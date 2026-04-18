@@ -541,6 +541,7 @@
   const NORMAL_COURSE_LAST = 49;  // 10-5 のインデックス
   const DARK_COURSE_START = 50;   // 11-1 のインデックス
   const DARK_COURSE_LAST = 149;   // 20-10 のインデックス
+  let darkTotoRevealSeen = false;  // 闇落ちとーと正体明かし済みフラグ
   const STAGES = generateAllStages();
 
 
@@ -1341,6 +1342,7 @@
       if (stateTimer > 140) {
         // 10-5 クリア直後はダークコース・プロローグを挟む（currentStage を進めずにカットシーン開始）
         if (currentStage === NORMAL_COURSE_LAST) {
+          markNormalCleared();
           stopBGM();
           startCutscene('prologue-dark');
           stateTimer = 0;
@@ -1384,6 +1386,14 @@
             maxTimer: 180,
           };
           saveGame();  // 新ワールド到達を明示セーブ
+        }
+        // 20-10 入場時は闇落ちとーと正体明かしカットシーン
+        if (label === '20-10' && !darkTotoRevealSeen) {
+          darkTotoRevealSeen = true;
+          stopBGM();
+          startCutscene('dark-toto-reveal');
+          saveGame();
+          return;
         }
         startBGM();
       }
@@ -2295,6 +2305,7 @@
     // true-ending 終了で「全クリア」画面
     if (endedId === 'true-ending') {
       state = 'allClear';
+      markTrueCleared();
       saveGame();
       overMsg.innerHTML = '🌸 [真|しん]エンディング 🌸'.replace(/\[([^\|]+)\|([^\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
       const sub = document.getElementById('overSub');
@@ -2940,6 +2951,7 @@
       clearSave();
       currentStage = 0; score = 0; coinCount = 0; lives = 3;
       saku.unlockedUlts = []; saku.selectedUlt = 0; saku.ultGauge = 0;
+      darkTotoRevealSeen = false;
     }
     comboMax = 0;  // ゲーム開始時にコンボベスト記録リセット
     scoreEl.textContent = score.toLocaleString();
@@ -2953,25 +2965,57 @@
 
   // タイトルメニューの決定
   function confirmTitleMenu() {
+    titleMenu.items = getTitleMenuItems();
     const hasSave = !!loadSave();
-    if (titleMenu.selected === 1 && !hasSave) {
+    const choice = titleMenu.items[titleMenu.selected];
+    if (choice === 'つづきから' && !hasSave) {
       // セーブ無しなのに「つづきから」→ 効果音なし、選択だけ自動で戻す
       titleMenu.selected = 0;
       return;
     }
     beep(880, 0.08, 'square', 0.14);
     setTimeout(() => beep(1319, 0.12, 'square', 0.12), 80);
-    const fromSave = (titleMenu.selected === 1);
+    if (choice === 'ダークコース') {
+      startDarkCourse();
+      return;
+    }
+    const fromSave = (choice === 'つづきから');
     startGame(fromSave);
   }
   function moveMenu(dir) {
+    titleMenu.items = getTitleMenuItems();
     const n = titleMenu.items.length;
     titleMenu.selected = (titleMenu.selected + dir + n) % n;
     // セーブ無しで「つづきから」を避ける
-    if (titleMenu.selected === 1 && !loadSave()) {
-      titleMenu.selected = 0;
+    if (titleMenu.items[titleMenu.selected] === 'つづきから' && !loadSave()) {
+      titleMenu.selected = (titleMenu.selected + dir + n) % n;
     }
     beep(440, 0.05, 'square', 0.08);
+  }
+  // ダークコース直行開始（タイトルから）
+  function startDarkCourse() {
+    if (state !== 'title') return;
+    ensureAudio();
+    currentStage = DARK_COURSE_START;
+    score = 0; coinCount = 0; lives = 5;
+    saku.unlockedUlts = ['punch', 'slash', 'peropero'];
+    saku.selectedUlt = 0;
+    saku.ultGauge = saku.maxUlt;  // ゲージ満タンでスタート
+    darkTotoRevealSeen = false;
+    comboMax = 0;
+    scoreEl.textContent = score.toLocaleString();
+    coinEl.textContent = coinCount;
+    livesEl.textContent = lives;
+    respawnPoint = null;
+    loadStage(currentStage);
+    state = 'playing';
+    worldIntro = {
+      name: WORLD_NAMES[DARK_WORLD_START],
+      num: DARK_WORLD_START + 1,
+      timer: 240,
+      maxTimer: 240,
+    };
+    startBGM();
   }
 
   // ====== コンティニュー／タイトル戻り ======
@@ -3639,6 +3683,7 @@
 
   // ====== 敵（スウェットおじさん） ======
   function drawEnemies() {
+    const isDark = !!STAGES[currentStage]?.dark;
     for (const en of enemies) {
       const x = en.x - cameraX;
       const y = en.y;
@@ -3649,10 +3694,270 @@
         const dx = Math.abs(saku.x + saku.w/2 - en.x - 14);
         if (dx < 120) wob = (120 - dx) / 120 * Math.sin(Date.now() * 0.02) * 0.8;
       }
-      if (en.type === 'kuri') drawKuri(x, y + wob, en);
-      else if (en.type === 'kame') drawKame(x, y + wob, en);
-      else if (en.type === 'tori') drawTori(x, y, en);
+      if (isDark) {
+        if (en.type === 'kuri') drawDarkKuri(x, y + wob, en);
+        else if (en.type === 'kame') drawDarkKame(x, y + wob, en);
+        else if (en.type === 'tori') drawDarkTori(x, y, en);
+      } else {
+        if (en.type === 'kuri') drawKuri(x, y + wob, en);
+        else if (en.type === 'kame') drawKame(x, y + wob, en);
+        else if (en.type === 'tori') drawTori(x, y, en);
+      }
     }
+  }
+  // ====== ダークコース専用モンスター描画 ======
+  // 骸骨歩兵（kuri の闇版）
+  function drawDarkKuri(x, y, en) {
+    const t = Date.now() * 0.008;
+    if (!en.alive && !en.flying) {
+      // 潰れて骨になる
+      ctx.fillStyle = '#c8c0a8';
+      ctx.beginPath();
+      ctx.ellipse(x + 14, y + 24, 14, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // 骨のバラけ
+      ctx.strokeStyle = '#6a6858';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x + 6, y + 22); ctx.lineTo(x + 12, y + 26);
+      ctx.moveTo(x + 20, y + 22); ctx.lineTo(x + 14, y + 26);
+      ctx.stroke();
+      return;
+    }
+    const sway = Math.sin(t + en.x * 0.1) * 1.2;
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(x + 14, y + 30, 10, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 体（ボロボロのローブ）
+    ctx.fillStyle = '#2a1a3a';
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y + 30);
+    ctx.lineTo(x + 24, y + 30);
+    ctx.lineTo(x + 22 + sway * 0.3, y + 16);
+    ctx.lineTo(x + 6 + sway * 0.3, y + 16);
+    ctx.closePath();
+    ctx.fill();
+    // ローブのほつれ
+    ctx.fillStyle = '#1a0a28';
+    for (let i = 0; i < 5; i++) {
+      const fx = x + 5 + i * 4;
+      ctx.fillRect(fx, y + 27, 2, 3);
+    }
+    // 骨の腕（両脇）
+    ctx.strokeStyle = '#e8e0c8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 5, y + 18); ctx.lineTo(x + 1 + sway, y + 25);
+    ctx.moveTo(x + 23, y + 18); ctx.lineTo(x + 27 - sway, y + 25);
+    ctx.stroke();
+    // 骸骨の手
+    ctx.fillStyle = '#e8e0c8';
+    ctx.beginPath();
+    ctx.arc(x + 1 + sway, y + 26, 1.5, 0, Math.PI * 2);
+    ctx.arc(x + 27 - sway, y + 26, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    // 頭蓋骨
+    ctx.fillStyle = '#e8e0c8';
+    ctx.beginPath();
+    ctx.arc(x + 14 + sway * 0.5, y + 10, 7, 0, Math.PI * 2);
+    ctx.fill();
+    // 頭蓋骨の影
+    ctx.fillStyle = '#a8a090';
+    ctx.beginPath();
+    ctx.arc(x + 16 + sway * 0.5, y + 11, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e8e0c8';
+    ctx.beginPath();
+    ctx.arc(x + 14 + sway * 0.5, y + 10, 7, Math.PI, Math.PI * 2);
+    ctx.fill();
+    // 目（赤く光る）
+    ctx.fillStyle = '#ff2030';
+    ctx.beginPath();
+    ctx.arc(x + 11.5 + sway * 0.5, y + 10, 1.4, 0, Math.PI * 2);
+    ctx.arc(x + 16.5 + sway * 0.5, y + 10, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+    // 目の光オーラ
+    ctx.fillStyle = 'rgba(255,40,60,0.4)';
+    ctx.beginPath();
+    ctx.arc(x + 11.5 + sway * 0.5, y + 10, 3, 0, Math.PI * 2);
+    ctx.arc(x + 16.5 + sway * 0.5, y + 10, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // 口（ギザギザの歯）
+    ctx.fillStyle = '#1a0a18';
+    ctx.fillRect(x + 11 + sway * 0.5, y + 13.5, 6, 2.5);
+    ctx.strokeStyle = '#a8a090';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      ctx.moveTo(x + 11 + i * 1.5 + sway * 0.5, y + 13.5);
+      ctx.lineTo(x + 11 + i * 1.5 + sway * 0.5, y + 16);
+    }
+    ctx.stroke();
+  }
+  // 影の獣（kame の闇版）
+  function drawDarkKame(x, y, en) {
+    const t = Date.now() * 0.006;
+    if (!en.alive && !en.flying) {
+      // 煙になって消える
+      ctx.fillStyle = 'rgba(40,10,60,0.5)';
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.arc(x + 8 + i * 3, y + 24 + Math.sin(t + i) * 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return;
+    }
+    const pulse = 1 + Math.sin(t * 2) * 0.08;
+    // 影のオーラ
+    const aurG = ctx.createRadialGradient(x + 14, y + 18, 2, x + 14, y + 18, 22);
+    aurG.addColorStop(0, 'rgba(120,40,200,0.35)');
+    aurG.addColorStop(1, 'rgba(20,0,40,0)');
+    ctx.fillStyle = aurG;
+    ctx.beginPath();
+    ctx.arc(x + 14, y + 18, 22, 0, Math.PI * 2);
+    ctx.fill();
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(x + 14, y + 30, 12, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 本体（黒い塊・ゼリー状）
+    ctx.fillStyle = '#180828';
+    ctx.beginPath();
+    ctx.ellipse(x + 14, y + 22, 11 * pulse, 8 * pulse, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // とげのような突起（上向き・振動する）
+    ctx.fillStyle = '#2a1040';
+    for (let i = 0; i < 5; i++) {
+      const sx = x + 6 + i * 4;
+      const sh = 5 + Math.sin(t * 3 + i) * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx, y + 18);
+      ctx.lineTo(sx + 2, y + 18 - sh);
+      ctx.lineTo(sx + 4, y + 18);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // 内側の紫（発光）
+    ctx.fillStyle = 'rgba(120,40,200,0.6)';
+    ctx.beginPath();
+    ctx.ellipse(x + 14, y + 23, 7 * pulse, 4 * pulse, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 目（紫に光る・複数）
+    ctx.fillStyle = '#ffa0ff';
+    ctx.beginPath();
+    ctx.arc(x + 10, y + 20, 1.2, 0, Math.PI * 2);
+    ctx.arc(x + 14, y + 19, 1.5, 0, Math.PI * 2);
+    ctx.arc(x + 18, y + 20, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(x + 10, y + 20, 0.5, 0, Math.PI * 2);
+    ctx.arc(x + 14, y + 19, 0.6, 0, Math.PI * 2);
+    ctx.arc(x + 18, y + 20, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // 悪魔コウモリ（tori の闇版）
+  function drawDarkTori(x, y, en) {
+    const t = Date.now() * 0.01;
+    if (!en.alive) {
+      // 黒い羽根が散る
+      ctx.fillStyle = '#1a0a2a';
+      ctx.beginPath();
+      ctx.ellipse(x + 14, y + 22, 10, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    const flap = Math.sin(t * 3) * 0.6;
+    // 影（小さめ）
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(x + 14, y + 32, 9, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 左翼
+    ctx.save();
+    ctx.translate(x + 10, y + 14);
+    ctx.rotate(-0.4 + flap);
+    ctx.fillStyle = '#1a0a28';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-12, -4);
+    ctx.lineTo(-14, 2);
+    ctx.lineTo(-11, 4);
+    ctx.lineTo(-8, 2);
+    ctx.lineTo(-5, 4);
+    ctx.lineTo(0, 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#3a1048';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.restore();
+    // 右翼
+    ctx.save();
+    ctx.translate(x + 18, y + 14);
+    ctx.rotate(0.4 - flap);
+    ctx.fillStyle = '#1a0a28';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(12, -4);
+    ctx.lineTo(14, 2);
+    ctx.lineTo(11, 4);
+    ctx.lineTo(8, 2);
+    ctx.lineTo(5, 4);
+    ctx.lineTo(0, 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#3a1048';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.restore();
+    // 胴体（黒い毛むくじゃら）
+    ctx.fillStyle = '#2a1038';
+    ctx.beginPath();
+    ctx.ellipse(x + 14, y + 15, 5, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 頭
+    ctx.fillStyle = '#180620';
+    ctx.beginPath();
+    ctx.arc(x + 14, y + 10, 5, 0, Math.PI * 2);
+    ctx.fill();
+    // 耳（三角・2つ）
+    ctx.beginPath();
+    ctx.moveTo(x + 10, y + 7);
+    ctx.lineTo(x + 11, y + 3);
+    ctx.lineTo(x + 13, y + 7);
+    ctx.closePath();
+    ctx.moveTo(x + 18, y + 7);
+    ctx.lineTo(x + 17, y + 3);
+    ctx.lineTo(x + 15, y + 7);
+    ctx.closePath();
+    ctx.fill();
+    // 目（赤く光る）
+    ctx.fillStyle = '#ff3040';
+    ctx.beginPath();
+    ctx.arc(x + 12, y + 9.5, 1.2, 0, Math.PI * 2);
+    ctx.arc(x + 16, y + 9.5, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,60,80,0.4)';
+    ctx.beginPath();
+    ctx.arc(x + 12, y + 9.5, 2.5, 0, Math.PI * 2);
+    ctx.arc(x + 16, y + 9.5, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // 牙（下向き・2本）
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(x + 13, y + 12);
+    ctx.lineTo(x + 12.3, y + 14);
+    ctx.lineTo(x + 13.5, y + 13);
+    ctx.closePath();
+    ctx.moveTo(x + 15, y + 12);
+    ctx.lineTo(x + 15.7, y + 14);
+    ctx.lineTo(x + 14.5, y + 13);
+    ctx.closePath();
+    ctx.fill();
   }
 
   // とり（空飛ぶおじさん）
@@ -4327,6 +4632,84 @@
       ctx.fill();
     }
 
+    // 闇落ちとーと用の上書きオーバーレイ（紫黒で染める＋王冠＋赤い目）
+    if (b.isDarkToto) {
+      const cx2 = x + b.w / 2;
+      const topY = y;
+      // 紫黒の multiply 風オーバーレイ
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-atop';
+      const overG = ctx.createLinearGradient(cx2, topY, cx2, y + b.h);
+      overG.addColorStop(0, 'rgba(40, 0, 60, 0.55)');
+      overG.addColorStop(0.5, 'rgba(20, 0, 30, 0.7)');
+      overG.addColorStop(1, 'rgba(10, 0, 20, 0.8)');
+      ctx.fillStyle = overG;
+      ctx.fillRect(x - 10, y - 10, b.w + 20, b.h + 20);
+      ctx.restore();
+      // 紫の闇オーラ（外側）
+      const auraR2 = 90 + Math.sin(b.anim * 0.4) * 12;
+      const auraG2 = ctx.createRadialGradient(cx2, y + b.h/2, 10, cx2, y + b.h/2, auraR2);
+      auraG2.addColorStop(0, 'rgba(140, 40, 200, 0.45)');
+      auraG2.addColorStop(0.5, 'rgba(60, 10, 100, 0.3)');
+      auraG2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = auraG2;
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.beginPath();
+      ctx.arc(cx2, y + b.h/2, auraR2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      // 王冠（頭上）
+      const crownY = topY - 6;
+      ctx.fillStyle = '#2a0040';
+      ctx.beginPath();
+      ctx.moveTo(cx2 - 22, crownY + 8);
+      ctx.lineTo(cx2 + 22, crownY + 8);
+      ctx.lineTo(cx2 + 20, crownY - 4);
+      ctx.lineTo(cx2 + 14, crownY + 2);
+      ctx.lineTo(cx2 + 8, crownY - 8);
+      ctx.lineTo(cx2, crownY + 2);
+      ctx.lineTo(cx2 - 8, crownY - 8);
+      ctx.lineTo(cx2 - 14, crownY + 2);
+      ctx.lineTo(cx2 - 20, crownY - 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#8a20c0';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // 王冠の宝石（赤い球）
+      for (let i = -1; i <= 1; i++) {
+        const gx = cx2 + i * 12;
+        const gy = crownY + 4;
+        const gg = ctx.createRadialGradient(gx - 0.6, gy - 0.6, 0.4, gx, gy, 3.2);
+        gg.addColorStop(0, '#ff8080');
+        gg.addColorStop(0.5, '#c00020');
+        gg.addColorStop(1, '#400010');
+        ctx.fillStyle = gg;
+        ctx.beginPath();
+        ctx.arc(gx, gy, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 真っ赤な目のハイライト（もともとの目の上に重ねて発光強調）
+      const facing2 = (saku.x + saku.w/2) < cx2 ? -1 : 1;
+      const headCx2 = cx2 + facing2 * 8;
+      const headCy2 = y + b.h * 0.3;
+      ctx.fillStyle = 'rgba(255, 60, 80, 0.7)';
+      ctx.beginPath();
+      ctx.arc(headCx2 + facing2 * 14, headCy2 + 10, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(headCx2 + facing2 * 14, headCy2 + 10, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      // 涙のような血（邪悪化の痕跡）
+      ctx.strokeStyle = 'rgba(160, 10, 30, 0.8)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(headCx2 + facing2 * 14, headCy2 + 12);
+      ctx.lineTo(headCx2 + facing2 * 14 + 1, headCy2 + 18);
+      ctx.stroke();
+    }
+
     ctx.restore();
   }
 
@@ -4888,10 +5271,29 @@
     selected: 0,
     holdCooldown: 0,
   };
+  function hasNormalCleared() {
+    try { return localStorage.getItem('saku_normal_cleared') === '1'; } catch(e) { return false; }
+  }
+  function markNormalCleared() {
+    try { localStorage.setItem('saku_normal_cleared', '1'); } catch(e) {}
+  }
+  function hasTrueCleared() {
+    try { return localStorage.getItem('saku_true_cleared') === '1'; } catch(e) { return false; }
+  }
+  function markTrueCleared() {
+    try { localStorage.setItem('saku_true_cleared', '1'); } catch(e) {}
+  }
+  function getTitleMenuItems() {
+    const items = ['はじめから', 'つづきから'];
+    if (hasNormalCleared()) items.push('ダークコース');
+    return items;
+  }
 
   function drawTitleMenu() {
     const save = loadSave();
     const hasSave = !!save;
+    titleMenu.items = getTitleMenuItems();
+    if (titleMenu.selected >= titleMenu.items.length) titleMenu.selected = 0;
     const menuY = H * 0.50;
     const gap = 48;
 
