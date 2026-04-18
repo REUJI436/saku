@@ -270,40 +270,60 @@
 
   /* ===== ACTION ===== */
   #action-scene {
-    background: linear-gradient(180deg, #87ceeb 0%, #c9e8c9 60%, #8b6f4e 60%, #5a4a3a 100%);
+    background: linear-gradient(180deg, #87ceeb 0%, #b8d8ef 50%, #8fbc8f 51%, #5a8a5a 100%);
     overflow: hidden;
+    display: none;
   }
+  #action-scene.active { display: block; }
   #action-canvas {
     position: absolute;
-    inset: 0;
-    width: 100%; height: 100%;
+    top: 0; left: 0;
+    display: block;
+    touch-action: manipulation;
   }
   #action-ui {
     position: absolute;
-    top: 10px; left: 10px; right: 10px;
+    top: env(safe-area-inset-top, 10px); left: 10px; right: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
     color: #fff;
-    text-shadow: 2px 2px 0 #000;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
     z-index: 5;
+    padding-top: 8px;
   }
   #action-tap-hint {
     position: absolute;
-    top: 50%;
+    top: 40%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: #fff;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
     text-shadow: 2px 2px 0 #000;
-    background: rgba(0,0,0,0.5);
-    padding: 12px 24px;
+    background: rgba(0,0,0,0.6);
+    padding: 16px 28px;
     border-radius: 16px;
     z-index: 10;
     pointer-events: none;
+    text-align: center;
+  }
+  #action-skip {
+    position: absolute;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    right: 16px;
+    background: rgba(255,255,255,0.85);
+    border: 3px solid #ff6fa8;
+    border-radius: 20px;
+    padding: 10px 18px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #d63384;
+    z-index: 20;
+    cursor: pointer;
+    font-family: inherit;
   }
 
   /* ===== DEDUCTION ===== */
@@ -417,6 +437,7 @@
       <div>⏱ <span id="action-time">30</span></div>
     </div>
     <div id="action-tap-hint">タップ で ジャンプ！<br>コイン を あつめよう</div>
+    <button id="action-skip">スキップ ▶</button>
   </div>
 
   <!-- ===== DEDUCTION ===== -->
@@ -878,213 +899,306 @@ let actionCallback = null;
 const actionState = {
   canvas: null, ctx: null,
   running: false,
-  player: { x: 80, y: 0, vy: 0, w: 50, h: 60, onGround: true },
+  W: 0, H: 0, dpr: 1,
+  player: null,
   obstacles: [],
   coins: [],
   scroll: 0,
-  time: 30,
   coinsCollected: 0,
   coinGoal: 10,
   lastSpawn: 0,
   groundY: 0,
+  startTime: 0,
+  lastFrame: 0,
+  tapHandler: null,
+  skipHandler: null,
+  ended: false,
 };
+
+function sizeActionCanvas() {
+  const canvas = actionState.canvas;
+  const W = Math.max(window.innerWidth, document.documentElement.clientWidth, 320);
+  const H = Math.max(window.innerHeight, document.documentElement.clientHeight, 400);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  actionState.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  actionState.W = W;
+  actionState.H = H;
+  actionState.dpr = dpr;
+  actionState.groundY = Math.round(H * 0.72);
+}
 
 function startActionGame(onComplete) {
   actionCallback = onComplete;
+  actionState.ended = false;
   showScene('action-scene');
-  const canvas = document.getElementById('action-canvas');
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
-  canvas.style.width = window.innerWidth + 'px';
-  canvas.style.height = window.innerHeight + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+  const canvas = document.getElementById('action-canvas');
   actionState.canvas = canvas;
-  actionState.ctx = ctx;
+  actionState.ctx = canvas.getContext('2d');
+  sizeActionCanvas();
+
+  // player
+  actionState.player = {
+    x: Math.round(actionState.W * 0.18),
+    y: actionState.groundY - 70,
+    vy: 0, w: 54, h: 70, onGround: true,
+  };
+
   actionState.running = true;
   actionState.obstacles = [];
   actionState.coins = [];
   actionState.scroll = 0;
-  actionState.time = 30;
   actionState.coinsCollected = 0;
   actionState.lastSpawn = 0;
-  actionState.groundY = window.innerHeight * 0.7;
-  actionState.player.y = actionState.groundY - actionState.player.h;
-  actionState.player.vy = 0;
-  actionState.player.onGround = true;
+  actionState.startTime = Date.now();
+  actionState.lastFrame = Date.now();
+
+  // Pre-spawn a couple of coins so something visible happens immediately
+  for (let i = 0; i < 3; i++) {
+    actionState.coins.push({
+      x: actionState.W + i * 180,
+      y: actionState.groundY - 50 - (i % 2) * 70,
+      size: 22, collected: false,
+    });
+  }
 
   document.getElementById('coin-count').textContent = '0';
   document.getElementById('coin-goal').textContent = actionState.coinGoal;
   document.getElementById('action-time').textContent = '30';
-
   const hint = document.getElementById('action-tap-hint');
   hint.style.display = '';
-  setTimeout(() => { hint.style.display = 'none'; }, 2000);
-
-  actionState.startTime = Date.now();
-  requestAnimationFrame(actionLoop);
+  setTimeout(() => { hint.style.display = 'none'; }, 1800);
 
   const tapHandler = (e) => {
-    e.preventDefault();
-    if (actionState.player.onGround) {
-      actionState.player.vy = -14;
-      actionState.player.onGround = false;
+    // skip if tap is on skip button
+    if (e.target && e.target.id === 'action-skip') return;
+    if (e.cancelable) e.preventDefault();
+    const p = actionState.player;
+    if (p && p.onGround) {
+      p.vy = -15;
+      p.onGround = false;
     }
   };
-  document.getElementById('action-scene').addEventListener('touchstart', tapHandler, { passive: false });
-  document.getElementById('action-scene').addEventListener('mousedown', tapHandler);
   actionState.tapHandler = tapHandler;
+  const scene = document.getElementById('action-scene');
+  scene.addEventListener('touchstart', tapHandler, { passive: false });
+  scene.addEventListener('mousedown', tapHandler);
+
+  const skipBtn = document.getElementById('action-skip');
+  const skipHandler = (e) => {
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+    endActionGame();
+  };
+  actionState.skipHandler = skipHandler;
+  skipBtn.addEventListener('click', skipHandler);
+  skipBtn.addEventListener('touchstart', skipHandler, { passive: false });
+
+  window.addEventListener('resize', onActionResize);
+  window.addEventListener('orientationchange', onActionResize);
+
+  requestAnimationFrame(actionLoop);
+}
+
+function onActionResize() {
+  if (!actionState.running) return;
+  sizeActionCanvas();
+  // keep player on ground after resize
+  if (actionState.player.onGround) {
+    actionState.player.y = actionState.groundY - actionState.player.h;
+  }
 }
 
 function endActionGame() {
+  if (actionState.ended) return;
+  actionState.ended = true;
   actionState.running = false;
-  document.getElementById('action-scene').removeEventListener('touchstart', actionState.tapHandler);
-  document.getElementById('action-scene').removeEventListener('mousedown', actionState.tapHandler);
+  const scene = document.getElementById('action-scene');
+  scene.removeEventListener('touchstart', actionState.tapHandler);
+  scene.removeEventListener('mousedown', actionState.tapHandler);
+  const skipBtn = document.getElementById('action-skip');
+  skipBtn.removeEventListener('click', actionState.skipHandler);
+  skipBtn.removeEventListener('touchstart', actionState.skipHandler);
+  window.removeEventListener('resize', onActionResize);
+  window.removeEventListener('orientationchange', onActionResize);
   if (actionCallback) actionCallback();
 }
 
 function actionLoop() {
   if (!actionState.running) return;
   const ctx = actionState.ctx;
-  const W = window.innerWidth, H = window.innerHeight;
+  const W = actionState.W, H = actionState.H;
+  const now = Date.now();
+  const dt = Math.min(33, now - actionState.lastFrame) / 16.67; // normalize to 60fps units
+  actionState.lastFrame = now;
 
-  // update time
-  const elapsed = Math.floor((Date.now() - actionState.startTime) / 1000);
-  const remaining = Math.max(0, 30 - elapsed);
+  // time remaining
+  const remaining = Math.max(0, 30 - Math.floor((now - actionState.startTime) / 1000));
   document.getElementById('action-time').textContent = remaining;
 
-  // win condition
-  if (actionState.coinsCollected >= actionState.coinGoal) {
-    endActionGame();
-    return;
-  }
-  if (remaining <= 0) {
+  if (actionState.coinsCollected >= actionState.coinGoal || remaining <= 0) {
     endActionGame();
     return;
   }
 
-  // spawn coins/obstacles
-  actionState.lastSpawn += 16;
-  if (actionState.lastSpawn > 700) {
+  // spawn
+  actionState.lastSpawn += dt * 16;
+  if (actionState.lastSpawn > 550) {
     actionState.lastSpawn = 0;
-    if (Math.random() < 0.8) {
-      const y = actionState.groundY - 40 - Math.random() * 100;
-      actionState.coins.push({ x: W + 30, y, size: 24, collected: false });
-    }
-    if (Math.random() < 0.3) {
-      actionState.obstacles.push({ x: W + 30, y: actionState.groundY - 40, w: 35, h: 40 });
+    const yOff = 40 + Math.random() * 90;
+    actionState.coins.push({
+      x: W + 30, y: actionState.groundY - yOff,
+      size: 22, collected: false,
+    });
+    if (Math.random() < 0.25) {
+      actionState.obstacles.push({ x: W + 30, y: actionState.groundY - 38, w: 32, h: 38 });
     }
   }
 
   // scroll
-  const scrollSpeed = 4;
+  const scrollSpeed = 4.5 * dt;
   actionState.coins.forEach(c => c.x -= scrollSpeed);
   actionState.obstacles.forEach(o => o.x -= scrollSpeed);
   actionState.coins = actionState.coins.filter(c => c.x > -50);
   actionState.obstacles = actionState.obstacles.filter(o => o.x > -50);
+  actionState.scroll += scrollSpeed;
 
   // physics
   const p = actionState.player;
-  p.vy += 0.7;
-  p.y += p.vy;
+  p.vy += 0.75 * dt;
+  p.y += p.vy * dt;
   if (p.y >= actionState.groundY - p.h) {
     p.y = actionState.groundY - p.h;
     p.vy = 0;
     p.onGround = true;
   }
 
-  // collisions
+  // collide coins
   actionState.coins.forEach(c => {
     if (c.collected) return;
     const dx = (p.x + p.w/2) - c.x;
     const dy = (p.y + p.h/2) - c.y;
-    if (Math.abs(dx) < 35 && Math.abs(dy) < 35) {
+    if (Math.abs(dx) < 36 && Math.abs(dy) < 40) {
       c.collected = true;
       actionState.coinsCollected++;
       document.getElementById('coin-count').textContent = actionState.coinsCollected;
-      burstSparkles(c.x, c.y, 12, false);
+      burstSparkles(c.x, c.y, 14, false);
     }
   });
 
+  // obstacles (soft bumper)
   actionState.obstacles.forEach(o => {
-    if (p.x < o.x + o.w && p.x + p.w > o.x && p.y + p.h > o.y) {
-      // hit - bounce back slightly, no penalty other than getting stuck
-      p.vy = -8;
+    if (p.x < o.x + o.w && p.x + p.w > o.x && p.y + p.h > o.y && p.y < o.y + o.h) {
+      p.vy = -10;
       p.onGround = false;
     }
   });
 
-  // draw
-  ctx.clearRect(0, 0, W, H);
+  // ====== DRAW ======
+  // sky
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, actionState.groundY);
+  skyGrad.addColorStop(0, '#87ceeb');
+  skyGrad.addColorStop(1, '#d4eef5');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, actionState.groundY);
 
   // ground
-  ctx.fillStyle = '#8b6f4e';
+  ctx.fillStyle = '#8fbc8f';
   ctx.fillRect(0, actionState.groundY, W, H - actionState.groundY);
   ctx.fillStyle = '#a8d8a8';
-  ctx.fillRect(0, actionState.groundY - 10, W, 10);
+  ctx.fillRect(0, actionState.groundY - 8, W, 8);
 
   // clouds
-  ctx.fillStyle = '#fff';
-  const cloudX = (actionState.scroll * 0.3) % W;
-  ctx.beginPath();
-  ctx.arc(W - cloudX, 80, 30, 0, Math.PI*2);
-  ctx.arc(W - cloudX + 30, 80, 35, 0, Math.PI*2);
-  ctx.arc(W - cloudX + 60, 80, 28, 0, Math.PI*2);
-  ctx.fill();
-  actionState.scroll += scrollSpeed;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  const cloudOffset = (actionState.scroll * 0.3) % (W + 200);
+  for (let i = 0; i < 3; i++) {
+    const cx = (W + 200) - cloudOffset + i * ((W + 200) / 3);
+    const cy = 70 + (i % 2) * 30;
+    const wrappedX = ((cx % (W + 200)) + (W + 200)) % (W + 200) - 50;
+    ctx.beginPath();
+    ctx.arc(wrappedX, cy, 22, 0, Math.PI * 2);
+    ctx.arc(wrappedX + 24, cy - 4, 28, 0, Math.PI * 2);
+    ctx.arc(wrappedX + 50, cy, 20, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // coins
   actionState.coins.forEach(c => {
     if (c.collected) return;
     ctx.save();
     ctx.translate(c.x, c.y);
-    ctx.rotate(Date.now() / 200);
+    ctx.rotate(now / 200);
     ctx.fillStyle = '#ffd700';
     ctx.beginPath(); ctx.arc(0, 0, c.size, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#ffb000';
-    ctx.beginPath(); ctx.arc(0, 0, c.size - 6, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, c.size - 5, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 20px sans-serif';
+    ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('♡', 0, 2);
+    ctx.fillText('♡', 0, 1);
     ctx.restore();
   });
 
-  // obstacles (thorny bushes)
+  // obstacles (bush)
   actionState.obstacles.forEach(o => {
-    ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(o.x, o.y, o.w, o.h);
-    ctx.fillStyle = '#7a5a3a';
+    ctx.fillStyle = '#5a8a3a';
     ctx.beginPath();
-    ctx.moveTo(o.x, o.y);
-    ctx.lineTo(o.x + o.w/2, o.y - 10);
-    ctx.lineTo(o.x + o.w, o.y);
+    ctx.arc(o.x + o.w/2, o.y + o.h/2, o.w/1.5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#ff6fa8';
+    ctx.beginPath();
+    ctx.arc(o.x + 6, o.y + 8, 4, 0, Math.PI*2);
+    ctx.arc(o.x + o.w - 6, o.y + 12, 4, 0, Math.PI*2);
     ctx.fill();
   });
 
-  // player (kurumi in pink)
+  // player (kurumi precure)
   ctx.save();
   ctx.translate(p.x, p.y);
-  // body
+  // skirt/dress
+  ctx.fillStyle = '#ff6fa8';
+  ctx.beginPath();
+  ctx.moveTo(4, p.h - 4);
+  ctx.lineTo(p.w - 4, p.h - 4);
+  ctx.lineTo(p.w - 10, 42);
+  ctx.lineTo(10, 42);
+  ctx.closePath();
+  ctx.fill();
+  // torso
   ctx.fillStyle = '#ff9ecd';
-  ctx.fillRect(8, 35, p.w - 16, p.h - 35);
+  ctx.fillRect(14, 36, p.w - 28, 12);
   // head
   ctx.fillStyle = '#ffe4c4';
-  ctx.beginPath(); ctx.arc(p.w/2, 18, 18, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.w/2, 22, 20, 0, Math.PI*2); ctx.fill();
   // hair
   ctx.fillStyle = '#d4a574';
   ctx.beginPath();
-  ctx.arc(p.w/2, 10, 20, 0, Math.PI, true);
+  ctx.arc(p.w/2, 14, 22, 0, Math.PI, true);
   ctx.fill();
-  // eyes
-  ctx.fillStyle = '#333';
-  ctx.beginPath(); ctx.arc(p.w/2 - 6, 18, 2, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(p.w/2 + 6, 18, 2, 0, Math.PI*2); ctx.fill();
+  ctx.fillRect(p.w/2 - 20, 12, 6, 22);
+  ctx.fillRect(p.w/2 + 14, 12, 6, 22);
   // bow
   ctx.fillStyle = '#ffd700';
-  ctx.beginPath(); ctx.arc(p.w/2 - 10, 0, 5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.w/2 - 12, 4, 5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.w/2 - 6, 0, 4, 0, Math.PI*2); ctx.fill();
+  // eyes
+  ctx.fillStyle = '#d63384';
+  ctx.beginPath(); ctx.arc(p.w/2 - 6, 22, 2.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.w/2 + 6, 22, 2.5, 0, Math.PI*2); ctx.fill();
+  // smile
+  ctx.strokeStyle = '#d63384';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(p.w/2, 28, 3, 0, Math.PI);
+  ctx.stroke();
+  // legs
+  ctx.fillStyle = '#ffe4c4';
+  ctx.fillRect(p.w/2 - 10, p.h - 8, 7, 10);
+  ctx.fillRect(p.w/2 + 3, p.h - 8, 7, 10);
   ctx.restore();
 
   requestAnimationFrame(actionLoop);
