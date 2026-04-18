@@ -638,6 +638,7 @@
   <div class="scene" id="result-scene">
     <h1 id="result-title">じけん かいけつ！</h1>
     <div class="result-text" id="result-text"></div>
+    <button class="big-btn" id="result-next-btn" style="display:none;">つぎ の じけん へ ▶</button>
     <button class="big-btn" id="result-btn">タイトル へ もどる</button>
   </div>
 
@@ -932,16 +933,16 @@ const CASE1 = [
     reactWrong: 'うーん、ちがうかも。もう いっかい！',
   },
 
-  // Miku interview - math quiz
+  // Miku interview - math quiz (addition)
   { type: 'char', char: 'miku' },
-  { type: 'dialogue', speaker: 'miku', text: 'くるみちゃん！<br>ケーキは みんなで たべる はずだったの。' },
-  { type: 'dialogue', speaker: 'miku', text: 'キッチンには ケーキが <br><ruby>8<rt>はち</rt></ruby>こ あったの。<br>でも いま みたら <ruby>2<rt>に</rt></ruby>こに なってた...' },
+  { type: 'dialogue', speaker: 'miku', text: 'くるみちゃん！<br>キッチンの ケーキは<br>いろいろ あったのよ。' },
+  { type: 'dialogue', speaker: 'miku', text: 'チョコケーキが <ruby>3<rt>さん</rt></ruby>こ、<br>いちごケーキが <ruby>5<rt>ご</rt></ruby>こ<br>あったの。' },
   { type: 'quiz', quizType: 'math', questioner: 'miku',
-    hint: 'なんこ なくなったのかな？',
-    question: '8 - 2 = ?',
-    choices: ['4', '5', '6', '7'],
+    hint: 'ぜんぶで なんこ あったのかな？',
+    question: '3 + 5 = ?',
+    choices: ['6', '7', '8', '9'],
     correct: 2,
-    reactCorrect: 'すごい！<ruby>6<rt>ろく</rt></ruby>こも なくなったんだ〜！',
+    reactCorrect: 'せいかい！<ruby>8<rt>はち</rt></ruby>こも あったのに、<br>ぜんぶ なくなっちゃったんだ〜！',
     reactWrong: 'うーん、もう いっかい かぞえて みて〜',
   },
 
@@ -1004,20 +1005,248 @@ const CASE1 = [
   { type: 'dialogue', speaker: 'kurumi', text: 'もう ケーキ かってに たべちゃ だめだよ〜？<br>こんど ポチの ごはん ちゃんと あげる ね！' },
 
   { type: 'result',
-    title: '🎉 じけん かいけつ！ 🎉',
+    title: '🎉 じけん１ かいけつ！ 🎉',
     text: 'くるみの <ruby>大活躍<rt>だいかつやく</rt></ruby>で、<br>ケーキじけんは かいけつ！<br>みんなで プリンを たのしく たべたとさ。<br><br>めでたし めでたし♪',
   },
 ];
 
+// ====================== CASE 2: うわばきさがし ======================
+const CASE2 = [
+  { type: 'bg', bg: 'kindergarten' },
+  { type: 'dialogue', speaker: 'narrator', text: 'つぎの <ruby>朝<rt>あさ</rt></ruby>、<br>ふじみだいこどもえんに とうえん した くるみ。<br>なにか ざわざわ している...' },
+  { type: 'bg', bg: 'classroom' },
+  { type: 'char', char: 'yuuta' },
+  { type: 'dialogue', speaker: 'yuuta', text: 'え〜〜〜！！<br>ぼくの うわばき が ない〜〜！' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'ゆうたくん、どうしたの！？' },
+  { type: 'char', char: 'yuuta' },
+  { type: 'dialogue', speaker: 'yuuta', text: 'ロッカーに いれといたのに<br>きえちゃったんだ〜〜！' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'こんどは うわばき！？<br>くるみに まかせて！<br><ruby>変身<rt>へんしん</rt></ruby>〜〜！！' },
+  { type: 'bg', bg: 'transform' },
+  { type: 'transform' },
+  { type: 'sparkle' },
+  { type: 'dialogue', speaker: 'kurumi', text: '✨ めいたんてい くるみ、さんじょう！ ✨<br>ゆうたくんの うわばき、さがすよ！' },
+  { type: 'bg', bg: 'classroom' },
+
+  // Haruka - hiragana
+  { type: 'char', char: 'haruka' },
+  { type: 'dialogue', speaker: 'haruka', text: 'くるみちゃん！<br>ロッカーの まえに<br>なにか かみが おちてたよ！' },
+  { type: 'dialogue', speaker: 'haruka', text: 'ひらがなで<br>かいてある みたい。<br>よんで みて〜！' },
+  { type: 'quiz', quizType: 'hiragana', questioner: 'haruka',
+    hint: 'かみに かいてあった もじは どれ？',
+    question: '「うわばき」は どれ？',
+    choices: ['うわばき', 'うさぎ', 'うきわ', 'すいか'],
+    correct: 0,
+    reactCorrect: 'せいかい！「うわばき」って かいてあったんだね！',
+    reactWrong: 'ちがうよ、よく みて〜',
+  },
+
+  // Miku - subtraction
+  { type: 'char', char: 'miku' },
+  { type: 'dialogue', speaker: 'miku', text: 'くるみちゃん、ロッカーに<br>ヒントあるかも！' },
+  { type: 'dialogue', speaker: 'miku', text: 'ロッカーは ぜんぶで<br><ruby>10<rt>じゅう</rt></ruby>こ あるの。<br>でも いま あいてるのは <ruby>4<rt>よん</rt></ruby>こ...' },
+  { type: 'quiz', quizType: 'math', questioner: 'miku',
+    hint: 'つかってる ロッカーは なんこ？',
+    question: '10 - 4 = ?',
+    choices: ['5', '6', '7', '8'],
+    correct: 1,
+    reactCorrect: 'せいかい！<ruby>6<rt>ろく</rt></ruby>この ロッカー つかってたんだ！',
+    reactWrong: 'もう いっかい かぞえて みよう！',
+  },
+
+  // Sensei - katakana
+  { type: 'char', char: 'sensei' },
+  { type: 'dialogue', speaker: 'sensei', text: 'くるみちゃん、<br>ロッカーの ふだ を よんで みて。<br>カタカナで かいてあるわ。' },
+  { type: 'quiz', quizType: 'katakana', questioner: 'sensei',
+    hint: 'ふだの カタカナは どれ？',
+    question: '「ロッカー」は どれ？',
+    choices: ['ロッカー', 'ポッキー', 'ライオン', 'クッキー'],
+    correct: 0,
+    reactCorrect: 'せいかい！「ロッカー」って かいてあったわね！',
+    reactWrong: 'もう いっかい みて！',
+  },
+
+  // Action setup
+  { type: 'dialogue', speaker: 'sensei', text: 'ゆうたくんに<br>あたらしい うわばき の<br>リボン を かって あげたいわ。' },
+  { type: 'dialogue', speaker: 'sensei', text: 'コインを あつめて、<br>おみせに 行ってきて くれる？' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'いってきま〜す！' },
+
+  { type: 'action' },
+
+  { type: 'bg', bg: 'classroom' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'ただいま〜！<br>ヒントも そろったよ！' },
+  { type: 'dialogue', speaker: 'narrator', text: '【ヒント】<br>・「うわばき」の かみが おちてた<br>・ロッカーは 6こ つかわれてた<br>・ふだに「ロッカー」<br><br>だれかが<br>ねぼけて まちがえて、<br>ゆうたくんの ロッカー<br>を あけちゃった...？' },
+
+  { type: 'deduction',
+    title: 'まちがえて もっていったのは だれ？',
+    suspects: [
+      { char: 'haruka', name: 'はるかちゃん' },
+      { char: 'miku', name: 'みくちゃん' },
+      { char: 'sensei', name: 'せんせい' },
+    ],
+    correct: 1,
+    reactCorrect: 'せいかい！みくちゃんだった！',
+    reactWrong: 'ちがうかも、もう いっかい かんがえよう！',
+  },
+
+  { type: 'char', char: 'miku' },
+  { type: 'dialogue', speaker: 'miku', text: 'う... うわ〜ん！<br>ごめんなさい ゆうたくん！' },
+  { type: 'dialogue', speaker: 'miku', text: 'けさ ねぼけてて、<br>ゆうたくんの ロッカーから<br>うわばき を とっちゃった...' },
+  { type: 'char', char: 'yuuta' },
+  { type: 'dialogue', speaker: 'yuuta', text: 'いいよ〜！<br>みつかって よかった！' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'みくちゃん、あしたは<br>ロッカーの なまえ、<br>ちゃんと みて 取ろうね♪' },
+
+  { type: 'result',
+    title: '🎉 じけん２ かいけつ！ 🎉',
+    text: 'くるみの おかげで、<br>うわばき は ぶじに もどった！<br>みくちゃんも すっきり、<br>みんな えがおに。<br><br>つづく！',
+  },
+];
+
+// ====================== CASE 3: おたから ちず の なぞ ======================
+const CASE3 = [
+  { type: 'bg', bg: 'garden' },
+  { type: 'dialogue', speaker: 'narrator', text: 'ある ひ、こどもえんの おにわで<br>くるみが ふしぎな かみきれ を<br>みつけた。' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'これって...ちず？<br>「おたから」って かいてある！' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'わくわく〜♪<br>みんなで さがそう！<br><ruby>変身<rt>へんしん</rt></ruby>〜〜！！' },
+  { type: 'bg', bg: 'transform' },
+  { type: 'transform' },
+  { type: 'sparkle' },
+  { type: 'dialogue', speaker: 'kurumi', text: '✨ たからさがし たんてい くるみ、しゅつどう！ ✨' },
+
+  // Clue 1: Haruka hiragana
+  { type: 'bg', bg: 'garden' },
+  { type: 'char', char: 'haruka' },
+  { type: 'dialogue', speaker: 'haruka', text: 'くるみちゃん、<br>ちずに なにか かいてある！' },
+  { type: 'dialogue', speaker: 'haruka', text: 'いちばん はじめは<br>ひらがな の ヒント だね。' },
+  { type: 'quiz', quizType: 'hiragana', questioner: 'haruka',
+    hint: 'ちずの さいしょの ばしょは？',
+    question: '「さくら」は どれ？',
+    choices: ['さくら', 'すいか', 'みかん', 'つくえ'],
+    correct: 0,
+    reactCorrect: 'せいかい！「さくら」！<br>さくらの き の ところに いこう！',
+    reactWrong: 'うーん、もう いっかい よんで みて！',
+  },
+
+  // Clue 2: Yuuta addition
+  { type: 'char', char: 'yuuta' },
+  { type: 'dialogue', speaker: 'yuuta', text: 'くるみちゃん！<br>さくらの き の したに<br>すうじ が みえるよ！' },
+  { type: 'dialogue', speaker: 'yuuta', text: 'はなびらが<br><ruby>4<rt>よん</rt></ruby>まい、<br>はっぱが <ruby>3<rt>さん</rt></ruby>まい。' },
+  { type: 'quiz', quizType: 'math', questioner: 'yuuta',
+    hint: 'ぜんぶで なんまい？',
+    question: '4 + 3 = ?',
+    choices: ['6', '7', '8', '9'],
+    correct: 1,
+    reactCorrect: 'せいかい！<ruby>7<rt>なな</rt></ruby>まい！<br>7ぽ あるいて つぎへ！',
+    reactWrong: 'もう いっかい かぞえて みて〜！',
+  },
+
+  // Clue 3: Miku katakana
+  { type: 'bg', bg: 'classroom' },
+  { type: 'char', char: 'miku' },
+  { type: 'dialogue', speaker: 'miku', text: 'ちずの つぎの ばしょ は<br>こどもえんの なか みたい！' },
+  { type: 'dialogue', speaker: 'miku', text: 'カタカナで かいてあるよ。' },
+  { type: 'quiz', quizType: 'katakana', questioner: 'miku',
+    hint: 'つぎの ばしょ は？',
+    question: '「ピアノ」は どれ？',
+    choices: ['ピアノ', 'バナナ', 'カメラ', 'プリン'],
+    correct: 0,
+    reactCorrect: 'せいかい！「ピアノ」！<br>おんがくしつに いこう！',
+    reactWrong: 'ちがうよ、もう いっかい みて！',
+  },
+
+  // Clue 4: Sensei subtraction
+  { type: 'char', char: 'sensei' },
+  { type: 'dialogue', speaker: 'sensei', text: 'くるみちゃん、<br>おんがくしつに きたのね！<br>ピアノの したに かみが あったの。' },
+  { type: 'dialogue', speaker: 'sensei', text: 'ぬいぐるみが <ruby>10<rt>じゅう</rt></ruby>こ あって、<br>きょう <ruby>3<rt>さん</rt></ruby>こ みんなに かしたの。' },
+  { type: 'quiz', quizType: 'math', questioner: 'sensei',
+    hint: 'いま のこってる ぬいぐるみは？',
+    question: '10 - 3 = ?',
+    choices: ['6', '7', '8', '9'],
+    correct: 1,
+    reactCorrect: 'せいかい！<ruby>7<rt>なな</rt></ruby>こ のこってる！<br>「ぬいぐるみばこ」に なにか ありそう！',
+    reactWrong: 'もう いっかい かんがえて みよう！',
+  },
+
+  // Extra hiragana clue
+  { type: 'char', char: 'haruka' },
+  { type: 'dialogue', speaker: 'haruka', text: 'くるみちゃん、<br>はこの まえに メモが!' },
+  { type: 'quiz', quizType: 'hiragana', questioner: 'haruka',
+    hint: 'メモの もじ は？',
+    question: '「あける」は どれ？',
+    choices: ['あける', 'あそぶ', 'あまい', 'あるく'],
+    correct: 0,
+    reactCorrect: 'せいかい！「あける」って かいてある！<br>ぜんぶ そろったよ！',
+    reactWrong: 'もう いっかい みて みて！',
+  },
+
+  // Action
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'たからを あける まえに、<br>カギを 買いに いかなきゃ！<br>コイン あつめよう〜♪' },
+  { type: 'action' },
+
+  { type: 'bg', bg: 'classroom' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'ただいま〜！<br>カギ ゲット！' },
+
+  // Final deduction
+  { type: 'dialogue', speaker: 'narrator', text: '【ヒント まとめ】<br>・さくらの き がスタート<br>・はなびら＋はっぱで 7ほ<br>・おんがくしつの ピアノ<br>・ぬいぐるみが 7こ のこってる<br>・「あける」と かいてある<br><br>さあ、おたから は どこ？' },
+
+  { type: 'deduction',
+    title: 'おたから は どこ？',
+    suspects: [
+      { char: 'pochi', name: 'ポチのおうち' },
+      { char: 'kurumi', name: 'ぬいぐるみばこ' },
+      { char: 'yuuta', name: 'おすなばのなか' },
+    ],
+    correct: 1,
+    reactCorrect: 'せいかい！ぬいぐるみばこ だった！',
+    reactWrong: 'うーん、もう いっかい ちずを みて！',
+  },
+
+  { type: 'sparkle' },
+  { type: 'dialogue', speaker: 'narrator', text: '✨ ピカーッ！ ✨<br>ぬいぐるみばこ を あけると、<br>きれいな おかしの はこ！' },
+  { type: 'char', char: 'sensei' },
+  { type: 'dialogue', speaker: 'sensei', text: 'あら〜！ これは きょねん<br>そつえん した おにいちゃんたちが<br>みんなの ために かくしておいた<br>プレゼント だったのね！' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'すっご〜〜い！<br>みんなで わけて たべよう♪' },
+  { type: 'char', char: 'haruka' },
+  { type: 'dialogue', speaker: 'haruka', text: 'くるみちゃん ありがとう〜！' },
+  { type: 'char', char: 'yuuta' },
+  { type: 'dialogue', speaker: 'yuuta', text: 'すっげ〜！めいたんてい！' },
+  { type: 'char', char: 'miku' },
+  { type: 'dialogue', speaker: 'miku', text: 'くるみちゃん、だいすき〜♪' },
+
+  { type: 'result',
+    title: '🎉 だいはっけん！ 🎉',
+    text: 'くるみの だいかつやくで、<br>みんなで おたからを はっけん！<br>ふじみだいこどもえんに<br>しあわせが あふれた！<br><br>〜 おしまい 〜',
+  },
+];
+
+// ====================== CASES ======================
+const CASES = [
+  { title: 'きえた ケーキ じけん', icon: '🎂', script: CASE1 },
+  { title: 'うわばき さがし じけん', icon: '👟', script: CASE2 },
+  { title: 'おたから ちず の なぞ', icon: '🗺️', script: CASE3 },
+];
+
 // ====================== GAME STATE ======================
-const SAVE_KEY = 'kurumi-save-v1';
+const SAVE_KEY = 'kurumi-save-v2';
 let state = {
+  caseIdx: 0,
   scriptIdx: 0,
   bg: 'kindergarten',
   char: null,
   coins: 0,
   transformed: false,
 };
+function currentScript() {
+  return CASES[state.caseIdx]?.script || CASE1;
+}
 
 // When kurumi is transformed, all 'kurumi' char/speaker refs show the precure form
 function resolveChar(key) {
@@ -1032,8 +1261,7 @@ function load() {
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (s && typeof s.scriptIdx === 'number') {
-      state = Object.assign({ scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false }, s);
-      // Re-apply visual state on load
+      state = Object.assign({ caseIdx: 0, scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false }, s);
       if (state.bg) setBackground(state.bg);
       if (state.char) {
         const el = document.getElementById('char-portrait');
@@ -1192,10 +1420,13 @@ function nextStep() {
   // Pull from transient queue first
   if (transientQueue.length) {
     currentStep = { step: transientQueue.shift(), transient: true };
-  } else if (state.scriptIdx < CASE1.length) {
-    currentStep = { step: CASE1[state.scriptIdx], transient: false };
   } else {
-    currentStep = null;
+    const script = currentScript();
+    if (state.scriptIdx < script.length) {
+      currentStep = { step: script[state.scriptIdx], transient: false };
+    } else {
+      currentStep = null;
+    }
   }
   return currentStep;
 }
@@ -1683,11 +1914,35 @@ function showResult(step) {
   burstSparkles(window.innerWidth/2, window.innerHeight/3, 100, true);
   setTimeout(() => burstSparkles(window.innerWidth/2, window.innerHeight/3, 60, true), 400);
   setTimeout(() => burstSparkles(window.innerWidth/2, window.innerHeight/3, 60, true), 800);
+
+  // Show next-case button if another case exists
+  const hasNext = state.caseIdx + 1 < CASES.length;
+  const nextBtn = document.getElementById('result-next-btn');
+  if (hasNext) {
+    const nextCase = CASES[state.caseIdx + 1];
+    nextBtn.textContent = `${nextCase.icon} ${nextCase.title} へ`;
+    nextBtn.style.display = '';
+  } else {
+    nextBtn.style.display = 'none';
+  }
 }
+
+document.getElementById('result-next-btn').addEventListener('click', () => {
+  if (state.caseIdx + 1 >= CASES.length) return;
+  state.caseIdx++;
+  state.scriptIdx = 0;
+  state.bg = 'kindergarten';
+  state.char = null;
+  state.transformed = false;
+  transientQueue = [];
+  currentStep = null;
+  save();
+  runScript();
+});
 
 document.getElementById('result-btn').addEventListener('click', () => {
   localStorage.removeItem(SAVE_KEY);
-  state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
+  state = { caseIdx: 0, scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
   transientQueue = [];
   currentStep = null;
   stopBGM();
@@ -1790,7 +2045,7 @@ function updateContinueBtn() {
 updateContinueBtn();
 
 document.getElementById('btn-new-game').addEventListener('click', () => {
-  state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
+  state = { caseIdx: 0, scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
   transientQueue = [];
   currentStep = null;
   save();
