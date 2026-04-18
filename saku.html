@@ -143,6 +143,7 @@
     <button data-key="ArrowRight" data-hold>▶</button>
   </div>
   <div class="right">
+    <button data-key="KeyC" data-hold class="ult" style="background: linear-gradient(to bottom, #d048a0, #70185a); border-color: #ff80c0; min-width:56px; min-height:56px; font-size:13px;">必殺</button>
     <button data-key="ShiftLeft" data-hold>ダッシュ</button>
     <button data-key="Space" data-hold class="jump">ジャンプ</button>
   </div>
@@ -407,6 +408,67 @@
     invuln: 0, starTimer: 0, swordTimer: 0,
     dead: false, jumpHeld: false,
     hp: 8, maxHp: 8,
+    ultGauge: 0, maxUlt: 100,
+    unlockedUlts: [],  // 'punch', 'slash', 'peropero'
+    selectedUlt: 0,    // 現在選択している必殺技のインデックス
+    ultActive: null,   // 必殺技発動中 { type, timer, phase }
+  };
+
+  // ====== 必殺技定義 ======
+  const ULTIMATES = [
+    { id: 'punch', name: 'スーパーパンチ', cost: 50 },
+    { id: 'slash', name: 'ジャンプ斬り', cost: 75 },
+    { id: 'peropero', name: 'ぺろぺろありーな', cost: 100 },
+  ];
+
+  // ====== カットシーン ======
+  let cutscene = null;  // { id, lines, step, charAnim }
+  const CUTSCENES = {
+    'teach-punch': {
+      lines: [
+        { speaker: 'nazo', text: 'さく殿…よくぞボスを撃破した。' },
+        { speaker: 'nazo', text: '吾輩はしばしお主の戦いを見守っておった。' },
+        { speaker: 'nazo', text: 'その志に免じ、必殺の技を授けよう。' },
+        { speaker: 'nazo', text: '――「スーパーパンチ」！！' },
+        { speaker: 'saku', text: 'な、なぞの人…一体あなたは…？' },
+        { speaker: 'nazo', text: '…語るは、まだ早い。また会うぞ、さく。' },
+      ],
+      unlock: 'punch',
+    },
+    'teach-slash': {
+      lines: [
+        { speaker: 'nazo', text: '再び、会ったな、さく。' },
+        { speaker: 'nazo', text: 'お前の成長、目覚ましいものがある。' },
+        { speaker: 'nazo', text: '次の技は空より舞い降りる剣閃。' },
+        { speaker: 'nazo', text: '――「ジャンプ斬り」！！' },
+        { speaker: 'saku', text: 'なぞの人……あなたのことが知りたい。' },
+        { speaker: 'nazo', text: '…すべてを語る時は近い。今少し待て。' },
+      ],
+      unlock: 'slash',
+    },
+    'final-reveal': {
+      lines: [
+        { speaker: 'nazo', text: 'さく…ついに、ここまで来たな…' },
+        { speaker: 'nazo', text: '最後の秘奥義を授ける前に…' },
+        { speaker: 'nazo', text: '…真実を、告げねばならぬ。' },
+        { speaker: 'nazo', text: '（フードを脱ぐ）' },
+        { speaker: 'toto', text: 'さく…わしは、お前の父だ。' },
+        { speaker: 'saku', text: 'と、とーと…！？とーと！！生きていたのか…！' },
+        { speaker: 'toto', text: 'ずっと、陰からお前を見守ってきた…' },
+        { speaker: 'toto', text: 'ようやく顔を合わせられ――' },
+        { speaker: 'boss', text: 'ククク…感動の再会、か？' },
+        { speaker: 'boss', text: '残念だが――お前達には、終わりだ！' },
+        { speaker: 'toto', text: 'ぐあああっ！！' },
+        { speaker: 'saku', text: 'とーと！！！' },
+        { speaker: 'toto', text: 'さく…最後に…伝授する…' },
+        { speaker: 'toto', text: '秘奥義――「ぺろぺろありーな」…' },
+        { speaker: 'toto', text: 'これで…奴を…倒せ…' },
+        { speaker: 'toto', text: 'う…ぐ…さ…らば、だ…さく…' },
+        { speaker: 'saku', text: 'とーと！！！' },
+        { speaker: 'saku', text: '絶対に、許さない…！！' },
+      ],
+      unlock: 'peropero',
+    },
   };
 
   // ====== ゲーム状態 ======
@@ -457,15 +519,24 @@
             // チェックポイント（Y）: 地上から1段上に配置
             stageCheckpoint = { x: px + TILE/2, y: py, activated: false };
             break;
-          case '@':
+          case '@': {
+            const isFinal = STAGES[idx].label === '10-5';
             boss = {
-              x: px - 10, y: py - 40, w: 52, h: 72,
-              vx: 0, vy: 0, hp: 3, maxHp: 3, onGround: false,
+              x: px - (isFinal ? 15 : 10),
+              y: py - (isFinal ? 50 : 40),
+              w: isFinal ? 64 : 52,
+              h: isFinal ? 88 : 72,
+              vx: 0, vy: 0,
+              hp: isFinal ? 6 : 3,
+              maxHp: isFinal ? 6 : 3,
+              onGround: false,
               attackCD: 160, hurtTimer: 0,
               defeated: false, defeatTimer: 0, anim: 0,
               engaged: false, triggerX: px - 240,
+              isFinal: isFinal,
             };
             break;
+          }
         }
       }
     }
@@ -496,12 +567,24 @@
   const keys = {};
   document.addEventListener('keydown', e => {
     if (['Space','ArrowUp','ArrowLeft','ArrowRight','ArrowDown'].includes(e.code)) e.preventDefault();
+    if (state === 'cutscene' && cutscene && !e.repeat) {
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyZ' || e.code === 'KeyC') {
+        advanceCutscene();
+        e.preventDefault();
+      }
+      return;
+    }
     keys[e.code] = true;
     if (state === 'title') {
       if (e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'KeyW' || e.code === 'KeyA') { moveMenu(-1); e.preventDefault(); return; }
       if (e.code === 'ArrowDown' || e.code === 'ArrowRight' || e.code === 'KeyS' || e.code === 'KeyD') { moveMenu(1); e.preventDefault(); return; }
       if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyZ') { confirmTitleMenu(); e.preventDefault(); return; }
       return;
+    }
+    // 必殺技（playing中のみ）
+    if (state === 'playing' && !e.repeat) {
+      if (e.code === 'KeyC' || e.code === 'KeyX') { tryActivateUlt(); e.preventDefault(); return; }
+      if (e.code === 'KeyV') { switchUlt(); e.preventDefault(); return; }
     }
   });
   document.addEventListener('keyup', e => { keys[e.code] = false; });
@@ -560,10 +643,14 @@
       e.preventDefault();
       const t = e.touches[0];
       titleTapAt(t.clientX, t.clientY);
+    } else if (state === 'cutscene') {
+      e.preventDefault();
+      advanceCutscene();
     }
   }, { passive: false });
   canvas.addEventListener('click', e => {
     if (state === 'title') titleTapAt(e.clientX, e.clientY);
+    else if (state === 'cutscene') advanceCutscene();
   });
 
   // ====== 音声 ======
@@ -746,9 +833,12 @@
   // ====== メインループ更新 ======
   function update() {
     if (state === 'title') { titleFrame++; return; }
+    if (state === 'cutscene') {
+      updateCutscene();
+      return;
+    }
     if (state === 'cleared') {
       stateTimer++;
-      // キノピオ救出シーン
       return;
     }
     if (state === 'stageTransition') {
@@ -790,6 +880,29 @@
       return;
     }
     if (state !== 'playing') return;
+
+    // 必殺技タイマー処理
+    if (saku.ultActive) {
+      saku.ultActive.timer--;
+      if (saku.ultActive.type === 'peropero') {
+        // ぺろぺろありーな：時間停止中に連撃発動
+        const phase = saku.ultActive.timer;
+        if (phase === 150 || phase === 125 || phase === 100 || phase === 75 || phase === 50) {
+          applyPeroperoHit();
+          saku.ultActive.hitCount++;
+        }
+        if (saku.ultActive.timer <= 0) saku.ultActive = null;
+        return;  // 他の処理スキップ
+      }
+      if (saku.ultActive.type === 'slash') {
+        // ジャンプ斬り中は空中継続＋下降で地面に戻ったら終わり
+        if (saku.ultActive.phase === 'jump' && saku.ultActive.timer < 45) {
+          applySlashDamage();
+          saku.ultActive.phase = 'down';
+        }
+      }
+      if (saku.ultActive.timer <= 0) saku.ultActive = null;
+    }
 
     // タイマー
     timeTicker++;
@@ -912,17 +1025,20 @@
             en.alive = false; en.squashTimer = 60; en.flying = true;
             en.vy = -10; en.vx = (saku.facing > 0 ? 4 : -4);
             score += 300; scoreEl.textContent = score;
+            addUlt(15);
             sfxStomp();
           } else if (saku.swordTimer > 0) {
             en.alive = false; en.squashTimer = 40; en.flying = true;
             en.vy = -6; en.vx = (saku.facing > 0 ? 2 : -2);
             score += 250; scoreEl.textContent = score;
+            addUlt(12);
             sfxStomp();
           } else if (saku.invuln === 0) {
             if (saku.vy > 1 && py2 - ey1 < 16) {
               en.alive = false; en.squashTimer = 20;
               saku.vy = -7;
               score += 100; scoreEl.textContent = score;
+              addUlt(10);
               sfxStomp();
             } else damagePlayer();
           }
@@ -961,8 +1077,16 @@
 
     // ゴール（キノピオ）接触判定
     if (flagPos && saku.x + saku.w > flagPos.x - 6 && saku.x < flagPos.x + 16) {
-      // ボスがまだいる場合はゴール無効
-      if (!boss || boss.defeated || !boss.engaged) reachGoal();
+      if (!boss || boss.defeated || !boss.engaged) {
+        // 保留中のカットシーンがあれば先に発動
+        if (pendingCutscene) {
+          const cs = pendingCutscene;
+          pendingCutscene = null;
+          startCutscene(cs);
+        } else {
+          reachGoal();
+        }
+      }
     }
   }
 
@@ -1030,13 +1154,82 @@
     boss.hp -= amount;
     boss.hurtTimer = 40;
     sfxStomp();
+    addUlt(8);
     if (boss.hp <= 0) {
       boss.defeated = true;
       boss.defeatTimer = 0;
       boss.vy = -14; boss.vx = -3;
       score += 2000; scoreEl.textContent = score;
       sfxBossDefeat();
+      // 特定のボス撃破でカットシーン
+      scheduleBossCutscene();
     }
+  }
+  let pendingCutscene = null;
+  function scheduleBossCutscene() {
+    const label = STAGES[currentStage].label;
+    let cs = null;
+    if (label === '3-5' && !saku.unlockedUlts.includes('punch')) cs = 'teach-punch';
+    else if (label === '6-5' && !saku.unlockedUlts.includes('slash')) cs = 'teach-slash';
+    else if (label === '9-5' && !saku.unlockedUlts.includes('peropero')) cs = 'final-reveal';
+    if (cs) {
+      pendingCutscene = cs;
+      setTimeout(() => {
+        if (pendingCutscene === cs) {
+          startCutscene(cs);
+          pendingCutscene = null;
+        }
+      }, 1500);
+    }
+  }
+  function startCutscene(id) {
+    const data = CUTSCENES[id];
+    if (!data) return;
+    cutscene = {
+      id,
+      lines: data.lines,
+      step: 0,
+      charAnim: 0,
+      charText: '',
+      charIdx: 0,
+      waitInput: false,
+    };
+    state = 'cutscene';
+    stopBGM();
+    beep(440, 0.1, 'triangle', 0.12);
+  }
+  function advanceCutscene() {
+    if (!cutscene) return;
+    const current = cutscene.lines[cutscene.step];
+    if (!current) return;
+    if (cutscene.charIdx < current.text.length) {
+      cutscene.charIdx = current.text.length;
+      cutscene.charText = current.text;
+      cutscene.waitInput = true;
+      return;
+    }
+    cutscene.step++;
+    cutscene.charIdx = 0;
+    cutscene.charText = '';
+    cutscene.waitInput = false;
+    if (cutscene.step >= cutscene.lines.length) {
+      endCutscene();
+    } else {
+      beep(600, 0.03, 'square', 0.08);
+    }
+  }
+  function endCutscene() {
+    const data = CUTSCENES[cutscene.id];
+    if (data.unlock) {
+      if (!saku.unlockedUlts.includes(data.unlock)) {
+        saku.unlockedUlts.push(data.unlock);
+        saku.selectedUlt = saku.unlockedUlts.length - 1;
+      }
+      saku.ultGauge = saku.maxUlt;
+    }
+    cutscene = null;
+    state = 'playing';
+    startBGM();
   }
   function damagePlayer() {
     if (saku.invuln > 0 || saku.dead) return;
@@ -1077,6 +1270,7 @@
       score: score,
       coinCount: coinCount,
       lives: lives,
+      unlockedUlts: saku.unlockedUlts,
       timestamp: Date.now(),
     };
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(saveData)); } catch(e) {}
@@ -1092,6 +1286,123 @@
     stateTimer = 0;
     startBGM();
   }
+  // ====== 必殺技システム ======
+  function addUlt(amount) {
+    if (saku.unlockedUlts.length === 0) return;  // 未習得
+    saku.ultGauge = Math.min(saku.maxUlt, saku.ultGauge + amount);
+  }
+  function switchUlt() {
+    if (saku.unlockedUlts.length <= 1) return;
+    saku.selectedUlt = (saku.selectedUlt + 1) % saku.unlockedUlts.length;
+    beep(600, 0.05, 'square', 0.1);
+  }
+  function tryActivateUlt() {
+    if (saku.ultActive) return;
+    if (saku.unlockedUlts.length === 0) return;
+    const ultId = saku.unlockedUlts[saku.selectedUlt];
+    const ult = ULTIMATES.find(u => u.id === ultId);
+    if (!ult) return;
+    if (saku.ultGauge < ult.cost) {
+      beep(200, 0.1, 'sawtooth', 0.1);
+      return;
+    }
+    saku.ultGauge -= ult.cost;
+    if (ultId === 'punch') activatePunch();
+    else if (ultId === 'slash') activateSlash();
+    else if (ultId === 'peropero') activatePeropero();
+  }
+  function activatePunch() {
+    saku.ultActive = { type: 'punch', timer: 40, phase: 'swing' };
+    // 前方に強力な突き：3タイル分の敵＆ボスにダメージ
+    beep(160, 0.1, 'sawtooth', 0.2);
+    setTimeout(()=>beep(80, 0.2, 'sawtooth', 0.22), 80);
+    applyPunchDamage();
+  }
+  function applyPunchDamage() {
+    const range = 120;  // 前方
+    const x1 = saku.facing > 0 ? saku.x : saku.x - range;
+    const x2 = saku.facing > 0 ? saku.x + saku.w + range : saku.x + saku.w;
+    for (const en of enemies) {
+      if (!en.alive) continue;
+      const ex = en.x + 14;
+      if (ex >= x1 && ex <= x2 && Math.abs(en.y - saku.y) < 60) {
+        en.alive = false; en.squashTimer = 60; en.flying = true;
+        en.vy = -10; en.vx = (saku.facing > 0 ? 8 : -8);
+        addUlt(5);
+        score += 400; scoreEl.textContent = score;
+      }
+    }
+    if (boss && !boss.defeated && !boss.hurtTimer) {
+      const bx = boss.x + boss.w/2;
+      if (bx >= x1 && bx <= x2) damageBoss(2);
+    }
+  }
+  function activateSlash() {
+    saku.ultActive = { type: 'slash', timer: 60, phase: 'jump' };
+    saku.vy = -18;
+    beep(520, 0.08, 'triangle', 0.15);
+    setTimeout(()=>beep(1040, 0.12, 'triangle', 0.15), 100);
+    setTimeout(()=>{
+      applySlashDamage();
+      beep(320, 0.2, 'sawtooth', 0.2);
+    }, 400);
+  }
+  function applySlashDamage() {
+    const range = 80;
+    for (const en of enemies) {
+      if (!en.alive) continue;
+      const dx = (en.x + 14) - (saku.x + saku.w/2);
+      const dy = (en.y + 14) - (saku.y + saku.h/2);
+      if (Math.hypot(dx, dy) < range) {
+        en.alive = false; en.squashTimer = 50; en.flying = true;
+        en.vy = -12; en.vx = (dx > 0 ? 6 : -6);
+        addUlt(5);
+        score += 350; scoreEl.textContent = score;
+      }
+    }
+    if (boss && !boss.defeated && !boss.hurtTimer) {
+      const dx = (boss.x + boss.w/2) - (saku.x + saku.w/2);
+      const dy = (boss.y + boss.h/2) - (saku.y + saku.h/2);
+      if (Math.hypot(dx, dy) < range * 1.5) damageBoss(2);
+    }
+  }
+  function activatePeropero() {
+    saku.ultActive = { type: 'peropero', timer: 180, phase: 'init', hitCount: 0 };
+    // カットイン中はゲーム停止（update内で扱う）
+    // 豪快な下降→上昇音
+    try {
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(800, now);
+      o.frequency.exponentialRampToValueAtTime(80, now + 1.0);
+      g.gain.setValueAtTime(0.2, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(now); o.stop(now + 1.1);
+    } catch(e) {}
+  }
+  function applyPeroperoHit() {
+    // 画面上の全敵にダメージ
+    for (const en of enemies) {
+      if (!en.alive) continue;
+      const ex = en.x - cameraX;
+      if (ex > -40 && ex < W + 40) {
+        en.alive = false; en.squashTimer = 90; en.flying = true;
+        en.vy = -12 - Math.random() * 6;
+        en.vx = (Math.random() - 0.5) * 14;
+        score += 500; scoreEl.textContent = score;
+      }
+    }
+    if (boss && !boss.defeated) damageBoss(3);
+    // 連撃音
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => beep(800 + Math.random()*600, 0.05, 'square', 0.1), i * 50);
+    }
+  }
+
   // ====== セーブ / ロード ======
   const SAVE_KEY = 'saku_adv_save_v1';
   function saveGame() {
@@ -1101,6 +1412,7 @@
         score: score,
         coinCount: coinCount,
         lives: lives,
+        unlockedUlts: saku.unlockedUlts,
         timestamp: Date.now(),
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -1126,14 +1438,17 @@
         score = save.score || 0;
         coinCount = save.coinCount || 0;
         lives = Math.max(3, save.lives || 3);
+        saku.unlockedUlts = save.unlockedUlts || [];
+        saku.selectedUlt = Math.min(saku.unlockedUlts.length - 1, Math.max(0, saku.selectedUlt));
+        saku.ultGauge = 0;
       } else {
-        // セーブが無ければ最初から
         currentStage = 0; score = 0; coinCount = 0; lives = 3;
+        saku.unlockedUlts = []; saku.selectedUlt = 0; saku.ultGauge = 0;
       }
     } else {
-      // はじめから（セーブを消す）
       clearSave();
       currentStage = 0; score = 0; coinCount = 0; lives = 3;
+      saku.unlockedUlts = []; saku.selectedUlt = 0; saku.ultGauge = 0;
     }
     scoreEl.textContent = score;
     coinEl.textContent = coinCount;
@@ -1704,6 +2019,7 @@
     const x = boss.x - cameraX;
     const y = boss.y;
     if (x < -100 || x > W + 100) return;
+    const isFinalBoss = STAGES[currentStage]?.label === '10-5';
     ctx.save();
     if (boss.defeated) {
       const a = Math.max(0, 1 - boss.defeatTimer / 180);
@@ -1715,6 +2031,31 @@
     if (boss.hurtTimer > 0 && Math.floor(boss.hurtTimer/4)%2 === 0) ctx.globalAlpha = 0.5;
 
     const W_ = boss.w, H_ = boss.h, cx = x + W_/2;
+
+    // ラスボス（10-5）は禍々しい赤黒オーラ
+    if (isFinalBoss) {
+      const auraR = 60 + Math.sin(boss.anim * 0.5) * 8;
+      const auraG = ctx.createRadialGradient(cx, y + H_/2, 5, cx, y + H_/2, auraR);
+      auraG.addColorStop(0, 'rgba(220, 20, 30, 0.55)');
+      auraG.addColorStop(0.4, 'rgba(120, 0, 20, 0.4)');
+      auraG.addColorStop(1, 'rgba(40, 0, 10, 0)');
+      ctx.fillStyle = auraG;
+      ctx.beginPath();
+      ctx.arc(cx, y + H_/2, auraR, 0, Math.PI * 2);
+      ctx.fill();
+      // 禍々しい電撃（複数の赤い線）
+      ctx.strokeStyle = 'rgba(255,50,80,0.7)';
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < 5; i++) {
+        const a = (i/5) * Math.PI * 2 + boss.anim * 0.2;
+        const r1 = auraR * 0.7, r2 = auraR * 1.1;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * r1, y + H_/2 + Math.sin(a) * r1);
+        ctx.lineTo(cx + Math.cos(a + 0.1) * r2, y + H_/2 + Math.sin(a + 0.1) * r2);
+        ctx.stroke();
+      }
+    }
+
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath(); ctx.ellipse(cx, y + H_ - 2, W_*0.45, 4, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#1a1a1a';
@@ -1726,10 +2067,14 @@
     ctx.fillStyle = '#1a1a24';
     ctx.fillRect(x + 6, y + H_*0.55, W_ - 12, H_*0.33);
     const body = ctx.createLinearGradient(cx, y + H_*0.2, cx, y + H_*0.6);
-    body.addColorStop(0, '#1a2a4a'); body.addColorStop(1, '#0a1630');
+    if (isFinalBoss) {
+      body.addColorStop(0, '#5a0a1a'); body.addColorStop(1, '#1a0005');
+    } else {
+      body.addColorStop(0, '#1a2a4a'); body.addColorStop(1, '#0a1630');
+    }
     ctx.fillStyle = body;
     ctx.fillRect(x + 3, y + H_*0.25, W_ - 6, H_*0.38);
-    ctx.fillStyle = '#0a1630';
+    ctx.fillStyle = isFinalBoss ? '#1a0005' : '#0a1630';
     ctx.beginPath();
     ctx.moveTo(x + 12, y + H_*0.25); ctx.lineTo(cx - 4, y + H_*0.4); ctx.lineTo(cx - 10, y + H_*0.25); ctx.closePath();
     ctx.moveTo(x + W_ - 12, y + H_*0.25); ctx.lineTo(cx + 4, y + H_*0.4); ctx.lineTo(cx + 10, y + H_*0.25); ctx.closePath();
@@ -1737,12 +2082,12 @@
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.moveTo(cx - 8, y + H_*0.25); ctx.lineTo(cx, y + H_*0.45); ctx.lineTo(cx + 8, y + H_*0.25); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#c8a030';
+    ctx.fillStyle = isFinalBoss ? '#8a0a28' : '#c8a030';
     ctx.beginPath();
     ctx.moveTo(cx - 4, y + H_*0.25); ctx.lineTo(cx + 4, y + H_*0.25); ctx.lineTo(cx + 5, y + H_*0.55); ctx.lineTo(cx - 5, y + H_*0.55); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#8a6010';
+    ctx.fillStyle = isFinalBoss ? '#3a0010' : '#8a6010';
     ctx.fillRect(cx - 4, y + H_*0.25, 8, 3);
-    ctx.fillStyle = '#1a2a4a';
+    ctx.fillStyle = isFinalBoss ? '#5a0a1a' : '#1a2a4a';
     ctx.fillRect(x, y + H_*0.3, 6, H_*0.3);
     ctx.fillRect(x + W_ - 6, y + H_*0.3, 6, H_*0.3);
     ctx.fillStyle = '#f2c8a2';
@@ -1803,11 +2148,12 @@
     hpG.addColorStop(0, '#ff6a6a'); hpG.addColorStop(1, '#c82020');
     ctx.fillStyle = hpG;
     ctx.fillRect(barX, barY, hpW, 10);
+    const bossName = boss.isFinal ? '闇の帝王' : 'メガネ部長';
     ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
-    ctx.strokeText('メガネ部長', W/2, barY + 5);
-    ctx.fillText('メガネ部長', W/2, barY + 5);
+    ctx.strokeText(bossName, W/2, barY + 5);
+    ctx.fillText(bossName, W/2, barY + 5);
   }
 
   // ====== キノピオ（ゴール） ======
@@ -2346,8 +2692,548 @@
     drawBoss();
     drawKinopio();
     drawSaku(saku.x, saku.y);
+    drawUltEffect();
     drawBossHUD();
     drawHPGauge();
+    drawUltGauge();
+    if (saku.ultActive && saku.ultActive.type === 'peropero') drawPeroperoCutin();
+  }
+
+  // 必殺技ゲージ（HPバーの下）
+  function drawUltGauge() {
+    if (state === 'title') return;
+    const x0 = 10, y0 = 24;
+    const labelW = 22;
+    const barW = 10 * 8 + 9 * 2;  // 既存HPバーと同じ幅感
+    ctx.save();
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+    ctx.strokeText('UL', x0, y0);
+    ctx.fillStyle = '#ffcc88';
+    ctx.fillText('UL', x0, y0);
+    ctx.restore();
+    const bx = x0 + labelW, by = y0 + 2;
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(bx - 2, by - 2, barW + 4, 8);
+    // ゲージ内容
+    const pct = saku.ultGauge / saku.maxUlt;
+    const fillW = pct * barW;
+    const g = ctx.createLinearGradient(bx, by, bx + barW, by);
+    g.addColorStop(0, '#ff60d0');
+    g.addColorStop(0.5, '#e018b0');
+    g.addColorStop(1, '#ff80e0');
+    ctx.fillStyle = g;
+    ctx.fillRect(bx, by, fillW, 4);
+    // 満タン時に光るエッジ
+    if (pct >= 1) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx - 0.5, by - 0.5, barW + 1, 5);
+      // 点滅
+      if (Math.floor(titleFrame / 10) % 2 === 0) {
+        ctx.save();
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+        ctx.strokeText('READY!', bx + barW + 4, by + 2);
+        ctx.fillStyle = '#ffff80';
+        ctx.fillText('READY!', bx + barW + 4, by + 2);
+        ctx.restore();
+      }
+    }
+    // 選択中の必殺技名
+    if (saku.unlockedUlts.length > 0) {
+      const ult = ULTIMATES.find(u => u.id === saku.unlockedUlts[saku.selectedUlt]);
+      if (ult) {
+        ctx.save();
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.lineWidth = 2.5; ctx.strokeStyle = '#000';
+        ctx.strokeText(ult.name, bx, by + 7);
+        ctx.fillStyle = '#ffccff';
+        ctx.fillText(ult.name, bx, by + 7);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 必殺技エフェクト（プレイヤー周辺）
+  function drawUltEffect() {
+    if (!saku.ultActive) return;
+    const type = saku.ultActive.type;
+    const timer = saku.ultActive.timer;
+    const sx = saku.x - cameraX + saku.w/2;
+    const sy = saku.y + saku.h/2;
+    if (type === 'punch') {
+      // スーパーパンチ：前方にエネルギー拳
+      const ph = 40 - timer;
+      const reach = Math.min(1, ph / 20) * 110;
+      const dir = saku.facing;
+      const gx = sx + dir * reach;
+      ctx.save();
+      // 軌跡
+      const g = ctx.createLinearGradient(sx, sy, gx, sy);
+      g.addColorStop(0, 'rgba(255,150,80,0)');
+      g.addColorStop(0.5, 'rgba(255,200,100,0.8)');
+      g.addColorStop(1, 'rgba(255,255,220,1)');
+      ctx.fillStyle = g;
+      ctx.fillRect(Math.min(sx, gx), sy - 14, Math.abs(gx - sx), 28);
+      // 拳
+      const fg = ctx.createRadialGradient(gx, sy, 2, gx, sy, 24);
+      fg.addColorStop(0, '#ffffff');
+      fg.addColorStop(0.4, '#ffc040');
+      fg.addColorStop(1, 'rgba(200,60,0,0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.arc(gx, sy, 22, 0, Math.PI * 2);
+      ctx.fill();
+      // スピード線
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(sx - dir * 20, sy + (i-2)*6);
+        ctx.lineTo(sx - dir * 60, sy + (i-2)*8);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else if (type === 'slash') {
+      // ジャンプ斬り：上昇→下降時に十字型斬撃
+      if (saku.ultActive.phase === 'jump') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(180,220,255,0.8)';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo(sx - 30 + Math.random()*60, sy - 10 + (60-timer)*2);
+          ctx.lineTo(sx - 30 + Math.random()*60, sy + 30 + (60-timer)*2);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else {
+        // 着地斬撃：放射状の光
+        ctx.save();
+        ctx.translate(sx, sy);
+        for (let i = 0; i < 8; i++) {
+          const a = (i/8) * Math.PI * 2 + timer * 0.1;
+          ctx.rotate(a);
+          const g = ctx.createLinearGradient(0, 0, 80, 0);
+          g.addColorStop(0, 'rgba(255,255,255,0.9)');
+          g.addColorStop(1, 'rgba(200,220,255,0)');
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(80, 0);
+          ctx.stroke();
+          ctx.rotate(-a);
+        }
+        ctx.restore();
+      }
+    }
+  }
+
+  // ぺろぺろありーなカットイン（画面全体）
+  function drawPeroperoCutin() {
+    const fx = saku.ultActive;
+    const t = (180 - fx.timer) / 180;  // 0→1
+    // 背景白フラッシュ
+    const alpha = t < 0.2 ? 1 : (1 - (t - 0.2) * 1.2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, alpha)})`;
+    ctx.fillRect(0, 0, W, H);
+    // 桜吹雪
+    for (let i = 0; i < 30; i++) {
+      const seed = i * 37;
+      const sx = ((seed + fx.timer * 2) % W);
+      const sy = ((seed * 3 + fx.timer * 3 + i * 40) % H);
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate((fx.timer * 0.1 + i) % (Math.PI * 2));
+      const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, 6);
+      grad.addColorStop(0, '#fff');
+      grad.addColorStop(0.5, '#ffc0d8');
+      grad.addColorStop(1, '#ff7faa');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 3.5, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    // 連撃フラッシュ（複数斜線）
+    const flashing = (fx.timer < 170 && fx.timer > 50);
+    if (flashing) {
+      for (let i = 0; i < 5; i++) {
+        const bx = Math.random() * W;
+        const by = Math.random() * H;
+        const len = 120 + Math.random() * 120;
+        const ang = Math.random() * Math.PI * 2;
+        ctx.save();
+        ctx.translate(bx, by);
+        ctx.rotate(ang);
+        const g = ctx.createLinearGradient(0, 0, len, 0);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(0.5, 'rgba(255,255,255,1)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, -2, len, 4);
+        ctx.restore();
+      }
+    }
+    // タイトル「ぺろぺろありーな」
+    if (fx.timer < 170 && fx.timer > 30) {
+      ctx.save();
+      ctx.translate(W/2, H/2);
+      const scale = 1 + 0.08 * Math.sin(fx.timer * 0.2);
+      const shake = (Math.random() - 0.5) * 6;
+      ctx.translate(shake, shake);
+      ctx.scale(scale, scale);
+      ctx.rotate(-0.05);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 42px "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif';
+      // 多重縁取り
+      ctx.lineWidth = 14; ctx.strokeStyle = '#000';
+      ctx.strokeText('ぺろぺろありーな', 0, 0);
+      ctx.lineWidth = 9; ctx.strokeStyle = '#7a1a5a';
+      ctx.strokeText('ぺろぺろありーな', 0, 0);
+      ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff';
+      ctx.strokeText('ぺろぺろありーな', 0, 0);
+      const tg = ctx.createLinearGradient(0, -30, 0, 30);
+      tg.addColorStop(0, '#ffffff');
+      tg.addColorStop(0.5, '#ffccf0');
+      tg.addColorStop(1, '#ff4488');
+      ctx.fillStyle = tg;
+      ctx.fillText('ぺろぺろありーな', 0, 0);
+      ctx.restore();
+    }
+    // 「秘奥義」表記
+    if (fx.timer > 140) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 24px serif';
+      const op = Math.min(1, (180 - fx.timer) / 20);
+      ctx.globalAlpha = op;
+      ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+      ctx.strokeText('秘奥義', W/2, H * 0.25);
+      ctx.fillStyle = '#ffeb4a';
+      ctx.fillText('秘奥義', W/2, H * 0.25);
+      ctx.restore();
+    }
+  }
+
+  // カットシーン
+  function updateCutscene() {
+    if (!cutscene) return;
+    cutscene.charAnim++;
+    const current = cutscene.lines[cutscene.step];
+    if (!current) { endCutscene(); return; }
+    if (cutscene.charIdx < current.text.length && cutscene.charAnim % 2 === 0) {
+      cutscene.charIdx++;
+      cutscene.charText = current.text.substring(0, cutscene.charIdx);
+      if (cutscene.charIdx % 3 === 0) beep(900 + Math.random()*200, 0.02, 'square', 0.05);
+      if (cutscene.charIdx >= current.text.length) cutscene.waitInput = true;
+    }
+  }
+
+  function drawCutscene() {
+    if (!cutscene) return;
+    // 背景：暗いオーバーレイ
+    ctx.fillStyle = '#050610';
+    ctx.fillRect(0, 0, W, H);
+    const current = cutscene.lines[cutscene.step];
+    if (!current) return;
+
+    // 背景の輝きグロー
+    const glowX = W/2, glowY = H*0.4;
+    const g = ctx.createRadialGradient(glowX, glowY, 10, glowX, glowY, 260);
+    let gColor = 'rgba(70,100,180,0.35)';
+    if (cutscene.id === 'final-reveal' && cutscene.step >= 9) gColor = 'rgba(180,30,60,0.4)';
+    else if (cutscene.id === 'final-reveal' && cutscene.step >= 3) gColor = 'rgba(200,170,80,0.4)';
+    g.addColorStop(0, gColor);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // キャラクター描画（中央）
+    const charY = H * 0.42;
+    drawCutsceneChar(current.speaker, W/2, charY, cutscene.id, cutscene.step);
+
+    // 名前と台詞ウィンドウ
+    const boxH = 100;
+    const boxY = H - boxH - 10;
+    ctx.save();
+    // ウィンドウ
+    ctx.fillStyle = 'rgba(10, 20, 40, 0.92)';
+    ctx.fillRect(20, boxY, W - 40, boxH);
+    ctx.strokeStyle = '#80a0d0';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(20, boxY, W - 40, boxH);
+    ctx.strokeStyle = 'rgba(200,230,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(24, boxY + 4, W - 48, boxH - 8);
+    // 名前タブ
+    const speakerNames = { nazo: 'なぞの男', toto: 'とーと', saku: 'さく', boss: '謎の声' };
+    let name = speakerNames[current.speaker] || '？？？';
+    // final-revealのreveal前後で「なぞの男」→「とーと」に
+    ctx.fillStyle = 'rgba(30, 50, 100, 0.95)';
+    ctx.fillRect(30, boxY - 18, 140, 22);
+    ctx.strokeStyle = '#80a0d0';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(30, boxY - 18, 140, 22);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(name, 40, boxY - 7);
+
+    // 台詞テキスト（途中まで表示）
+    ctx.fillStyle = '#e8f0ff';
+    ctx.font = '16px serif';
+    const textToShow = cutscene.charText || '';
+    const lines = wrapText(textToShow, W - 80, '16px serif');
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], 40, boxY + 22 + i * 22);
+    }
+
+    // 続きマーカー
+    if (cutscene.waitInput && Math.floor(cutscene.charAnim / 20) % 2 === 0) {
+      ctx.fillStyle = '#ffc040';
+      ctx.font = '18px serif';
+      ctx.fillText('▼', W - 60, boxY + boxH - 18);
+    }
+    ctx.restore();
+
+    // 操作ヒント
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '10px serif';
+    ctx.fillStyle = 'rgba(200,220,255,0.6)';
+    ctx.fillText('Space/Z/タップ : つぎへ', W/2, H - 4);
+    ctx.restore();
+  }
+  function wrapText(text, maxWidth, font) {
+    ctx.save();
+    ctx.font = font;
+    const chars = text.split('');
+    const lines = [];
+    let line = '';
+    for (const ch of chars) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxWidth) {
+        lines.push(line);
+        line = ch;
+      } else line = test;
+    }
+    if (line) lines.push(line);
+    ctx.restore();
+    return lines;
+  }
+
+  // カットシーンのキャラ描画
+  function drawCutsceneChar(speaker, x, y, id, step) {
+    ctx.save();
+    const revealed = (id === 'final-reveal' && step >= 4);
+    if (speaker === 'nazo') {
+      if (id === 'final-reveal' && step >= 3) {
+        // フード脱ぐシーン
+        drawToto(x, y, step - 3);
+      } else {
+        drawNazo(x, y);
+      }
+    } else if (speaker === 'toto') {
+      const phase = step - 3;  // reveal開始を基準
+      if (id === 'final-reveal' && step >= 9) {
+        // ボスに攻撃されてダメージ
+        drawToto(x, y, phase, true);
+      } else {
+        drawToto(x, y, phase);
+      }
+    } else if (speaker === 'saku') {
+      ctx.save();
+      ctx.translate(x - 12, y - 45);
+      ctx.scale(3, 3);
+      const savedSaku = {...saku};
+      saku.x = cameraX; saku.y = 0; saku.vx = 0; saku.onGround = true;
+      saku.facing = 1; saku.anim = cutscene.charAnim * 0.05;
+      saku.invuln = 0; saku.starTimer = 0; saku.swordTimer = 0;
+      drawSaku(cameraX, 0);
+      Object.assign(saku, savedSaku);
+      ctx.restore();
+    } else if (speaker === 'boss') {
+      drawFinalBossSilhouette(x, y);
+    }
+    ctx.restore();
+  }
+  // なぞの男（フード姿）
+  function drawNazo(cx, cy) {
+    ctx.save();
+    // フード＆マント（暗い紫）
+    ctx.fillStyle = '#1a0a2a';
+    ctx.beginPath();
+    ctx.moveTo(cx - 30, cy + 70);
+    ctx.lineTo(cx + 30, cy + 70);
+    ctx.lineTo(cx + 25, cy - 10);
+    ctx.quadraticCurveTo(cx, cy - 45, cx - 25, cy - 10);
+    ctx.closePath();
+    ctx.fill();
+    // フードの影
+    ctx.fillStyle = '#05000f';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 5, 18, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 覗く目
+    ctx.fillStyle = '#ffdd40';
+    ctx.beginPath();
+    ctx.arc(cx - 6, cy - 6, 1.3, 0, Math.PI * 2);
+    ctx.arc(cx + 6, cy - 6, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+    // フチの縫い（金）
+    ctx.strokeStyle = '#b88010';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 30, cy + 70);
+    ctx.lineTo(cx + 30, cy + 70);
+    ctx.stroke();
+    ctx.restore();
+  }
+  // とーと（お父さん）
+  function drawToto(cx, cy, phase, injured) {
+    ctx.save();
+    // 体（白シャツ＋黒ズボン・大人）
+    ctx.fillStyle = '#2a2a38';
+    ctx.fillRect(cx - 16, cy + 32, 32, 35);
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(cx - 18, cy + 5, 36, 30);
+    ctx.fillStyle = '#3a6fb0';
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy + 5);
+    ctx.lineTo(cx, cy + 12);
+    ctx.lineTo(cx + 5, cy + 5);
+    ctx.closePath();
+    ctx.fill();
+    // 腕
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(cx - 22, cy + 8, 5, 22);
+    ctx.fillRect(cx + 17, cy + 8, 5, 22);
+    ctx.fillStyle = '#f2c8a2';
+    ctx.beginPath();
+    ctx.arc(cx - 19.5, cy + 32, 3.5, 0, Math.PI * 2);
+    ctx.arc(cx + 19.5, cy + 32, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    // 頭
+    ctx.fillStyle = '#f2c8a2';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 8, 14, 0, Math.PI * 2);
+    ctx.fill();
+    // 髪（30-40代、さくと同じ黒髪だが少しグレー）
+    ctx.fillStyle = '#2a1f18';
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, cy - 10);
+    ctx.quadraticCurveTo(cx - 15, cy - 22, cx - 5, cy - 22);
+    ctx.quadraticCurveTo(cx + 6, cy - 23, cx + 14, cy - 19);
+    ctx.quadraticCurveTo(cx + 16, cy - 10, cx + 14, cy - 10);
+    ctx.lineTo(cx + 10, cy - 12);
+    ctx.quadraticCurveTo(cx + 4, cy - 9, cx, cy - 12);
+    ctx.quadraticCurveTo(cx - 6, cy - 9, cx - 14, cy - 10);
+    ctx.closePath();
+    ctx.fill();
+    // 白髪すじ（年齢感）
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + 6, cy - 18);
+    ctx.lineTo(cx + 10, cy - 15);
+    ctx.stroke();
+    // 眼鏡（銀縁）
+    ctx.strokeStyle = '#c0c0c0';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx - 5, cy - 6, 3, 0, Math.PI * 2);
+    ctx.arc(cx + 5, cy - 6, 3, 0, Math.PI * 2);
+    ctx.moveTo(cx - 2, cy - 6);
+    ctx.lineTo(cx + 2, cy - 6);
+    ctx.stroke();
+    // 目
+    ctx.fillStyle = '#000';
+    if (injured) {
+      // ×目（死にかけ）
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - 7, cy - 8); ctx.lineTo(cx - 3, cy - 4);
+      ctx.moveTo(cx - 7, cy - 4); ctx.lineTo(cx - 3, cy - 8);
+      ctx.moveTo(cx + 3, cy - 8); ctx.lineTo(cx + 7, cy - 4);
+      ctx.moveTo(cx + 3, cy - 4); ctx.lineTo(cx + 7, cy - 8);
+      ctx.stroke();
+    } else {
+      ctx.fillRect(cx - 5.5, cy - 6.5, 1.2, 1);
+      ctx.fillRect(cx + 4.3, cy - 6.5, 1.2, 1);
+    }
+    // 口
+    ctx.strokeStyle = '#5a3a20';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (injured) {
+      ctx.moveTo(cx - 3, cy + 1);
+      ctx.lineTo(cx + 3, cy + 1);  // 一文字（息絶える）
+    } else {
+      ctx.arc(cx, cy, 2.5, 0.15 * Math.PI, 0.85 * Math.PI);
+    }
+    ctx.stroke();
+    // ダメージの血（誇張せず控えめ）
+    if (injured) {
+      ctx.fillStyle = '#8a1010';
+      ctx.beginPath();
+      ctx.moveTo(cx + 3, cy + 2);
+      ctx.lineTo(cx + 6, cy + 6);
+      ctx.lineTo(cx + 2, cy + 5);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  // ラスボスシルエット
+  function drawFinalBossSilhouette(cx, cy) {
+    ctx.save();
+    // ダークオーラ
+    const g = ctx.createRadialGradient(cx, cy, 5, cx, cy, 90);
+    g.addColorStop(0, 'rgba(180, 20, 40, 0.5)');
+    g.addColorStop(0.5, 'rgba(60, 0, 20, 0.35)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 90, 0, Math.PI * 2);
+    ctx.fill();
+    // 黒いシルエット（人型）
+    ctx.fillStyle = '#050008';
+    ctx.beginPath();
+    ctx.moveTo(cx - 25, cy + 70);
+    ctx.lineTo(cx + 25, cy + 70);
+    ctx.lineTo(cx + 30, cy);
+    ctx.lineTo(cx + 18, cy - 20);
+    ctx.lineTo(cx + 22, cy - 40);
+    ctx.lineTo(cx, cy - 50);
+    ctx.lineTo(cx - 22, cy - 40);
+    ctx.lineTo(cx - 18, cy - 20);
+    ctx.lineTo(cx - 30, cy);
+    ctx.closePath();
+    ctx.fill();
+    // 赤い目
+    const blink = Math.floor(cutscene ? cutscene.charAnim / 30 : 0) % 2;
+    ctx.fillStyle = blink ? '#ff2020' : '#ff6060';
+    ctx.beginPath();
+    ctx.arc(cx - 7, cy - 32, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 7, cy - 32, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(cx - 7, cy - 32, 0.5, 0, Math.PI * 2);
+    ctx.arc(cx + 7, cy - 32, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   function drawCheckpoint() {
@@ -2463,6 +3349,9 @@
       if (state === 'title') {
         titleFrame++;
         drawTitle();
+      } else if (state === 'cutscene') {
+        update();
+        drawCutscene();
       } else if (state === 'stageTransition') {
         render();
         drawStageTransition();
