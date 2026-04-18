@@ -92,6 +92,26 @@
     background: #4a8; color: #fff; border: 2px solid #2c6; border-radius: 8px;
   }
   #hint { font-size: 12px; opacity: 0.8; text-align: center; margin: 4px; }
+  #portalBtn {
+    position: fixed;
+    top: 6px;
+    left: 6px;
+    z-index: 80;
+    background: rgba(30, 40, 70, 0.85);
+    color: #fff;
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid #80a0d0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #portalBtn:active { transform: translateY(1px); opacity: 0.85; }
+  @media (max-width: 720px) {
+    #portalBtn { font-size: 10px; padding: 4px 8px; }
+  }
 
   @media (max-width: 720px) {
     html, body { height: 100%; height: 100dvh; overflow: hidden; }
@@ -124,6 +144,8 @@
 </style>
 </head>
 <body>
+
+<a id="portalBtn" href="https://reuji436.github.io/saku/">🏠 ポータル</a>
 
 <div id="hud">
   <div class="item">🌸<span id="stage">1-1</span></div>
@@ -990,6 +1012,7 @@
         score += 100;
         coinEl.textContent = coinCount;
         scoreEl.textContent = score;
+        addUlt(5);  // 寿司を食べて必殺ゲージ +5
         sfxCoin();
         if (coinCount % 20 === 0) { lives++; livesEl.textContent = lives; }
       }
@@ -1036,20 +1059,20 @@
             en.alive = false; en.squashTimer = 60; en.flying = true;
             en.vy = -10; en.vx = (saku.facing > 0 ? 4 : -4);
             score += 300; scoreEl.textContent = score;
-            addUlt(15);
+            addUlt(30);
             sfxStomp();
           } else if (saku.swordTimer > 0) {
             en.alive = false; en.squashTimer = 40; en.flying = true;
             en.vy = -6; en.vx = (saku.facing > 0 ? 2 : -2);
             score += 250; scoreEl.textContent = score;
-            addUlt(12);
+            addUlt(25);
             sfxStomp();
           } else if (saku.invuln === 0) {
             if (saku.vy > 1 && py2 - ey1 < 16) {
               en.alive = false; en.squashTimer = 20;
               saku.vy = -7;
               score += 100; scoreEl.textContent = score;
-              addUlt(10);
+              addUlt(20);
               sfxStomp();
             } else damagePlayer();
           }
@@ -1165,7 +1188,7 @@
     boss.hp -= amount;
     boss.hurtTimer = 40;
     sfxStomp();
-    addUlt(8);
+    addUlt(20);
     if (boss.hp <= 0) {
       boss.defeated = true;
       boss.defeatTimer = 0;
@@ -1457,9 +1480,34 @@
     startBGM();
   }
   // ====== 必殺技システム ======
+  const ultPopups = [];  // +X の表示用
   function addUlt(amount) {
-    if (saku.unlockedUlts.length === 0) return;  // 未習得
+    const before = saku.ultGauge;
     saku.ultGauge = Math.min(saku.maxUlt, saku.ultGauge + amount);
+    const diff = saku.ultGauge - before;
+    if (diff > 0) {
+      // +X のフローティング演出
+      ultPopups.push({
+        x: saku.x + saku.w/2,
+        y: saku.y,
+        text: '+' + Math.round(diff),
+        life: 40,
+        maxLife: 40,
+      });
+      // 満タンになった瞬間のエフェクト
+      if (before < saku.maxUlt && saku.ultGauge >= saku.maxUlt && saku.unlockedUlts.length > 0) {
+        beep(1200, 0.1, 'square', 0.12);
+        setTimeout(()=>beep(1600, 0.15, 'square', 0.12), 80);
+        ultPopups.push({
+          x: saku.x + saku.w/2,
+          y: saku.y - 10,
+          text: 'READY!',
+          life: 80,
+          maxLife: 80,
+          color: '#ffee40',
+        });
+      }
+    }
   }
   function switchUlt() {
     if (saku.unlockedUlts.length <= 1) return;
@@ -2866,7 +2914,31 @@
     drawBossHUD();
     drawHPGauge();
     drawUltGauge();
+    drawUltPopups();
     if (saku.ultActive && saku.ultActive.type === 'peropero') drawPeroperoCutin();
+  }
+
+  function drawUltPopups() {
+    if (!ultPopups.length) return;
+    for (let i = ultPopups.length - 1; i >= 0; i--) {
+      const p = ultPopups[i];
+      p.life--;
+      if (p.life <= 0) { ultPopups.splice(i, 1); continue; }
+      const t = 1 - p.life / p.maxLife;
+      const x = p.x - cameraX;
+      const y = p.y - t * 30;
+      const alpha = p.life > 20 ? 1 : p.life / 20;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.lineWidth = 4; ctx.strokeStyle = '#000';
+      ctx.strokeText(p.text, x, y);
+      ctx.fillStyle = p.color || '#ff70d8';
+      ctx.fillText(p.text, x, y);
+      ctx.restore();
+    }
   }
 
   // 必殺技ゲージ（HPバーの下）

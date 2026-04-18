@@ -46,6 +46,26 @@
     border: 1px solid #666; font-size: 12px;
   }
   #score { font-size: 22px; font-weight: bold; color: #ffd; }
+  #portalBtn {
+    position: fixed;
+    top: 6px;
+    left: 6px;
+    z-index: 80;
+    background: rgba(30, 40, 70, 0.85);
+    color: #fff;
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid #80a0d0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #portalBtn:active { transform: translateY(1px); opacity: 0.85; }
+  @media (max-width: 720px) {
+    #portalBtn { font-size: 10px; padding: 4px 8px; }
+  }
   #over {
     position: fixed; inset: 0; display: none; align-items: center;
     justify-content: center; background: rgba(0,0,0,0.75); font-size: 36px;
@@ -207,6 +227,7 @@
 </style>
 </head>
 <body>
+<a id="portalBtn" href="https://reuji436.github.io/saku/">🏠 ポータル</a>
 <h1>ぷよぷよとーと。〜ぺろぺろありーなしたかった〜</h1>
 <div id="wrap">
   <canvas id="field" width="320" height="640"></canvas>
