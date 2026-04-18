@@ -1317,6 +1317,8 @@
   }
   function damageBoss(amount) {
     if (!boss || boss.defeated) return;
+    // 接敵前（engaged=false）はダメージ無効。画面外のラスボスを遠くから倒せないように
+    if (!boss.engaged) return;
     boss.hp -= amount;
     boss.hurtTimer = 40;
     sfxStomp();
