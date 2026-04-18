@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>♡めいたんてい くるみ♡</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; font-family: "Hiragino Maru Gothic ProN", "Comic Sans MS", sans-serif; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: linear-gradient(180deg, #ffd6ec 0%, #c9e4ff 100%);
+    touch-action: manipulation;
+    color: #333;
+  }
+
+  rt { font-size: 0.55em; color: #e91e63; }
+
+  /* Scene container */
+  .scene {
+    position: fixed; inset: 0;
+    display: none;
+    flex-direction: column;
+  }
+  .scene.active { display: flex; }
+
+  /* ===== TITLE ===== */
+  #title-scene {
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+  }
+  #title-scene h1 {
+    font-size: 42px;
+    color: #d63384;
+    text-shadow: 3px 3px 0 #fff, 5px 5px 0 #ffb0d0;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+    animation: titleBounce 2s ease-in-out infinite;
+  }
+  @keyframes titleBounce {
+    0%, 100% { transform: scale(1) rotate(-1deg); }
+    50% { transform: scale(1.05) rotate(1deg); }
+  }
+  .kurumi-title-img {
+    width: 220px;
+    height: 220px;
+    margin-bottom: 20px;
+  }
+  .big-btn {
+    font-size: 22px;
+    font-weight: bold;
+    padding: 16px 40px;
+    margin: 10px;
+    border: 4px solid #fff;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #ff9ecd, #ff6fa8);
+    color: #fff;
+    text-shadow: 1px 1px 0 #c44d85;
+    box-shadow: 0 5px 0 #c44d85, 0 8px 15px rgba(0,0,0,0.2);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #c44d85, 0 4px 8px rgba(0,0,0,0.2); }
+  .big-btn.disabled { background: #aaa; box-shadow: 0 5px 0 #777; cursor: not-allowed; }
+
+  /* ===== STORY ===== */
+  #story-scene { background: #ffe5f1; }
+  #bg-layer {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: opacity 0.3s;
+  }
+  .bg-kindergarten {
+    background: linear-gradient(180deg, #b3e0ff 0%, #d4edff 40%, #a8d8a8 41%, #c8e6c8 100%);
+  }
+  .bg-kindergarten::before {
+    content: '🏫';
+    position: absolute;
+    font-size: 160px;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .bg-classroom {
+    background: linear-gradient(180deg, #fff4e0 0%, #ffe5c4 100%);
+  }
+  .bg-classroom::before {
+    content: '🧸 🎨 📚';
+    position: absolute;
+    font-size: 50px;
+    top: 20%;
+    left: 20%;
+    letter-spacing: 30px;
+  }
+  .bg-garden {
+    background: linear-gradient(180deg, #87ceeb 0%, #c9e8c9 40%, #90c090 100%);
+  }
+  .bg-garden::before {
+    content: '🌳 🌷 🌻';
+    position: absolute;
+    font-size: 60px;
+    bottom: 20%;
+    left: 10%;
+    letter-spacing: 40px;
+  }
+  .bg-shop {
+    background: linear-gradient(180deg, #ffd4d4 0%, #ffe5e5 100%);
+  }
+  .bg-shop::before {
+    content: '🏪';
+    position: absolute;
+    font-size: 180px;
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .bg-transform {
+    background: radial-gradient(circle, #ffb0d0, #ff6fa8, #c44d85);
+    animation: transformBg 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes transformBg {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.3); }
+  }
+  .bg-night {
+    background: linear-gradient(180deg, #1a1a4a 0%, #4a3a6a 100%);
+  }
+  .bg-night::before {
+    content: '⭐ 🌙 ⭐';
+    position: absolute;
+    font-size: 40px;
+    top: 20%;
+    left: 20%;
+    letter-spacing: 50px;
+  }
+
+  #character-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 180px;
+  }
+  .char-portrait {
+    width: min(60vw, 260px);
+    height: min(60vw, 260px);
+    transition: transform 0.3s;
+  }
+  .char-portrait.speaking { animation: speak 0.5s ease-in-out infinite alternate; }
+  @keyframes speak {
+    from { transform: scale(1); }
+    to { transform: scale(1.03) translateY(-4px); }
+  }
+
+  #dialogue-box {
+    position: absolute;
+    bottom: 20px;
+    left: 10px; right: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 4px solid #ff9ecd;
+    border-radius: 20px;
+    padding: 14px 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    cursor: pointer;
+    min-height: 130px;
+  }
+  .speaker-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #d63384;
+    margin-bottom: 6px;
+  }
+  .dialogue-text {
+    font-size: 20px;
+    line-height: 1.5;
+    color: #333;
+    min-height: 60px;
+  }
+  .next-hint {
+    text-align: right;
+    font-size: 14px;
+    color: #888;
+    animation: blink 1s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  .voice-btn {
+    display: inline-block;
+    background: #ffd700;
+    border: 2px solid #fff;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 14px;
+    color: #d63384;
+    margin-left: 8px;
+    cursor: pointer;
+  }
+
+  /* ===== QUIZ ===== */
+  #quiz-scene {
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(180deg, #fff4e0 0%, #ffd6ec 100%);
+  }
+  .quiz-card {
+    background: #fff;
+    border: 5px solid #ffd700;
+    border-radius: 24px;
+    padding: 24px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+  .quiz-character {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .quiz-character svg { width: 100px; height: 100px; }
+  .quiz-hint {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 14px;
+  }
+  .quiz-question {
+    font-size: 32px;
+    color: #d63384;
+    font-weight: bold;
+    margin-bottom: 20px;
+    padding: 18px;
+    background: linear-gradient(135deg, #fff0f8, #fff);
+    border-radius: 16px;
+  }
+  .quiz-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .choice-btn {
+    font-size: 28px;
+    padding: 20px;
+    border: 4px solid #ffb0d0;
+    background: #fff;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+    font-family: inherit;
+    transition: transform 0.1s;
+  }
+  .choice-btn:active { transform: scale(0.95); }
+  .choice-btn.correct { background: #a8f5a8; border-color: #00c800; animation: correctPulse 0.5s ease-out; }
+  .choice-btn.wrong { background: #ffb0b0; border-color: #ff3030; animation: shake 0.3s; }
+  @keyframes correctPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  /* ===== ACTION ===== */
+  #action-scene {
+    background: linear-gradient(180deg, #87ceeb 0%, #c9e8c9 60%, #8b6f4e 60%, #5a4a3a 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  #action-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+  }
+  #action-ui {
+    position: absolute;
+    top: 10px; left: 10px; right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+    z-index: 5;
+  }
+  #action-tap-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #000;
+    background: rgba(0,0,0,0.5);
+    padding: 12px 24px;
+    border-radius: 16px;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* ===== DEDUCTION ===== */
+  #deduction-scene {
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(180deg, #2c1a4a 0%, #5a3a8a 100%);
+  }
+  .deduction-card {
+    background: #fff;
+    border: 4px solid #ffd700;
+    border-radius: 24px;
+    padding: 24px;
+    max-width: 500px;
+    width: 100%;
+  }
+  .deduction-title {
+    font-size: 26px;
+    color: #d63384;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .suspect-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  .suspect {
+    background: #fff;
+    border: 3px solid #ffb0d0;
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .suspect svg { width: 60px; height: 60px; }
+  .suspect-name { font-size: 14px; margin-top: 4px; font-weight: bold; }
+
+  /* ===== RESULT ===== */
+  #result-scene {
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: radial-gradient(circle, #ffd700 0%, #ffb0d0 50%, #ff6fa8 100%);
+    text-align: center;
+  }
+  #result-scene h1 {
+    font-size: 48px;
+    color: #d63384;
+    text-shadow: 3px 3px 0 #fff;
+    animation: titleBounce 1s ease-in-out infinite;
+    margin-bottom: 20px;
+  }
+  .result-text {
+    font-size: 22px;
+    color: #333;
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 16px;
+    margin: 20px;
+    max-width: 500px;
+  }
+
+  /* Sparkle overlay */
+  #sparkle-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+
+  /* Coin HUD */
+  .hud-coin { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; }
+</style>
+</head>
+<body>
+
+  <!-- ===== TITLE ===== -->
+  <div class="scene active" id="title-scene">
+    <div class="kurumi-title-img" id="title-portrait"></div>
+    <h1>♡めいたんてい くるみ♡</h1>
+    <button class="big-btn" id="btn-new-game">はじめから</button>
+    <button class="big-btn" id="btn-continue">つづきから</button>
+  </div>
+
+  <!-- ===== STORY ===== -->
+  <div class="scene" id="story-scene">
+    <div id="bg-layer"></div>
+    <div id="character-layer">
+      <div id="char-portrait" class="char-portrait"></div>
+    </div>
+    <div id="dialogue-box">
+      <div class="speaker-name" id="speaker-name"></div>
+      <div class="dialogue-text" id="dialogue-text"></div>
+      <div class="next-hint">▼ タップで つぎへ</div>
+    </div>
+  </div>
+
+  <!-- ===== QUIZ ===== -->
+  <div class="scene" id="quiz-scene">
+    <div class="quiz-card">
+      <div class="quiz-character" id="quiz-character"></div>
+      <div class="quiz-hint" id="quiz-hint"></div>
+      <div class="quiz-question" id="quiz-question"></div>
+      <div class="quiz-choices" id="quiz-choices"></div>
+    </div>
+  </div>
+
+  <!-- ===== ACTION ===== -->
+  <div class="scene" id="action-scene">
+    <canvas id="action-canvas"></canvas>
+    <div id="action-ui">
+      <div class="hud-coin">🪙 <span id="coin-count">0</span>/<span id="coin-goal">10</span></div>
+      <div>⏱ <span id="action-time">30</span></div>
+    </div>
+    <div id="action-tap-hint">タップ で ジャンプ！<br>コイン を あつめよう</div>
+  </div>
+
+  <!-- ===== DEDUCTION ===== -->
+  <div class="scene" id="deduction-scene">
+    <div class="deduction-card">
+      <div class="deduction-title" id="deduction-title"></div>
+      <div class="suspect-grid" id="suspect-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===== RESULT ===== -->
+  <div class="scene" id="result-scene">
+    <h1 id="result-title">じけん かいけつ！</h1>
+    <div class="result-text" id="result-text"></div>
+    <button class="big-btn" id="result-btn">タイトル へ もどる</button>
+  </div>
+
+  <canvas id="sparkle-canvas"></canvas>
+
+<script>
+// ====================== CHARACTER SVG ======================
+const CHARS = {
+  kurumi: {
+    name: 'くるみ',
+    color: '#d63384',
+    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="100" cy="165" rx="60" ry="28" fill="#ff9ecd"/>
+      <path d="M50 80 Q40 40 100 30 Q160 40 150 80 L150 130 Q130 125 100 125 Q70 125 50 130 Z" fill="#d4a574"/>
+      <circle cx="100" cy="100" r="48" fill="#ffe4c4"/>
+      <ellipse cx="100" cy="150" rx="35" ry="25" fill="#ffb0d0"/>
+      <path d="M50 85 Q45 120 55 140" stroke="#d4a574" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <path d="M150 85 Q155 120 145 140" stroke="#d4a574" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <circle cx="82" cy="100" r="7" fill="#333"/>
+      <circle cx="118" cy="100" r="7" fill="#333"/>
+      <circle cx="80" cy="97" r="2" fill="#fff"/>
+      <circle cx="116" cy="97" r="2" fill="#fff"/>
+      <ellipse cx="75" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
+      <ellipse cx="125" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
+      <path d="M92 118 Q100 125 108 118" stroke="#d63384" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>`
+  },
+  kurumiPre: {
+    name: 'プリキュア くるみ',
+    color: '#d63384',
+    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="shine" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stop-color="#fff" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="100" cy="100" r="95" fill="url(#shine)"/>
+      <path d="M100 170 L70 190 L130 190 Z" fill="#ff6fa8"/>
+      <ellipse cx="100" cy="170" rx="55" ry="30" fill="#ff9ecd"/>
+      <ellipse cx="100" cy="165" rx="62" ry="14" fill="#ffd700"/>
+      <path d="M45 80 Q35 30 100 20 Q165 30 155 80 L160 140 Q150 145 140 135 L140 90 Q100 80 60 90 L60 135 Q50 145 40 140 Z" fill="#e8b07a"/>
+      <circle cx="100" cy="100" r="48" fill="#ffe4c4"/>
+      <path d="M60 70 Q80 40 100 50 Q120 40 140 70 L135 85 Q100 75 65 85 Z" fill="#e8b07a"/>
+      <g transform="translate(65, 55)">
+        <path d="M0 10 Q-15 -5 -5 -15 Q10 -15 10 0 Q25 -15 30 5 Q25 15 10 15 Q-5 20 0 10 Z" fill="#ff6fa8"/>
+        <circle cx="10" cy="0" r="6" fill="#ffd700"/>
+      </g>
+      <circle cx="82" cy="100" r="9" fill="#d63384"/>
+      <circle cx="118" cy="100" r="9" fill="#d63384"/>
+      <circle cx="79" cy="96" r="3" fill="#fff"/>
+      <circle cx="115" cy="96" r="3" fill="#fff"/>
+      <circle cx="84" cy="104" r="1.5" fill="#fff"/>
+      <circle cx="120" cy="104" r="1.5" fill="#fff"/>
+      <ellipse cx="75" cy="115" rx="6" ry="4" fill="#ff8080"/>
+      <ellipse cx="125" cy="115" rx="6" ry="4" fill="#ff8080"/>
+      <path d="M90 118 Q100 128 110 118" stroke="#d63384" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <text x="165" y="45" font-size="20" fill="#ffd700">✨</text>
+      <text x="30" y="140" font-size="18" fill="#ffd700">✨</text>
+      <text x="170" y="160" font-size="16" fill="#ffd700">✨</text>
+    </svg>`
+  },
+  haruka: {
+    name: 'はるかちゃん',
+    color: '#ff6b6b',
+    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="100" cy="170" rx="55" ry="25" fill="#ffeb3b"/>
+      <path d="M55 80 Q50 45 100 35 Q150 45 145 80 L140 110 Q100 100 60 110 Z" fill="#ff4040"/>
+      <circle cx="100" cy="100" r="47" fill="#ffe4c4"/>
+      <circle cx="82" cy="100" r="7" fill="#333"/>
+      <circle cx="118" cy="100" r="7" fill="#333"/>
+      <circle cx="80" cy="97" r="2" fill="#fff"/>
+      <circle cx="116" cy="97" r="2" fill="#fff"/>
+      <ellipse cx="75" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
+      <ellipse cx="125" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
+      <path d="M92 120 Q100 130 108 120" stroke="#d63384" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>`
+  },
+  miku: {
+    name: 'みくちゃん',
+    color: '#a855f7',
+    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="100" cy="170" rx="55" ry="25" fill="#c9a0ff"/>
+      <path d="M45 100 Q40 50 100 40 Q160 50 155 100 L160 150 L135 145 L135 90 Q100 85 65 90 L65 145 L40 150 Z" fill="#2a2a2a"/>
+      <circle cx="100" cy="100" r="47" fill="#ffe4c4"/>
+      <circle cx="82" cy="100" r="7" fill="#333"/>
+      <circle cx="118" cy="100" r="7" fill="#333"/>
+      <circle cx="80" cy="97" r="2" fill="#fff"/>
+      <circle cx="116" cy="97" r="2" fill="#fff"/>
+      <ellipse cx="75" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
+      <ellipse cx="125" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
+      <path d="M92 118 Q100 123 108 118" stroke="#d63384" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="60" cy="70" r="10" fill="#ff69b4"/>
+      <circle cx="140" cy="70" r="10" fill="#ff69b4"/>
+    </svg>`
+  },
+  yuuta: {
+    name: 'ゆうたくん',
+    color: '#4dc3ff',
+    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="100" cy="170" rx="55" ry="25" fill="#4dc3ff"/>
+      <path d="M55 75 Q50 40 100 30 Q150 40 145 75 Q140 85 135 88 Q100 78 65 88 Q60 85 55 75 Z" fill="#6b4423"/>
+      <circle cx="100" cy="100" r="47" fill="#ffe4c4"/>
+      <circle cx="82" cy="100" r="7" fill="#333"/>
+      <circle cx="118" cy="100" r="7" fill="#333"/>
+      <circle cx="80" cy="97" r="2" fill="#fff"/>
+      <circle cx="116" cy="97" r="2" fill="#fff"/>
+      <ellipse cx="75" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
+      <ellipse cx="125" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
+      <path d="M90 120 Q100 132 110 120" stroke="#d63384" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>`
+  },
+  sensei: {
+    name: 'ともこせんせい',
+    color: '#8b4513',
+    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="100" cy="175" rx="60" ry="22" fill="#87ceeb"/>
+      <path d="M55 85 Q50 40 100 30 Q150 40 145 85 L145 125 Q100 115 55 125 Z" fill="#8b4513"/>
+      <circle cx="100" cy="105" r="48" fill="#ffe4c4"/>
+      <circle cx="82" cy="105" r="6" fill="#333"/>
+      <circle cx="118" cy="105" r="6" fill="#333"/>
+      <ellipse cx="75" cy="120" rx="5" ry="3" fill="#ffb0a0"/>
+      <ellipse cx="125" cy="120" rx="5" ry="3" fill="#ffb0a0"/>
+      <path d="M88 128 Q100 138 112 128" stroke="#d63384" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    </svg>`
+  },
+  pochi: {
+    name: 'ポチ',
+    color: '#8b4513',
+    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="100" cy="180" rx="70" ry="15" fill="rgba(0,0,0,0.2)"/>
+      <ellipse cx="100" cy="120" rx="75" ry="55" fill="#d4a574"/>
+      <ellipse cx="100" cy="120" rx="55" ry="42" fill="#e8c09a"/>
+      <path d="M45 90 Q35 110 50 130 Q55 115 60 105 Z" fill="#d4a574"/>
+      <path d="M155 90 Q165 110 150 130 Q145 115 140 105 Z" fill="#d4a574"/>
+      <ellipse cx="80" cy="115" rx="10" ry="14" fill="#fff"/>
+      <ellipse cx="120" cy="115" rx="10" ry="14" fill="#fff"/>
+      <circle cx="80" cy="118" r="5" fill="#333"/>
+      <circle cx="120" cy="118" r="5" fill="#333"/>
+      <ellipse cx="100" cy="135" rx="15" ry="12" fill="#6b4423"/>
+      <circle cx="100" cy="132" r="4" fill="#333"/>
+      <path d="M85 145 Q100 160 115 145" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M80 155 Q90 170 100 160 Q110 170 120 155" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M70 100 Q65 115 75 125" stroke="#8b4513" stroke-width="3" fill="none"/>
+      <path d="M130 100 Q135 115 125 125" stroke="#8b4513" stroke-width="3" fill="none"/>
+    </svg>`
+  },
+  narrator: { name: 'おはなし', color: '#666', svg: '' },
+};
+
+// ====================== STORY SCRIPT ======================
+// types: dialogue (speaker, bg, text), transform, quiz, action, deduction, result, scene(bg)
+const CASE1 = [
+  { type: 'bg', bg: 'kindergarten' },
+  { type: 'dialogue', speaker: 'narrator', text: '<ruby>今日<rt>きょう</rt></ruby>も ふじみだいこどもえんは にぎやか。<br>くるみちゃんは みんなと あそんでるよ。' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'きょうの おやつ、ケーキだって！<br>くるみ、たのしみ〜♪' },
+  { type: 'char', char: 'haruka' },
+  { type: 'dialogue', speaker: 'haruka', text: 'た、たいへ〜ん！！<br>みんなの ケーキが なくなってる！！' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'えっ！ケーキが なくなった！？' },
+  { type: 'char', char: 'sensei' },
+  { type: 'dialogue', speaker: 'sensei', text: 'ほんとうだわ... キッチンに あった はずの ケーキが ぜんぶ きえてる...' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'こんなときは... くるみに まかせて！<br><ruby>変身<rt>へんしん</rt></ruby>〜〜！！' },
+
+  { type: 'bg', bg: 'transform' },
+  { type: 'char', char: 'kurumiPre' },
+  { type: 'sparkle' },
+  { type: 'dialogue', speaker: 'kurumi', text: '✨ ピンクの ドレスに へんしん！ ✨<br>めいたんてい くるみ、まいりまーす！' },
+
+  { type: 'bg', bg: 'classroom' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'まずは、おともだちに おはなしを<br>きいてみよう！' },
+
+  // Haruka interview - hiragana quiz
+  { type: 'char', char: 'haruka' },
+  { type: 'dialogue', speaker: 'haruka', text: 'くるみちゃん！わたし なんにも しらないよ〜<br>でも... あっ！そういえば、<br>ケーキの そばに ちいさな かみきれが おちてた！' },
+  { type: 'dialogue', speaker: 'haruka', text: 'その かみに、<br>なにか かいてあったの。<br>よんで みて くれる？' },
+  { type: 'quiz', quizType: 'hiragana', questioner: 'haruka',
+    hint: 'かみに かいてあった もじは どれ？',
+    question: '「いぬ」は どれ？',
+    choices: ['いぬ', 'ねこ', 'うさ', 'さる'],
+    correct: 0,
+    reactCorrect: 'すごい！くるみちゃん よめた〜！<br>「いぬ」って かいてあったんだね...',
+    reactWrong: 'うーん、ちがうかも。もう いっかい！',
+  },
+
+  // Miku interview - math quiz
+  { type: 'char', char: 'miku' },
+  { type: 'dialogue', speaker: 'miku', text: 'くるみちゃん！<br>ケーキは みんなで たべる はずだったの。' },
+  { type: 'dialogue', speaker: 'miku', text: 'キッチンには ケーキが <br><ruby>8<rt>はち</rt></ruby>こ あったの。<br>でも いま みたら <ruby>2<rt>に</rt></ruby>こに なってた...' },
+  { type: 'quiz', quizType: 'math', questioner: 'miku',
+    hint: 'なんこ なくなったのかな？',
+    question: '8 - 2 = ?',
+    choices: ['4', '5', '6', '7'],
+    correct: 2,
+    reactCorrect: 'すごい！<ruby>6<rt>ろく</rt></ruby>こも なくなったんだ〜！',
+    reactWrong: 'うーん、もう いっかい かぞえて みて〜',
+  },
+
+  // Yuuta interview - katakana quiz
+  { type: 'char', char: 'yuuta' },
+  { type: 'dialogue', speaker: 'yuuta', text: 'くるみちゃん！ぼく、にわで<br>へんな あしあと みたよ！' },
+  { type: 'dialogue', speaker: 'yuuta', text: 'その あしあとの そばに、<br>おちてた ふくろに なんか かいてあったんだ。' },
+  { type: 'quiz', quizType: 'katakana', questioner: 'yuuta',
+    hint: 'ふくろに かいてあった カタカナは どれ？',
+    question: '「ケーキ」は どれ？',
+    choices: ['ケーキ', 'タイヤ', 'パンダ', 'クッキー'],
+    correct: 0,
+    reactCorrect: 'せいかい！やっぱり ケーキの ふくろだったんだね！',
+    reactWrong: 'おしい！もう いっかい みて みて！',
+  },
+
+  // Sensei - shopping mission intro
+  { type: 'char', char: 'sensei' },
+  { type: 'dialogue', speaker: 'sensei', text: 'くるみちゃん、たすけて！<br>おやつの かわりに、<br>プリンを つくろうと おもうの。' },
+  { type: 'dialogue', speaker: 'sensei', text: 'でも おさとうが たりないの。<br>コインを あつめて、<br>おみせで かってきてくれる？' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'まかせて〜！<br>くるみが コイン あつめて くるよ！' },
+
+  { type: 'action' },
+
+  { type: 'bg', bg: 'shop' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'コインいっぱい ゲット！<br>おさとう かって こどもえんに もどろう！' },
+
+  { type: 'bg', bg: 'kindergarten' },
+  { type: 'char', char: 'sensei' },
+  { type: 'dialogue', speaker: 'sensei', text: 'ありがとう くるみちゃん！' },
+
+  // Deduction
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'さてと... ヒントは あつまった！<br>はんにんを あてるよ！' },
+  { type: 'dialogue', speaker: 'narrator', text: '【ヒント】<br>・「いぬ」と かいてあった かみ<br>・ケーキが 6こ なくなった<br>・にわに へんな あしあと' },
+
+  { type: 'deduction',
+    title: 'はんにんは だれ？',
+    suspects: [
+      { char: 'haruka', name: 'はるかちゃん' },
+      { char: 'pochi', name: 'ポチ' },
+      { char: 'yuuta', name: 'ゆうたくん' },
+    ],
+    correct: 1,
+    reactCorrect: 'そうだ！ポチだ！',
+    reactWrong: 'ちがう みたい... もう いっかい かんがえよう！',
+  },
+
+  { type: 'bg', bg: 'garden' },
+  { type: 'char', char: 'pochi' },
+  { type: 'dialogue', speaker: 'narrator', text: 'にわに でて みると......' },
+  { type: 'dialogue', speaker: 'pochi', text: 'ワン！ワン！<br>（くちの まわりに クリームを つけて いる...）' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'やっぱり ポチだったんだね〜！<br>おなか すいてた のかな？' },
+  { type: 'char', char: 'pochi' },
+  { type: 'dialogue', speaker: 'pochi', text: 'クゥ〜ン...（ごめんね の かお）' },
+  { type: 'char', char: 'kurumi' },
+  { type: 'dialogue', speaker: 'kurumi', text: 'もう ケーキ かってに たべちゃ だめだよ〜？<br>こんど ポチの ごはん ちゃんと あげる ね！' },
+
+  { type: 'result',
+    title: '🎉 じけん かいけつ！ 🎉',
+    text: 'くるみの <ruby>大活躍<rt>だいかつやく</rt></ruby>で、<br>ケーキじけんは かいけつ！<br>みんなで プリンを たのしく たべたとさ。<br><br>めでたし めでたし♪',
+  },
+];
+
+// ====================== GAME STATE ======================
+const SAVE_KEY = 'kurumi-save-v1';
+let state = {
+  scriptIdx: 0,
+  bg: 'kindergarten',
+  char: null,
+  coins: 0,
+};
+
+function save() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+}
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (s && typeof s.scriptIdx === 'number') { state = s; return true; }
+  } catch (e) {}
+  return false;
+}
+function hasSave() {
+  return !!localStorage.getItem(SAVE_KEY);
+}
+
+// ====================== VOICE ======================
+let voiceEnabled = true;
+function speak(text) {
+  if (!voiceEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  // strip HTML, convert ruby to just reading
+  const clean = text
+    .replace(/<ruby>([^<]+)<rt>([^<]+)<\/rt><\/ruby>/g, '$2')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!clean) return;
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = 'ja-JP';
+  u.rate = 1.0;
+  u.pitch = 1.2;
+  speechSynthesis.speak(u);
+}
+
+// ====================== SCENE MANAGEMENT ======================
+function showScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function setBackground(bg) {
+  state.bg = bg;
+  const layer = document.getElementById('bg-layer');
+  layer.className = 'bg-' + bg;
+}
+
+function setCharacter(charKey) {
+  state.char = charKey;
+  const el = document.getElementById('char-portrait');
+  el.innerHTML = CHARS[charKey]?.svg || '';
+}
+
+// ====================== DIALOGUE ENGINE ======================
+function runScript() {
+  if (state.scriptIdx >= CASE1.length) {
+    showScene('title-scene');
+    return;
+  }
+  const step = CASE1[state.scriptIdx];
+
+  switch (step.type) {
+    case 'bg':
+      setBackground(step.bg);
+      state.scriptIdx++;
+      save();
+      runScript();
+      return;
+
+    case 'char':
+      setCharacter(step.char);
+      state.scriptIdx++;
+      save();
+      runScript();
+      return;
+
+    case 'sparkle':
+      burstSparkles(window.innerWidth/2, window.innerHeight/2, 80, true);
+      state.scriptIdx++;
+      save();
+      setTimeout(runScript, 400);
+      return;
+
+    case 'dialogue':
+      showScene('story-scene');
+      showDialogue(step);
+      return;
+
+    case 'quiz':
+      showQuiz(step);
+      return;
+
+    case 'action':
+      startActionGame(() => {
+        state.scriptIdx++;
+        save();
+        runScript();
+      });
+      return;
+
+    case 'deduction':
+      showDeduction(step);
+      return;
+
+    case 'result':
+      showResult(step);
+      return;
+  }
+}
+
+function showDialogue(step) {
+  const char = CHARS[step.speaker] || CHARS.narrator;
+  document.getElementById('speaker-name').textContent = char.name;
+  document.getElementById('speaker-name').style.color = char.color;
+  document.getElementById('dialogue-text').innerHTML = step.text;
+  document.getElementById('char-portrait').classList.add('speaking');
+  speak(step.text);
+}
+
+document.getElementById('dialogue-box').addEventListener('click', () => {
+  document.getElementById('char-portrait').classList.remove('speaking');
+  speechSynthesis.cancel();
+  state.scriptIdx++;
+  save();
+  runScript();
+});
+
+// ====================== QUIZ ======================
+function showQuiz(step) {
+  showScene('quiz-scene');
+  const charSvg = CHARS[step.questioner]?.svg || '';
+  document.getElementById('quiz-character').innerHTML = charSvg;
+  document.getElementById('quiz-hint').innerHTML = step.hint;
+  document.getElementById('quiz-question').innerHTML = step.question;
+  speak(step.hint + ' ' + step.question);
+
+  const choicesEl = document.getElementById('quiz-choices');
+  choicesEl.innerHTML = '';
+  step.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c;
+    btn.addEventListener('click', () => handleQuizAnswer(step, i, btn));
+    choicesEl.appendChild(btn);
+  });
+}
+
+function handleQuizAnswer(step, picked, btn) {
+  const correct = picked === step.correct;
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  speechSynthesis.cancel();
+  if (correct) {
+    burstSparkles(window.innerWidth/2, window.innerHeight/2, 40, false);
+    speak('せいかい！' + step.reactCorrect.replace(/<[^>]+>/g, ' '));
+    setTimeout(() => {
+      state.scriptIdx++;
+      // Insert a quick reaction dialogue
+      const reactionStep = { type: 'dialogue', speaker: step.questioner, text: step.reactCorrect };
+      CASE1.splice(state.scriptIdx, 0, reactionStep);
+      save();
+      runScript();
+    }, 1200);
+  } else {
+    speak('ちがうよ、もういっかい');
+    setTimeout(() => {
+      btn.classList.remove('wrong');
+    }, 600);
+  }
+}
+
+// ====================== ACTION GAME ======================
+let actionCallback = null;
+const actionState = {
+  canvas: null, ctx: null,
+  running: false,
+  player: { x: 80, y: 0, vy: 0, w: 50, h: 60, onGround: true },
+  obstacles: [],
+  coins: [],
+  scroll: 0,
+  time: 30,
+  coinsCollected: 0,
+  coinGoal: 10,
+  lastSpawn: 0,
+  groundY: 0,
+};
+
+function startActionGame(onComplete) {
+  actionCallback = onComplete;
+  showScene('action-scene');
+  const canvas = document.getElementById('action-canvas');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  actionState.canvas = canvas;
+  actionState.ctx = ctx;
+  actionState.running = true;
+  actionState.obstacles = [];
+  actionState.coins = [];
+  actionState.scroll = 0;
+  actionState.time = 30;
+  actionState.coinsCollected = 0;
+  actionState.lastSpawn = 0;
+  actionState.groundY = window.innerHeight * 0.7;
+  actionState.player.y = actionState.groundY - actionState.player.h;
+  actionState.player.vy = 0;
+  actionState.player.onGround = true;
+
+  document.getElementById('coin-count').textContent = '0';
+  document.getElementById('coin-goal').textContent = actionState.coinGoal;
+  document.getElementById('action-time').textContent = '30';
+
+  const hint = document.getElementById('action-tap-hint');
+  hint.style.display = '';
+  setTimeout(() => { hint.style.display = 'none'; }, 2000);
+
+  actionState.startTime = Date.now();
+  requestAnimationFrame(actionLoop);
+
+  const tapHandler = (e) => {
+    e.preventDefault();
+    if (actionState.player.onGround) {
+      actionState.player.vy = -14;
+      actionState.player.onGround = false;
+    }
+  };
+  document.getElementById('action-scene').addEventListener('touchstart', tapHandler, { passive: false });
+  document.getElementById('action-scene').addEventListener('mousedown', tapHandler);
+  actionState.tapHandler = tapHandler;
+}
+
+function endActionGame() {
+  actionState.running = false;
+  document.getElementById('action-scene').removeEventListener('touchstart', actionState.tapHandler);
+  document.getElementById('action-scene').removeEventListener('mousedown', actionState.tapHandler);
+  if (actionCallback) actionCallback();
+}
+
+function actionLoop() {
+  if (!actionState.running) return;
+  const ctx = actionState.ctx;
+  const W = window.innerWidth, H = window.innerHeight;
+
+  // update time
+  const elapsed = Math.floor((Date.now() - actionState.startTime) / 1000);
+  const remaining = Math.max(0, 30 - elapsed);
+  document.getElementById('action-time').textContent = remaining;
+
+  // win condition
+  if (actionState.coinsCollected >= actionState.coinGoal) {
+    endActionGame();
+    return;
+  }
+  if (remaining <= 0) {
+    endActionGame();
+    return;
+  }
+
+  // spawn coins/obstacles
+  actionState.lastSpawn += 16;
+  if (actionState.lastSpawn > 700) {
+    actionState.lastSpawn = 0;
+    if (Math.random() < 0.8) {
+      const y = actionState.groundY - 40 - Math.random() * 100;
+      actionState.coins.push({ x: W + 30, y, size: 24, collected: false });
+    }
+    if (Math.random() < 0.3) {
+      actionState.obstacles.push({ x: W + 30, y: actionState.groundY - 40, w: 35, h: 40 });
+    }
+  }
+
+  // scroll
+  const scrollSpeed = 4;
+  actionState.coins.forEach(c => c.x -= scrollSpeed);
+  actionState.obstacles.forEach(o => o.x -= scrollSpeed);
+  actionState.coins = actionState.coins.filter(c => c.x > -50);
+  actionState.obstacles = actionState.obstacles.filter(o => o.x > -50);
+
+  // physics
+  const p = actionState.player;
+  p.vy += 0.7;
+  p.y += p.vy;
+  if (p.y >= actionState.groundY - p.h) {
+    p.y = actionState.groundY - p.h;
+    p.vy = 0;
+    p.onGround = true;
+  }
+
+  // collisions
+  actionState.coins.forEach(c => {
+    if (c.collected) return;
+    const dx = (p.x + p.w/2) - c.x;
+    const dy = (p.y + p.h/2) - c.y;
+    if (Math.abs(dx) < 35 && Math.abs(dy) < 35) {
+      c.collected = true;
+      actionState.coinsCollected++;
+      document.getElementById('coin-count').textContent = actionState.coinsCollected;
+      burstSparkles(c.x, c.y, 12, false);
+    }
+  });
+
+  actionState.obstacles.forEach(o => {
+    if (p.x < o.x + o.w && p.x + p.w > o.x && p.y + p.h > o.y) {
+      // hit - bounce back slightly, no penalty other than getting stuck
+      p.vy = -8;
+      p.onGround = false;
+    }
+  });
+
+  // draw
+  ctx.clearRect(0, 0, W, H);
+
+  // ground
+  ctx.fillStyle = '#8b6f4e';
+  ctx.fillRect(0, actionState.groundY, W, H - actionState.groundY);
+  ctx.fillStyle = '#a8d8a8';
+  ctx.fillRect(0, actionState.groundY - 10, W, 10);
+
+  // clouds
+  ctx.fillStyle = '#fff';
+  const cloudX = (actionState.scroll * 0.3) % W;
+  ctx.beginPath();
+  ctx.arc(W - cloudX, 80, 30, 0, Math.PI*2);
+  ctx.arc(W - cloudX + 30, 80, 35, 0, Math.PI*2);
+  ctx.arc(W - cloudX + 60, 80, 28, 0, Math.PI*2);
+  ctx.fill();
+  actionState.scroll += scrollSpeed;
+
+  // coins
+  actionState.coins.forEach(c => {
+    if (c.collected) return;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(Date.now() / 200);
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath(); ctx.arc(0, 0, c.size, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffb000';
+    ctx.beginPath(); ctx.arc(0, 0, c.size - 6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('♡', 0, 2);
+    ctx.restore();
+  });
+
+  // obstacles (thorny bushes)
+  actionState.obstacles.forEach(o => {
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.fillStyle = '#7a5a3a';
+    ctx.beginPath();
+    ctx.moveTo(o.x, o.y);
+    ctx.lineTo(o.x + o.w/2, o.y - 10);
+    ctx.lineTo(o.x + o.w, o.y);
+    ctx.fill();
+  });
+
+  // player (kurumi in pink)
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  // body
+  ctx.fillStyle = '#ff9ecd';
+  ctx.fillRect(8, 35, p.w - 16, p.h - 35);
+  // head
+  ctx.fillStyle = '#ffe4c4';
+  ctx.beginPath(); ctx.arc(p.w/2, 18, 18, 0, Math.PI*2); ctx.fill();
+  // hair
+  ctx.fillStyle = '#d4a574';
+  ctx.beginPath();
+  ctx.arc(p.w/2, 10, 20, 0, Math.PI, true);
+  ctx.fill();
+  // eyes
+  ctx.fillStyle = '#333';
+  ctx.beginPath(); ctx.arc(p.w/2 - 6, 18, 2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.w/2 + 6, 18, 2, 0, Math.PI*2); ctx.fill();
+  // bow
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath(); ctx.arc(p.w/2 - 10, 0, 5, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  requestAnimationFrame(actionLoop);
+}
+
+// ====================== DEDUCTION ======================
+function showDeduction(step) {
+  showScene('deduction-scene');
+  document.getElementById('deduction-title').textContent = step.title;
+  speak(step.title);
+  const grid = document.getElementById('suspect-grid');
+  grid.innerHTML = '';
+  step.suspects.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'suspect';
+    div.innerHTML = `${CHARS[s.char]?.svg || ''}<div class="suspect-name">${s.name}</div>`;
+    div.addEventListener('click', () => handleDeduction(step, i, div));
+    grid.appendChild(div);
+  });
+}
+
+function handleDeduction(step, picked, el) {
+  speechSynthesis.cancel();
+  if (picked === step.correct) {
+    el.style.background = '#a8f5a8';
+    burstSparkles(window.innerWidth/2, window.innerHeight/2, 60, true);
+    speak('せいかい！' + step.reactCorrect);
+    setTimeout(() => {
+      state.scriptIdx++;
+      save();
+      runScript();
+    }, 1500);
+  } else {
+    el.style.background = '#ffb0b0';
+    speak('ちがうかも。もういっかい かんがえよう');
+    setTimeout(() => { el.style.background = ''; }, 800);
+  }
+}
+
+// ====================== RESULT ======================
+function showResult(step) {
+  showScene('result-scene');
+  document.getElementById('result-title').textContent = step.title;
+  document.getElementById('result-text').innerHTML = step.text;
+  speak(step.title + ' ' + step.text);
+  burstSparkles(window.innerWidth/2, window.innerHeight/3, 100, true);
+  setTimeout(() => burstSparkles(window.innerWidth/2, window.innerHeight/3, 60, true), 400);
+  setTimeout(() => burstSparkles(window.innerWidth/2, window.innerHeight/3, 60, true), 800);
+}
+
+document.getElementById('result-btn').addEventListener('click', () => {
+  // clear save
+  localStorage.removeItem(SAVE_KEY);
+  state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0 };
+  showScene('title-scene');
+  updateContinueBtn();
+});
+
+// ====================== SPARKLES ======================
+const sparkleCanvas = document.getElementById('sparkle-canvas');
+const sctx = sparkleCanvas.getContext('2d');
+function resizeSparkle() {
+  const dpr = window.devicePixelRatio || 1;
+  sparkleCanvas.width = window.innerWidth * dpr;
+  sparkleCanvas.height = window.innerHeight * dpr;
+  sparkleCanvas.style.width = window.innerWidth + 'px';
+  sparkleCanvas.style.height = window.innerHeight + 'px';
+  sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resizeSparkle);
+resizeSparkle();
+
+const particles = [];
+function burstSparkles(x, y, count = 40, intense = false) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * (intense ? 7 : 4) + 2;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      life: 1,
+      color: `hsl(${Math.random() * 360}, 90%, 70%)`,
+      size: Math.random() * 5 + 3,
+    });
+  }
+}
+
+function animateSparkles() {
+  sctx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.02;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    sctx.save();
+    sctx.globalAlpha = p.life;
+    sctx.fillStyle = p.color;
+    sctx.beginPath();
+    const spikes = 5, outer = p.size, inner = p.size / 2;
+    for (let j = 0; j < spikes * 2; j++) {
+      const rr = j % 2 === 0 ? outer : inner;
+      const a = (Math.PI * j) / spikes - Math.PI / 2;
+      const px = p.x + Math.cos(a) * rr, py = p.y + Math.sin(a) * rr;
+      j === 0 ? sctx.moveTo(px, py) : sctx.lineTo(px, py);
+    }
+    sctx.closePath();
+    sctx.fill();
+    sctx.restore();
+  }
+  requestAnimationFrame(animateSparkles);
+}
+animateSparkles();
+
+// ====================== TITLE ======================
+document.getElementById('title-portrait').innerHTML = CHARS.kurumiPre.svg;
+
+function updateContinueBtn() {
+  const btn = document.getElementById('btn-continue');
+  if (hasSave()) {
+    btn.classList.remove('disabled');
+    btn.disabled = false;
+  } else {
+    btn.classList.add('disabled');
+    btn.disabled = true;
+  }
+}
+updateContinueBtn();
+
+document.getElementById('btn-new-game').addEventListener('click', () => {
+  state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0 };
+  save();
+  runScript();
+});
+
+document.getElementById('btn-continue').addEventListener('click', () => {
+  if (!hasSave()) return;
+  load();
+  runScript();
+});
+
+// Prime voice on first user interaction (required by browsers)
+document.body.addEventListener('click', () => {
+  if (!voiceEnabled) return;
+  try {
+    const u = new SpeechSynthesisUtterance('');
+    speechSynthesis.speak(u);
+  } catch(e) {}
+}, { once: true });
+
+</script>
+</body>
+</html>
