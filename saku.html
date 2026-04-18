@@ -3986,27 +3986,49 @@
       ctx.restore();
     }
 
-    // バキッのテキスト演出
+    // 衝撃波エフェクト（バキッのタイミングで広がるリング＋ヒビ割れ放射線）
     if (isAttack) {
       const hitFrames = [220, 200, 180, 160, 140];
       for (const hf of hitFrames) {
         const d = hf - t;
-        if (d >= 0 && d < 25) {
-          const p = d / 25;
-          const ox = (hf * 37) % W;
-          const oy = ((hf * 17) % (H - 100)) + 60;
+        if (d >= 0 && d < 30) {
+          const p = d / 30;  // 0→1
+          const cx0 = (hf * 37) % (W - 100) + 50;
+          const cy0 = ((hf * 17) % (H - 200)) + 100;
+
+          // 白い衝撃リング（急速に広がって消える）
+          const ringR = 10 + p * 180;
           ctx.save();
-          ctx.translate(ox, oy);
-          ctx.rotate((hf * 0.7) % 0.3 - 0.15);
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          const sz = 34 * (1 - p * 0.3);
-          ctx.font = `bold ${sz}px "Hiragino Maru Gothic ProN", sans-serif`;
           ctx.globalAlpha = 1 - p;
-          ctx.lineWidth = 7; ctx.strokeStyle = '#000';
-          ctx.strokeText('バキッ！', 0, 0);
-          ctx.fillStyle = '#ffee40';
-          ctx.fillText('バキッ！', 0, 0);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 8 * (1 - p) + 2;
+          ctx.beginPath();
+          ctx.arc(cx0, cy0, ringR, 0, Math.PI * 2);
+          ctx.stroke();
+          // 内側にもう一本
+          ctx.strokeStyle = 'rgba(255, 220, 120, 0.8)';
+          ctx.lineWidth = 4 * (1 - p) + 1;
+          ctx.beginPath();
+          ctx.arc(cx0, cy0, ringR * 0.7, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+
+          // 放射状ヒビ割れ線
+          ctx.save();
+          ctx.translate(cx0, cy0);
+          ctx.globalAlpha = Math.max(0, 1 - p * 1.5);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3;
+          const numSpokes = 10;
+          for (let i = 0; i < numSpokes; i++) {
+            const a = (i / numSpokes) * Math.PI * 2 + hf * 0.13;
+            const r1 = 20;
+            const r2 = 40 + p * 200;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
+            ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
+            ctx.stroke();
+          }
           ctx.restore();
         }
       }
