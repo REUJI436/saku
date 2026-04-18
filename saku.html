@@ -1774,6 +1774,7 @@
       phase: 'init',
       hitCount: 0,
       auraFrame: 0,
+      bossDamaged: false,   // ★ボスに一度だけダメージを与えるフラグ
       // 発動時のさくの位置を記憶（戻る用）
       origX: saku.x,
       origY: saku.y,
@@ -1844,9 +1845,10 @@
         score += 500; scoreEl.textContent = score;
       }
     }
-    // ボスダメージは1回の発動につき3（5ヒットのうち最初の1回だけ）
-    if (boss && !boss.defeated && saku.ultActive && saku.ultActive.type === 'peropero' && saku.ultActive.hitCount === 0) {
+    // ボスダメージは1回の発動につき3（フラグで一度だけ）
+    if (boss && !boss.defeated && saku.ultActive && saku.ultActive.type === 'peropero' && !saku.ultActive.bossDamaged) {
       damageBoss(3);
+      saku.ultActive.bossDamaged = true;
     }
     // バキッ！の殴打音
     sfxBakiHit();
