@@ -143,7 +143,7 @@
     <button data-key="ArrowRight" data-hold>▶</button>
   </div>
   <div class="right">
-    <button data-key="KeyC" data-hold class="ult" style="background: linear-gradient(to bottom, #d048a0, #70185a); border-color: #ff80c0; min-width:56px; min-height:56px; font-size:13px;">必殺</button>
+    <button data-key="KeyC" data-hold class="ult" style="background: linear-gradient(to bottom, #d048a0, #70185a); border-color: #ff80c0; min-width:56px; min-height:56px; font-size:12px; line-height:1;"><ruby>必殺<rt style="font-size:8px;">ひっさつ</rt></ruby></button>
     <button data-key="ShiftLeft" data-hold>ダッシュ</button>
     <button data-key="Space" data-hold class="jump">ジャンプ</button>
   </div>
@@ -426,46 +426,46 @@
   const CUTSCENES = {
     'teach-punch': {
       lines: [
-        { speaker: 'nazo', text: 'さく殿…よくぞボスを撃破した。' },
-        { speaker: 'nazo', text: '吾輩はしばしお主の戦いを見守っておった。' },
-        { speaker: 'nazo', text: 'その志に免じ、必殺の技を授けよう。' },
+        { speaker: 'nazo', text: 'さく[殿|どの]…よくぞボスを[撃破|げきは]した。' },
+        { speaker: 'nazo', text: '[吾輩|わがはい]は、しばしお[主|ぬし]の[戦|たたか]いを[見守|みまも]っておった。' },
+        { speaker: 'nazo', text: 'その[志|こころざし]に[免|めん]じ、[必殺|ひっさつ]の[技|わざ]を[授|さず]けよう。' },
         { speaker: 'nazo', text: '――「スーパーパンチ」！！' },
-        { speaker: 'saku', text: 'な、なぞの人…一体あなたは…？' },
-        { speaker: 'nazo', text: '…語るは、まだ早い。また会うぞ、さく。' },
+        { speaker: 'saku', text: 'な、[謎|なぞ]の[人|ひと]…[一体|いったい]あなたは…？' },
+        { speaker: 'nazo', text: '…[語|かた]るは、まだ[早|はや]い。また[会|あ]うぞ、さく。' },
       ],
       unlock: 'punch',
     },
     'teach-slash': {
       lines: [
-        { speaker: 'nazo', text: '再び、会ったな、さく。' },
-        { speaker: 'nazo', text: 'お前の成長、目覚ましいものがある。' },
-        { speaker: 'nazo', text: '次の技は空より舞い降りる剣閃。' },
-        { speaker: 'nazo', text: '――「ジャンプ斬り」！！' },
-        { speaker: 'saku', text: 'なぞの人……あなたのことが知りたい。' },
-        { speaker: 'nazo', text: '…すべてを語る時は近い。今少し待て。' },
+        { speaker: 'nazo', text: '[再|ふたた]び、[会|あ]ったな、さく。' },
+        { speaker: 'nazo', text: 'お[前|まえ]の[成長|せいちょう]、[目覚|めざ]ましいものがある。' },
+        { speaker: 'nazo', text: '[次|つぎ]の[技|わざ]は、[空|そら]より[舞|ま]い[降|お]りる[剣閃|けんせん]。' },
+        { speaker: 'nazo', text: '――「ジャンプ[斬|ぎ]り」！！' },
+        { speaker: 'saku', text: '[謎|なぞ]の[人|ひと]……あなたのことが[知|し]りたい。' },
+        { speaker: 'nazo', text: '…すべてを[語|かた]る[時|とき]は、[近|ちか]い。[今|いま][少|すこ]し[待|ま]て。' },
       ],
       unlock: 'slash',
     },
     'final-reveal': {
       lines: [
-        { speaker: 'nazo', text: 'さく…ついに、ここまで来たな…' },
-        { speaker: 'nazo', text: '最後の秘奥義を授ける前に…' },
-        { speaker: 'nazo', text: '…真実を、告げねばならぬ。' },
-        { speaker: 'nazo', text: '（フードを脱ぐ）' },
-        { speaker: 'toto', text: 'さく…わしは、お前の父だ。' },
-        { speaker: 'saku', text: 'と、とーと…！？とーと！！生きていたのか…！' },
-        { speaker: 'toto', text: 'ずっと、陰からお前を見守ってきた…' },
-        { speaker: 'toto', text: 'ようやく顔を合わせられ――' },
-        { speaker: 'boss', text: 'ククク…感動の再会、か？' },
-        { speaker: 'boss', text: '残念だが――お前達には、終わりだ！' },
+        { speaker: 'nazo', text: 'さく…ついに、ここまで[来|き]たな…' },
+        { speaker: 'nazo', text: '[最後|さいご]の[秘奥義|ひおうぎ]を[授|さず]ける[前|まえ]に…' },
+        { speaker: 'nazo', text: '…[真実|しんじつ]を、[告|つ]げねばならぬ。' },
+        { speaker: 'nazo', text: '（フードを[脱|ぬ]ぐ）' },
+        { speaker: 'toto', text: 'さく…わしは、お[前|まえ]の[父|ちち]だ。' },
+        { speaker: 'saku', text: 'と、とーと…！？とーと！！[生|い]きていたのか…！' },
+        { speaker: 'toto', text: 'ずっと、[陰|かげ]からお[前|まえ]を[見守|みまも]ってきた…' },
+        { speaker: 'toto', text: 'ようやく[顔|かお]を[合|あ]わせられ――' },
+        { speaker: 'boss', text: 'ククク…[感動|かんどう]の[再会|さいかい]、か？' },
+        { speaker: 'boss', text: '[残念|ざんねん]だが――お[前|まえ][達|たち]には、[終|お]わりだ！' },
         { speaker: 'toto', text: 'ぐあああっ！！' },
         { speaker: 'saku', text: 'とーと！！！' },
-        { speaker: 'toto', text: 'さく…最後に…伝授する…' },
-        { speaker: 'toto', text: '秘奥義――「ぺろぺろありーな」…' },
-        { speaker: 'toto', text: 'これで…奴を…倒せ…' },
+        { speaker: 'toto', text: 'さく…[最後|さいご]に…[伝授|でんじゅ]する…' },
+        { speaker: 'toto', text: '[秘奥義|ひおうぎ]――「ぺろぺろありーな」…' },
+        { speaker: 'toto', text: 'これで…[奴|やつ]を…[倒|たお]せ…' },
         { speaker: 'toto', text: 'う…ぐ…さ…らば、だ…さく…' },
         { speaker: 'saku', text: 'とーと！！！' },
-        { speaker: 'saku', text: '絶対に、許さない…！！' },
+        { speaker: 'saku', text: '[絶対|ぜったい]に、[許|ゆる]さない…！！' },
       ],
       unlock: 'peropero',
     },
@@ -574,6 +574,13 @@
       }
       return;
     }
+    if (state === 'tutorial' && !e.repeat) {
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyZ' || e.code === 'KeyC') {
+        dismissUltTutorial();
+        e.preventDefault();
+      }
+      return;
+    }
     keys[e.code] = true;
     if (state === 'title') {
       if (e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'KeyW' || e.code === 'KeyA') { moveMenu(-1); e.preventDefault(); return; }
@@ -646,11 +653,15 @@
     } else if (state === 'cutscene') {
       e.preventDefault();
       advanceCutscene();
+    } else if (state === 'tutorial') {
+      e.preventDefault();
+      dismissUltTutorial();
     }
   }, { passive: false });
   canvas.addEventListener('click', e => {
     if (state === 'title') titleTapAt(e.clientX, e.clientY);
     else if (state === 'cutscene') advanceCutscene();
+    else if (state === 'tutorial') dismissUltTutorial();
   });
 
   // ====== 音声 ======
@@ -1202,9 +1213,10 @@
     if (!cutscene) return;
     const current = cutscene.lines[cutscene.step];
     if (!current) return;
-    if (cutscene.charIdx < current.text.length) {
-      cutscene.charIdx = current.text.length;
-      cutscene.charText = current.text;
+    const plainLen = stripRuby(current.text).length;
+    if (cutscene.charIdx < plainLen) {
+      cutscene.charIdx = plainLen;
+      cutscene.charText = current.text;  // 全文（ルビ記号込み）
       cutscene.waitInput = true;
       return;
     }
@@ -1220,14 +1232,172 @@
   }
   function endCutscene() {
     const data = CUTSCENES[cutscene.id];
+    let justUnlocked = null;
     if (data.unlock) {
       if (!saku.unlockedUlts.includes(data.unlock)) {
         saku.unlockedUlts.push(data.unlock);
         saku.selectedUlt = saku.unlockedUlts.length - 1;
+        justUnlocked = data.unlock;
       }
       saku.ultGauge = saku.maxUlt;
     }
     cutscene = null;
+    if (justUnlocked) {
+      // 初回取得時のみチュートリアル表示
+      showUltTutorial(justUnlocked);
+    } else {
+      state = 'playing';
+      startBGM();
+    }
+  }
+
+  // ====== 必殺技チュートリアル ======
+  let ultTutorial = null;
+  function showUltTutorial(ultId) {
+    const ult = ULTIMATES.find(u => u.id === ultId);
+    if (!ult) { state = 'playing'; startBGM(); return; }
+    ultTutorial = {
+      ultId,
+      ultName: ult.name,
+      animFrame: 0,
+    };
+    state = 'tutorial';
+  }
+  function drawUltTutorial() {
+    if (!ultTutorial) return;
+    ultTutorial.animFrame++;
+    // 背景暗転
+    ctx.fillStyle = 'rgba(5, 10, 22, 0.92)';
+    ctx.fillRect(0, 0, W, H);
+    // 光の輪（中央）
+    const glow = ctx.createRadialGradient(W/2, H*0.38, 5, W/2, H*0.38, 220);
+    glow.addColorStop(0, 'rgba(255, 200, 60, 0.4)');
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    // タイトル
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const titleFont = 'bold 22px serif';
+    drawRuby('あたらしい[技|わざ]をおぼえた！', W/2, H*0.22, titleFont, {
+      strokeStyle: '#000', lineWidth: 6,
+      fillStyle: '#ffdd44',
+      rubyFill: '#ffeeaa',
+    });
+    ctx.restore();
+
+    // 技名（大きく）
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const name = ultTutorial.ultName;
+    const bounce = 1 + Math.sin(ultTutorial.animFrame * 0.1) * 0.05;
+    ctx.translate(W/2, H*0.35);
+    ctx.scale(bounce, bounce);
+    ctx.font = 'bold 34px "Hiragino Maru Gothic ProN", sans-serif';
+    ctx.lineWidth = 9; ctx.strokeStyle = '#000';
+    ctx.strokeText(name, 0, 0);
+    ctx.lineWidth = 5; ctx.strokeStyle = '#a0306a';
+    ctx.strokeText(name, 0, 0);
+    const ng = ctx.createLinearGradient(0, -20, 0, 20);
+    ng.addColorStop(0, '#fff');
+    ng.addColorStop(0.5, '#ffccee');
+    ng.addColorStop(1, '#ff4488');
+    ctx.fillStyle = ng;
+    ctx.fillText(name, 0, 0);
+    ctx.restore();
+
+    // 操作説明ボックス
+    const boxY = H * 0.50;
+    ctx.save();
+    ctx.fillStyle = 'rgba(20, 30, 60, 0.9)';
+    ctx.fillRect(30, boxY, W - 60, 180);
+    ctx.strokeStyle = '#80a0d0';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(30, boxY, W - 60, 180);
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    drawRuby('[使|つか]いかた', W/2, boxY + 24, 'bold 18px serif', {
+      strokeStyle: '#000', lineWidth: 4,
+      fillStyle: '#ffe070',
+      rubyFill: '#ffeeaa',
+    });
+
+    // ゲージの説明
+    drawRuby('１．[敵|てき]をたおすと ゲージがたまる', W/2, boxY + 60, 'bold 14px serif', {
+      strokeStyle: '#000', lineWidth: 3,
+      fillStyle: '#fff',
+      rubyFill: '#bcd0ff',
+    });
+
+    // 発動方法
+    drawRuby('２．ゲージがいっぱいになったら…', W/2, boxY + 92, 'bold 14px serif', {
+      strokeStyle: '#000', lineWidth: 3,
+      fillStyle: '#fff',
+      rubyFill: '#bcd0ff',
+    });
+
+    // ボタン案内
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 13px serif';
+    // キーボードアイコン
+    const keyX = W/2 - 90;
+    const keyY = boxY + 126;
+    ctx.fillStyle = '#444';
+    ctx.fillRect(keyX - 14, keyY - 12, 28, 24);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(keyX - 14, keyY - 12, 28, 24);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText('C', keyX, keyY);
+    // "or"
+    ctx.font = '12px serif';
+    ctx.fillStyle = '#ccc';
+    ctx.fillText('or', W/2, keyY);
+    // ボタンアイコン
+    const btnX = W/2 + 90;
+    ctx.fillStyle = '#d048a0';
+    ctx.beginPath();
+    ctx.arc(btnX, keyY, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ff80c0';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    drawRuby('[必殺|ひっさつ]', btnX, keyY + 1, 'bold 10px serif', {
+      fillStyle: '#fff',
+      rubyFill: '#ffcce8',
+    });
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    drawRuby('をおすと [発動|はつどう]！', W/2, boxY + 158, 'bold 14px serif', {
+      strokeStyle: '#000', lineWidth: 3,
+      fillStyle: '#fff',
+      rubyFill: '#bcd0ff',
+    });
+
+    // 続けるヒント
+    if (Math.floor(ultTutorial.animFrame / 20) % 2 === 0) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '13px serif';
+      ctx.fillStyle = '#ffee80';
+      ctx.fillText('▼ タップ / Space / Z でとじる ▼', W/2, H - 22);
+      ctx.restore();
+    }
+  }
+  function dismissUltTutorial() {
+    ultTutorial = null;
     state = 'playing';
     startBGM();
   }
@@ -2304,11 +2474,11 @@
     ctx.fillStyle = '#fff';
     if (jumping) { ctx.fillRect(cx - 6, y + 29, 6, 3); ctx.fillRect(cx, y + 29, 6, 3); }
     else { ctx.fillRect(leg1x - 1, y + 29, 6, 3); ctx.fillRect(leg2x - 1, y + 29, 6, 3); }
-    // ランドセル
+    // ランドセル（黒）
     const backX = saku.facing > 0 ? cx - 11 : cx + 3;
-    ctx.fillStyle = '#8a1e1e';
+    ctx.fillStyle = '#0e0e14';
     ctx.fillRect(backX, y + 10 + bob, 8, 15);
-    ctx.fillStyle = '#b33030';
+    ctx.fillStyle = '#333340';  // ハイライト
     ctx.fillRect(backX + 1, y + 11 + bob, 2, 13);
     // 体（白シャツ）
     ctx.fillStyle = '#fff';
@@ -2930,13 +3100,56 @@
     cutscene.charAnim++;
     const current = cutscene.lines[cutscene.step];
     if (!current) { endCutscene(); return; }
-    if (cutscene.charIdx < current.text.length && cutscene.charAnim % 2 === 0) {
+    // ルビ除去したプレーンテキストで字数カウント
+    const plain = stripRuby(current.text);
+    if (cutscene.charIdx < plain.length && cutscene.charAnim % 2 === 0) {
       cutscene.charIdx++;
-      cutscene.charText = current.text.substring(0, cutscene.charIdx);
+      // ルビ記号を維持しつつ charIdx 分だけ表示するように変換
+      cutscene.charText = displayUpTo(current.text, cutscene.charIdx);
       if (cutscene.charIdx % 3 === 0) beep(900 + Math.random()*200, 0.02, 'square', 0.05);
-      if (cutscene.charIdx >= current.text.length) cutscene.waitInput = true;
+      if (cutscene.charIdx >= plain.length) cutscene.waitInput = true;
     }
   }
+  // text の "表示上" 最初から n 文字分を、[kanji|furigana] のルビを温存した形で返す
+  function displayUpTo(text, n) {
+    let out = '';
+    let visible = 0;
+    let i = 0;
+    while (i < text.length && visible < n) {
+      if (text[i] === '[') {
+        const end = text.indexOf(']', i);
+        if (end < 0) { out += text.substring(i); break; }
+        const inner = text.substring(i+1, end);
+        const pipe = inner.indexOf('|');
+        if (pipe > 0) {
+          const base = inner.substring(0, pipe);
+          const remain = n - visible;
+          if (remain >= base.length) {
+            out += '[' + inner + ']';
+            visible += base.length;
+            i = end + 1;
+          } else {
+            // 途中まで表示：ルビは付けずにプレーンで
+            out += base.substring(0, remain);
+            visible += remain;
+            i = end + 1;
+          }
+        } else {
+          // 閉じてない/妙な記法は素通り
+          out += '[' + inner + ']';
+          visible += (inner.length + 2);
+          i = end + 1;
+        }
+      } else {
+        out += text[i];
+        visible++;
+        i++;
+      }
+    }
+    return out;
+  }
+  // advanceCutscene で即時全表示にするときも修正
+
 
   function drawCutscene() {
     if (!cutscene) return;
@@ -2989,13 +3202,19 @@
     ctx.textBaseline = 'middle';
     ctx.fillText(name, 40, boxY - 7);
 
-    // 台詞テキスト（途中まで表示）
+    // 台詞テキスト（途中まで表示・ルビ対応）
     ctx.fillStyle = '#e8f0ff';
-    ctx.font = '16px serif';
+    const dlgFont = '16px serif';
+    ctx.font = dlgFont;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
     const textToShow = cutscene.charText || '';
-    const lines = wrapText(textToShow, W - 80, '16px serif');
-    for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], 40, boxY + 22 + i * 22);
+    const lineSegs = wrapRuby(textToShow, W - 80, dlgFont);
+    for (let i = 0; i < lineSegs.length; i++) {
+      drawRuby(lineSegs[i], 40, boxY + 32 + i * 26, dlgFont, {
+        fillStyle: '#e8f0ff',
+        rubyFill: '#bcd0ff',
+      });
     }
 
     // 続きマーカー
@@ -3028,6 +3247,144 @@
       } else line = test;
     }
     if (line) lines.push(line);
+    ctx.restore();
+    return lines;
+  }
+
+  // ====== ルビ対応テキスト ======
+  // 記法: "ふつうの文章[漢字|かんじ]を[送|おく]る"
+  function parseRuby(text) {
+    const segs = [];
+    let i = 0;
+    while (i < text.length) {
+      if (text[i] === '[') {
+        const end = text.indexOf(']', i);
+        if (end < 0) { segs.push({ type: 'plain', s: text.substring(i) }); break; }
+        const inner = text.substring(i+1, end);
+        const pipe = inner.indexOf('|');
+        if (pipe > 0) {
+          // 1文字ずつに分割してまとめて rt に入れる（1漢字1hiragana割当の方が綺麗）
+          segs.push({ type: 'ruby', s: inner.substring(0, pipe), r: inner.substring(pipe+1) });
+        } else {
+          segs.push({ type: 'plain', s: '[' + inner + ']' });
+        }
+        i = end + 1;
+      } else {
+        let end = text.indexOf('[', i);
+        if (end < 0) end = text.length;
+        segs.push({ type: 'plain', s: text.substring(i, end) });
+        i = end;
+      }
+    }
+    return segs;
+  }
+  // セグメント列の表示幅（ベース文字幅）を返す
+  function measureRuby(segs, font) {
+    ctx.save();
+    ctx.font = font;
+    let w = 0;
+    for (const s of segs) w += ctx.measureText(s.s).width;
+    ctx.restore();
+    return w;
+  }
+  // ルビ付きテキスト描画。基準 (x,y) に textAlign/textBaseline 従って描く
+  function drawRuby(segsOrText, x, y, baseFont, options) {
+    options = options || {};
+    const segs = Array.isArray(segsOrText) ? segsOrText : parseRuby(segsOrText);
+    ctx.save();
+    ctx.font = baseFont;
+    const baseSize = parseFloat(baseFont.match(/(\d+(?:\.\d+)?)px/)[1]);
+    const rubyFont = (options.rubyFont) || `${Math.round(baseSize * 0.45)}px serif`;
+    const totalW = measureRuby(segs, baseFont);
+    let cx = x;
+    if (ctx.textAlign === 'center') cx = x - totalW / 2;
+    else if (ctx.textAlign === 'right') cx = x - totalW;
+    const savedAlign = ctx.textAlign;
+    ctx.textAlign = 'left';
+
+    // 1回目: 縁取り（指定された場合）
+    if (options.strokeStyle && options.lineWidth) {
+      ctx.strokeStyle = options.strokeStyle;
+      ctx.lineWidth = options.lineWidth;
+      let px = cx;
+      for (const s of segs) {
+        const w = ctx.measureText(s.s).width;
+        ctx.strokeText(s.s, px, y);
+        if (s.type === 'ruby') {
+          ctx.save();
+          ctx.font = rubyFont;
+          const rw = ctx.measureText(s.r).width;
+          const rx = px + (w - rw) / 2;
+          const ry = y - baseSize * 0.88;
+          ctx.strokeText(s.r, rx, ry);
+          ctx.restore();
+        }
+        px += w;
+      }
+    }
+    // 2回目: 本体塗り
+    if (options.fillStyle !== false) {
+      ctx.fillStyle = options.fillStyle || ctx.fillStyle;
+      let px = cx;
+      for (const s of segs) {
+        const w = ctx.measureText(s.s).width;
+        ctx.fillText(s.s, px, y);
+        if (s.type === 'ruby') {
+          ctx.save();
+          ctx.font = rubyFont;
+          ctx.fillStyle = options.rubyFill || options.fillStyle || '#fff';
+          const rw = ctx.measureText(s.r).width;
+          const rx = px + (w - rw) / 2;
+          const ry = y - baseSize * 0.88;
+          ctx.fillText(s.r, rx, ry);
+          ctx.restore();
+        }
+        px += w;
+      }
+    }
+    ctx.textAlign = savedAlign;
+    ctx.restore();
+  }
+  // ルビを単純に hiragana だけ取り出して通常文字列に変換（簡易）
+  function stripRuby(text) {
+    return text.replace(/\[([^\|\]]+)\|[^\]]+\]/g, '$1');
+  }
+  // ルビを考慮した折り返し
+  function wrapRuby(text, maxWidth, font) {
+    ctx.save();
+    ctx.font = font;
+    const segs = parseRuby(text);
+    const lines = [];
+    let lineSegs = [];
+    let lineW = 0;
+    for (const seg of segs) {
+      // セグメント内を 1 文字ずつ進める（ruby 内も 1 文字ずつ）
+      const chars = seg.s.split('');
+      if (seg.type === 'ruby') {
+        // ruby は分割せず1まとめで追加（切れたら不自然）
+        const w = ctx.measureText(seg.s).width;
+        if (lineW + w > maxWidth && lineW > 0) {
+          lines.push(lineSegs); lineSegs = []; lineW = 0;
+        }
+        lineSegs.push({ type: 'ruby', s: seg.s, r: seg.r });
+        lineW += w;
+      } else {
+        for (const ch of chars) {
+          const w = ctx.measureText(ch).width;
+          if (lineW + w > maxWidth && lineW > 0) {
+            lines.push(lineSegs); lineSegs = []; lineW = 0;
+          }
+          // 連結：最後が plain なら結合
+          if (lineSegs.length > 0 && lineSegs[lineSegs.length-1].type === 'plain') {
+            lineSegs[lineSegs.length-1].s += ch;
+          } else {
+            lineSegs.push({ type: 'plain', s: ch });
+          }
+          lineW += w;
+        }
+      }
+    }
+    if (lineSegs.length) lines.push(lineSegs);
     ctx.restore();
     return lines;
   }
@@ -3099,97 +3456,147 @@
     ctx.stroke();
     ctx.restore();
   }
-  // とーと（お父さん）
+  // とーと（痩せ型・30代・黒縁メガネの父）
   function drawToto(cx, cy, phase, injured) {
     ctx.save();
-    // 体（白シャツ＋黒ズボン・大人）
-    ctx.fillStyle = '#2a2a38';
-    ctx.fillRect(cx - 16, cy + 32, 32, 35);
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(cx - 18, cy + 5, 36, 30);
-    ctx.fillStyle = '#3a6fb0';
+    const skin = '#f2c8a2';
+    const skinShade = '#b57849';
+    // 黒スラックス（細め）
+    ctx.fillStyle = '#1a1a22';
+    ctx.fillRect(cx - 10, cy + 32, 20, 35);
+    // 革靴
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx - 12, cy + 65, 8, 4);
+    ctx.fillRect(cx + 4, cy + 65, 8, 4);
+    // 白シャツ（やや細身）
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 13, cy + 5, 26, 30);
+    ctx.fillStyle = '#e8e8f0';  // 影
+    ctx.fillRect(cx - 13, cy + 5, 2, 30);
+    ctx.fillRect(cx + 11, cy + 5, 2, 30);
+    // 襟
+    ctx.fillStyle = '#d8dce4';
     ctx.beginPath();
-    ctx.moveTo(cx - 5, cy + 5);
-    ctx.lineTo(cx, cy + 12);
-    ctx.lineTo(cx + 5, cy + 5);
+    ctx.moveTo(cx - 6, cy + 5);
+    ctx.lineTo(cx, cy + 10);
+    ctx.lineTo(cx + 6, cy + 5);
     ctx.closePath();
     ctx.fill();
-    // 腕
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(cx - 22, cy + 8, 5, 22);
-    ctx.fillRect(cx + 17, cy + 8, 5, 22);
-    ctx.fillStyle = '#f2c8a2';
+    // ネクタイ（暗めの青）
+    ctx.fillStyle = '#24456e';
     ctx.beginPath();
-    ctx.arc(cx - 19.5, cy + 32, 3.5, 0, Math.PI * 2);
-    ctx.arc(cx + 19.5, cy + 32, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    // 頭
-    ctx.fillStyle = '#f2c8a2';
-    ctx.beginPath();
-    ctx.arc(cx, cy - 8, 14, 0, Math.PI * 2);
-    ctx.fill();
-    // 髪（30-40代、さくと同じ黒髪だが少しグレー）
-    ctx.fillStyle = '#2a1f18';
-    ctx.beginPath();
-    ctx.moveTo(cx - 14, cy - 10);
-    ctx.quadraticCurveTo(cx - 15, cy - 22, cx - 5, cy - 22);
-    ctx.quadraticCurveTo(cx + 6, cy - 23, cx + 14, cy - 19);
-    ctx.quadraticCurveTo(cx + 16, cy - 10, cx + 14, cy - 10);
-    ctx.lineTo(cx + 10, cy - 12);
-    ctx.quadraticCurveTo(cx + 4, cy - 9, cx, cy - 12);
-    ctx.quadraticCurveTo(cx - 6, cy - 9, cx - 14, cy - 10);
+    ctx.moveTo(cx - 2, cy + 6);
+    ctx.lineTo(cx + 2, cy + 6);
+    ctx.lineTo(cx + 3, cy + 30);
+    ctx.lineTo(cx - 3, cy + 30);
     ctx.closePath();
     ctx.fill();
-    // 白髪すじ（年齢感）
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillStyle = '#142a48';
+    ctx.fillRect(cx - 2, cy + 6, 4, 1.5);
+    // 腕（細め）
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 16, cy + 7, 3, 22);
+    ctx.fillRect(cx + 13, cy + 7, 3, 22);
+    // 手
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    ctx.arc(cx - 14.5, cy + 31, 2.8, 0, Math.PI * 2);
+    ctx.arc(cx + 14.5, cy + 31, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+    // 首（細）
+    ctx.fillStyle = skinShade;
+    ctx.fillRect(cx - 3, cy + 1, 6, 4);
+    // 頭（痩せ型：縦長の楕円）
+    const headGrad = ctx.createRadialGradient(cx - 2, cy - 10, 1, cx, cy - 6, 13);
+    headGrad.addColorStop(0, '#ffe6c8');
+    headGrad.addColorStop(0.6, skin);
+    headGrad.addColorStop(1, skinShade);
+    ctx.fillStyle = headGrad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 6, 10, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 頬のシャープな陰（痩せ型）
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(cx - 8, cy - 3, 1.5, 3.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 8, cy - 3, 1.5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 髪（黒・短髪・七三に流す30代）
+    ctx.fillStyle = '#141014';
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy - 11);
+    ctx.quadraticCurveTo(cx - 12, cy - 18, cx - 4, cy - 19);
+    ctx.quadraticCurveTo(cx + 4, cy - 20, cx + 10, cy - 17);
+    ctx.quadraticCurveTo(cx + 11, cy - 11, cx + 10, cy - 10);
+    // 前髪（右流し）
+    ctx.lineTo(cx + 7, cy - 12);
+    ctx.quadraticCurveTo(cx + 2, cy - 9, cx - 1, cy - 12);
+    ctx.quadraticCurveTo(cx - 6, cy - 9, cx - 10, cy - 11);
+    ctx.closePath();
+    ctx.fill();
+    // 眉（細くシャープ）
+    ctx.strokeStyle = '#141014';
     ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(cx + 6, cy - 18);
-    ctx.lineTo(cx + 10, cy - 15);
+    ctx.moveTo(cx - 7, cy - 7); ctx.lineTo(cx - 2, cy - 7.5);
+    ctx.moveTo(cx + 2, cy - 7.5); ctx.lineTo(cx + 7, cy - 7);
     ctx.stroke();
-    // 眼鏡（銀縁）
-    ctx.strokeStyle = '#c0c0c0';
+    // 眼鏡（黒縁・スクエア）
+    ctx.strokeStyle = '#0a0a12';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(cx - 5, cy - 6, 3, 0, Math.PI * 2);
-    ctx.arc(cx + 5, cy - 6, 3, 0, Math.PI * 2);
-    ctx.moveTo(cx - 2, cy - 6);
-    ctx.lineTo(cx + 2, cy - 6);
+    ctx.rect(cx - 8, cy - 6, 6, 4);
+    ctx.rect(cx + 2, cy - 6, 6, 4);
+    ctx.moveTo(cx - 2, cy - 4);
+    ctx.lineTo(cx + 2, cy - 4);
     ctx.stroke();
     // 目
-    ctx.fillStyle = '#000';
     if (injured) {
-      // ×目（死にかけ）
       ctx.strokeStyle = '#000';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.moveTo(cx - 7, cy - 8); ctx.lineTo(cx - 3, cy - 4);
-      ctx.moveTo(cx - 7, cy - 4); ctx.lineTo(cx - 3, cy - 8);
-      ctx.moveTo(cx + 3, cy - 8); ctx.lineTo(cx + 7, cy - 4);
-      ctx.moveTo(cx + 3, cy - 4); ctx.lineTo(cx + 7, cy - 8);
+      ctx.moveTo(cx - 7, cy - 6); ctx.lineTo(cx - 3, cy - 2);
+      ctx.moveTo(cx - 7, cy - 2); ctx.lineTo(cx - 3, cy - 6);
+      ctx.moveTo(cx + 3, cy - 6); ctx.lineTo(cx + 7, cy - 2);
+      ctx.moveTo(cx + 3, cy - 2); ctx.lineTo(cx + 7, cy - 6);
       ctx.stroke();
     } else {
-      ctx.fillRect(cx - 5.5, cy - 6.5, 1.2, 1);
-      ctx.fillRect(cx + 4.3, cy - 6.5, 1.2, 1);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(cx - 5.8, cy - 4.5, 1.6, 1);
+      ctx.fillRect(cx + 4.2, cy - 4.5, 1.6, 1);
     }
+    // レンズのハイライト
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy - 5.5); ctx.lineTo(cx - 5, cy - 5.5);
+    ctx.moveTo(cx + 3, cy - 5.5); ctx.lineTo(cx + 5, cy - 5.5);
+    ctx.stroke();
+    // 鼻筋
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 2); ctx.lineTo(cx - 0.5, cy + 1);
+    ctx.stroke();
     // 口
-    ctx.strokeStyle = '#5a3a20';
+    ctx.strokeStyle = '#5a3a28';
     ctx.lineWidth = 1;
     ctx.beginPath();
     if (injured) {
-      ctx.moveTo(cx - 3, cy + 1);
-      ctx.lineTo(cx + 3, cy + 1);  // 一文字（息絶える）
+      ctx.moveTo(cx - 3, cy + 3);
+      ctx.lineTo(cx + 3, cy + 3);
     } else {
-      ctx.arc(cx, cy, 2.5, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.arc(cx, cy + 2, 1.8, 0.15 * Math.PI, 0.85 * Math.PI);
     }
     ctx.stroke();
-    // ダメージの血（誇張せず控えめ）
+    // 血（軽く）
     if (injured) {
       ctx.fillStyle = '#8a1010';
       ctx.beginPath();
-      ctx.moveTo(cx + 3, cy + 2);
-      ctx.lineTo(cx + 6, cy + 6);
-      ctx.lineTo(cx + 2, cy + 5);
+      ctx.moveTo(cx + 3, cy + 4);
+      ctx.lineTo(cx + 5, cy + 7);
+      ctx.lineTo(cx + 2, cy + 6);
       ctx.closePath();
       ctx.fill();
     }
@@ -3352,6 +3759,8 @@
       } else if (state === 'cutscene') {
         update();
         drawCutscene();
+      } else if (state === 'tutorial') {
+        drawUltTutorial();
       } else if (state === 'stageTransition') {
         render();
         drawStageTransition();
