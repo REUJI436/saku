@@ -558,17 +558,19 @@
           case '@': {
             const isFinal = STAGES[idx].label === '10-5';
             boss = {
-              x: px - (isFinal ? 15 : 10),
-              y: py - (isFinal ? 50 : 40),
-              w: isFinal ? 64 : 52,
-              h: isFinal ? 88 : 72,
+              x: px - (isFinal ? 30 : 10),
+              y: py - (isFinal ? 70 : 40),
+              w: isFinal ? 90 : 52,
+              h: isFinal ? 108 : 72,
               vx: 0, vy: 0,
-              hp: isFinal ? 6 : 3,
-              maxHp: isFinal ? 6 : 3,
+              hp: isFinal ? 9 : 3,
+              maxHp: isFinal ? 9 : 3,
               onGround: false,
               attackCD: 160, hurtTimer: 0,
+              fireCD: 180,          // ラスボス用・炎ブレスCD
+              fireballs: [],        // 炎玉
               defeated: false, defeatTimer: 0, anim: 0,
-              engaged: false, triggerX: px - 240,
+              engaged: false, triggerX: px - 260,
               isFinal: isFinal,
             };
             break;
@@ -1207,6 +1209,15 @@
       beep(300, 0.08, 'square', 0.12);
       setTimeout(()=>beep(200, 0.12, 'square', 0.1), 80);
     }
+    // ラスボスの炎ブレス
+    if (boss.isFinal) {
+      boss.fireCD--;
+      if (boss.fireCD <= 0) {
+        boss.fireCD = 120 + Math.random() * 60;
+        spawnFireball();
+      }
+      updateFireballs();
+    }
     if (boss.hurtTimer > 0) boss.hurtTimer--;
     boss.x += boss.vx;
     let hits = rectVsTiles(boss.x, boss.y, boss.w, boss.h);
@@ -1237,6 +1248,56 @@
         }
       }
     }
+  }
+  // ラスボス：炎玉発射
+  function spawnFireball() {
+    if (!boss) return;
+    const dir = (saku.x + saku.w/2) < (boss.x + boss.w/2) ? -1 : 1;
+    boss.fireballs.push({
+      x: boss.x + boss.w/2 + dir * (boss.w/2 + 8),
+      y: boss.y + boss.h * 0.25,
+      vx: dir * 4,
+      vy: -1.5,
+      life: 180,
+      anim: 0,
+    });
+    // 炎の咆哮
+    try {
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(220, now);
+      o.frequency.exponentialRampToValueAtTime(60, now + 0.5);
+      g.gain.setValueAtTime(0.18, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(now); o.stop(now + 0.6);
+    } catch(e) {}
+  }
+  function updateFireballs() {
+    if (!boss || !boss.fireballs) return;
+    for (const fb of boss.fireballs) {
+      fb.vy += 0.15;  // 軽く重力
+      fb.x += fb.vx;
+      fb.y += fb.vy;
+      fb.life--;
+      fb.anim += 0.3;
+      // プレイヤー衝突
+      if (!saku.dead && saku.invuln === 0 && saku.starTimer === 0) {
+        const px1 = saku.x, py1 = saku.y, px2 = px1 + saku.w, py2 = py1 + saku.h;
+        if (fb.x > px1 - 10 && fb.x < px2 + 10 && fb.y > py1 - 10 && fb.y < py2 + 10) {
+          fb.life = 0;
+          damagePlayer();
+        }
+      }
+      // 地面と衝突したら消滅
+      const t = tileAt(fb.x, fb.y);
+      if (isSolid(t)) fb.life = 0;
+      if (fb.y > LEVEL_H) fb.life = 0;
+    }
+    boss.fireballs = boss.fireballs.filter(fb => fb.life > 0);
   }
   function damageBoss(amount) {
     if (!boss || boss.defeated) return;
@@ -1617,7 +1678,7 @@
     }
     if (boss && !boss.defeated && !boss.hurtTimer) {
       const bx = boss.x + boss.w/2;
-      if (bx >= x1 && bx <= x2) damageBoss(2);
+      if (bx >= x1 && bx <= x2) damageBoss(3);
     }
   }
   // ジャンプ斬り: 垂直小ジャンプ→空中から前方に3連の地面斬撃波を飛ばす
@@ -1681,8 +1742,8 @@
         if (Math.abs(bx - w.x) < 50 && Math.abs(by - w.y) < 60) {
           w.hit.add(boss);
           if (!boss.hurtTimer) {
-            damageBoss(2);
-            fx.hitBoss = true;  // 1回の発動で1ヒットに制限（複数波で重複させない）
+            damageBoss(3);
+            fx.hitBoss = true;
           }
         }
       }
@@ -1719,7 +1780,7 @@
         score += 500; scoreEl.textContent = score;
       }
     }
-    if (boss && !boss.defeated) damageBoss(3);
+    if (boss && !boss.defeated) damageBoss(3);  // ぺろぺろの各ヒットで3ダメ×5回 = 最大15
     // 連撃音
     for (let i = 0; i < 6; i++) {
       setTimeout(() => beep(800 + Math.random()*600, 0.05, 'square', 0.1), i * 50);
@@ -2420,6 +2481,19 @@
     const y = boss.y;
     if (x < -100 || x > W + 100) return;
     const isFinalBoss = STAGES[currentStage]?.label === '10-5';
+
+    // 炎玉描画（ラスボスの攻撃）
+    if (isFinalBoss && boss.fireballs) {
+      for (const fb of boss.fireballs) {
+        drawFireball(fb.x - cameraX, fb.y, fb.anim);
+      }
+    }
+
+    // ラスボスはクッパ風の専用描画
+    if (isFinalBoss) {
+      drawFinalBoss(x, y, boss);
+      return;
+    }
     ctx.save();
     if (boss.defeated) {
       const a = Math.max(0, 1 - boss.defeatTimer / 180);
@@ -2536,6 +2610,285 @@
     ctx.fillRect(headCx + 2, headCy + 9, 1.8, 1.5);
     ctx.restore();
   }
+  // 炎玉
+  function drawFireball(x, y, anim) {
+    ctx.save();
+    // 外側のオーラ
+    const aura = ctx.createRadialGradient(x, y, 2, x, y, 18);
+    aura.addColorStop(0, 'rgba(255,220,120,1)');
+    aura.addColorStop(0.4, 'rgba(255,120,30,0.8)');
+    aura.addColorStop(1, 'rgba(180,20,0,0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(x, y, 18 + Math.sin(anim) * 2, 0, Math.PI * 2);
+    ctx.fill();
+    // コア
+    ctx.fillStyle = '#fff0a0';
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    // 尾っぽ（トレイル）
+    ctx.fillStyle = 'rgba(255,140,40,0.6)';
+    for (let i = 1; i <= 3; i++) {
+      ctx.beginPath();
+      ctx.arc(x - i * 6 + Math.sin(anim + i) * 2, y, 4 - i * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ラスボス（クッパ風）
+  function drawFinalBoss(x, y, b) {
+    ctx.save();
+    if (b.defeated) {
+      const a = Math.max(0, 1 - b.defeatTimer / 180);
+      ctx.globalAlpha = a;
+      ctx.translate(x + b.w/2, y + b.h/2);
+      ctx.rotate(b.defeatTimer * 0.15);
+      ctx.translate(-(x + b.w/2), -(y + b.h/2));
+    }
+    if (b.hurtTimer > 0 && Math.floor(b.hurtTimer/4)%2 === 0) ctx.globalAlpha = 0.5;
+
+    const W_ = b.w, H_ = b.h, cx = x + W_/2, bottomY = y + H_;
+    const breathe = Math.sin(b.anim * 0.3) * 2;
+    const facing = (saku.x + saku.w/2) < cx ? -1 : 1;
+
+    // 赤黒オーラ
+    const auraR = 70 + Math.sin(b.anim * 0.5) * 10;
+    const auraG = ctx.createRadialGradient(cx, y + H_/2, 5, cx, y + H_/2, auraR);
+    auraG.addColorStop(0, 'rgba(220,30,40,0.5)');
+    auraG.addColorStop(0.4, 'rgba(120,0,20,0.35)');
+    auraG.addColorStop(1, 'rgba(40,0,10,0)');
+    ctx.fillStyle = auraG;
+    ctx.beginPath();
+    ctx.arc(cx, y + H_/2, auraR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(cx, bottomY - 2, W_*0.5, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // 脚（太い短脚）
+    ctx.fillStyle = '#6a8030';
+    ctx.fillRect(cx - 30, bottomY - 26, 22, 24);
+    ctx.fillRect(cx + 8, bottomY - 26, 22, 24);
+    // 爪先の白いツメ
+    ctx.fillStyle = '#ffe0a0';
+    for (let s of [-1, 1]) {
+      for (let i = 0; i < 3; i++) {
+        const fx = cx + s * 19 + (i - 1) * 6;
+        ctx.beginPath();
+        ctx.moveTo(fx - 2, bottomY - 6);
+        ctx.lineTo(fx, bottomY);
+        ctx.lineTo(fx + 2, bottomY - 6);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    ctx.strokeStyle = '#3a4a18';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - 30, bottomY - 26, 22, 24);
+    ctx.strokeRect(cx + 8, bottomY - 26, 22, 24);
+
+    // 甲羅（背中）— 描くのは顔より少し後ろに見える
+    ctx.save();
+    // 甲羅の上部のスパイク帯（金色スパイク）
+    ctx.fillStyle = '#ffcb4a';
+    for (let i = 0; i < 6; i++) {
+      const sx = cx - 35 + i * 14;
+      const sy = y + H_*0.22;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + 5, sy - 10);
+      ctx.lineTo(sx + 10, sy);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#8a5a10';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 体（緑のクッパボディ）
+    const body = ctx.createLinearGradient(cx, y + H_*0.2, cx, bottomY - 20);
+    body.addColorStop(0, '#6c9030');
+    body.addColorStop(1, '#4a6818');
+    ctx.fillStyle = body;
+    ctx.fillRect(cx - 32 + breathe * 0.5, y + H_*0.28, 64 - breathe, H_*0.55);
+    // お腹（白黄、クッパのお腹）
+    const belly = ctx.createLinearGradient(cx, y + H_*0.3, cx, bottomY - 30);
+    belly.addColorStop(0, '#f8e080');
+    belly.addColorStop(1, '#c8a040');
+    ctx.fillStyle = belly;
+    ctx.fillRect(cx - 20, y + H_*0.38, 40, H_*0.42);
+    // 腹のスジ（うろこ風）
+    ctx.strokeStyle = '#a07820';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 4; i++) {
+      const ly = y + H_*0.45 + i * 12;
+      ctx.beginPath();
+      ctx.moveTo(cx - 18, ly);
+      ctx.quadraticCurveTo(cx, ly + 3, cx + 18, ly);
+      ctx.stroke();
+    }
+
+    // 腕（太く）＋スパイクリストバンド
+    ctx.fillStyle = '#6c9030';
+    ctx.fillRect(cx - 42, y + H_*0.34, 12, 24);
+    ctx.fillRect(cx + 30, y + H_*0.34, 12, 24);
+    ctx.strokeStyle = '#3a4a18';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - 42, y + H_*0.34, 12, 24);
+    ctx.strokeRect(cx + 30, y + H_*0.34, 12, 24);
+    // 黒リストバンド
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(cx - 44, y + H_*0.5, 16, 7);
+    ctx.fillRect(cx + 28, y + H_*0.5, 16, 7);
+    // スパイク
+    ctx.fillStyle = '#e8e8e8';
+    for (let s of [-1, 1]) {
+      for (let i = 0; i < 3; i++) {
+        const spx = cx + s * (36 + i * 2);
+        const spy = y + H_*0.53;
+        ctx.beginPath();
+        ctx.moveTo(spx - 2, spy);
+        ctx.lineTo(spx, spy - 6);
+        ctx.lineTo(spx + 2, spy);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    // 拳
+    ctx.fillStyle = '#ffe0a0';
+    ctx.beginPath();
+    ctx.arc(cx - 36, y + H_*0.6, 8, 0, Math.PI * 2);
+    ctx.arc(cx + 36, y + H_*0.6, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#8a5010';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 頭（大きな口を持った恐竜顔）
+    const headCx = cx, headCy = y + H_*0.18, headR = 22;
+    // 頭本体
+    const headG = ctx.createRadialGradient(headCx - 4, headCy - 6, 2, headCx, headCy, headR);
+    headG.addColorStop(0, '#8aab40');
+    headG.addColorStop(0.6, '#6a8c28');
+    headG.addColorStop(1, '#3a5010');
+    ctx.fillStyle = headG;
+    ctx.beginPath();
+    ctx.arc(headCx, headCy, headR, 0, Math.PI * 2);
+    ctx.fill();
+    // 口元（黄肌）
+    ctx.fillStyle = '#e8c870';
+    ctx.beginPath();
+    ctx.ellipse(headCx + facing * 4, headCy + 8, 18, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 口（大きな歯）
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(headCx + facing * 4, headCy + 10, 14, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 牙（上下）
+    ctx.fillStyle = '#ffffff';
+    for (let i = -1; i <= 1; i++) {
+      const tx = headCx + facing * 4 + i * 6;
+      ctx.beginPath();
+      ctx.moveTo(tx - 1.5, headCy + 7);
+      ctx.lineTo(tx + 1.5, headCy + 7);
+      ctx.lineTo(tx, headCy + 11);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // 左右の大きな牙
+    ctx.beginPath();
+    ctx.moveTo(headCx + facing * (4 - 11), headCy + 7);
+    ctx.lineTo(headCx + facing * (4 - 11) + 3, headCy + 7);
+    ctx.lineTo(headCx + facing * (4 - 11) + 1, headCy + 14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(headCx + facing * (4 + 11), headCy + 7);
+    ctx.lineTo(headCx + facing * (4 + 11) - 3, headCy + 7);
+    ctx.lineTo(headCx + facing * (4 + 11) - 1, headCy + 14);
+    ctx.closePath();
+    ctx.fill();
+
+    // 眉（太く怒り）
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(headCx - 14, headCy - 5); ctx.lineTo(headCx - 3, headCy - 1);
+    ctx.moveTo(headCx + 3, headCy - 1); ctx.lineTo(headCx + 14, headCy - 5);
+    ctx.stroke();
+    // 目（黒目の下半分ギラリ）
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(headCx - 7, headCy + 1, 4, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(headCx + 7, headCy + 1, 4, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(headCx - 7 + facing, headCy + 2, 2, 2.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(headCx + 7 + facing, headCy + 2, 2, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ツノ（2本のカーブした白い角）
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    // 左角
+    ctx.beginPath();
+    ctx.moveTo(headCx - 16, headCy - 18);
+    ctx.quadraticCurveTo(headCx - 24, headCy - 26, headCx - 18, headCy - 32);
+    ctx.quadraticCurveTo(headCx - 14, headCy - 22, headCx - 10, headCy - 18);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // 右角
+    ctx.beginPath();
+    ctx.moveTo(headCx + 16, headCy - 18);
+    ctx.quadraticCurveTo(headCx + 24, headCy - 26, headCx + 18, headCy - 32);
+    ctx.quadraticCurveTo(headCx + 14, headCy - 22, headCx + 10, headCy - 18);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // 髪（赤いモヒカン）
+    ctx.fillStyle = '#d82020';
+    for (let i = 0; i < 5; i++) {
+      const hx = headCx - 10 + i * 5;
+      ctx.beginPath();
+      ctx.moveTo(hx - 3, headCy - 14);
+      ctx.lineTo(hx, headCy - 24 - Math.abs(i - 2) * 3);
+      ctx.lineTo(hx + 3, headCy - 14);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // 髪のハイライト
+    ctx.fillStyle = '#ff6060';
+    ctx.beginPath();
+    ctx.moveTo(headCx - 6, headCy - 18);
+    ctx.lineTo(headCx - 5, headCy - 23);
+    ctx.lineTo(headCx - 4, headCy - 18);
+    ctx.closePath();
+    ctx.fill();
+
+    // 炎チャージ（次の炎ブレスが近い時）
+    if (b.fireCD < 30 && !b.defeated) {
+      const glow = ctx.createRadialGradient(headCx + facing * 14, headCy + 10, 1, headCx + facing * 14, headCy + 10, 14);
+      glow.addColorStop(0, `rgba(255,220,80,${(30 - b.fireCD) / 30})`);
+      glow.addColorStop(1, 'rgba(255,100,0,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(headCx + facing * 14, headCy + 10, 14, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
   function drawBossHUD() {
     if (!boss || boss.defeated || !boss.engaged) return;
     const barW = W*0.6, barX = W*0.2, barY = 24;
