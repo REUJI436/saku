@@ -949,19 +949,24 @@
       }
       if (saku.ultActive.type === 'slash') {
         const t = saku.ultActive.timer;
-        // t: 110→75 ジャンプ上昇中（通常物理）
-        // t: 75→35 空中停止＋斬撃波スポーン（3波）
-        // t: 35→0  落下（通常物理）
-        if (t <= 75 && t > 35) {
-          // 空中停止
+        // t: 110→85 小ジャンプ＋前方突進
+        // t: 85→0  斬撃波を 85, 70, 55 F でスポーン、さくは空中浮遊＆前進
+        const fx = saku.ultActive;
+        if (t <= 85) {
+          // 空中で前方突進（物理無効化・ジャンプ斬りっぽく前にすべる）
           saku.vy = 0;
-          // 斬撃波を 75, 60, 45 フレームでスポーン
-          const spawnFrames = [75, 60, 45];
+          saku.vx = fx.dashX;
+          const spawnFrames = [85, 70, 55];
           for (const f of spawnFrames) {
             if (t === f) spawnSlashWave();
           }
         }
-        updateSlashWaves(saku.ultActive);
+        // 40F 以降はゆっくり降下させる
+        if (t < 40) {
+          saku.vy = 4;
+          saku.vx = fx.dashX * 0.3;
+        }
+        updateSlashWaves(fx);
       }
       if (saku.ultActive.timer <= 0) saku.ultActive = null;
     }
@@ -1594,29 +1599,36 @@
       if (bx >= x1 && bx <= x2) damageBoss(2);
     }
   }
-  // 空中連斬：高く跳ね上がって空中停止、前方に3連の斬撃波を飛ばす
+  // ジャンプ斬り: 小ジャンプ→空中で素早く前方に弾丸突進→地面近くで3連の横薙ぎ斬撃波
+  // 地上の敵をしっかり薙ぎ払う
   function activateSlash() {
     saku.ultActive = {
       type: 'slash',
-      timer: 110,            // 全体 110F
-      phase: 'jump',
+      timer: 110,
+      phase: 'rise',
       slashWaves: [],
-      spawnedAt: [],         // スポーン済みフレーム
+      groundY: saku.y + saku.h,   // 発動時点の足元を記憶
+      dashX: saku.facing * 5,     // 前方突進スピード
+      hitBoss: false,
     };
-    saku.vy = -17;
+    saku.vy = -11;
+    saku.vx = saku.facing * 5;
     beep(520, 0.08, 'triangle', 0.15);
-    setTimeout(()=>beep(1040, 0.12, 'triangle', 0.15), 100);
+    setTimeout(()=>beep(780, 0.08, 'triangle', 0.14), 90);
+    setTimeout(()=>beep(1040, 0.12, 'triangle', 0.15), 180);
   }
   function spawnSlashWave() {
     if (!saku.ultActive) return;
+    // 斬撃波の y は「発動時の地面Y - 20」（地上の敵をしっかりヒット）
+    const groundY = saku.ultActive.groundY;
     saku.ultActive.slashWaves.push({
-      x: saku.x + saku.w/2 + saku.facing * 20,
-      y: saku.y + 8,
-      vx: saku.facing * 9,
-      life: 50,
-      maxLife: 50,
+      x: saku.x + saku.w/2 + saku.facing * 18,
+      y: groundY - 20,
+      vx: saku.facing * 7,
+      life: 60,
+      maxLife: 60,
       hit: new Set(),
-      angle: (Math.random() - 0.5) * 0.4,  // 微妙に傾ける
+      angle: (Math.random() - 0.5) * 0.3,
     });
     beep(900 + Math.random() * 200, 0.09, 'triangle', 0.15);
   }
@@ -1624,11 +1636,12 @@
     for (const w of fx.slashWaves) {
       w.x += w.vx;
       w.life--;
-      // 敵との当たり
+      // 敵との当たり（縦広めのヒットボックスで地上の敵を確実に捕らえる）
       for (const en of enemies) {
         if (!en.alive || w.hit.has(en)) continue;
         const ex = en.x + 14, ey = en.y + 14;
-        if (Math.abs(ex - w.x) < 34 && Math.abs(ey - w.y) < 42) {
+        // 横 38px × 縦 50px
+        if (Math.abs(ex - w.x) < 38 && Math.abs(ey - w.y) < 50) {
           w.hit.add(en);
           en.alive = false;
           en.squashTimer = 50;
@@ -1640,12 +1653,15 @@
           sfxStomp();
         }
       }
-      // ボス（hurtTimer中は無敵だが、別の斬撃波はノーヒットのまま進む）
-      if (boss && !boss.defeated && !w.hit.has(boss)) {
+      // ボス
+      if (boss && !boss.defeated && !w.hit.has(boss) && !fx.hitBoss) {
         const bx = boss.x + boss.w/2, by = boss.y + boss.h/2;
-        if (Math.abs(bx - w.x) < 40 && Math.abs(by - w.y) < 55) {
+        if (Math.abs(bx - w.x) < 50 && Math.abs(by - w.y) < 60) {
           w.hit.add(boss);
-          if (!boss.hurtTimer) damageBoss(2);
+          if (!boss.hurtTimer) {
+            damageBoss(2);
+            fx.hitBoss = true;  // 1回の発動で1ヒットに制限（複数波で重複させない）
+          }
         }
       }
     }
