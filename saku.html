@@ -115,6 +115,19 @@
     display: inline-block;
   }
   #portalBtn:active { transform: translateY(1px); opacity: 0.85; }
+  #pauseBtn, #muteBtn {
+    background: linear-gradient(to bottom, #806040, #403020);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #c0a070;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  #pauseBtn:active, #muteBtn:active { transform: translateY(1px); opacity: 0.85; }
 
   @media (max-width: 720px) {
     html, body { height: 100%; height: 100dvh; overflow: hidden; }
@@ -150,6 +163,8 @@
 
 <div id="hud">
   <a id="portalBtn" href="https://reuji436.github.io/saku/">🏠</a>
+  <button id="pauseBtn" title="ポーズ">⏸</button>
+  <button id="muteBtn" title="ミュート">🔊</button>
   <div class="item">🌸<span id="stage">1-1</span></div>
   <div class="item">🎒<span id="score">0</span></div>
   <div class="item">🍣<span id="coins">0</span></div>
@@ -167,6 +182,7 @@
     <button data-key="ArrowRight" data-hold>▶</button>
   </div>
   <div class="right">
+    <button data-key="KeyV" class="ultswitch" style="background: linear-gradient(to bottom, #6080c0, #304070); border-color: #80a0e0; min-width:40px; min-height:40px; font-size:10px; line-height:1; display:none;">技<br>切替</button>
     <button data-key="KeyC" data-hold class="ult" style="background: linear-gradient(to bottom, #d048a0, #70185a); border-color: #ff80c0; min-width:56px; min-height:56px; font-size:12px; line-height:1;"><ruby>必殺<rt style="font-size:8px;">ひっさつ</rt></ruby></button>
     <button data-key="ShiftLeft" data-hold>ダッシュ</button>
     <button data-key="Space" data-hold class="jump">ジャンプ</button>
@@ -269,9 +285,97 @@
       pipe: '#6030a0', pipeLight: '#a060e0', pipeDark: '#20104a',
       stair: '#30186a', stairDark: '#10041a',
     },
+    // ====== ダークコース・テーマ ======
+    graveyard: {  // W11 星の墓場
+      sky: ['#0a0020', '#2a0850'], hillColor: '#2a1040',
+      groundTop: '#1a0828', grass: '#5030a0', groundBot: '#0a0410', groundDetail: '#301858',
+      brick: '#302040', brickDark: '#100818',
+      pipe: '#403058', pipeLight: '#7060a0', pipeDark: '#1a0828',
+      stair: '#1a1028', stairDark: '#080410',
+      dark: true,
+    },
+    bloodlake: {  // W12 血の湖沼
+      sky: ['#200000', '#500808'], hillColor: '#401010',
+      groundTop: '#2a0808', grass: '#a01818', groundBot: '#100000', groundDetail: '#401010',
+      brick: '#502020', brickDark: '#200808',
+      pipe: '#801818', pipeLight: '#c04040', pipeDark: '#300808',
+      stair: '#300808', stairDark: '#100404',
+      dark: true,
+    },
+    twisted: {  // W13 歪んだ森
+      sky: ['#102018', '#304030'], hillColor: '#1a2a18',
+      groundTop: '#0a1408', grass: '#305028', groundBot: '#050a04', groundDetail: '#1a2818',
+      brick: '#2a3820', brickDark: '#101810',
+      pipe: '#304830', pipeLight: '#507850', pipeDark: '#101810',
+      stair: '#202818', stairDark: '#080c08',
+      dark: true,
+    },
+    hell: {  // W14 地獄熔岩
+      sky: ['#1a0000', '#600810'], hillColor: '#300404',
+      groundTop: '#200000', grass: '#a02010', groundBot: '#080000', groundDetail: '#400808',
+      brick: '#502010', brickDark: '#200000',
+      pipe: '#a03020', pipeLight: '#e06040', pipeDark: '#401008',
+      stair: '#200808', stairDark: '#080000',
+      dark: true,
+    },
+    icetower: {  // W15 氷塔廃墟
+      sky: ['#000828', '#102048'], hillColor: '#1a2050',
+      groundTop: '#202848', grass: '#a0b0d0', groundBot: '#080818', groundDetail: '#303858',
+      brick: '#384060', brickDark: '#181830',
+      pipe: '#5068a0', pipeLight: '#8098c8', pipeDark: '#203050',
+      stair: '#304058', stairDark: '#101828',
+      dark: true,
+    },
+    void: {  // W16 虚無の砂漠
+      sky: ['#101018', '#303038'], hillColor: '#202028',
+      groundTop: '#181820', grass: '#504860', groundBot: '#080810', groundDetail: '#2a2a38',
+      brick: '#303040', brickDark: '#101018',
+      pipe: '#404058', pipeLight: '#707080', pipeDark: '#181820',
+      stair: '#1a1a22', stairDark: '#0a0a10',
+      dark: true,
+    },
+    gears: {  // W17 歯車廃都
+      sky: ['#1a1008', '#402010'], hillColor: '#2a1808',
+      groundTop: '#1a1008', grass: '#806048', groundBot: '#0a0804', groundDetail: '#382010',
+      brick: '#403020', brickDark: '#1a1008',
+      pipe: '#806040', pipeLight: '#b09068', pipeDark: '#2a1a0a',
+      stair: '#2a1a08', stairDark: '#0a0604',
+      dark: true,
+    },
+    poison: {  // W18 毒の沼地
+      sky: ['#100818', '#380858'], hillColor: '#28104a',
+      groundTop: '#180828', grass: '#6020a8', groundBot: '#080410', groundDetail: '#302050',
+      brick: '#3a2050', brickDark: '#1a0828',
+      pipe: '#6028a0', pipeLight: '#9060c8', pipeDark: '#2a1048',
+      stair: '#201040', stairDark: '#080418',
+      dark: true,
+    },
+    fallenheaven: {  // W19 天空祭壇
+      sky: ['#281828', '#504858'], hillColor: '#383050',
+      groundTop: '#302830', grass: '#a090a8', groundBot: '#181018', groundDetail: '#483850',
+      brick: '#584868', brickDark: '#201828',
+      pipe: '#806090', pipeLight: '#b090c0', pipeDark: '#302040',
+      stair: '#382838', stairDark: '#181018',
+      dark: true,
+    },
+    throne: {  // W20 闇の王座
+      sky: ['#000000', '#100010'], hillColor: '#080008',
+      groundTop: '#080008', grass: '#400040', groundBot: '#000000', groundDetail: '#200020',
+      brick: '#200020', brickDark: '#080008',
+      pipe: '#500060', pipeLight: '#8000a0', pipeDark: '#180020',
+      stair: '#180018', stairDark: '#080008',
+      dark: true,
+    },
   };
-  const WORLD_THEMES = ['grass','cave','sky','water','desert','ice','fire','forest','heaven','space'];
-  const WORLD_NAMES = ['はらっぱ','どうくつ','そらのしろ','うみのそこ','さばく','ゆきのくに','まぐまやま','もり','てんごく','うちゅう'];
+  const WORLD_THEMES = [
+    'grass','cave','sky','water','desert','ice','fire','forest','heaven','space',
+    'graveyard','bloodlake','twisted','hell','icetower','void','gears','poison','fallenheaven','throne',
+  ];
+  const WORLD_NAMES = [
+    'はらっぱ','どうくつ','そらのしろ','うみのそこ','さばく','ゆきのくに','まぐまやま','もり','てんごく','うちゅう',
+    '星の墓場','血の湖沼','歪んだ森','地獄熔岩','氷塔廃墟','虚無の砂漠','歯車廃都','毒の沼地','堕ちた祭壇','闇の王座',
+  ];
+  const DARK_WORLD_START = 10;  // worldIdx >= 10 はダークコース
 
   // ====== ステージ自動生成（10ワールド × 5ステージ） ======
   // 各ワールドの5番目がボスステージ、各ステージの中間にチェックポイント 'Y'
@@ -289,10 +393,13 @@
     row[idx] = ch;
   }
   function generateStage(worldIdx, stageIdx) {
+    const isDark = worldIdx >= DARK_WORLD_START;
+    const stagesPerWorld = isDark ? 10 : 5;
     const rand = rngFrom(worldIdx * 1000 + stageIdx * 17 + 1);
     const randRange = (a, b) => a + Math.floor(rand() * (b - a + 1));
-    const difficulty = worldIdx * 0.8 + stageIdx * 0.5;
-    const isBoss = (stageIdx === 4);
+    // ダークコースは基礎難度を大きく上げる
+    const difficulty = worldIdx * 0.8 + stageIdx * 0.5 + (isDark ? 6 : 0);
+    const isBoss = (stageIdx === stagesPerWorld - 1);
     // 長さを大きく変化させる（全体的に長め）
     const baseWidth = isBoss ? 150 : 200;
     const width = baseWidth + Math.floor(difficulty * 12) + randRange(0, 30);
@@ -343,8 +450,8 @@
     }
     // 空飛ぶおじさん（ワールド3-5を超えると出現＝必殺技を習得したあたりから）
     // ステージ index: 0-4(W1), 5-9(W2), 10-14(W3:boss@14), 15+ から登場
-    const gStageIdx = worldIdx * 5 + stageIdx;
-    if (gStageIdx >= 15) {  // 4-1（index 15）から
+    const gStageIdx = worldIdx * 5 + stageIdx;  // 通常コース内の目安
+    if (gStageIdx >= 15 || isDark) {  // 4-1（index 15）から。ダーク世界では常時出現
       const toriCount = 2 + Math.floor((gStageIdx - 15) * 0.3);
       for (let i = 0; i < toriCount; i++) {
         const tx = 40 + Math.floor(rand() * (width - 80));
@@ -401,6 +508,7 @@
   }
   function generateAllStages() {
     const stages = [];
+    // 通常コース：10ワールド × 5ステージ = 50ステージ
     for (let w = 0; w < 10; w++) {
       for (let s = 0; s < 5; s++) {
         const label = `${w+1}-${s+1}`;
@@ -410,11 +518,29 @@
           name: isBoss ? `${WORLD_NAMES[w]}のボス` : WORLD_NAMES[w],
           theme: WORLD_THEMES[w],
           level: generateStage(w, s),
+          dark: false,
+        });
+      }
+    }
+    // ダークコース：10ワールド × 10ステージ = 100ステージ
+    for (let w = 10; w < 20; w++) {
+      for (let s = 0; s < 10; s++) {
+        const label = `${w+1}-${s+1}`;
+        const isBoss = s === 9;
+        stages.push({
+          label,
+          name: isBoss ? `${WORLD_NAMES[w]}のボス` : WORLD_NAMES[w],
+          theme: WORLD_THEMES[w],
+          level: generateStage(w, s),
+          dark: true,
         });
       }
     }
     return stages;
   }
+  const NORMAL_COURSE_LAST = 49;  // 10-5 のインデックス
+  const DARK_COURSE_START = 50;   // 11-1 のインデックス
+  const DARK_COURSE_LAST = 149;   // 20-10 のインデックス
   const STAGES = generateAllStages();
 
 
@@ -440,7 +566,7 @@
     x: 60, y: 300, w: 24, h: 30,
     vx: 0, vy: 0, onGround: false, facing: 1,
     running: false, anim: 0,
-    invuln: 0, starTimer: 0, swordTimer: 0,
+    invuln: 0, starTimer: 0, swordTimer: 0, ultraStarTimer: 0,
     dead: false, jumpHeld: false,
     hp: 8, maxHp: 8,
     ultGauge: 0, maxUlt: 100,
@@ -481,6 +607,137 @@
       ],
       unlock: 'slash',
     },
+    'final-victory': {
+      lines: [
+        { speaker: 'boss', text: 'ぐ…おのれ…まさか…この[俺|おれ]が…' },
+        { speaker: 'boss', text: '[闇|やみ]の[帝王|ていおう]が…[敗|やぶ]れるとは…！' },
+        { speaker: 'saku', text: 'とーとの[魂|たましい]が、[僕|ぼく]の[中|なか]にいたんだ…！' },
+        { speaker: 'saku', text: 'お[前|まえ]の[暗|くら]い[野望|やぼう]は、ここで[終|お]わりだ！' },
+        { speaker: 'boss', text: 'グワアアアアアッ！！' },
+        { speaker: 'saku', text: 'とーと…[見|み]ていてくれた？' },
+        { speaker: 'toto', text: '（[空|そら]から）よくやった、さく…[誇|ほこ]らしいぞ…' },
+        { speaker: 'saku', text: 'とーと…！ありがとう…！' },
+        { speaker: 'saku', text: '[平和|へいわ]が、[戻|もど]ってきたんだ…' },
+      ],
+      unlock: null,
+    },
+    // ダークコース プロローグ（10-5 勝利後、すぐに発動）
+    'prologue-dark': {
+      lines: [
+        { speaker: 'saku', text: '[家|いえ]に[帰|かえ]ってきた…やっと[平和|へいわ]になったんだ…' },
+        { speaker: 'kurumi', text: 'おにいちゃーん！おかえりー！' },
+        { speaker: 'saku', text: 'くるみ…！ただいま…[会|あ]いたかった…' },
+        { speaker: 'kurumi', text: 'えへへ、だいすきーっ！' },
+        { speaker: 'nazo', text: '――[愚|おろ]かな[子|こ]よ…' },
+        { speaker: 'nazo', text: '[闇|やみ]の[帝王|ていおう]は、ただの[手下|てした]にすぎぬ…' },
+        { speaker: 'nazo', text: '[真|しん]の[黒幕|くろまく]は、お[前|まえ]の[最愛|さいあい]の[者|もの]の[中|なか]にいる…' },
+        { speaker: 'kurumi', text: 'きゃあっ！！おにいちゃん、たすけてぇっ！！' },
+        { speaker: 'saku', text: 'くるみィィィッ！！' },
+        { speaker: 'saku', text: '[待|ま]ってろ、くるみ！[絶対|ぜったい][助|たす]けに[行|い]くからな！' },
+      ],
+      unlock: null,
+    },
+    // ワールド11クリア後：檻の中のくるみ
+    'kurumi-cage-11': {
+      lines: [
+        { speaker: 'kurumi', text: '（[檻|おり]の[中|なか]で[歌|うた]を[口|くち]ずさんでいる）' },
+        { speaker: 'kurumi', text: 'おにいちゃん…まってるよ…' },
+        { speaker: 'saku', text: 'くるみ…！[必|かなら]ず[迎|むか]えに[行|い]く！' },
+      ],
+      unlock: null,
+    },
+    'kurumi-cage-12': {
+      lines: [
+        { speaker: 'kurumi', text: 'おにいちゃん…さむいよ…' },
+        { speaker: 'saku', text: 'もうすぐだ…！[絶対|ぜったい][助|たす]ける…！' },
+      ],
+      unlock: null,
+    },
+    'kurumi-cage-13': {
+      lines: [
+        { speaker: 'kurumi', text: 'おにいちゃん、おそいよぉ…' },
+        { speaker: 'saku', text: 'ごめん、くるみ…[今|いま][行|い]く…！' },
+      ],
+      unlock: null,
+    },
+    'kurumi-cage-14': {
+      lines: [
+        { speaker: 'nazo', text: 'ククク…[妹|いもうと]はもう[我|われ]らのものだ…' },
+        { speaker: 'saku', text: '[黙|だま]れ！くるみを[返|かえ]せっ！' },
+      ],
+      unlock: null,
+    },
+    'kurumi-cage-15': {
+      lines: [
+        { speaker: 'kurumi', text: 'おにいちゃん…がんばって…' },
+        { speaker: 'saku', text: 'くるみの[声|こえ]が[聞|き]こえる…！まだ[間|ま]に[合|あ]う！' },
+      ],
+      unlock: null,
+    },
+    'kurumi-cage-16': {
+      lines: [
+        { speaker: 'nazo', text: 'なぜ、[来|く]る…？[戻|もど]れぬぞ、もう…' },
+        { speaker: 'saku', text: '[戻|もど]らない。くるみを[取|と]り[戻|もど]すまでは！' },
+      ],
+      unlock: null,
+    },
+    'kurumi-cage-17': {
+      lines: [
+        { speaker: 'kurumi', text: '（[意識|いしき]が[薄|うす]れかけている）おにいちゃん…' },
+        { speaker: 'saku', text: 'くるみ…！[待|ま]ってろ、すぐに[行|い]く！' },
+      ],
+      unlock: null,
+    },
+    'kurumi-cage-18': {
+      lines: [
+        { speaker: 'nazo', text: 'そろそろ[妹|いもうと]の[魂|たましい]が[闇|やみ]に[染|そ]まる…' },
+        { speaker: 'saku', text: 'やめろッ！！くるみに[触|ふ]れるな！！' },
+      ],
+      unlock: null,
+    },
+    'kurumi-cage-19': {
+      lines: [
+        { speaker: 'nazo', text: 'あと[一歩|いっぽ]だ、さく…だがその[一歩|いっぽ]は――[絶望|ぜつぼう]だ' },
+        { speaker: 'saku', text: '[絶望|ぜつぼう]？[俺|おれ]は、くるみを[助|たす]けるためなら――[何|なに]でもやる！' },
+      ],
+      unlock: null,
+    },
+    // 20-10（闇の王座）で闇落ちとーと戦前
+    'dark-toto-reveal': {
+      lines: [
+        { speaker: 'nazo', text: 'さく…ついに、ここまで[来|き]たか…' },
+        { speaker: 'nazo', text: 'だが、お[前|まえ]が[会|あ]うのは――' },
+        { speaker: 'nazo', text: '（フードを[脱|ぬ]ぐ）' },
+        { speaker: 'toto', text: 'さく…[俺|おれ]だ。お[前|まえ]の[父|ちち]だ…' },
+        { speaker: 'saku', text: 'と、とーと…！？なんで、こんな[姿|すがた]に…！？' },
+        { speaker: 'toto', text: '[闇|やみ]の[帝王|ていおう]を[封|ふう]じるため、[自分|じぶん]の[魂|たましい]を[差|さ]し[出|だ]した…' },
+        { speaker: 'toto', text: 'だが[長|なが]い[年月|としつき]で、[俺|おれ]の[魂|たましい]は[闇|やみ]に[呑|の]まれた…' },
+        { speaker: 'toto', text: '[今|いま]の[俺|おれ]は――[闇|やみ]の[王|おう]だ。' },
+        { speaker: 'saku', text: 'とーと…！[目|め]を[覚|さ]まして！くるみを[返|かえ]して！' },
+        { speaker: 'toto', text: '[俺|おれ]はもう、お[前|まえ]の[父|ちち]ではない…' },
+        { speaker: 'toto', text: 'さく――お[前|まえ]を、ここで[殺|ころ]す。' },
+      ],
+      unlock: null,
+    },
+    // 真エンディング（20-10 撃破後）
+    'true-ending': {
+      lines: [
+        { speaker: 'toto', text: 'ぐ…さく…[お前|おまえ]の[拳|こぶし]が…[俺|おれ]を…[呼|よ]び[戻|もど]してくれた…' },
+        { speaker: 'saku', text: 'とーと…！' },
+        { speaker: 'toto', text: '（[黒|くろ]い[鎧|よろい]が[砕|くだ]け、[本物|ほんもの]のとーとが[現|あらわ]れる）' },
+        { speaker: 'toto', text: 'さく…まさか、お[前|まえ]がここまで[強|つよ]くなっていたとは…' },
+        { speaker: 'saku', text: 'とーと…！[死|し]んでなかったんだね…！' },
+        { speaker: 'kurumi', text: '（[檻|おり]が[消|き]えて、くるみが[駆|か]け[寄|よ]る）' },
+        { speaker: 'kurumi', text: 'おにいちゃーん！とーとぉー！' },
+        { speaker: 'saku', text: 'くるみ…！[無事|ぶじ]でよかった…！' },
+        { speaker: 'toto', text: 'さく、くるみ…[本当|ほんとう]にすまなかった…' },
+        { speaker: 'saku', text: 'とーと、[帰|かえ]ろう。[三人|さんにん]で。' },
+        { speaker: 'toto', text: 'ああ――[家|いえ]に[帰|かえ]ろう。' },
+        { speaker: 'saku', text: '（[桜並木|さくらなみき]、[夕焼|ゆうや]け、[家族|かぞく][三人|さんにん]の[影|かげ]）' },
+        { speaker: 'saku', text: 'これからは、[本当|ほんとう]にずっと[一緒|いっしょ]だ。' },
+      ],
+      unlock: null,
+    },
     'final-reveal': {
       lines: [
         { speaker: 'nazo', text: 'さく…ついに、ここまで[来|き]たな…' },
@@ -508,7 +765,76 @@
 
   // ====== ゲーム状態 ======
   let cameraX = 0;
+  let screenShake = 0;  // 画面揺れ用タイマー
+  function addScreenShake(amount) { screenShake = Math.max(screenShake, amount); }
   let score = 0, coinCount = 0, lives = 3, timeLeft = 300, timeTicker = 0;
+  // パーティクル（粉塵・爆発など）
+  const particles = [];
+  function spawnDust(x, y, count) {
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: x, y: y,
+        vx: (Math.random() - 0.5) * 4,
+        vy: -Math.random() * 2.5 - 0.5,
+        life: 22 + Math.random() * 10,
+        maxLife: 30,
+        color: '#d8c8a8',
+        size: 2 + Math.random() * 2,
+        gravity: 0.15,
+      });
+    }
+  }
+  function spawnPop(x, y, color) {
+    // 敵踏み潰し用のポップ
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(a) * 3,
+        vy: Math.sin(a) * 3 - 2,
+        life: 28, maxLife: 28,
+        color: color || '#ffcc40',
+        size: 2.5,
+        gravity: 0.2,
+      });
+    }
+  }
+  function updateParticles() {
+    // パーティクル数上限（パフォーマンス保護）
+    if (particles.length > 300) particles.splice(0, particles.length - 300);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.life--;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+  }
+  function drawParticles() {
+    for (const p of particles) {
+      const alpha = p.life / p.maxLife;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x - cameraX, p.y, p.size * alpha, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  // コンボシステム
+  let comboCount = 0, comboTimer = 0, comboMax = 0;
+  const COMBO_WINDOW = 120;  // 2秒以内に倒せばコンボ継続
+  function addCombo() {
+    comboCount++;
+    comboTimer = COMBO_WINDOW;
+    if (comboCount > comboMax) comboMax = comboCount;
+  }
+  function comboBonus() {
+    // コンボ数に応じたスコア倍率（最大4倍）
+    return Math.min(4, 1 + comboCount * 0.15);
+  }
   let state = 'title';
   let stateTimer = 0;
   let titleFrame = 0;
@@ -528,6 +854,9 @@
     coins = []; enemies = []; items = [];
     boss = null; flagPos = null;
     stageCheckpoint = null;
+    particles.length = 0;
+    // コンボ回数はリセット、ベスト記録は通し（ゲーム単位で累計）
+    comboCount = 0; comboTimer = 0;
 
     for (let r = 0; r < LEVEL_ROWS; r++) {
       const line = levelStr[r];
@@ -541,10 +870,36 @@
           case 'P': tiles[r][c] = T_PIPE_TOP; break;
           case 'p': tiles[r][c] = T_PIPE_BODY; break;
           case '#': tiles[r][c] = T_STAIR; break;
-          case 'C': coins.push({ x: px + TILE/2, y: py + TILE/2, taken: false, anim: Math.random()*Math.PI*2, type: SUSHI_TYPES[Math.floor(Math.random()*SUSHI_TYPES.length)] }); break;
-          case 'E': enemies.push({ type: 'kuri', x: px, y: py + 4, vx: -0.8, vy: 0, alive: true, squashTimer: 0 }); break;
-          case 'T': enemies.push({ type: 'kame', x: px, y: py + 4, vx: -0.6, vy: 0, alive: true, squashTimer: 0 }); break;
-          case 'H': enemies.push({ type: 'tori', x: px, y: py, baseY: py, vx: -1.2, vy: 0, alive: true, squashTimer: 0, anim: 0 }); break;
+          case 'C': {
+            // 5%の確率で虹寿司（高得点）
+            const isRainbow = Math.random() < 0.05;
+            coins.push({
+              x: px + TILE/2, y: py + TILE/2,
+              taken: false, anim: Math.random()*Math.PI*2,
+              type: isRainbow ? 'rainbow' : SUSHI_TYPES[Math.floor(Math.random()*SUSHI_TYPES.length)],
+              rainbow: isRainbow,
+            });
+            break;
+          }
+          case 'E': {
+            // ワールド毎に速度アップ
+            const w = Math.floor(idx / 5);
+            const speedBoost = 1 + w * 0.08;  // W10で+80%
+            enemies.push({ type: 'kuri', x: px, y: py + 4, vx: -0.8 * speedBoost, vy: 0, alive: true, squashTimer: 0 });
+            break;
+          }
+          case 'T': {
+            const w = Math.floor(idx / 5);
+            const speedBoost = 1 + w * 0.1;   // W10で+100%
+            enemies.push({ type: 'kame', x: px, y: py + 4, vx: -0.6 * speedBoost, vy: 0, alive: true, squashTimer: 0 });
+            break;
+          }
+          case 'H': {
+            const w = Math.floor(idx / 5);
+            const speedBoost = 1 + w * 0.1;
+            enemies.push({ type: 'tori', x: px, y: py, baseY: py, vx: -1.2 * speedBoost, vy: 0, alive: true, squashTimer: 0, anim: 0 });
+            break;
+          }
           case 'F':
             tiles[r][c] = T_FLAG;
             if (!flagPos) flagPos = { x: px + TILE/2, y: py };
@@ -556,22 +911,33 @@
             stageCheckpoint = { x: px + TILE/2, y: py, activated: false };
             break;
           case '@': {
-            const isFinal = STAGES[idx].label === '10-5';
+            const stLabel = STAGES[idx].label;
+            const isFinal = (stLabel === '10-5' || stLabel === '20-10');
+            const isDarkToto = (stLabel === '20-10');  // 真ラスボス：闇落ちとーと
+            const isDarkBoss = STAGES[idx].dark && !isFinal;  // 11-10〜19-10
+            // ダークワールドボスは通常ボスより強め
+            const bossHp = isDarkToto ? 20 : (isFinal ? 13 : (isDarkBoss ? 8 : 5));
             boss = {
               x: px - (isFinal ? 30 : 10),
               y: py - (isFinal ? 70 : 40),
               w: isFinal ? 90 : 52,
               h: isFinal ? 108 : 72,
               vx: 0, vy: 0,
-              hp: isFinal ? 9 : 3,
-              maxHp: isFinal ? 9 : 3,
+              hp: bossHp,
+              maxHp: bossHp,
               onGround: false,
-              attackCD: 160, hurtTimer: 0,
-              fireCD: 180,          // ラスボス用・炎ブレスCD
+              attackCD: 140, hurtTimer: 0,
+              fireCD: 140,          // ラスボス用・炎ブレスCD
               fireballs: [],        // 炎玉
+              shockwaves: [],       // 着地衝撃波
+              wasAirborne: false,   // 空中→着地検出用
+              dashCD: 220,          // ラスボス用・突進攻撃CD
               defeated: false, defeatTimer: 0, anim: 0,
               engaged: false, triggerX: px - 260,
               isFinal: isFinal,
+              isDarkToto: isDarkToto,
+              isDarkBoss: isDarkBoss,
+              darkWorldIdx: STAGES[idx].dark ? parseInt(stLabel.split('-')[0]) - 1 : -1,
             };
             break;
           }
@@ -593,12 +959,14 @@
     saku.vx = 0; saku.vy = 0;
     saku.dead = false;
     saku.invuln = 60;
-    saku.starTimer = 0; saku.swordTimer = 0;
+    saku.starTimer = 0; saku.swordTimer = 0; saku.ultraStarTimer = 0;
     saku.hp = saku.maxHp;
     cameraX = Math.max(0, saku.x - W/2 + saku.w/2);
     stageEl.textContent = stage.label;
     timeLeft = 300;
     timeEl.textContent = timeLeft;
+    timeEl.style.color = '';
+    timeEl.style.fontWeight = '';
   }
 
   // ====== 入力 ======
@@ -626,6 +994,20 @@
       if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyZ') { confirmTitleMenu(); e.preventDefault(); return; }
       return;
     }
+    // ポーズトグル
+    if ((state === 'playing' || state === 'paused') && !e.repeat) {
+      if (e.code === 'Escape' || e.code === 'KeyP') {
+        togglePause();
+        e.preventDefault();
+        return;
+      }
+    }
+    // ポーズ中のみTキーでタイトルへ
+    if (state === 'paused' && !e.repeat && e.code === 'KeyT') {
+      returnToTitle();
+      e.preventDefault();
+      return;
+    }
     // 必殺技（playing中のみ）
     if (state === 'playing' && !e.repeat) {
       if (e.code === 'KeyC' || e.code === 'KeyX') { tryActivateUlt(); e.preventDefault(); return; }
@@ -633,6 +1015,28 @@
     }
   });
   document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+  // ポーズボタン
+  const pauseBtn = document.getElementById('pauseBtn');
+  if (pauseBtn) {
+    pauseBtn.addEventListener('click', () => {
+      if (state === 'playing' || state === 'paused') {
+        togglePause();
+      }
+    });
+  }
+  // ミュートボタン
+  const muteBtn = document.getElementById('muteBtn');
+  if (muteBtn) {
+    muteBtn.addEventListener('click', () => {
+      audioMuted = !audioMuted;
+      muteBtn.textContent = audioMuted ? '🔇' : '🔊';
+      if (audioCtx) {
+        if (audioMuted) audioCtx.suspend();
+        else audioCtx.resume();
+      }
+    });
+  }
 
   const pad = document.getElementById('pad');
   for (const btn of pad.querySelectorAll('button')) {
@@ -722,9 +1126,10 @@
 
   // ====== 音声 ======
   let audioCtx = null;
+  let audioMuted = false;
   function ensureAudio() {
     if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} }
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx && audioCtx.state === 'suspended' && !audioMuted) audioCtx.resume();
   }
   function beep(freq, dur = 0.1, type = 'square', gain = 0.12) {
     try {
@@ -741,14 +1146,15 @@
       o.start(now); o.stop(now + dur + 0.02);
     } catch(e) {}
   }
-  function sfxCoin() { beep(988, 0.06, 'square', 0.1); setTimeout(()=>beep(1319, 0.15, 'square', 0.1), 60); }
+  function sfxCoin() { beep(988, 0.06, 'square', 0.08); setTimeout(()=>beep(1319, 0.1, 'square', 0.08), 50); setTimeout(()=>beep(1568, 0.1, 'square', 0.06), 100); }
   function sfxJump() { beep(440, 0.07, 'square', 0.1); setTimeout(()=>beep(660, 0.1, 'square', 0.08), 70); }
-  function sfxStomp() { beep(200, 0.1, 'square', 0.14); }
+  function sfxStomp() { beep(200, 0.1, 'square', 0.14); setTimeout(()=>beep(150, 0.08, 'square', 0.1), 40); }
   function sfxHurt() { beep(200, 0.1, 'sawtooth', 0.2); setTimeout(()=>beep(120, 0.3, 'sawtooth', 0.2), 100); }
   function sfxGoal() {
     const n = [523,659,784,1047,1319];
     n.forEach((f, i) => setTimeout(() => beep(f, 0.18, 'square', 0.13), i*100));
   }
+  function sfxTimeUp() { beep(880, 0.15, 'triangle', 0.15); setTimeout(()=>beep(440, 0.25, 'triangle', 0.15), 150); }
   function sfxStar() {
     const n = [523,659,784,988,1175,1397,1568];
     n.forEach((f, i) => setTimeout(() => beep(f, 0.12, 'square', 0.12), i*50));
@@ -758,6 +1164,7 @@
     setTimeout(() => beep(1200, 0.12, 'sawtooth', 0.15), 80);
     setTimeout(() => beep(1600, 0.18, 'triangle', 0.12), 170);
   }
+  function sfxRoar2() { beep(80, 0.4, 'sawtooth', 0.2); }
   function sfxBossRoar() {
     try {
       ensureAudio();
@@ -793,17 +1200,36 @@
   // BGM
   let bgmTimer = null;
   const BGM_THEMES = {
-    grass: { bpm: 140, mel: [523,659,784,1047,988,784,880,0,784,659,698,784,523,0,587,0,659,784,988,1175,1047,784,0,659,587,659,784,988,523,0,0,0] },
-    cave:  { bpm: 110, mel: [262,330,392,330,440,330,262,0,294,349,392,349,466,349,294,0,262,294,330,349,392,330,262,0,196,262,294,330,262,0,0,0] },
-    sky:   { bpm: 160, mel: [659,784,988,1175,1319,1175,988,0,784,988,1175,1319,988,0,784,0,659,784,988,1319,1175,988,0,784,698,880,988,1175,659,0,0,0] },
+    grass: { bpm: 140, mel: [523,659,784,1047,988,784,880,0,784,659,698,784,523,0,587,0,659,784,988,1175,1047,784,0,659,587,659,784,988,523,0,0,0], bass: [131,165,196,131] },
+    cave:  { bpm: 110, mel: [262,330,392,330,440,330,262,0,294,349,392,349,466,349,294,0,262,294,330,349,392,330,262,0,196,262,294,330,262,0,0,0], bass: [110,131,147,110] },
+    sky:   { bpm: 160, mel: [659,784,988,1175,1319,1175,988,0,784,988,1175,1319,988,0,784,0,659,784,988,1319,1175,988,0,784,698,880,988,1175,659,0,0,0], bass: [165,196,220,165] },
+    water: { bpm: 100, mel: [440,523,659,784,880,784,659,0,587,698,880,784,659,523,440,0,440,523,659,784,1047,880,784,659,587,523,587,659,523,440,0,0], bass: [110,131,147,110] },
+    desert:{ bpm: 130, mel: [392,466,523,622,698,622,523,466,392,466,523,622,698,784,698,0,622,523,466,392,466,523,622,698,622,523,466,392,349,392,0,0], bass: [98,117,131,98] },
+    ice:   { bpm: 120, mel: [698,784,988,1175,988,784,880,0,784,880,1047,1175,988,880,0,0,698,784,988,1175,1319,1175,988,784,698,784,880,988,880,784,0,0], bass: [175,208,233,175] },
+    fire:  { bpm: 155, mel: [262,311,349,415,466,415,349,311,262,311,349,415,466,523,466,415,349,415,466,523,466,415,349,311,262,311,349,415,311,262,0,0], bass: [82,98,110,82] },
+    forest:{ bpm: 125, mel: [330,392,440,523,587,523,440,0,392,440,523,587,659,587,523,0,440,523,587,659,784,659,587,523,440,392,349,392,440,330,0,0], bass: [98,123,131,98] },
+    heaven:{ bpm: 95,  mel: [784,880,988,1175,1319,1175,988,0,880,988,1047,1319,1568,1319,1175,0,1319,1175,988,880,784,698,784,880,988,880,784,659,587,523,0,0], bass: [196,220,247,196] },
+    space: { bpm: 85,  mel: [311,349,415,466,415,349,311,0,277,311,349,415,466,415,349,0,311,277,233,277,311,349,415,466,622,466,415,349,311,0,0,0], bass: [73,87,98,73] },
+    boss:  { bpm: 170, mel: [185,0,185,220,247,0,247,220,196,0,196,233,261,0,261,233,311,0,311,277,247,0,247,233,220,196,220,247,277,311,0,0], bass: [49,49,55,49,65,65,55,49] },
+    // ダークコース用・不気味な短調
+    dark:  { bpm: 100, mel: [139,0,165,0,185,0,165,139,147,0,175,0,196,0,175,147,139,0,165,0,185,220,247,220,185,165,139,0,0,0,0,0], bass: [41,44,49,41] },
+    darkboss: { bpm: 180, mel: [98,0,98,110,117,0,117,110,98,0,98,123,131,0,131,123,147,0,147,139,131,0,131,117,110,98,110,117,131,147,0,0], bass: [41,41,49,41,55,55,49,41] },
   };
   function startBGM() {
     stopBGM();
     ensureAudio();
     if (!audioCtx) return;
-    const th = BGM_THEMES[STAGES[currentStage]?.theme] || BGM_THEMES.grass;
+    // ボスステージ（X-5）は専用ボスBGM
+    const stageLabel = STAGES[currentStage]?.label || '';
+    const isBossStage = stageLabel.endsWith('-5') || stageLabel.endsWith('-10');
+    const isDarkStage = !!STAGES[currentStage]?.dark;
+    const themeKey = isBossStage
+      ? (isDarkStage ? 'darkboss' : 'boss')
+      : (isDarkStage ? 'dark' : (STAGES[currentStage]?.theme || 'grass'));
+    const th = BGM_THEMES[themeKey] || BGM_THEMES.grass;
     const beat = 60 / th.bpm;
     const mel = th.mel;
+    const bassLine = th.bass || [131, 165, 196, 131];
     const loopDur = mel.length * 0.25 * beat;
     const play = (t0) => {
       let t = t0;
@@ -811,7 +1237,7 @@
         if (f > 0) {
           const o = audioCtx.createOscillator();
           const g = audioCtx.createGain();
-          o.type = 'square';
+          o.type = isBossStage ? 'sawtooth' : 'square';
           o.frequency.value = f;
           g.gain.setValueAtTime(0, t);
           g.gain.linearRampToValueAtTime(0.05, t + 0.01);
@@ -823,13 +1249,14 @@
         t += 0.25 * beat;
       }
       // bass
-      for (let b = 0; b < 8; b++) {
+      const bassCount = Math.max(8, bassLine.length);
+      for (let b = 0; b < bassCount; b++) {
         const bt = t0 + b * beat;
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         o.type = 'triangle';
-        o.frequency.value = [131, 165, 196, 131][b % 4];
-        g.gain.setValueAtTime(0.07, bt);
+        o.frequency.value = bassLine[b % bassLine.length];
+        g.gain.setValueAtTime(isBossStage ? 0.1 : 0.07, bt);
         g.gain.exponentialRampToValueAtTime(0.001, bt + beat * 0.8);
         o.connect(g).connect(audioCtx.destination);
         o.start(bt); o.stop(bt + beat);
@@ -900,6 +1327,7 @@
   // ====== メインループ更新 ======
   function update() {
     if (state === 'title') { titleFrame++; return; }
+    if (state === 'paused') { return; }  // ポーズ中は更新停止
     if (state === 'cutscene') {
       updateCutscene();
       return;
@@ -911,16 +1339,52 @@
     if (state === 'stageTransition') {
       stateTimer++;
       if (stateTimer > 140) {
+        // 10-5 クリア直後はダークコース・プロローグを挟む（currentStage を進めずにカットシーン開始）
+        if (currentStage === NORMAL_COURSE_LAST) {
+          stopBGM();
+          startCutscene('prologue-dark');
+          stateTimer = 0;
+          return;
+        }
         currentStage++;
         if (currentStage >= STAGES.length) {
           state = 'allClear';
-          overMsg.textContent = '🎉 ぜんクリア！ 🎉';
+          saveGame();  // 全クリア時にハイスコア保存
+          overMsg.innerHTML = '🎉 ぜんクリア！ 🎉';
+          const sub = document.getElementById('overSub');
+          if (sub) {
+            // ランク判定
+            let rank = 'B';
+            const avgScore = score / STAGES.length;
+            if (avgScore >= 4000) rank = 'S';
+            else if (avgScore >= 3000) rank = 'A';
+            else if (avgScore >= 2000) rank = 'B';
+            else rank = 'C';
+            sub.innerHTML = `さくは[世界|せかい]を[救|すく]った！<br>
+              <span style="color:#ffee40;font-size:24px;">RANK: ${rank}</span><br>
+              SCORE: ${score.toLocaleString()}<br>
+              🍣 ${coinCount}　MAX COMBO: ×${comboMax}<br>
+              <span style="color:#8fb;font-size:12px;">ありがとうさく！</span>`;
+            sub.innerHTML = sub.innerHTML.replace(/\[([^\|]+)\|([^\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
+          }
           overEl.style.display = 'flex';
           return;
         }
         loadStage(currentStage);
         state = 'playing';
         stateTimer = 0;
+        // 新ワールド突入（X-1、X >= 2）ならワールドイントロ表示＋自動セーブ
+        const label = STAGES[currentStage]?.label || '';
+        if (label.endsWith('-1') && !label.startsWith('1-')) {
+          const worldIdx = parseInt(label.split('-')[0]) - 1;
+          worldIntro = {
+            name: WORLD_NAMES[worldIdx],
+            num: worldIdx + 1,
+            timer: 180,
+            maxTimer: 180,
+          };
+          saveGame();  // 新ワールド到達を明示セーブ
+        }
         startBGM();
       }
       return;
@@ -937,9 +1401,10 @@
           overMsg.textContent = 'GAME OVER';
           const stage = STAGES[currentStage];
           const sub = document.getElementById('overSub');
-          if (sub) sub.textContent = `${stage.label} ${stage.name} からコンティニュー可能`;
+          if (sub) sub.innerHTML = `${stage.label} ${stage.name} からコンティニュー可能<br>SCORE: ${score.toLocaleString()}　🍣 ${coinCount}`;
           overEl.style.display = 'flex';
           stopBGM();
+          saveGame();  // ゲームオーバー時にハイスコア更新
         } else {
           resetLevel();
         }
@@ -997,13 +1462,32 @@
       if (saku.ultActive.timer <= 0) saku.ultActive = null;
     }
 
+    // コンボタイマー減少
+    if (comboTimer > 0) {
+      comboTimer--;
+      if (comboTimer === 0) comboCount = 0;
+    }
+
     // タイマー
     timeTicker++;
     if (timeTicker >= 60) {
       timeTicker = 0;
       timeLeft--;
       timeEl.textContent = timeLeft;
-      if (timeLeft <= 0) killPlayer();
+      // 残り時間警告（30秒以下で点滅、10秒以下でビープ）
+      if (timeLeft <= 30) {
+        timeEl.style.color = timeLeft % 2 === 0 ? '#ff4040' : '#ff8080';
+        timeEl.style.fontWeight = 'bold';
+        if (timeLeft <= 10 && timeLeft > 0) beep(1000, 0.08, 'square', 0.1);
+      } else {
+        timeEl.style.color = '';
+        timeEl.style.fontWeight = '';
+      }
+      if (timeLeft <= 0) {
+        ultBanner = { name: 'TIME UP!', timer: 60, maxTimer: 60 };
+        sfxTimeUp();
+        killPlayer();
+      }
     }
 
     const left = keys['ArrowLeft'] || keys['KeyA'];
@@ -1011,9 +1495,34 @@
     const run = keys['ShiftLeft'] || keys['ShiftRight'];
     const jump = keys['Space'] || keys['KeyZ'] || keys['ArrowUp'] || keys['KeyW'];
 
-    const walkAccel = 0.5;
-    const maxWalk = run ? 4.5 : 2.8;
-    const friction = 0.85;
+    // ワールド別物理係数
+    const theme = STAGES[currentStage]?.theme || 'grass';
+    let walkAccel = 0.5;
+    let maxWalk = run ? 4.5 : 2.8;
+    let friction = 0.85;
+    let gravity = 0.5;
+    let jumpVy = run ? -15.5 : -14.5;
+    let maxFall = 15;
+    if (theme === 'ice') {
+      // 氷: 加速ゆっくり、止まりにくい（滑る）
+      walkAccel = 0.3;
+      friction = 0.97;
+    } else if (theme === 'water') {
+      // 水中: 重力弱く、ジャンプ控えめ、ふわっと
+      gravity = 0.22;
+      jumpVy = run ? -10 : -9.5;
+      maxFall = 6;
+      maxWalk = run ? 3.5 : 2.2;
+    } else if (theme === 'space') {
+      // 宇宙: 低重力、滞空長い
+      gravity = 0.28;
+      jumpVy = run ? -13 : -12;
+      maxFall = 10;
+    } else if (theme === 'heaven') {
+      // 天国: 少し低重力
+      gravity = 0.4;
+      jumpVy = run ? -14.5 : -13.5;
+    }
 
     if (left && !right) {
       saku.vx -= walkAccel;
@@ -1029,25 +1538,64 @@
     }
 
     if (jump && saku.onGround && !saku.jumpHeld) {
-      saku.vy = run ? -15.5 : -14.5;
+      saku.vy = jumpVy;
       saku.onGround = false;
       sfxJump();
       saku.jumpHeld = true;
+      // ジャンプ時の土埃
+      spawnDust(saku.x + saku.w/2, saku.y + saku.h - 2, 3);
     }
     if (!jump) saku.jumpHeld = false;
     if (!jump && saku.vy < -5) saku.vy += 0.5;
 
-    saku.vy += 0.5;
-    if (saku.vy > 15) saku.vy = 15;
+    saku.vy += gravity;
+    if (saku.vy > maxFall) saku.vy = maxFall;
+    const prevOnGround = saku.onGround;
+    const prevVy = saku.vy;
     moveWithCollision(saku, saku.vx, 0);
     moveWithCollision(saku, 0, saku.vy);
+    // 着地した瞬間（前フレ空中→今フレ地上）に土埃（水中なら水しぶき）
+    if (!prevOnGround && saku.onGround && prevVy > 3) {
+      if (theme === 'water') {
+        // 水しぶき
+        for (let i = 0; i < 8; i++) {
+          particles.push({
+            x: saku.x + saku.w/2 + (Math.random() - 0.5) * 8,
+            y: saku.y + saku.h - 2,
+            vx: (Math.random() - 0.5) * 5,
+            vy: -Math.random() * 4 - 1,
+            life: 30, maxLife: 30,
+            color: 'rgba(160,220,255,0.9)',
+            size: 2.5, gravity: 0.2,
+          });
+        }
+      } else {
+        spawnDust(saku.x + saku.w/2, saku.y + saku.h - 2, 4);
+      }
+    }
+    // 氷上を走ってる時に時々滑りマーク
+    if (theme === 'ice' && saku.onGround && Math.abs(saku.vx) > 2 && Math.random() < 0.15) {
+      particles.push({
+        x: saku.x + saku.w/2 + (Math.random() - 0.5) * 6,
+        y: saku.y + saku.h - 1,
+        vx: -saku.vx * 0.2, vy: 0,
+        life: 30, maxLife: 30,
+        color: 'rgba(220,240,255,0.8)',
+        size: 2, gravity: 0,
+      });
+    }
+
+    // パーティクル更新
+    updateParticles();
 
     if (saku.y > LEVEL_H + 80) { killPlayer(); return; }
     if (saku.x < 0) { saku.x = 0; saku.vx = 0; }
     if (saku.x > LEVEL_W - saku.w) { saku.x = LEVEL_W - saku.w; saku.vx = 0; }
 
-    const targetCam = saku.x - W/2 + saku.w/2;
-    cameraX += (targetCam - cameraX) * 0.15;
+    // カメラの見越し（走ってる方向に少し先取り）
+    const lookAhead = Math.max(-80, Math.min(80, saku.vx * 18));
+    const targetCam = saku.x - W/2 + saku.w/2 + lookAhead;
+    cameraX += (targetCam - cameraX) * 0.12;
     if (cameraX < 0) cameraX = 0;
     if (cameraX > LEVEL_W - W) cameraX = LEVEL_W - W;
 
@@ -1066,15 +1614,72 @@
       }
       const dx = coin.x - (saku.x + saku.w/2);
       const dy = coin.y - (saku.y + saku.h/2);
+      // スターパワーアップ中はコイン磁力で吸い寄せ
+      if (saku.starTimer > 0) {
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 80 && dist > 5) {
+          coin.x -= (dx / dist) * 3;
+          coin.y -= (dy / dist) * 3;
+        }
+      }
       if (Math.abs(dx) < saku.w/2 + 10 && Math.abs(dy) < saku.h/2 + 10) {
         coin.taken = true;
         coinCount++;
-        score += 100;
+        // 虹寿司は5倍得点＋ゲージ3倍
+        const isRainbow = coin.rainbow;
+        const gainedScore = isRainbow ? 500 : 100;
+        score += gainedScore;
         coinEl.textContent = coinCount;
-        scoreEl.textContent = score;
-        addUlt(5);  // 寿司を食べて必殺ゲージ +5
+        scoreEl.textContent = score.toLocaleString();
+        addUlt(isRainbow ? 15 : 5);
         sfxCoin();
-        if (coinCount % 20 === 0) { lives++; livesEl.textContent = lives; }
+        if (isRainbow) {
+          // 虹寿司エフェクト
+          beep(2200, 0.15, 'square', 0.1);
+          setTimeout(()=>beep(2640, 0.15, 'square', 0.08), 100);
+          for (let i = 0; i < 16; i++) {
+            const a = (i / 16) * Math.PI * 2;
+            particles.push({
+              x: coin.x, y: coin.y,
+              vx: Math.cos(a) * 4, vy: Math.sin(a) * 4,
+              life: 40, maxLife: 40,
+              color: `hsl(${(i * 22) % 360},100%,70%)`,
+              size: 3, gravity: 0.05,
+            });
+          }
+        }
+        // ポップアップ
+        ultPopups.push({
+          x: coin.x, y: coin.y - 4,
+          text: isRainbow ? '+500 🌈' : '+100',
+          life: isRainbow ? 80 : 40, maxLife: isRainbow ? 80 : 40,
+          color: isRainbow ? '#ff40d0' : '#ffee60',
+        });
+        if (coinCount % 20 === 0) {
+          lives++; livesEl.textContent = lives;
+          // 1UP 演出
+          ultPopups.push({
+            x: saku.x + saku.w/2, y: saku.y - 20,
+            text: '1UP!',
+            life: 90, maxLife: 90,
+            color: '#40ff60',
+          });
+          sfxRescue();
+        }
+        // 節目（50, 100, 150 寿司）でバナー＋花火パーティクル
+        if (coinCount === 50 || coinCount === 100 || coinCount === 150 || coinCount === 200) {
+          ultBanner = { name: '🍣 ' + coinCount + '貫 達成！', timer: 90, maxTimer: 90 };
+          for (let i = 0; i < 24; i++) {
+            const a = (i / 24) * Math.PI * 2;
+            particles.push({
+              x: saku.x + saku.w/2, y: saku.y + 5,
+              vx: Math.cos(a) * 5, vy: Math.sin(a) * 5 - 2,
+              life: 50, maxLife: 50,
+              color: `hsl(${(i * 15) % 360},100%,70%)`,
+              size: 3, gravity: 0.1,
+            });
+          }
+        }
       }
     }
 
@@ -1131,22 +1736,34 @@
           if (saku.starTimer > 0) {
             en.alive = false; en.squashTimer = 60; en.flying = true;
             en.vy = -10; en.vx = (saku.facing > 0 ? 4 : -4);
-            score += 300; scoreEl.textContent = score;
+            addCombo();
+            const gained = Math.floor(300 * comboBonus());
+            score += gained; scoreEl.textContent = score.toLocaleString();
             addUlt(30);
             sfxStomp();
+            spawnPop(en.x + 14, en.y + 14, '#ffee40');
+            ultPopups.push({ x: en.x + 14, y: en.y, text: '+' + gained, life: 40, maxLife: 40, color: '#ffee40' });
           } else if (saku.swordTimer > 0) {
             en.alive = false; en.squashTimer = 40; en.flying = true;
             en.vy = -6; en.vx = (saku.facing > 0 ? 2 : -2);
-            score += 250; scoreEl.textContent = score;
+            addCombo();
+            const gained = Math.floor(250 * comboBonus());
+            score += gained; scoreEl.textContent = score.toLocaleString();
             addUlt(25);
             sfxStomp();
+            spawnPop(en.x + 14, en.y + 14, '#c8c8f0');
+            ultPopups.push({ x: en.x + 14, y: en.y, text: '+' + gained, life: 40, maxLife: 40, color: '#c8d8f0' });
           } else if (saku.invuln === 0) {
             if (saku.vy > 1 && py2 - ey1 < 16) {
               en.alive = false; en.squashTimer = 20;
               saku.vy = -7;
-              score += 100; scoreEl.textContent = score;
+              addCombo();
+              const gained = Math.floor(100 * comboBonus());
+              score += gained; scoreEl.textContent = score.toLocaleString();
               addUlt(20);
               sfxStomp();
+              spawnPop(en.x + 14, en.y + 14, '#d8c8a8');
+              ultPopups.push({ x: en.x + 14, y: en.y, text: '+' + gained, life: 40, maxLife: 40, color: '#ffffff' });
             } else damagePlayer();
           }
         }
@@ -1161,17 +1778,67 @@
     for (const item of items) {
       if (item.taken) continue;
       item.anim += 0.1;
+      // ウルトラスター：ふわふわ浮遊
+      if (item.type === 'ultraStar' && item.float) {
+        // 位置は固定、描画時に sin() で揺らす
+      }
       const dx = item.x - (saku.x + saku.w/2);
       const dy = item.y - (saku.y + saku.h/2);
-      if (Math.abs(dx) < saku.w/2 + 12 && Math.abs(dy) < saku.h/2 + 12) {
+      const pickupR = item.type === 'ultraStar' ? 20 : 12;
+      if (Math.abs(dx) < saku.w/2 + pickupR && Math.abs(dy) < saku.h/2 + pickupR) {
         item.taken = true;
-        if (item.type === 'star') { saku.starTimer = 480; score += 500; sfxStar(); }
-        else if (item.type === 'sword') { saku.swordTimer = 900; score += 300; sfxSword(); }
-        scoreEl.textContent = score;
+        if (item.type === 'ultraStar') {
+          saku.ultraStarTimer = 600; saku.starTimer = 600;  // 通常のキラキラも重ねる
+          score += 3000; sfxStar();
+          ultBanner = { name: '★ ULTRA STAR POWER ★', timer: 120, maxTimer: 120 };
+          addScreenShake(16);
+          ultPopups.push({ x: item.x, y: item.y - 10, text: 'ULTRA!', life: 90, maxLife: 90, color: '#ff40ff' });
+          // 虹色大爆発
+          for (let i = 0; i < 50; i++) {
+            const a = (i / 50) * Math.PI * 2;
+            const sp = 3 + Math.random() * 5;
+            particles.push({
+              x: item.x, y: item.y,
+              vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2,
+              life: 60, maxLife: 60,
+              color: `hsl(${(i * 12) % 360},100%,70%)`,
+              size: 3, gravity: 0.08,
+            });
+          }
+        } else if (item.type === 'star') {
+          saku.starTimer = 480; score += 500; sfxStar();
+          ultPopups.push({ x: item.x, y: item.y - 10, text: 'STAR!', life: 70, maxLife: 70, color: '#ffee40' });
+          // 星型キラキラ
+          for (let i = 0; i < 20; i++) {
+            const a = (i / 20) * Math.PI * 2;
+            particles.push({
+              x: item.x, y: item.y,
+              vx: Math.cos(a) * 4, vy: Math.sin(a) * 4 - 2,
+              life: 40, maxLife: 40,
+              color: `hsl(${(i * 18) % 360},100%,70%)`,
+              size: 3, gravity: 0.1,
+            });
+          }
+        } else if (item.type === 'sword') {
+          saku.swordTimer = 900; score += 300; sfxSword();
+          ultPopups.push({ x: item.x, y: item.y - 10, text: 'つるぎ！', life: 70, maxLife: 70, color: '#c0c8e8' });
+          for (let i = 0; i < 14; i++) {
+            const a = (i / 14) * Math.PI * 2;
+            particles.push({
+              x: item.x, y: item.y,
+              vx: Math.cos(a) * 3.5, vy: Math.sin(a) * 3.5 - 1,
+              life: 35, maxLife: 35,
+              color: '#c8d8f0',
+              size: 2.5, gravity: 0.1,
+            });
+          }
+        }
+        scoreEl.textContent = score.toLocaleString();
       }
     }
     if (saku.starTimer > 0) saku.starTimer--;
     if (saku.swordTimer > 0) saku.swordTimer--;
+    if (saku.ultraStarTimer > 0) saku.ultraStarTimer--;
 
     // チェックポイント通過判定
     if (stageCheckpoint && !stageCheckpoint.activated && saku.x + saku.w/2 >= stageCheckpoint.x) {
@@ -1180,6 +1847,22 @@
       sfxCheckpoint();
       // プチHP回復（半分回復）
       saku.hp = Math.min(saku.maxHp, saku.hp + Math.floor(saku.maxHp / 2));
+      // 通過バナー
+      ultBanner = { name: 'チェックポイント通過！', timer: 80, maxTimer: 80 };
+      addScreenShake(3);
+      // 周囲にキラキラ
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        particles.push({
+          x: stageCheckpoint.x, y: stageCheckpoint.y,
+          vx: Math.cos(a) * 3,
+          vy: Math.sin(a) * 3 - 2,
+          life: 40, maxLife: 40,
+          color: ['#ffee40','#40ffcc','#ff80d0'][i % 3],
+          size: 3,
+          gravity: 0.05,
+        });
+      }
     }
 
     // ゴール（キノピオ）接触判定
@@ -1204,24 +1887,38 @@
       boss.defeatTimer++;
       boss.vy += 0.3;
       boss.x += boss.vx; boss.y += boss.vy;
-      if (boss.defeatTimer > 180) { boss = null; score += 5000; scoreEl.textContent = score; }
+      if (boss.defeatTimer > 180) { boss = null; score += 5000; scoreEl.textContent = score.toLocaleString(); }
       return;
     }
     if (!boss.engaged) {
-      if (saku.x + saku.w > boss.triggerX) { boss.engaged = true; sfxBossRoar(); }
+      if (saku.x + saku.w > boss.triggerX) {
+        boss.engaged = true;
+        sfxBossRoar();
+        addScreenShake(12);
+        // BOSSバナー
+        const bannerName = boss.isDarkToto ? '闇落ちとーと、覚醒'
+          : (boss.isFinal ? '闇の帝王、襲来'
+          : (boss.isDarkBoss ? 'モンスターボス！'
+          : 'ボス戦！'));
+        ultBanner = { name: bannerName, timer: 100, maxTimer: 100 };
+      }
       else return;
     }
     boss.vy += 0.6;
     if (boss.vy > 16) boss.vy = 16;
     const dx = (saku.x + saku.w/2) - (boss.x + boss.w/2);
+    // HP35%以下で激昂（動き速く、攻撃間隔短く、パターン増）
+    const enraged = boss.hp / boss.maxHp < 0.35;
+    const speedMul = enraged ? 2.0 : 1;
     if (boss.onGround) {
-      if (Math.abs(dx) > 20) boss.vx = dx > 0 ? 1.4 : -1.4;
+      if (Math.abs(dx) > 20) boss.vx = dx > 0 ? 1.6 * speedMul : -1.6 * speedMul;
       else boss.vx = 0;
     }
     boss.attackCD--;
     if (boss.attackCD <= 0 && boss.onGround) {
-      boss.vy = -13;
-      boss.attackCD = 140 + Math.random() * 40;
+      boss.vy = enraged ? -16 : -14;
+      boss.attackCD = (enraged ? 60 : 110) + Math.random() * 30;
+      boss.justJumped = true;
       beep(300, 0.08, 'square', 0.12);
       setTimeout(()=>beep(200, 0.12, 'square', 0.1), 80);
     }
@@ -1229,11 +1926,31 @@
     if (boss.isFinal) {
       boss.fireCD--;
       if (boss.fireCD <= 0) {
-        boss.fireCD = 120 + Math.random() * 60;
-        spawnFireball();
+        boss.fireCD = (enraged ? 60 : 100) + Math.random() * 40;
+        if (enraged) spawnFireballSpread();  // 激昂時は3way
+        else spawnFireball();
+      }
+      // 突進攻撃（激昂時のみ）
+      if (enraged) {
+        boss.dashCD--;
+        if (boss.dashCD <= 0 && boss.onGround && Math.abs(dx) > 60 && Math.abs(dx) < 280) {
+          boss.vx = dx > 0 ? 8 : -8;
+          boss.vy = -6;
+          boss.dashCD = 180 + Math.random() * 60;
+          // 突進音
+          beep(150, 0.2, 'sawtooth', 0.15);
+        }
       }
       updateFireballs();
     }
+    // 着地検出 → 衝撃波（ジャンプ攻撃後のみ）
+    if (boss.wasAirborne && boss.onGround && boss.justJumped) {
+      spawnShockwave(boss.x + boss.w/2, boss.y + boss.h);
+      addScreenShake(8);
+      boss.justJumped = false;
+    }
+    boss.wasAirborne = !boss.onGround;
+    updateShockwaves();
     if (boss.hurtTimer > 0) boss.hurtTimer--;
     boss.x += boss.vx;
     let hits = rectVsTiles(boss.x, boss.y, boss.w, boss.h);
@@ -1257,7 +1974,8 @@
       if (hx1 < bx2 && hx2 > bx1 && py1 < by2 && py2 > by1) {
         const stomped = (saku.vy > 1 && py2 - by1 < 24);
         if (boss.hurtTimer === 0) {
-          if (saku.starTimer > 0) { damageBoss(2); saku.vy = -8; }
+          if (saku.ultraStarTimer > 0) { damageBoss(5); saku.vy = -10; addScreenShake(14); }
+          else if (saku.starTimer > 0) { damageBoss(2); saku.vy = -8; }
           else if (saku.swordTimer > 0) damageBoss(1);
           else if (stomped) { damageBoss(1); saku.vy = -10; }
           else if (saku.invuln === 0) damagePlayer();
@@ -1292,6 +2010,127 @@
       o.start(now); o.stop(now + 0.6);
     } catch(e) {}
   }
+  // ラスボス激昂時：3way炎ブレス
+  function spawnFireballSpread() {
+    if (!boss) return;
+    const dir = (saku.x + saku.w/2) < (boss.x + boss.w/2) ? -1 : 1;
+    const bx = boss.x + boss.w/2 + dir * (boss.w/2 + 8);
+    const by = boss.y + boss.h * 0.25;
+    const angles = [-0.35, 0, 0.35];
+    for (const a of angles) {
+      const speed = 4;
+      boss.fireballs.push({
+        x: bx, y: by,
+        vx: dir * speed * Math.cos(a),
+        vy: -1.5 + speed * Math.sin(a),
+        life: 180, anim: 0,
+      });
+    }
+    try {
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(280, now);
+      o.frequency.exponentialRampToValueAtTime(50, now + 0.6);
+      g.gain.setValueAtTime(0.22, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(now); o.stop(now + 0.7);
+    } catch(e) {}
+  }
+  // ウルトラスター出現（ラスボスHP半減で1回だけ）
+  function spawnUltraStar() {
+    if (!boss) return;
+    // サクとボスの間、やや上空に出現
+    const sx = (saku.x + saku.w/2 + boss.x + boss.w/2) / 2;
+    const gy = (LEVEL_ROWS - 3) * TILE;  // 地面ライン
+    const sy = gy - 60;
+    items.push({
+      x: sx, y: sy, type: 'ultraStar',
+      vy: 0, anim: 0, taken: false,
+      float: true,  // 上下にふわふわ
+    });
+    // 演出：バナー＋派手なパーティクル＋SE
+    ultBanner = { name: '★ ウルトラスター 出現！ ★', timer: 140, maxTimer: 140 };
+    addScreenShake(14);
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 2;
+      const sp = 2 + Math.random() * 5;
+      particles.push({
+        x: sx, y: sy,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 60 + Math.random() * 30, maxLife: 80,
+        color: `hsl(${(i * 6) % 360},100%,70%)`,
+        size: 2 + Math.random() * 2,
+        gravity: 0,
+      });
+    }
+    // 荘厳な登場音
+    try {
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const freqs = [523, 659, 784, 1046];
+      freqs.forEach((f, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f, now + i * 0.08);
+        g.gain.setValueAtTime(0.0001, now + i * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.2, now + i * 0.08 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.5);
+        o.connect(g).connect(audioCtx.destination);
+        o.start(now + i * 0.08); o.stop(now + i * 0.08 + 0.55);
+      });
+    } catch(e) {}
+  }
+  // 着地衝撃波（横に広がる）
+  function spawnShockwave(cx, cy) {
+    if (!boss) return;
+    if (!boss.shockwaves) boss.shockwaves = [];
+    boss.shockwaves.push({
+      x: cx, y: cy,
+      radius: 10,
+      maxRadius: boss.isFinal ? 160 : 100,
+      life: 30, maxLife: 30,
+      hit: false,
+    });
+    // 着地ドスン音
+    try {
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(90, now);
+      o.frequency.exponentialRampToValueAtTime(30, now + 0.25);
+      g.gain.setValueAtTime(0.3, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(now); o.stop(now + 0.3);
+    } catch(e) {}
+  }
+  function updateShockwaves() {
+    if (!boss || !boss.shockwaves) return;
+    for (const sw of boss.shockwaves) {
+      sw.life--;
+      const t = 1 - sw.life / sw.maxLife;
+      sw.radius = 10 + (sw.maxRadius - 10) * t;
+      // プレイヤーが地上にいて範囲内ならダメージ
+      if (!sw.hit && !saku.dead && saku.invuln === 0 && saku.starTimer === 0 && saku.ultraStarTimer === 0 && saku.onGround) {
+        const pcx = saku.x + saku.w/2;
+        const dist = Math.abs(pcx - sw.x);
+        // 地面ライン近くにプレイヤーがいるか
+        if (Math.abs((saku.y + saku.h) - sw.y) < 30 && dist < sw.radius) {
+          sw.hit = true;
+          damagePlayer();
+        }
+      }
+    }
+    boss.shockwaves = boss.shockwaves.filter(sw => sw.life > 0);
+  }
   function updateFireballs() {
     if (!boss || !boss.fireballs) return;
     for (const fb of boss.fireballs) {
@@ -1301,7 +2140,7 @@
       fb.life--;
       fb.anim += 0.3;
       // プレイヤー衝突
-      if (!saku.dead && saku.invuln === 0 && saku.starTimer === 0) {
+      if (!saku.dead && saku.invuln === 0 && saku.starTimer === 0 && saku.ultraStarTimer === 0) {
         const px1 = saku.x, py1 = saku.y, px2 = px1 + saku.w, py2 = py1 + saku.h;
         if (fb.x > px1 - 10 && fb.x < px2 + 10 && fb.y > py1 - 10 && fb.y < py2 + 10) {
           fb.life = 0;
@@ -1320,15 +2159,37 @@
     // 接敵前（engaged=false）はダメージ無効。画面外のラスボスを遠くから倒せないように
     if (!boss.engaged) return;
     boss.hp -= amount;
+    addScreenShake(6);
     boss.hurtTimer = 40;
     sfxStomp();
     addUlt(20);
+    // ラスボスHP半減でウルトラスター出現（1回だけ）
+    if (boss.isFinal && !boss.ultraStarSpawned && boss.hp > 0 && boss.hp <= boss.maxHp / 2) {
+      spawnUltraStar();
+      boss.ultraStarSpawned = true;
+    }
     if (boss.hp <= 0) {
       boss.defeated = true;
       boss.defeatTimer = 0;
       boss.vy = -14; boss.vx = -3;
-      score += 2000; scoreEl.textContent = score;
+      score += 2000; scoreEl.textContent = score.toLocaleString();
       sfxBossDefeat();
+      addScreenShake(20);
+      // 撃破時の大爆発パーティクル
+      const bcx = boss.x + boss.w/2, bcy = boss.y + boss.h/2;
+      for (let i = 0; i < 50; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const speed = 3 + Math.random() * 6;
+        particles.push({
+          x: bcx, y: bcy,
+          vx: Math.cos(a) * speed,
+          vy: Math.sin(a) * speed - 3,
+          life: 60 + Math.random() * 40, maxLife: 80,
+          color: ['#ff8020','#ffcc40','#ffee80','#c0c0c0','#ff4040'][Math.floor(Math.random() * 5)],
+          size: 3 + Math.random() * 2,
+          gravity: 0.15,
+        });
+      }
       // 特定のボス撃破でカットシーン
       scheduleBossCutscene();
     }
@@ -1340,6 +2201,18 @@
     if (label === '3-5' && !saku.unlockedUlts.includes('punch')) cs = 'teach-punch';
     else if (label === '6-5' && !saku.unlockedUlts.includes('slash')) cs = 'teach-slash';
     else if (label === '9-5' && !saku.unlockedUlts.includes('peropero')) cs = 'final-reveal';
+    else if (label === '10-5') cs = 'final-victory';
+    // ダークコースの各ワールドボス撃破後にくるみの檻カットシーン
+    else if (label === '11-10') cs = 'kurumi-cage-11';
+    else if (label === '12-10') cs = 'kurumi-cage-12';
+    else if (label === '13-10') cs = 'kurumi-cage-13';
+    else if (label === '14-10') cs = 'kurumi-cage-14';
+    else if (label === '15-10') cs = 'kurumi-cage-15';
+    else if (label === '16-10') cs = 'kurumi-cage-16';
+    else if (label === '17-10') cs = 'kurumi-cage-17';
+    else if (label === '18-10') cs = 'kurumi-cage-18';
+    else if (label === '19-10') cs = 'kurumi-cage-19';
+    else if (label === '20-10') cs = 'true-ending';
     if (cs) {
       pendingCutscene = cs;
       setTimeout(() => {
@@ -1389,6 +2262,7 @@
   }
   function endCutscene() {
     const data = CUTSCENES[cutscene.id];
+    const endedId = cutscene.id;
     let justUnlocked = null;
     if (data.unlock) {
       if (!saku.unlockedUlts.includes(data.unlock)) {
@@ -1399,6 +2273,42 @@
       saku.ultGauge = saku.maxUlt;
     }
     cutscene = null;
+    // prologue-dark 終了後は自動で 11-1 にステージ遷移を再開
+    if (endedId === 'prologue-dark') {
+      currentStage = DARK_COURSE_START;  // 11-1
+      loadStage(currentStage);
+      state = 'playing';
+      stateTimer = 0;
+      const label = STAGES[currentStage]?.label || '';
+      if (label === '11-1') {
+        worldIntro = {
+          name: WORLD_NAMES[DARK_WORLD_START],
+          num: DARK_WORLD_START + 1,
+          timer: 240,
+          maxTimer: 240,
+        };
+        saveGame();
+      }
+      startBGM();
+      return;
+    }
+    // true-ending 終了で「全クリア」画面
+    if (endedId === 'true-ending') {
+      state = 'allClear';
+      saveGame();
+      overMsg.innerHTML = '🌸 [真|しん]エンディング 🌸'.replace(/\[([^\|]+)\|([^\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
+      const sub = document.getElementById('overSub');
+      if (sub) {
+        sub.innerHTML = `とーととくるみを[救|すく]い、[家族|かぞく]は[再|ふたた]び[一緒|いっしょ]になった。<br>
+          <span style="color:#ffee40;font-size:20px;">TRUE END</span><br>
+          SCORE: ${score.toLocaleString()}<br>
+          🍣 ${coinCount}　MAX COMBO: ×${comboMax}<br>
+          <span style="color:#ffaaff;font-size:12px;">ありがとう、さく。</span>`;
+        sub.innerHTML = sub.innerHTML.replace(/\[([^\|]+)\|([^\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
+      }
+      overEl.style.display = 'flex';
+      return;
+    }
     if (justUnlocked) {
       // 初回取得時のみチュートリアル表示
       showUltTutorial(justUnlocked);
@@ -1561,6 +2471,8 @@
   function damagePlayer() {
     if (saku.invuln > 0 || saku.dead) return;
     saku.hp -= 1;
+    comboCount = 0; comboTimer = 0;  // ダメージ受けるとコンボリセット
+    addScreenShake(8);
     if (saku.hp <= 0) {
       killPlayer();
       return;
@@ -1579,17 +2491,49 @@
     stateTimer = 0;
     sfxHurt();
     stopBGM();
+    // 死亡エフェクト（爆発的パーティクル）
+    for (let i = 0; i < 20; i++) {
+      const a = (i / 20) * Math.PI * 2;
+      particles.push({
+        x: saku.x + saku.w/2,
+        y: saku.y + saku.h/2,
+        vx: Math.cos(a) * 5,
+        vy: Math.sin(a) * 5 - 2,
+        life: 50, maxLife: 50,
+        color: ['#ff6040','#ffcc40','#c0c0c0'][i % 3],
+        size: 3,
+        gravity: 0.2,
+      });
+    }
   }
   function reachGoal() {
     if (state !== 'playing') return;
     state = 'cleared';
     stateTimer = 0;
-    score += timeLeft * 10;
-    scoreEl.textContent = score;
+    // タイム＆ノーダメ＆コンボ ボーナス
+    const timeBonus = timeLeft * 10;
+    score += timeBonus;
+    // 満HPならノーダメージボーナス
+    if (saku.hp === saku.maxHp) score += 1000;
+    scoreEl.textContent = score.toLocaleString();
     sfxGoal();
     setTimeout(() => sfxRescue(), 1500);
     stopBGM();
     respawnPoint = null;
+    // 紙吹雪（たっぷり）
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: saku.x + saku.w/2 + (Math.random() - 0.5) * 300,
+        y: saku.y - 50,
+        vx: (Math.random() - 0.5) * 8,
+        vy: -Math.random() * 6 - 2,
+        life: 120 + Math.random() * 60, maxLife: 150,
+        color: ['#ff4080','#40d0ff','#ffee40','#40ff80','#ff8040','#a060ff'][Math.floor(Math.random()*6)],
+        size: 3 + Math.random() * 2,
+        gravity: 0.12,
+      });
+    }
+    addScreenShake(4);
     // ステージクリア時に自動セーブ（次ステージから再開できるように）
     const nextStage = currentStage + 1;
     const saveData = {
@@ -1613,8 +2557,78 @@
     stateTimer = 0;
     startBGM();
   }
+
+  // ====== ポーズ ======
+  let pausedFrom = null;
+  function togglePause() {
+    if (state === 'playing') {
+      pausedFrom = 'playing';
+      state = 'paused';
+      stopBGM();
+    } else if (state === 'paused') {
+      state = pausedFrom || 'playing';
+      startBGM();
+    }
+  }
+  function drawPauseOverlay() {
+    if (state !== 'paused') return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // PAUSE大きめ
+    ctx.font = 'bold 48px "Hiragino Maru Gothic ProN", sans-serif';
+    ctx.lineWidth = 10; ctx.strokeStyle = '#000';
+    ctx.strokeText('PAUSE', W/2, H * 0.28);
+    const pg = ctx.createLinearGradient(0, H*0.22, 0, H*0.34);
+    pg.addColorStop(0, '#ffffff');
+    pg.addColorStop(0.5, '#ffee40');
+    pg.addColorStop(1, '#ff8020');
+    ctx.fillStyle = pg;
+    ctx.fillText('PAUSE', W/2, H * 0.28);
+    // 現状ステータス
+    const stage = STAGES[currentStage];
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = '#aeb';
+    if (stage) ctx.fillText(stage.label + ' ' + stage.name, W/2, H * 0.43);
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('SCORE: ' + score.toLocaleString().toLocaleString(), W/2, H * 0.50);
+    ctx.fillStyle = '#ffcc60';
+    ctx.fillText('🍣 ' + coinCount + '   ❤️ ' + saku.hp + '/' + saku.maxHp, W/2, H * 0.57);
+    // プロチップ（ランダム）
+    const tips = [
+      '敵を連続で倒すとコンボボーナス！',
+      '走りながらのジャンプで遠くへ飛べる',
+      '寿司 20 貫ごとに 1UP',
+      'HP が 1 になると画面が赤く光る',
+      'スターの間はコインが吸い寄せられる',
+      'チェックポイントで HP 半分回復',
+      '必殺技は敵を倒すか寿司で充填',
+      '氷の世界は滑るから慎重に',
+      '水の世界はジャンプが軽い',
+      'ノーダメクリアで 1000 ボーナス',
+    ];
+    const tipIdx = Math.floor(Date.now() / 3500) % tips.length;
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = '#8fc';
+    ctx.fillText('💡 ' + tips[tipIdx], W/2, H * 0.67);
+    // 再開の説明
+    ctx.font = '13px sans-serif';
+    ctx.lineWidth = 4; ctx.strokeStyle = '#000';
+    ctx.strokeText('Pキー または ⏸ボタンで再開', W/2, H * 0.78);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('Pキー または ⏸ボタンで再開', W/2, H * 0.78);
+    // タイトルに戻る案内
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = 'rgba(200,200,255,0.7)';
+    ctx.fillText('Tキーでタイトルへ戻る', W/2, H * 0.85);
+    ctx.restore();
+  }
   // ====== 必殺技システム ======
   const ultPopups = [];  // +X の表示用
+  // 必殺ゲージが満タンになった瞬間、画面エフェクトを出す
   function addUlt(amount) {
     const before = saku.ultGauge;
     saku.ultGauge = Math.min(saku.maxUlt, saku.ultGauge + amount);
@@ -1640,6 +2654,16 @@
           maxLife: 80,
           color: '#ffee40',
         });
+        // さくの周囲にキラキラ
+        for (let i = 0; i < 14; i++) {
+          const a = (i / 14) * Math.PI * 2;
+          particles.push({
+            x: saku.x + saku.w/2, y: saku.y + 15,
+            vx: Math.cos(a) * 3.5, vy: Math.sin(a) * 3.5,
+            life: 30, maxLife: 30,
+            color: '#ffee40', size: 2, gravity: 0,
+          });
+        }
       }
     }
   }
@@ -1649,6 +2673,7 @@
     beep(600, 0.05, 'square', 0.1);
   }
   let ultBanner = null;  // 必殺技発動バナー
+  let worldIntro = null; // 新ワールド突入時のイントロ
   function tryActivateUlt() {
     if (saku.ultActive) return;
     if (saku.unlockedUlts.length === 0) return;
@@ -1667,6 +2692,7 @@
       return;
     }
     if (!window.DEBUG_INFINITE_ULT) saku.ultGauge -= ult.cost;
+    addScreenShake(5);
     // 発動バナー
     ultBanner = { name: ult.name, timer: 80, maxTimer: 80 };
     if (ultId === 'punch') activatePunch();
@@ -1691,7 +2717,7 @@
         en.alive = false; en.squashTimer = 60; en.flying = true;
         en.vy = -10; en.vx = (saku.facing > 0 ? 8 : -8);
         addUlt(5);
-        score += 400; scoreEl.textContent = score;
+        score += 400; scoreEl.textContent = score.toLocaleString();
       }
     }
     if (boss && !boss.defeated && !boss.hurtTimer) {
@@ -1749,7 +2775,7 @@
           en.flying = true;
           en.vy = -10;
           en.vx = saku.facing * 6;
-          score += 350; scoreEl.textContent = score;
+          score += 350; scoreEl.textContent = score.toLocaleString();
           addUlt(5);
           sfxStomp();
         }
@@ -1844,7 +2870,7 @@
         en.alive = false; en.squashTimer = 90; en.flying = true;
         en.vy = -12 - Math.random() * 6;
         en.vx = (Math.random() - 0.5) * 14;
-        score += 500; scoreEl.textContent = score;
+        score += 500; scoreEl.textContent = score.toLocaleString();
       }
     }
     // ボスダメージは1回の発動につき3（フラグで一度だけ）
@@ -1869,7 +2895,19 @@
         timestamp: Date.now(),
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      // ハイスコア更新（超過時はポップアップ＆特別演出）
+      const hi = parseInt(localStorage.getItem('saku_highscore') || '0', 10);
+      if (score > hi && hi > 0) {
+        localStorage.setItem('saku_highscore', String(score));
+        // NEW BEST!バナー
+        ultBanner = { name: '★ NEW BEST! ★', timer: 120, maxTimer: 120 };
+      } else if (score > hi) {
+        localStorage.setItem('saku_highscore', String(score));
+      }
     } catch(e) {}
+  }
+  function getHighScore() {
+    try { return parseInt(localStorage.getItem('saku_highscore') || '0', 10); } catch(e) { return 0; }
   }
   function loadSave() {
     try {
@@ -1903,7 +2941,8 @@
       currentStage = 0; score = 0; coinCount = 0; lives = 3;
       saku.unlockedUlts = []; saku.selectedUlt = 0; saku.ultGauge = 0;
     }
-    scoreEl.textContent = score;
+    comboMax = 0;  // ゲーム開始時にコンボベスト記録リセット
+    scoreEl.textContent = score.toLocaleString();
     coinEl.textContent = coinCount;
     livesEl.textContent = lives;
     respawnPoint = null;
@@ -2014,6 +3053,182 @@
         ctx.closePath();
         ctx.fill();
       }
+    }
+
+    // ワールド別雰囲気パーティクル
+    drawAmbientParticles();
+  }
+
+  // 時間とともに更新される擬似乱数（スプライトの位置にaudioSafe）
+  let ambientFrame = 0;
+  function drawAmbientParticles() {
+    ambientFrame++;
+    const themeName = STAGES[currentStage]?.theme;
+    if (!themeName) return;
+    if (themeName === 'ice') {
+      // 雪が降る
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 40; i++) {
+        const seed = i * 73;
+        const sx = ((seed + ambientFrame * 0.7) % (W + 40)) - 20;
+        const sy = ((seed * 3 + ambientFrame * 1.6 + i * 31) % (H + 40)) - 20;
+        const r = 1 + (i % 3);
+        ctx.globalAlpha = 0.7 - (i % 3) * 0.15;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    } else if (themeName === 'water') {
+      // 気泡が上に昇る
+      for (let i = 0; i < 25; i++) {
+        const seed = i * 91;
+        const sx = ((seed + cameraX * 0.3) % (W + 40)) - 20;
+        const sy = H - ((seed * 7 + ambientFrame * 0.9 + i * 43) % (H + 80));
+        const r = 2 + (i % 4);
+        ctx.fillStyle = 'rgba(180,230,255,' + (0.2 + (i % 3) * 0.15) + ')';
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(220,255,255,0.6)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    } else if (themeName === 'fire') {
+      // 火の粉が上昇
+      for (let i = 0; i < 35; i++) {
+        const seed = i * 61;
+        const sx = ((seed + ambientFrame * 1.2) % (W + 40)) - 20;
+        const sy = H - ((seed * 5 + ambientFrame * 2 + i * 37) % (H + 80));
+        const r = 1 + (i % 3);
+        ctx.fillStyle = ['#ffee60','#ff9020','#ff4000'][i % 3];
+        ctx.globalAlpha = 0.6 + 0.3 * Math.sin(ambientFrame * 0.1 + i);
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // 遠景の溶岩発光（画面下）
+      const lavaGrad = ctx.createLinearGradient(0, H * 0.7, 0, H);
+      lavaGrad.addColorStop(0, 'rgba(255,80,0,0)');
+      lavaGrad.addColorStop(1, 'rgba(255,120,0,0.25)');
+      ctx.fillStyle = lavaGrad;
+      ctx.fillRect(0, H * 0.7, W, H * 0.3);
+    } else if (themeName === 'space') {
+      // 星が瞬く
+      ctx.fillStyle = '#fff';
+      for (let i = 0; i < 80; i++) {
+        const seed = i * 47;
+        const sx = ((seed + cameraX * 0.1) % W);
+        const sy = ((seed * 11) % (H * 0.7));
+        const tw = 0.4 + 0.6 * Math.abs(Math.sin(ambientFrame * 0.05 + i));
+        ctx.globalAlpha = tw;
+        const r = 0.8 + (i % 3) * 0.4;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // 遠くに惑星
+      const planetX = W * 0.85 - (cameraX * 0.05) % (W * 0.3);
+      const planetY = H * 0.2;
+      const pg = ctx.createRadialGradient(planetX - 5, planetY - 5, 2, planetX, planetY, 30);
+      pg.addColorStop(0, '#ff8040');
+      pg.addColorStop(0.6, '#a04020');
+      pg.addColorStop(1, '#300810');
+      ctx.fillStyle = pg;
+      ctx.beginPath();
+      ctx.arc(planetX, planetY, 28, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (themeName === 'heaven') {
+      // 光の粒子がふわふわ
+      for (let i = 0; i < 30; i++) {
+        const seed = i * 89;
+        const sx = ((seed + cameraX * 0.2 + ambientFrame * 0.3) % (W + 40)) - 20;
+        const sy = ((seed * 5 + Math.sin(ambientFrame * 0.02 + i) * 30 + i * 25) % H);
+        ctx.fillStyle = 'rgba(255,240,200,' + (0.3 + 0.4 * Math.sin(ambientFrame * 0.03 + i)) + ')';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 3 + (i % 2), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 天国は背景に大きな虹アーチ
+      ctx.save();
+      const arcCx = W * 0.5 - cameraX * 0.1;
+      const arcCy = H * 1.1;
+      const rainbowColors = ['#ff8080','#ffaa60','#ffee60','#80ff80','#60d0ff','#a080ff','#ff80d0'];
+      for (let i = 0; i < 7; i++) {
+        ctx.strokeStyle = rainbowColors[i];
+        ctx.globalAlpha = 0.25;
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.arc(arcCx, arcCy, 200 + i * 10, Math.PI, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else if (themeName === 'forest') {
+      // 木の葉が舞う
+      for (let i = 0; i < 20; i++) {
+        const seed = i * 67;
+        const sx = ((seed + ambientFrame * 1.1) % (W + 40)) - 20;
+        const sy = ((seed * 7 + ambientFrame * 1.3 + i * 41) % (H + 40));
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate((ambientFrame * 0.04 + i) % (Math.PI * 2));
+        ctx.fillStyle = ['#4a8a3a', '#6aa050', '#8ab068'][i % 3];
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 3, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      // 遠景の大きな木シルエット
+      ctx.fillStyle = 'rgba(20,40,20,0.4)';
+      for (let ti = 0; ti < 3; ti++) {
+        const tx = (W * (0.2 + ti * 0.35) - cameraX * 0.2) % (W * 1.2);
+        ctx.beginPath();
+        ctx.arc(tx, H * 0.55, 50, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(tx - 4, H * 0.55, 8, H * 0.2);
+      }
+    } else if (themeName === 'desert') {
+      // 砂塵が風で流れる
+      ctx.fillStyle = 'rgba(220,180,120,0.35)';
+      for (let i = 0; i < 25; i++) {
+        const seed = i * 79;
+        const sx = ((seed + ambientFrame * 3) % (W + 40)) - 20;
+        const sy = ((seed * 9 + i * 37) % H);
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, 8, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 遠景ピラミッドのシルエット
+      ctx.fillStyle = 'rgba(160,110,60,0.4)';
+      const pyramidX = W * 0.75 - (cameraX * 0.15) % (W * 0.5);
+      const pyramidY = H * 0.65;
+      ctx.beginPath();
+      ctx.moveTo(pyramidX, pyramidY);
+      ctx.lineTo(pyramidX - 50, pyramidY + 60);
+      ctx.lineTo(pyramidX + 50, pyramidY + 60);
+      ctx.closePath();
+      ctx.fill();
+    } else if (themeName === 'sky') {
+      // 小鳥のような点が横切る
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      for (let i = 0; i < 10; i++) {
+        const seed = i * 131;
+        const sx = ((seed + ambientFrame * 2) % (W + 80)) - 40;
+        const sy = ((seed * 13) % (H * 0.5));
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 遠景に浮かぶ雲の城シルエット
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      const castleX = W * 0.7 - (cameraX * 0.08) % (W * 0.5);
+      const cy0 = H * 0.35;
+      ctx.fillRect(castleX - 30, cy0, 60, 20);
+      ctx.fillRect(castleX - 35, cy0 - 6, 10, 6);
+      ctx.fillRect(castleX - 5, cy0 - 10, 10, 10);
+      ctx.fillRect(castleX + 25, cy0 - 6, 10, 6);
     }
   }
 
@@ -2126,6 +3341,10 @@
     }
   }
   function drawSushi(cx, cy, type) {
+    if (type === 'rainbow') {
+      drawRainbowSushi(cx, cy);
+      return;
+    }
     switch (type) {
       case 'maguro': drawMaguro(cx, cy); break;
       case 'tamago': drawTamago(cx, cy); break;
@@ -2135,6 +3354,38 @@
       case 'ramen': drawRamen(cx, cy); break;
       default: drawMaguro(cx, cy);
     }
+  }
+  function drawRainbowSushi(cx, cy) {
+    // 虹色オーラ
+    const hue = (Date.now() * 0.1) % 360;
+    const aura = ctx.createRadialGradient(cx, cy, 2, cx, cy, 18);
+    aura.addColorStop(0, `hsla(${hue},100%,75%,0.7)`);
+    aura.addColorStop(1, `hsla(${(hue + 120) % 360},100%,50%,0)`);
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.fill();
+    // 握り（虹色）
+    ctx.save();
+    ctx.translate(cx, cy);
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = `hsl(${(hue + i * 60) % 360},100%,65%)`;
+      ctx.beginPath();
+      ctx.arc(Math.cos(i * Math.PI / 3) * 2, Math.sin(i * Math.PI / 3) * 2 + 2, 6 - i * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // ネタ
+    ctx.fillStyle = `hsl(${hue},100%,75%)`;
+    ctx.beginPath();
+    ctx.ellipse(0, -3, 8, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // キラキラ
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✦', 0, -3);
+    ctx.restore();
   }
   function drawRice(cx, cy) {
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
@@ -2260,6 +3511,7 @@
       const y = item.y + Math.sin(item.anim) * 3;
       if (x < -24 || x > W + 24) continue;
       if (item.type === 'star') drawStarItem(x, y, item.anim);
+      else if (item.type === 'ultraStar') drawUltraStarItem(x, y, item.anim);
       else if (item.type === 'sword') drawSwordItem(x, y, item.anim);
     }
   }
@@ -2303,6 +3555,62 @@
     ctx.stroke();
     ctx.restore();
   }
+  function drawUltraStarItem(cx, cy, anim) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    // 外側の巨大オーラ（脈動）
+    const pulse = 1 + Math.sin(anim * 3) * 0.15;
+    const auraR = 40 * pulse;
+    const aurG = ctx.createRadialGradient(0, 0, 5, 0, 0, auraR);
+    aurG.addColorStop(0, `hsla(${(anim*60)%360},100%,80%,0.6)`);
+    aurG.addColorStop(0.5, `hsla(${(anim*60+120)%360},100%,60%,0.3)`);
+    aurG.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = aurG;
+    ctx.beginPath(); ctx.arc(0, 0, auraR, 0, Math.PI*2); ctx.fill();
+    // 周囲を回るキラキラ
+    for (let i = 0; i < 12; i++) {
+      const a = (i/12)*Math.PI*2 + anim*0.8;
+      const rr = 26 + Math.sin(anim*3+i)*4;
+      const sx = Math.cos(a)*rr, sy = Math.sin(a)*rr;
+      ctx.fillStyle = `hsl(${(anim*50+i*30)%360},100%,75%)`;
+      ctx.beginPath(); ctx.arc(sx, sy, 2.5 + Math.sin(anim*4+i)*0.8, 0, Math.PI*2); ctx.fill();
+    }
+    // 星本体（通常の2倍強）
+    ctx.rotate(anim*0.5);
+    const hue = (anim*60)%360;
+    const g = ctx.createRadialGradient(-3, -4, 1, 0, 0, 22);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.25, `hsl(${hue},100%,85%)`);
+    g.addColorStop(0.7, `hsl(${(hue+120)%360},100%,60%)`);
+    g.addColorStop(1, `hsl(${(hue+240)%360},100%,40%)`);
+    ctx.fillStyle = g;
+    drawStarShape(22);
+    // 外縁光る
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = `hsl(${(hue+60)%360},100%,70%)`;
+    ctx.stroke();
+    // 内側の白い縁
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+    // かわいい顔（通常より大きめ）
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-5, -2, 1.8, 0, Math.PI*2);
+    ctx.arc(5, -2, 1.8, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(0, 3, 3, 0.15*Math.PI, 0.85*Math.PI);
+    ctx.stroke();
+    // ほっぺ
+    ctx.fillStyle = 'rgba(255,120,160,0.7)';
+    ctx.beginPath();
+    ctx.arc(-8, 2, 1.8, 0, Math.PI*2);
+    ctx.arc(8, 2, 1.8, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
   function drawSwordItem(cx, cy, anim) {
     ctx.save();
     ctx.translate(cx, cy);
@@ -2335,8 +3643,14 @@
       const x = en.x - cameraX;
       const y = en.y;
       if (x < -32 || x > W + 32) continue;
-      if (en.type === 'kuri') drawKuri(x, y, en);
-      else if (en.type === 'kame') drawKame(x, y, en);
+      // さくに近い敵は微妙に振動（警戒モーション）
+      let wob = 0;
+      if (en.alive && !en.flying) {
+        const dx = Math.abs(saku.x + saku.w/2 - en.x - 14);
+        if (dx < 120) wob = (120 - dx) / 120 * Math.sin(Date.now() * 0.02) * 0.8;
+      }
+      if (en.type === 'kuri') drawKuri(x, y + wob, en);
+      else if (en.type === 'kame') drawKame(x, y + wob, en);
       else if (en.type === 'tori') drawTori(x, y, en);
     }
   }
@@ -2549,12 +3863,46 @@
     const x = boss.x - cameraX;
     const y = boss.y;
     if (x < -100 || x > W + 100) return;
-    const isFinalBoss = STAGES[currentStage]?.label === '10-5';
+    const curLabel = STAGES[currentStage]?.label;
+    const isFinalBoss = (curLabel === '10-5' || curLabel === '20-10');
 
     // 炎玉描画（ラスボスの攻撃）
     if (isFinalBoss && boss.fireballs) {
       for (const fb of boss.fireballs) {
         drawFireball(fb.x - cameraX, fb.y, fb.anim);
+      }
+    }
+
+    // 着地衝撃波描画
+    if (boss.shockwaves) {
+      for (const sw of boss.shockwaves) {
+        const t = 1 - sw.life / sw.maxLife;
+        const alpha = (1 - t) * 0.7;
+        ctx.save();
+        ctx.translate(sw.x - cameraX, sw.y);
+        // 外側リング
+        ctx.strokeStyle = `rgba(255,180,60,${alpha})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, sw.radius, sw.radius * 0.35, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        // 内側リング
+        ctx.strokeStyle = `rgba(255,255,200,${alpha * 0.8})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, sw.radius * 0.7, sw.radius * 0.25, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        // 地面のヒビ（赤系）
+        ctx.strokeStyle = `rgba(200,40,40,${alpha})`;
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(a) * sw.radius * 0.9, Math.sin(a) * sw.radius * 0.3);
+          ctx.stroke();
+        }
+        ctx.restore();
       }
     }
 
@@ -2575,7 +3923,18 @@
 
     const W_ = boss.w, H_ = boss.h, cx = x + W_/2;
 
-    // ラスボス（10-5）は禍々しい赤黒オーラ
+      // 激昂モード時は常に赤い波動
+    if (boss.hp / boss.maxHp < 0.35 && !boss.defeated) {
+      const rageR = 70 + Math.sin(boss.anim * 0.5) * 10;
+      const rageG = ctx.createRadialGradient(cx, y + H_/2, 10, cx, y + H_/2, rageR);
+      rageG.addColorStop(0, 'rgba(255,40,40,0.45)');
+      rageG.addColorStop(1, 'rgba(120,0,0,0)');
+      ctx.fillStyle = rageG;
+      ctx.beginPath();
+      ctx.arc(cx, y + H_/2, rageR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  // ラスボス（10-5）は禍々しい赤黒オーラ
     if (isFinalBoss) {
       const auraR = 60 + Math.sin(boss.anim * 0.5) * 8;
       const auraG = ctx.createRadialGradient(cx, y + H_/2, 5, cx, y + H_/2, auraR);
@@ -2717,6 +4076,19 @@
       ctx.translate(-(x + b.w/2), -(y + b.h/2));
     }
     if (b.hurtTimer > 0 && Math.floor(b.hurtTimer/4)%2 === 0) ctx.globalAlpha = 0.5;
+    // 激昂モード（HP35%以下）: 周囲に赤い強いオーラ
+    if (b.hp / b.maxHp < 0.35 && !b.defeated) {
+      const fcx = x + b.w/2, fcy = y + b.h/2;
+      const rageR = 120 + Math.sin(b.anim * 0.5) * 15;
+      const rageG = ctx.createRadialGradient(fcx, fcy, 20, fcx, fcy, rageR);
+      rageG.addColorStop(0, 'rgba(255,60,30,0.5)');
+      rageG.addColorStop(0.5, 'rgba(200,0,40,0.3)');
+      rageG.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = rageG;
+      ctx.beginPath();
+      ctx.arc(fcx, fcy, rageR, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     const W_ = b.w, H_ = b.h, cx = x + W_/2, bottomY = y + H_;
     const breathe = Math.sin(b.anim * 0.3) * 2;
@@ -2970,7 +4342,13 @@
     hpG.addColorStop(0, '#ff6a6a'); hpG.addColorStop(1, '#c82020');
     ctx.fillStyle = hpG;
     ctx.fillRect(barX, barY, hpW, 10);
-    const bossName = boss.isFinal ? '闇の帝王' : 'メガネ部長';
+    const DARK_BOSS_NAMES = [
+      '骨狼ネクロルフ','双頭水竜ヒュドラ','千眼木妖エントアイ','溶岩鬼マグマギガ',
+      '氷の処刑人フロストガロ','砂大蛇ヴォイドワーム','歯車悪魔ギアデモン','毒妃クイーンアラクネ','堕天使ルシフェル',
+    ];
+    const bossName = boss.isDarkToto ? '闇落ちとーと'
+      : (boss.isFinal ? '闇の帝王'
+      : (boss.isDarkBoss ? (DARK_BOSS_NAMES[boss.darkWorldIdx - DARK_WORLD_START] || 'モンスター') : 'メガネ部長'));
     ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
@@ -2985,6 +4363,30 @@
     // 地面から少し上に立つ
     const ky = (LEVEL_ROWS - 3) * TILE;
     if (kx < -40 || kx > W + 40) return;
+
+    // 旗竿の頂上に翻る旗
+    const flagTopY = 20;
+    const wave = Math.sin(titleFrame * 0.15) * 3;
+    ctx.save();
+    ctx.fillStyle = '#e03030';
+    ctx.beginPath();
+    ctx.moveTo(kx, flagTopY);
+    ctx.lineTo(kx + 22 + wave, flagTopY + 6);
+    ctx.lineTo(kx + 20 + wave, flagTopY + 12);
+    ctx.lineTo(kx, flagTopY + 14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('★', kx + 8, flagTopY + 8);
+    // 旗の先端の球
+    ctx.fillStyle = '#ffcc40';
+    ctx.beginPath();
+    ctx.arc(kx, flagTopY - 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
     const jitter = Math.sin(titleFrame * 0.1) * 1.2;
     // ボスがいてまだ engaged されてないならキノピオは「待ってる」
     // 影
@@ -3095,7 +4497,32 @@
     const cx = x + 12;
     const walking = Math.abs(saku.vx) > 0.5 && saku.onGround;
     const jumping = !saku.onGround;
-    const bob = walking ? Math.sin(saku.anim) * 1 : 0;
+    // 歩行時はbob、待機時は小さく呼吸
+    const idleBreath = (!walking && saku.onGround) ? Math.sin(Date.now() * 0.003) * 0.6 : 0;
+    const bob = walking ? Math.sin(saku.anim) * 1 : idleBreath;
+    // 剣所持時はさくの周りに青白いオーラ
+    if (saku.swordTimer > 0 && saku.swordTimer > 60 || (saku.swordTimer > 0 && Math.floor(saku.swordTimer / 6) % 2 === 0)) {
+      const aG = ctx.createRadialGradient(cx, y + 15, 2, cx, y + 15, 22);
+      aG.addColorStop(0, 'rgba(180,220,255,0.5)');
+      aG.addColorStop(1, 'rgba(180,220,255,0)');
+      ctx.fillStyle = aG;
+      ctx.beginPath();
+      ctx.arc(cx, y + 15, 22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // ダッシュ時のモーションブラー残像
+    if (Math.abs(saku.vx) > 3.5 && saku.onGround) {
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#40c0ff';
+      // 後ろに向けて3本の残像ライン
+      for (let i = 1; i <= 3; i++) {
+        const ox = saku.facing > 0 ? -i * 6 : i * 6;
+        ctx.globalAlpha = 0.3 - i * 0.08;
+        ctx.fillRect(cx + ox - 4, y + 12, 8, 14);
+      }
+      ctx.restore();
+    }
     // スター周辺キラキラ
     if (saku.starTimer > 0) {
       for (let i = 0; i < 6; i++) {
@@ -3105,6 +4532,35 @@
         const sy = y + 15 + Math.sin(ang)*rr;
         ctx.fillStyle = `hsl(${(saku.starTimer*10+i*60)%360},100%,70%)`;
         ctx.beginPath(); ctx.arc(sx, sy, 2.5, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    // ウルトラスター発動中：巨大虹オーラ＋ミニ星の軌跡
+    if (saku.ultraStarTimer > 0) {
+      const t = saku.ultraStarTimer;
+      // 下地の巨大グラデ
+      const ag = ctx.createRadialGradient(cx, y + 15, 2, cx, y + 15, 45);
+      ag.addColorStop(0, `hsla(${(t*8)%360},100%,80%,0.7)`);
+      ag.addColorStop(0.4, `hsla(${(t*8+120)%360},100%,60%,0.45)`);
+      ag.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = ag;
+      ctx.beginPath(); ctx.arc(cx, y + 15, 45, 0, Math.PI*2); ctx.fill();
+      // 周囲をぐるぐる回る小さな星（12個）
+      for (let i = 0; i < 12; i++) {
+        const ang = (i/12)*Math.PI*2 + t*0.15;
+        const rr = 32 + Math.sin(t*0.2+i)*5;
+        const sx = cx + Math.cos(ang)*rr;
+        const sy = y + 15 + Math.sin(ang)*rr;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(t*0.1 + i);
+        ctx.fillStyle = `hsl(${(t*12+i*30)%360},100%,75%)`;
+        drawStarShape(3);
+        ctx.restore();
+      }
+      // 終了直前（残り1秒）は点滅
+      if (t < 60 && Math.floor(t / 6) % 2 === 0) {
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(cx - 16, y, 32, 36);
       }
     }
     // ぺろぺろありーな発動後の青オーラ（aftermath 中）
@@ -3398,7 +4854,7 @@
     const savedSaku = {...saku};
     saku.x = cameraX; saku.y = 0; saku.vx = 0; saku.onGround = true;
     saku.facing = 1; saku.anim = titleFrame * 0.08;
-    saku.invuln = 0; saku.starTimer = 0; saku.swordTimer = 0;
+    saku.invuln = 0; saku.starTimer = 0; saku.swordTimer = 0; saku.ultraStarTimer = 0;
     drawSaku(cameraX, 0);
     Object.assign(saku, savedSaku);
     ctx.restore();
@@ -3515,6 +4971,27 @@
       }
     }
 
+    // ハイスコア＆進捗
+    const hi = getHighScore();
+    if (hi > 0) {
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold 12px serif';
+      ctx.fillStyle = 'rgba(255,220,120,0.9)';
+      ctx.fillText('HI SCORE: ' + hi.toLocaleString(), W/2, H * 0.43);
+      ctx.restore();
+    }
+    const saveData = loadSave();
+    if (saveData) {
+      const stageIdx = saveData.currentStage || 0;
+      const worldsCleared = Math.floor(stageIdx / 5);
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '11px serif';
+      ctx.fillStyle = 'rgba(200,255,220,0.75)';
+      ctx.fillText('制覇ワールド: ' + worldsCleared + ' / 10', W/2, H * 0.46);
+      ctx.restore();
+    }
     // 操作ヒント
     ctx.save();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -3525,22 +5002,70 @@
   }
 
   function drawStageTransition() {
-    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    // 背景グラデ（黒→紺）＋輝く星
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, 'rgba(5,5,20,0.92)');
+    bg.addColorStop(1, 'rgba(20,10,40,0.92)');
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
+    // 背景の星
+    for (let i = 0; i < 40; i++) {
+      const sx = ((i * 47 + stateTimer * 0.3) % W);
+      const sy = ((i * 31) % H);
+      const tw = 0.3 + 0.7 * Math.abs(Math.sin(stateTimer * 0.05 + i));
+      ctx.fillStyle = `rgba(255,255,255,${tw * 0.6})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1 + (i % 2), 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const next = STAGES[currentStage + 1];
-    const txt = next ? `${next.label}  ${next.name}` : '';
-    ctx.font = 'bold 28px sans-serif';
-    ctx.lineWidth = 6; ctx.strokeStyle = '#000';
-    ctx.strokeText(txt, W/2, H/2 - 20);
-    ctx.fillStyle = '#fff';
-    ctx.fillText(txt, W/2, H/2 - 20);
+
+    // 前ステージ結果
+    const prev = STAGES[currentStage];
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = '#8ab';
+    ctx.fillText('CLEAR!', W/2, H * 0.2);
     ctx.font = 'bold 18px sans-serif';
-    ctx.fillStyle = '#ffee44';
-    ctx.fillText('スタート！', W/2, H/2 + 20);
+    ctx.fillStyle = '#fff';
+    if (prev) ctx.fillText(prev.label + ' ' + prev.name, W/2, H * 0.27);
+
+    // 統計
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = '#ffcc60';
+    ctx.fillText('SCORE: ' + score.toLocaleString().toLocaleString(), W/2, H * 0.36);
+    ctx.fillText('🍣 ' + coinCount + '  MAX COMBO: ×' + comboMax, W/2, H * 0.42);
+
+    // 次ステージ
+    if (next) {
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillStyle = '#8fc';
+      ctx.fillText('NEXT', W/2, H * 0.55);
+      ctx.font = 'bold 28px sans-serif';
+      ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+      const txt = next.label + '  ' + next.name;
+      ctx.strokeText(txt, W/2, H * 0.63);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(txt, W/2, H * 0.63);
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillStyle = '#ffee44';
+      const pulse = 0.7 + 0.3 * Math.sin(stateTimer * 0.2);
+      ctx.globalAlpha = pulse;
+      ctx.fillText('スタート！', W/2, H * 0.73);
+      ctx.globalAlpha = 1;
+    }
   }
 
   function render() {
+    // 画面揺れ適用
+    ctx.save();
+    if (screenShake > 0) {
+      const sx = (Math.random() - 0.5) * screenShake;
+      const sy = (Math.random() - 0.5) * screenShake;
+      ctx.translate(sx, sy);
+      screenShake *= 0.85;
+      if (screenShake < 0.2) screenShake = 0;
+    }
     drawBackground();
     drawTiles();
     drawCheckpoint();
@@ -3550,12 +5075,19 @@
     drawBoss();
     drawKinopio();
     drawSaku(saku.x, saku.y);
+    drawParticles();
     drawUltEffect();
     drawBossHUD();
     drawHPGauge();
     drawUltGauge();
     drawUltPopups();
     drawUltBanner();
+    drawCombo();
+    drawStageProgress();
+    drawHpWarning();
+    drawWorldIntro();
+    drawClearOverlay();
+    drawPauseOverlay();
     if (saku.ultActive && saku.ultActive.type === 'peropero') {
       drawPeroperoCutin();
       // aftermath フェーズではさくを再描画して前面に表示（青オーラ付き）
@@ -3563,6 +5095,7 @@
         drawSaku(saku.x, saku.y);
       }
     }
+    ctx.restore();
   }
 
   function drawUltBanner() {
@@ -3604,6 +5137,136 @@
     ctx.restore();
   }
 
+  // コンボ表示（画面右上に大きくポップ。高ティアで色変化）
+  function drawCombo() {
+    if (comboCount < 2) return;
+    const fade = comboTimer < 30 ? comboTimer / 30 : 1;
+    const cx = W - 70;
+    const cy = 70;
+    // 高コンボほど派手に揺れる
+    const shakeAmt = Math.min(6, comboCount * 0.3);
+    const shakeX = (Math.random() - 0.5) * shakeAmt;
+    const shakeY = (Math.random() - 0.5) * shakeAmt;
+    const scale = 1 + Math.min(0.25, comboCount * 0.01) + 0.08 * Math.sin(Date.now() * 0.01);
+    // ティア別タイトル
+    let tierLabel = 'COMBO';
+    let tg1 = '#fff', tg2 = '#ffcc40', tg3 = '#ff6020';
+    if (comboCount >= 20) { tierLabel = 'LEGENDARY!'; tg1 = '#fff'; tg2 = '#ff40ff'; tg3 = '#8a00ff'; }
+    else if (comboCount >= 10) { tierLabel = 'GREAT!'; tg1 = '#fff'; tg2 = '#40d0ff'; tg3 = '#1060c0'; }
+    else if (comboCount >= 5) { tierLabel = 'GOOD!'; tg1 = '#fff'; tg2 = '#60ff60'; tg3 = '#207020'; }
+    ctx.save();
+    ctx.globalAlpha = fade;
+    ctx.translate(cx + shakeX, cy + shakeY);
+    ctx.scale(scale, scale);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.lineWidth = 4; ctx.strokeStyle = '#000';
+    ctx.strokeText(tierLabel, 0, -14);
+    ctx.fillStyle = tg2;
+    ctx.fillText(tierLabel, 0, -14);
+    ctx.font = 'bold 28px "Hiragino Maru Gothic ProN", sans-serif';
+    ctx.lineWidth = 5; ctx.strokeStyle = '#000';
+    ctx.strokeText(`×${comboCount}`, 0, 10);
+    const tg = ctx.createLinearGradient(0, -8, 0, 20);
+    tg.addColorStop(0, tg1);
+    tg.addColorStop(0.6, tg2);
+    tg.addColorStop(1, tg3);
+    ctx.fillStyle = tg;
+    ctx.fillText(`×${comboCount}`, 0, 10);
+    // コンボタイマー横棒
+    ctx.fillStyle = `rgba(255,220,120,${fade * 0.8})`;
+    const w = 60 * (comboTimer / COMBO_WINDOW);
+    ctx.fillRect(-30, 28, w, 3);
+    ctx.restore();
+  }
+
+  // ステージクリア時の大バナー
+  function drawClearOverlay() {
+    if (state !== 'cleared') return;
+    const t = Math.min(1, stateTimer / 30);
+    // 上下から黒帯が寄る
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    const barH = H * 0.18 * t;
+    ctx.fillRect(0, H * 0.35, W, barH);
+    ctx.fillRect(0, H * 0.65 - barH, W, barH);
+    // STAGE CLEAR!
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const scale = 0.5 + 0.5 * Math.min(1, stateTimer / 20);
+    ctx.translate(W/2, H * 0.5);
+    ctx.scale(scale, scale);
+    ctx.rotate(-0.03);
+    ctx.font = 'bold 44px "Hiragino Maru Gothic ProN", sans-serif';
+    ctx.lineWidth = 10; ctx.strokeStyle = '#000';
+    ctx.strokeText('STAGE CLEAR!', 0, 0);
+    const g = ctx.createLinearGradient(0, -30, 0, 30);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.5, '#ffee40');
+    g.addColorStop(1, '#ff6020');
+    ctx.fillStyle = g;
+    ctx.fillText('STAGE CLEAR!', 0, 0);
+    ctx.restore();
+  }
+
+  // HPがピンチの時に赤い縁を脈打たせる
+  function drawHpWarning() {
+    if (state !== 'playing' && state !== 'paused') return;
+    if (saku.hp > 2) return;
+    const intensity = saku.hp === 1 ? 0.5 : 0.3;
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.008);
+    const grad = ctx.createRadialGradient(W/2, H/2, Math.min(W,H) * 0.3, W/2, H/2, Math.max(W,H) * 0.65);
+    grad.addColorStop(0, 'rgba(255,0,0,0)');
+    grad.addColorStop(1, `rgba(255,20,20,${intensity * pulse})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // 新ワールド突入時の大バナー
+  function drawWorldIntro() {
+    if (!worldIntro) return;
+    worldIntro.timer--;
+    if (worldIntro.timer <= 0) { worldIntro = null; return; }
+    const t = 1 - worldIntro.timer / worldIntro.maxTimer;
+    // スライドイン→保持→フェードアウト
+    let alpha = 1;
+    let offX = 0;
+    if (t < 0.2) offX = (0.2 - t) * 1000;
+    else if (t > 0.75) alpha = Math.max(0, (1 - t) * 4);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // 黒帯
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0, H * 0.4 + offX, W, H * 0.2);
+    // 上下ライン
+    ctx.strokeStyle = '#ffee40';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.4 + offX); ctx.lineTo(W, H * 0.4 + offX);
+    ctx.moveTo(0, H * 0.6 + offX); ctx.lineTo(W, H * 0.6 + offX);
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // WORLD 番号
+    ctx.font = 'bold 13px serif';
+    ctx.fillStyle = '#ffcc60';
+    ctx.fillText('WORLD ' + worldIntro.num, W/2 + offX, H * 0.44);
+    // ワールド名
+    ctx.font = 'bold 32px "Hiragino Maru Gothic ProN", sans-serif';
+    ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+    ctx.strokeText(worldIntro.name, W/2 + offX, H * 0.52);
+    const tg = ctx.createLinearGradient(0, H * 0.47, 0, H * 0.57);
+    tg.addColorStop(0, '#ffffff');
+    tg.addColorStop(0.5, '#ffcc60');
+    tg.addColorStop(1, '#ff6040');
+    ctx.fillStyle = tg;
+    ctx.fillText(worldIntro.name, W/2 + offX, H * 0.52);
+    ctx.restore();
+  }
+
   function drawUltPopups() {
     if (!ultPopups.length) return;
     for (let i = ultPopups.length - 1; i >= 0; i--) {
@@ -3634,10 +5297,15 @@
       // 必殺ボタンを隠す
       const b = document.querySelector('#pad button.ult');
       if (b) b.style.display = 'none';
+      const sw = document.querySelector('#pad button.ultswitch');
+      if (sw) sw.style.display = 'none';
       return;
     } else {
       const b = document.querySelector('#pad button.ult');
       if (b) b.style.display = '';
+      const sw = document.querySelector('#pad button.ultswitch');
+      // 複数技を持っている時だけ切替ボタン表示
+      if (sw) sw.style.display = saku.unlockedUlts.length > 1 ? '' : 'none';
     }
 
     const pct = saku.ultGauge / saku.maxUlt;
@@ -4187,7 +5855,7 @@
     ctx.lineWidth = 1;
     ctx.strokeRect(24, boxY + 4, W - 48, boxH - 8);
     // 名前タブ
-    const speakerNames = { nazo: 'なぞの男', toto: 'とーと', saku: 'さく', boss: '謎の声' };
+    const speakerNames = { nazo: 'なぞの男', toto: 'とーと', saku: 'さく', boss: '謎の声', kurumi: 'くるみ' };
     let name = speakerNames[current.speaker] || '？？？';
     // final-revealのreveal前後で「なぞの男」→「とーと」に
     ctx.fillStyle = 'rgba(30, 50, 100, 0.95)';
@@ -4414,13 +6082,199 @@
       const savedSaku = {...saku};
       saku.x = cameraX; saku.y = 0; saku.vx = 0; saku.onGround = true;
       saku.facing = 1; saku.anim = cutscene.charAnim * 0.05;
-      saku.invuln = 0; saku.starTimer = 0; saku.swordTimer = 0;
+      saku.invuln = 0; saku.starTimer = 0; saku.swordTimer = 0; saku.ultraStarTimer = 0;
       drawSaku(cameraX, 0);
       Object.assign(saku, savedSaku);
       ctx.restore();
     } else if (speaker === 'boss') {
       drawFinalBossSilhouette(x, y);
+    } else if (speaker === 'kurumi') {
+      drawKurumi(x, y, cutscene.charAnim);
     }
+    ctx.restore();
+  }
+  // くるみ（3〜5歳の幼女・栗色ツインテール・白ワンピース＋ピンクリボン）
+  function drawKurumi(cx, cy, anim) {
+    ctx.save();
+    const skin = '#ffddbb';
+    const skinShade = '#d8a070';
+    const hairCol = '#9a5a2a';  // 栗色
+    const hairHL = '#c48040';
+    const dress = '#ffffff';
+    const dressShade = '#e0e0f0';
+    const ribbon = '#ff80b0';
+    const ribbonDark = '#c04880';
+    const bob = Math.sin(anim * 0.08) * 1.2;
+    const by = cy + bob;
+    // 靴（赤いメリージェーン）
+    ctx.fillStyle = '#c02040';
+    ctx.fillRect(cx - 9, by + 60, 7, 5);
+    ctx.fillRect(cx + 2, by + 60, 7, 5);
+    ctx.strokeStyle = '#600818';
+    ctx.lineWidth = 0.6;
+    ctx.strokeRect(cx - 9, by + 60, 7, 5);
+    ctx.strokeRect(cx + 2, by + 60, 7, 5);
+    // 白い靴下
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 8, by + 52, 5, 8);
+    ctx.fillRect(cx + 3, by + 52, 5, 8);
+    // 脚（ぷくっと）
+    ctx.fillStyle = skin;
+    ctx.fillRect(cx - 8, by + 45, 5, 8);
+    ctx.fillRect(cx + 3, by + 45, 5, 8);
+    // ワンピース（スカート広がり）
+    ctx.fillStyle = dress;
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, by + 48);
+    ctx.lineTo(cx + 14, by + 48);
+    ctx.lineTo(cx + 10, by + 22);
+    ctx.lineTo(cx - 10, by + 22);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = dressShade;
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+    // スカートのフリル
+    ctx.strokeStyle = dressShade;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 7; i++) {
+      const t = i / 6;
+      const fx = cx - 14 + t * 28;
+      ctx.moveTo(fx, by + 46);
+      ctx.lineTo(fx + 2, by + 48);
+    }
+    ctx.stroke();
+    // 胴（ワンピース上部）
+    ctx.fillStyle = dress;
+    ctx.fillRect(cx - 10, by + 22, 20, 6);
+    // ピンクリボン（胸元）
+    ctx.fillStyle = ribbon;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, by + 24);
+    ctx.lineTo(cx - 2, by + 22);
+    ctx.lineTo(cx - 2, by + 26);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 6, by + 24);
+    ctx.lineTo(cx + 2, by + 22);
+    ctx.lineTo(cx + 2, by + 26);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = ribbonDark;
+    ctx.fillRect(cx - 2, by + 22, 4, 4);
+    // 腕
+    ctx.fillStyle = skin;
+    ctx.fillRect(cx - 13, by + 24, 3, 14);
+    ctx.fillRect(cx + 10, by + 24, 3, 14);
+    // 手
+    ctx.beginPath();
+    ctx.arc(cx - 11.5, by + 39, 2.2, 0, Math.PI*2);
+    ctx.arc(cx + 11.5, by + 39, 2.2, 0, Math.PI*2);
+    ctx.fill();
+    // 首
+    ctx.fillStyle = skinShade;
+    ctx.fillRect(cx - 3, by + 18, 6, 5);
+    // 頭（丸くて大きめ・幼児体型）
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    ctx.ellipse(cx, by + 6, 15, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 髪の毛（頭のてっぺん・前髪）
+    ctx.fillStyle = hairCol;
+    ctx.beginPath();
+    ctx.arc(cx, by - 4, 14, Math.PI, 0);
+    ctx.lineTo(cx + 14, by + 4);
+    ctx.quadraticCurveTo(cx + 8, by - 2, cx, by - 1);
+    ctx.quadraticCurveTo(cx - 8, by - 2, cx - 14, by + 4);
+    ctx.closePath();
+    ctx.fill();
+    // 前髪のぱっつん
+    ctx.fillStyle = hairCol;
+    ctx.fillRect(cx - 12, by - 1, 24, 5);
+    // ツインテール（左）
+    ctx.save();
+    ctx.translate(cx - 14, by + 5);
+    ctx.rotate(-0.3 + Math.sin(anim*0.06)*0.05);
+    ctx.fillStyle = hairCol;
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 5, 14, 0, 0, Math.PI*2);
+    ctx.fill();
+    // ハイライト
+    ctx.fillStyle = hairHL;
+    ctx.beginPath();
+    ctx.ellipse(-2, 4, 1.2, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    // ツインテール（右）
+    ctx.save();
+    ctx.translate(cx + 14, by + 5);
+    ctx.rotate(0.3 + Math.sin(anim*0.06+1)*0.05);
+    ctx.fillStyle = hairCol;
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 5, 14, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = hairHL;
+    ctx.beginPath();
+    ctx.ellipse(2, 4, 1.2, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    // ピンクリボン（左ツインテールの根本）
+    ctx.fillStyle = ribbon;
+    ctx.beginPath();
+    ctx.moveTo(cx - 18, by + 3);
+    ctx.lineTo(cx - 14, by + 1);
+    ctx.lineTo(cx - 14, by + 7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, by + 3);
+    ctx.lineTo(cx - 14, by + 1);
+    ctx.lineTo(cx - 14, by + 7);
+    ctx.closePath();
+    ctx.fill();
+    // ピンクリボン（右）
+    ctx.beginPath();
+    ctx.moveTo(cx + 18, by + 3);
+    ctx.lineTo(cx + 14, by + 1);
+    ctx.lineTo(cx + 14, by + 7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 10, by + 3);
+    ctx.lineTo(cx + 14, by + 1);
+    ctx.lineTo(cx + 14, by + 7);
+    ctx.closePath();
+    ctx.fill();
+    // 目（大きくキラキラ）
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(cx - 5, by + 7, 2.6, 3.2, 0, 0, Math.PI*2);
+    ctx.ellipse(cx + 5, by + 7, 2.6, 3.2, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#7a3a10';  // 茶色い瞳
+    ctx.beginPath();
+    ctx.ellipse(cx - 5, by + 7.5, 1.8, 2.2, 0, 0, Math.PI*2);
+    ctx.ellipse(cx + 5, by + 7.5, 1.8, 2.2, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(cx - 5.5, by + 6.5, 0.8, 0, Math.PI*2);
+    ctx.arc(cx + 4.5, by + 6.5, 0.8, 0, Math.PI*2);
+    ctx.fill();
+    // 小さな口（ニコニコ）
+    ctx.strokeStyle = '#c06a4a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, by + 12, 1.8, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
+    // ほっぺ
+    ctx.fillStyle = 'rgba(255,140,180,0.6)';
+    ctx.beginPath();
+    ctx.arc(cx - 10, by + 10, 2.2, 0, Math.PI*2);
+    ctx.arc(cx + 10, by + 10, 2.2, 0, Math.PI*2);
+    ctx.fill();
     ctx.restore();
   }
   // なぞの男（フード姿）
@@ -4791,6 +6645,46 @@
   }
 
   // ロックマン風のHPゲージ
+  // ステージ進行度バー（上部中央）
+  function drawStageProgress() {
+    if (state !== 'playing' && state !== 'paused') return;
+    const stage = STAGES[currentStage];
+    if (!stage) return;
+    const progress = Math.max(0, Math.min(1, (saku.x + saku.w/2) / (LEVEL_W - TILE * 2)));
+    const bw = W * 0.5;
+    const bx = (W - bw) / 2;
+    const by = 8;
+    ctx.save();
+    // 背景
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(bx, by, bw, 10);
+    // 進行度
+    const pg = ctx.createLinearGradient(bx, by, bx + bw, by);
+    pg.addColorStop(0, '#40d0ff');
+    pg.addColorStop(0.5, '#ffee40');
+    pg.addColorStop(1, '#ff4080');
+    ctx.fillStyle = pg;
+    ctx.fillRect(bx + 1, by + 1, (bw - 2) * progress, 8);
+    // さくマーカー
+    const mx = bx + (bw - 2) * progress;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(mx, by + 5, 4, 0, Math.PI * 2);
+    ctx.fill();
+    // 旗マーカー（右端）
+    ctx.fillStyle = '#ffee40';
+    ctx.fillRect(bx + bw - 4, by - 4, 3, 18);
+    // ステージラベル
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+    ctx.strokeText(stage.label + ' ' + stage.name, W/2, by + 14);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(stage.label + ' ' + stage.name, W/2, by + 14);
+    ctx.restore();
+  }
+
   function drawHPGauge() {
     if (state === 'title') return;
     const x0 = 10, y0 = 10;
