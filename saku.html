@@ -1666,7 +1666,7 @@
       });
       return;
     }
-    saku.ultGauge -= ult.cost;
+    if (!window.DEBUG_INFINITE_ULT) saku.ultGauge -= ult.cost;
     // 発動バナー
     ultBanner = { name: ult.name, timer: 80, maxTimer: 80 };
     if (ultId === 'punch') activatePunch();
@@ -4825,6 +4825,8 @@
       const cs = params.get('cs');
       const stageParam = params.get('stage');
       const ultsParam = params.get('ults');
+      // デバッグ: ?infinite=1 で必殺技ゲージ無限
+      if (params.get('infinite') === '1') window.DEBUG_INFINITE_ULT = true;
 
       if (stageParam) {
         ensureAudio();
