@@ -948,11 +948,20 @@
         return;  // 他の処理スキップ
       }
       if (saku.ultActive.type === 'slash') {
-        // ジャンプ斬り中は空中継続＋下降で地面に戻ったら終わり
-        if (saku.ultActive.phase === 'jump' && saku.ultActive.timer < 45) {
-          applySlashDamage();
-          saku.ultActive.phase = 'down';
+        const t = saku.ultActive.timer;
+        // t: 110→75 ジャンプ上昇中（通常物理）
+        // t: 75→35 空中停止＋斬撃波スポーン（3波）
+        // t: 35→0  落下（通常物理）
+        if (t <= 75 && t > 35) {
+          // 空中停止
+          saku.vy = 0;
+          // 斬撃波を 75, 60, 45 フレームでスポーン
+          const spawnFrames = [75, 60, 45];
+          for (const f of spawnFrames) {
+            if (t === f) spawnSlashWave();
+          }
         }
+        updateSlashWaves(saku.ultActive);
       }
       if (saku.ultActive.timer <= 0) saku.ultActive = null;
     }
@@ -1585,34 +1594,62 @@
       if (bx >= x1 && bx <= x2) damageBoss(2);
     }
   }
+  // 空中連斬：高く跳ね上がって空中停止、前方に3連の斬撃波を飛ばす
   function activateSlash() {
-    saku.ultActive = { type: 'slash', timer: 60, phase: 'jump' };
-    saku.vy = -18;
+    saku.ultActive = {
+      type: 'slash',
+      timer: 110,            // 全体 110F
+      phase: 'jump',
+      slashWaves: [],
+      spawnedAt: [],         // スポーン済みフレーム
+    };
+    saku.vy = -17;
     beep(520, 0.08, 'triangle', 0.15);
     setTimeout(()=>beep(1040, 0.12, 'triangle', 0.15), 100);
-    setTimeout(()=>{
-      applySlashDamage();
-      beep(320, 0.2, 'sawtooth', 0.2);
-    }, 400);
   }
-  function applySlashDamage() {
-    const range = 80;
-    for (const en of enemies) {
-      if (!en.alive) continue;
-      const dx = (en.x + 14) - (saku.x + saku.w/2);
-      const dy = (en.y + 14) - (saku.y + saku.h/2);
-      if (Math.hypot(dx, dy) < range) {
-        en.alive = false; en.squashTimer = 50; en.flying = true;
-        en.vy = -12; en.vx = (dx > 0 ? 6 : -6);
-        addUlt(5);
-        score += 350; scoreEl.textContent = score;
+  function spawnSlashWave() {
+    if (!saku.ultActive) return;
+    saku.ultActive.slashWaves.push({
+      x: saku.x + saku.w/2 + saku.facing * 20,
+      y: saku.y + 8,
+      vx: saku.facing * 9,
+      life: 50,
+      maxLife: 50,
+      hit: new Set(),
+      angle: (Math.random() - 0.5) * 0.4,  // 微妙に傾ける
+    });
+    beep(900 + Math.random() * 200, 0.09, 'triangle', 0.15);
+  }
+  function updateSlashWaves(fx) {
+    for (const w of fx.slashWaves) {
+      w.x += w.vx;
+      w.life--;
+      // 敵との当たり
+      for (const en of enemies) {
+        if (!en.alive || w.hit.has(en)) continue;
+        const ex = en.x + 14, ey = en.y + 14;
+        if (Math.abs(ex - w.x) < 34 && Math.abs(ey - w.y) < 42) {
+          w.hit.add(en);
+          en.alive = false;
+          en.squashTimer = 50;
+          en.flying = true;
+          en.vy = -10;
+          en.vx = saku.facing * 6;
+          score += 350; scoreEl.textContent = score;
+          addUlt(5);
+          sfxStomp();
+        }
+      }
+      // ボス（hurtTimer中は無敵だが、別の斬撃波はノーヒットのまま進む）
+      if (boss && !boss.defeated && !w.hit.has(boss)) {
+        const bx = boss.x + boss.w/2, by = boss.y + boss.h/2;
+        if (Math.abs(bx - w.x) < 40 && Math.abs(by - w.y) < 55) {
+          w.hit.add(boss);
+          if (!boss.hurtTimer) damageBoss(2);
+        }
       }
     }
-    if (boss && !boss.defeated && !boss.hurtTimer) {
-      const dx = (boss.x + boss.w/2) - (saku.x + saku.w/2);
-      const dy = (boss.y + boss.h/2) - (saku.y + saku.h/2);
-      if (Math.hypot(dx, dy) < range * 1.5) damageBoss(2);
-    }
+    fx.slashWaves = fx.slashWaves.filter(w => w.life > 0);
   }
   function activatePeropero() {
     saku.ultActive = { type: 'peropero', timer: 180, phase: 'init', hitCount: 0 };
@@ -3164,39 +3201,69 @@
       }
       ctx.restore();
     } else if (type === 'slash') {
-      // ジャンプ斬り：上昇→下降時に十字型斬撃
-      if (saku.ultActive.phase === 'jump') {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(180,220,255,0.8)';
-        ctx.lineWidth = 3;
-        for (let i = 0; i < 4; i++) {
-          ctx.beginPath();
-          ctx.moveTo(sx - 30 + Math.random()*60, sy - 10 + (60-timer)*2);
-          ctx.lineTo(sx - 30 + Math.random()*60, sy + 30 + (60-timer)*2);
-          ctx.stroke();
-        }
-        ctx.restore();
-      } else {
-        // 着地斬撃：放射状の光
+      // ジャンプ斬り：空中停止中に光の軌跡＋斬撃波
+      // さくの周りに輝くオーラ
+      const t = saku.ultActive.timer;
+      if (t <= 80 && t >= 35) {
         ctx.save();
         ctx.translate(sx, sy);
-        for (let i = 0; i < 8; i++) {
-          const a = (i/8) * Math.PI * 2 + timer * 0.1;
-          ctx.rotate(a);
-          const g = ctx.createLinearGradient(0, 0, 80, 0);
-          g.addColorStop(0, 'rgba(255,255,255,0.9)');
-          g.addColorStop(1, 'rgba(200,220,255,0)');
-          ctx.strokeStyle = g;
-          ctx.lineWidth = 6;
+        for (let i = 0; i < 6; i++) {
+          const a = (i/6)*Math.PI*2 + (110-t)*0.2;
+          const rr = 22 + Math.sin((110-t)*0.3 + i) * 4;
+          ctx.fillStyle = `rgba(180,230,255,${0.5 + 0.5 * Math.sin((110-t)*0.2 + i)})`;
           ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(80, 0);
-          ctx.stroke();
-          ctx.rotate(-a);
+          ctx.arc(Math.cos(a)*rr, Math.sin(a)*rr, 2.5, 0, Math.PI*2);
+          ctx.fill();
         }
         ctx.restore();
       }
+      // 斬撃波
+      if (saku.ultActive.slashWaves) {
+        for (const w of saku.ultActive.slashWaves) {
+          drawSlashWave(w);
+        }
+      }
     }
+  }
+
+  function drawSlashWave(w) {
+    const x = w.x - cameraX;
+    const y = w.y;
+    const a = w.life / w.maxLife;
+    const phase = 1 - a;
+    ctx.save();
+    ctx.translate(x, y);
+    // 軌跡（残像）
+    for (let i = 0; i < 5; i++) {
+      const off = -i * 8 * Math.sign(w.vx);
+      ctx.globalAlpha = a * (1 - i * 0.2);
+      ctx.save();
+      ctx.translate(off, 0);
+      ctx.rotate(w.angle + phase * Math.sign(w.vx) * 0.3);
+      // 外側のグロー
+      const g = ctx.createLinearGradient(-40, 0, 40, 0);
+      g.addColorStop(0, 'rgba(160,210,255,0)');
+      g.addColorStop(0.4, 'rgba(200,235,255,0.7)');
+      g.addColorStop(0.5, 'rgba(255,255,255,1)');
+      g.addColorStop(0.6, 'rgba(200,235,255,0.7)');
+      g.addColorStop(1, 'rgba(160,210,255,0)');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 16;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-35, -22);
+      ctx.quadraticCurveTo(0, -5, 35, 22);
+      ctx.stroke();
+      // 中核の白線
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-30, -18);
+      ctx.quadraticCurveTo(0, -3, 30, 18);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
   }
 
   // ぺろぺろありーなカットイン（画面全体）
