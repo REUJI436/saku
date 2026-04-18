@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>きらきらおえかき</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; font-family: "Hiragino Maru Gothic ProN", "Comic Sans MS", sans-serif; user-select: none; -webkit-user-select: none; }
+  body {
+    background: #ffe0f0;
+    display: flex;
+    flex-direction: column;
+    touch-action: none;
+  }
+
+  #canvas-wrap {
+    flex: 1;
+    position: relative;
+    margin: 4px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 3px #fff;
+    background: #fff;
+  }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  #sparkles { position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%; }
+
+  #toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 6px;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,0.85);
+    flex-wrap: wrap;
+  }
+
+  .group { display: flex; gap: 4px; align-items: center; }
+  .group + .group { padding-left: 4px; border-left: 2px dashed #ffb0d0; margin-left: 2px; }
+
+  .btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .btn:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.15); }
+  .btn.selected { border-color: #ffd700; box-shadow: 0 0 0 2px #ffaa00, 0 2px 0 rgba(0,0,0,0.15); }
+
+  .color-btn[data-color="rainbow"] {
+    background: conic-gradient(from 0deg, #ff6b6b, #ffd93d, #6bcf7f, #4d96ff, #a855f7, #ff6b6b);
+  }
+  .size-btn .dot { background: #333; border-radius: 50%; }
+  .stamp-btn { background: #fff0f8; font-size: 22px; }
+
+  #clear-btn {
+    background: #ff6fa8; color: #fff; font-size: 12px; font-weight: bold;
+    width: auto; padding: 0 10px; border-radius: 20px; height: 40px;
+  }
+
+  #stamp-popup {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border: 3px solid #ffb0d0;
+    border-radius: 16px;
+    padding: 8px;
+    display: none;
+    grid-template-columns: repeat(6, 44px);
+    gap: 6px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    z-index: 10;
+    max-width: 90vw;
+  }
+  #stamp-popup.open { display: grid; }
+  #stamp-popup .btn { width: 44px; height: 44px; font-size: 24px; }
+</style>
+</head>
+<body>
+  <div id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+    <canvas id="sparkles"></canvas>
+  </div>
+  <div id="stamp-popup"></div>
+  <div id="toolbar">
+    <div class="group" id="colors"></div>
+    <div class="group" id="sizes"></div>
+    <div class="group" id="tools"></div>
+    <div class="group">
+      <div class="btn stamp-btn" id="stamp-toggle">🎀</div>
+      <button class="btn" id="clear-btn">けす</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const sparkleCanvas = document.getElementById('sparkles');
+  const sctx = sparkleCanvas.getContext('2d');
+
+  const colors = ['#ff6b9d', '#ff9a3c', '#ffd93d', '#6bcf7f', '#4dc3ff', '#a855f7', '#000', 'rainbow'];
+  const sizes = [6, 14, 26, 42];
+  const tools = [
+    { id: 'brush', emoji: '🖌️' },
+    { id: 'sparkle', emoji: '✨' },
+    { id: 'eraser', emoji: '🧽' },
+  ];
+  const stamps = ['🐰', '🐱', '🐶', '🦄', '🌸', '⭐', '❤️', '🌈', '🍓', '🎀', '🍰', '🦋'];
+
+  const state = {
+    color: '#ff6b9d',
+    size: 14,
+    tool: 'brush',
+    stamp: null,
+    drawing: false,
+    lastX: 0, lastY: 0,
+    rainbowHue: 0,
+  };
+
+  function resize() {
+    const wrap = document.getElementById('canvas-wrap');
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+    const snapshot = document.createElement('canvas');
+    snapshot.width = canvas.width; snapshot.height = canvas.height;
+    if (canvas.width > 0) snapshot.getContext('2d').drawImage(canvas, 0, 0);
+
+    [canvas, sparkleCanvas].forEach(c => {
+      c.width = w * dpr; c.height = h * dpr;
+      c.style.width = w + 'px'; c.style.height = h + 'px';
+    });
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (snapshot.width > 0) ctx.drawImage(snapshot, 0, 0, snapshot.width / dpr, snapshot.height / dpr);
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 100));
+
+  const colorsEl = document.getElementById('colors');
+  colors.forEach(c => {
+    const b = document.createElement('div');
+    b.className = 'btn color-btn';
+    b.dataset.color = c;
+    if (c !== 'rainbow') b.style.background = c;
+    b.addEventListener('click', () => selectColor(c, b));
+    colorsEl.appendChild(b);
+    if (c === state.color) b.classList.add('selected');
+  });
+
+  const sizesEl = document.getElementById('sizes');
+  sizes.forEach(s => {
+    const b = document.createElement('div');
+    b.className = 'btn size-btn';
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.width = Math.min(s, 28) + 'px';
+    dot.style.height = Math.min(s, 28) + 'px';
+    b.appendChild(dot);
+    b.addEventListener('click', () => selectSize(s, b));
+    sizesEl.appendChild(b);
+    if (s === state.size) b.classList.add('selected');
+  });
+
+  const toolsEl = document.getElementById('tools');
+  tools.forEach(t => {
+    const b = document.createElement('div');
+    b.className = 'btn tool-btn';
+    b.textContent = t.emoji;
+    b.addEventListener('click', () => selectTool(t.id, b));
+    toolsEl.appendChild(b);
+    if (t.id === state.tool) b.classList.add('selected');
+  });
+
+  const stampsPopup = document.getElementById('stamp-popup');
+  stamps.forEach(s => {
+    const b = document.createElement('div');
+    b.className = 'btn stamp-btn';
+    b.textContent = s;
+    b.addEventListener('click', () => selectStamp(s, b));
+    stampsPopup.appendChild(b);
+  });
+
+  const stampToggle = document.getElementById('stamp-toggle');
+  stampToggle.addEventListener('click', () => {
+    stampsPopup.classList.toggle('open');
+  });
+
+  function clearSelection(selector) {
+    document.querySelectorAll(selector + '.selected').forEach(el => el.classList.remove('selected'));
+  }
+  function selectColor(c, el) {
+    state.color = c;
+    clearSelection('.color-btn');
+    el.classList.add('selected');
+    state.stamp = null;
+    clearSelection('.stamp-btn');
+    if (state.tool === 'eraser') {
+      state.tool = 'brush';
+      clearSelection('.tool-btn');
+      document.querySelectorAll('.tool-btn')[0].classList.add('selected');
+    }
+  }
+  function selectSize(s, el) {
+    state.size = s;
+    clearSelection('.size-btn');
+    el.classList.add('selected');
+  }
+  function selectTool(id, el) {
+    state.tool = id;
+    clearSelection('.tool-btn');
+    el.classList.add('selected');
+    state.stamp = null;
+    clearSelection('#stamp-popup .stamp-btn');
+  }
+  function selectStamp(s, el) {
+    state.stamp = s;
+    clearSelection('#stamp-popup .stamp-btn');
+    el.classList.add('selected');
+    stampsPopup.classList.remove('open');
+  }
+
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    if (confirm('ぜんぶ けしちゃう？')) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  });
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
+
+  function currentColor() {
+    if (state.color === 'rainbow') {
+      state.rainbowHue = (state.rainbowHue + 8) % 360;
+      return `hsl(${state.rainbowHue}, 90%, 60%)`;
+    }
+    return state.color;
+  }
+
+  function drawDot(x, y) {
+    if (state.tool === 'eraser') {
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, state.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+    ctx.fillStyle = currentColor();
+    ctx.beginPath();
+    ctx.arc(x, y, state.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawLine(x1, y1, x2, y2) {
+    if (state.tool === 'eraser') {
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = state.size * 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+    ctx.strokeStyle = currentColor();
+    ctx.lineWidth = state.size;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.stroke();
+    if (state.tool === 'sparkle') addSparkle(x2, y2);
+  }
+
+  function drawStamp(x, y) {
+    const size = state.size * 3 + 24;
+    ctx.font = size + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(state.stamp, x, y);
+    for (let i = 0; i < 6; i++) addSparkle(x + (Math.random() - 0.5) * size, y + (Math.random() - 0.5) * size);
+  }
+
+  const particles = [];
+  function addSparkle(x, y) {
+    for (let i = 0; i < 3; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 3,
+        vy: (Math.random() - 0.5) * 3 - 1,
+        life: 1,
+        color: `hsl(${Math.random() * 360}, 90%, 70%)`,
+        size: Math.random() * 4 + 2,
+      });
+    }
+  }
+
+  function animateSparkles() {
+    sctx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life -= 0.03;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      sctx.save();
+      sctx.globalAlpha = p.life;
+      sctx.fillStyle = p.color;
+      sctx.beginPath();
+      const spikes = 5, outer = p.size, inner = p.size / 2;
+      for (let j = 0; j < spikes * 2; j++) {
+        const r = j % 2 === 0 ? outer : inner;
+        const a = (Math.PI * j) / spikes - Math.PI / 2;
+        const px = p.x + Math.cos(a) * r, py = p.y + Math.sin(a) * r;
+        j === 0 ? sctx.moveTo(px, py) : sctx.lineTo(px, py);
+      }
+      sctx.closePath();
+      sctx.fill();
+      sctx.restore();
+    }
+    requestAnimationFrame(animateSparkles);
+  }
+
+  function onDown(e) {
+    e.preventDefault();
+    const { x, y } = getPos(e);
+    if (state.stamp) { drawStamp(x, y); return; }
+    state.drawing = true;
+    state.lastX = x; state.lastY = y;
+    drawDot(x, y);
+    if (state.tool === 'sparkle') addSparkle(x, y);
+  }
+  function onMove(e) {
+    if (!state.drawing) return;
+    e.preventDefault();
+    const { x, y } = getPos(e);
+    drawLine(state.lastX, state.lastY, x, y);
+    state.lastX = x; state.lastY = y;
+  }
+  function onUp() { state.drawing = false; }
+
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('touchstart', onDown, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  canvas.addEventListener('touchend', onUp);
+  canvas.addEventListener('touchcancel', onUp);
+
+  resize();
+  animateSparkles();
+})();
+</script>
+</body>
+</html>

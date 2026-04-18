@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>きらめき カードコレクション</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  html, body { height: 100%; overflow: hidden; font-family: "Hiragino Maru Gothic ProN", "Comic Sans MS", sans-serif; }
+  body {
+    background: linear-gradient(180deg, #ffd6ec 0%, #c9e4ff 50%, #e4d4ff 100%);
+    height: 100vh;
+    touch-action: manipulation;
+    overflow: hidden;
+  }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    padding: 12px;
+  }
+  .screen.active { display: flex; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .title {
+    font-size: 20px;
+    color: #d63384;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #fff;
+  }
+  .count {
+    font-size: 14px;
+    color: #555;
+    font-weight: bold;
+  }
+
+  .nav-btn {
+    background: #ff6fa8;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #c44d85;
+    font-family: inherit;
+  }
+  .nav-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #c44d85; }
+
+  /* Home screen */
+  #home-screen {
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+  }
+  #gacha-box {
+    width: 220px; height: 220px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #ffb3d9, #ff6fa8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 120px;
+    box-shadow: 0 10px 0 #c44d85, 0 15px 30px rgba(0,0,0,0.3);
+    cursor: pointer;
+    position: relative;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  #gacha-box::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 40px;
+    background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.6), transparent, rgba(255,255,255,0.6), transparent);
+    animation: rotate 4s linear infinite;
+    z-index: -1;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.02); }
+  }
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  #gacha-box:active { transform: translateY(5px) scale(0.98); box-shadow: 0 5px 0 #c44d85, 0 8px 15px rgba(0,0,0,0.3); }
+
+  #gacha-label {
+    font-size: 24px;
+    color: #d63384;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #fff, 3px 3px 0 #ffb0d0;
+    letter-spacing: 2px;
+  }
+
+  .home-footer {
+    display: flex;
+    gap: 12px;
+  }
+
+  /* Reveal screen */
+  #reveal-screen {
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+  #reveal-card {
+    animation: revealIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes revealIn {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  #reveal-new {
+    color: #ffd700;
+    font-size: 32px;
+    font-weight: bold;
+    text-shadow: 3px 3px 0 #ff6fa8, -2px -2px 0 #fff;
+    margin-bottom: 10px;
+    animation: pulse 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
+  }
+
+  /* Card */
+  .card {
+    width: 220px;
+    height: 300px;
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    border: 4px solid #fff;
+    overflow: hidden;
+  }
+  .card .char {
+    font-size: 100px;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+    z-index: 2;
+  }
+  .card .name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    background: rgba(255,255,255,0.9);
+    padding: 4px 10px;
+    border-radius: 12px;
+    z-index: 2;
+  }
+  .card .stars {
+    font-size: 14px;
+    color: #ffa500;
+    z-index: 2;
+    text-shadow: 1px 1px 0 #fff;
+  }
+  .card .bg-pattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.3;
+    font-size: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+
+  .card.r1 { background: linear-gradient(135deg, #e6f2ff, #cce0ff); }
+  .card.r2 { background: linear-gradient(135deg, #ffe6f2, #ffb3d9); }
+  .card.r3 { background: linear-gradient(135deg, #fff2cc, #ffd966); border-color: #ffd700; }
+  .card.r4 {
+    background: linear-gradient(135deg, #ff9ecd, #c9a0ff, #87ceeb, #ffd966);
+    background-size: 300% 300%;
+    animation: rainbow 3s ease infinite;
+    border-color: #ffd700;
+    box-shadow: 0 0 20px #ffd700, 0 6px 20px rgba(0,0,0,0.3);
+  }
+  @keyframes rainbow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .card.r4::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%);
+    animation: shine 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Collection screen */
+  #collection-grid {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    padding: 10px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 16px;
+    margin-top: 10px;
+  }
+  .mini-card {
+    aspect-ratio: 2/3;
+    border-radius: 10px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .mini-card .char { font-size: 40px; }
+  .mini-card .name { font-size: 10px; font-weight: bold; color: #333; text-align: center; background: rgba(255,255,255,0.9); padding: 2px 4px; border-radius: 6px; }
+  .mini-card .stars { font-size: 10px; color: #ffa500; }
+  .mini-card.locked { background: #ccc; filter: grayscale(1); }
+  .mini-card.locked .char { opacity: 0.3; color: #666; }
+  .mini-card.locked .name { opacity: 0; }
+  .mini-card.locked::after { content: '?'; position: absolute; font-size: 50px; color: rgba(0,0,0,0.3); font-weight: bold; }
+
+  .mini-card.r1 { background: linear-gradient(135deg, #e6f2ff, #cce0ff); }
+  .mini-card.r2 { background: linear-gradient(135deg, #ffe6f2, #ffb3d9); }
+  .mini-card.r3 { background: linear-gradient(135deg, #fff2cc, #ffd966); border-color: #ffd700; }
+  .mini-card.r4 { background: linear-gradient(135deg, #ff9ecd, #c9a0ff, #87ceeb); border-color: #ffd700; box-shadow: 0 0 8px #ffd700; }
+
+  /* Tap anywhere hint */
+  .tap-hint {
+    position: absolute;
+    bottom: 30px;
+    color: #fff;
+    font-size: 16px;
+    animation: blink 1s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* Sparkle overlay */
+  #sparkle-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 200; }
+</style>
+</head>
+<body>
+
+  <div id="home-screen" class="screen active">
+    <div class="title" style="font-size: 32px;">きらめき カードコレクション</div>
+    <div id="gacha-box">🎁</div>
+    <div id="gacha-label">タップ して カードを あつめよう！</div>
+    <div class="home-footer">
+      <button class="nav-btn" id="open-collection">📖 ずかん</button>
+      <button class="nav-btn" id="reset-btn" style="background: #999; box-shadow: 0 3px 0 #666;">🔄 さいしょから</button>
+    </div>
+    <div class="count" id="home-count"></div>
+  </div>
+
+  <div id="reveal-screen" class="screen">
+    <div id="reveal-new" style="display:none;">✨ あたらしいカード！ ✨</div>
+    <div id="reveal-card"></div>
+    <div class="tap-hint">タップ で つぎへ</div>
+  </div>
+
+  <div id="collection-screen" class="screen">
+    <div class="top-bar">
+      <div class="title">📖 カードずかん</div>
+      <div class="count" id="collection-count"></div>
+      <button class="nav-btn" id="back-home">◀ もどる</button>
+    </div>
+    <div id="collection-grid"></div>
+  </div>
+
+  <canvas id="sparkle-canvas"></canvas>
+
+<script>
+const CARDS = [
+  // R1 common
+  { id: 1, name: 'うさぎちゃん', char: '🐰', rarity: 1, bg: '🌸' },
+  { id: 2, name: 'ねこちゃん', char: '🐱', rarity: 1, bg: '🐟' },
+  { id: 3, name: 'いぬちゃん', char: '🐶', rarity: 1, bg: '🦴' },
+  { id: 4, name: 'くまちゃん', char: '🐻', rarity: 1, bg: '🍯' },
+  { id: 5, name: 'ぱんだちゃん', char: '🐼', rarity: 1, bg: '🎋' },
+  { id: 6, name: 'ひよこちゃん', char: '🐥', rarity: 1, bg: '⭐' },
+  { id: 7, name: 'かえるくん', char: '🐸', rarity: 1, bg: '🍃' },
+  { id: 8, name: 'ぶたちゃん', char: '🐷', rarity: 1, bg: '🍎' },
+  // R2 rare
+  { id: 9, name: 'きつねひめ', char: '🦊', rarity: 2, bg: '🍁' },
+  { id: 10, name: 'こあらちゃん', char: '🐨', rarity: 2, bg: '🌿' },
+  { id: 11, name: 'おさるさん', char: '🐵', rarity: 2, bg: '🍌' },
+  { id: 12, name: 'ぺんぎんおうじ', char: '🐧', rarity: 2, bg: '❄️' },
+  { id: 13, name: 'たこちゃん', char: '🐙', rarity: 2, bg: '💙' },
+  { id: 14, name: 'ちょうちょ', char: '🦋', rarity: 2, bg: '🌺' },
+  // R3 super rare
+  { id: 15, name: 'おひめさま', char: '👸', rarity: 3, bg: '💎' },
+  { id: 16, name: 'まほうつかい', char: '🧙‍♀️', rarity: 3, bg: '✨' },
+  { id: 17, name: 'てんしちゃん', char: '👼', rarity: 3, bg: '☁️' },
+  { id: 18, name: 'にんぎょひめ', char: '🧜‍♀️', rarity: 3, bg: '🐚' },
+  // R4 legendary
+  { id: 19, name: 'にじのユニコーン', char: '🦄', rarity: 4, bg: '🌈' },
+  { id: 20, name: 'ドラゴンのひめ', char: '🐉', rarity: 4, bg: '💖' },
+];
+
+// drop rates per rarity
+const RARITY_WEIGHT = { 1: 60, 2: 25, 3: 12, 4: 3 };
+
+const STORAGE_KEY = 'kira-card-collection-v1';
+let owned = loadOwned();
+
+function loadOwned() {
+  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
+  catch (e) { return new Set(); }
+}
+function saveOwned() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...owned]));
+}
+
+function drawCard() {
+  const total = Object.values(RARITY_WEIGHT).reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  let chosenRarity = 1;
+  for (const [rarity, w] of Object.entries(RARITY_WEIGHT)) {
+    r -= w;
+    if (r <= 0) { chosenRarity = Number(rarity); break; }
+  }
+  const pool = CARDS.filter(c => c.rarity === chosenRarity);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function makeCardEl(card, cls = 'card') {
+  const el = document.createElement('div');
+  el.className = `${cls} r${card.rarity}`;
+  const stars = '⭐'.repeat(card.rarity);
+  const bgHtml = cls === 'card' ? `<div class="bg-pattern">${card.bg.repeat(24)}</div>` : '';
+  el.innerHTML = `
+    ${bgHtml}
+    <div class="stars">${stars}</div>
+    <div class="char">${card.char}</div>
+    <div class="name">${card.name}</div>
+  `;
+  return el;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateCounts() {
+  const text = `あつめた: ${owned.size} / ${CARDS.length}`;
+  document.getElementById('home-count').textContent = text;
+  document.getElementById('collection-count').textContent = text;
+}
+
+// Sparkle animation
+const sparkleCanvas = document.getElementById('sparkle-canvas');
+const sctx = sparkleCanvas.getContext('2d');
+function resizeSparkle() {
+  const dpr = window.devicePixelRatio || 1;
+  sparkleCanvas.width = window.innerWidth * dpr;
+  sparkleCanvas.height = window.innerHeight * dpr;
+  sparkleCanvas.style.width = window.innerWidth + 'px';
+  sparkleCanvas.style.height = window.innerHeight + 'px';
+  sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resizeSparkle);
+resizeSparkle();
+
+const particles = [];
+function burstSparkles(x, y, count = 40, intense = false) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * (intense ? 8 : 5) + 2;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1,
+      color: `hsl(${Math.random() * 360}, 90%, 70%)`,
+      size: Math.random() * 5 + 3,
+    });
+  }
+}
+
+function animate() {
+  sctx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.015;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    sctx.save();
+    sctx.globalAlpha = p.life;
+    sctx.fillStyle = p.color;
+    sctx.beginPath();
+    const spikes = 5, outer = p.size, inner = p.size / 2;
+    for (let j = 0; j < spikes * 2; j++) {
+      const rr = j % 2 === 0 ? outer : inner;
+      const a = (Math.PI * j) / spikes - Math.PI / 2;
+      const px = p.x + Math.cos(a) * rr, py = p.y + Math.sin(a) * rr;
+      j === 0 ? sctx.moveTo(px, py) : sctx.lineTo(px, py);
+    }
+    sctx.closePath();
+    sctx.fill();
+    sctx.restore();
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Reveal
+function openGacha() {
+  const card = drawCard();
+  const isNew = !owned.has(card.id);
+  owned.add(card.id);
+  saveOwned();
+
+  const revealCard = document.getElementById('reveal-card');
+  revealCard.innerHTML = '';
+  revealCard.appendChild(makeCardEl(card));
+
+  document.getElementById('reveal-new').style.display = isNew ? 'block' : 'none';
+
+  showScreen('reveal-screen');
+
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  const intense = card.rarity >= 3;
+  burstSparkles(cx, cy, card.rarity * 25, intense);
+  if (card.rarity === 4) {
+    setTimeout(() => burstSparkles(cx, cy, 60, true), 200);
+    setTimeout(() => burstSparkles(cx, cy, 60, true), 400);
+  }
+}
+
+document.getElementById('gacha-box').addEventListener('click', openGacha);
+
+document.getElementById('reveal-screen').addEventListener('click', () => {
+  showScreen('home-screen');
+  updateCounts();
+});
+
+document.getElementById('open-collection').addEventListener('click', () => {
+  renderCollection();
+  showScreen('collection-screen');
+});
+
+document.getElementById('back-home').addEventListener('click', () => {
+  showScreen('home-screen');
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('あつめたカードを ぜんぶ わすれちゃう？')) {
+    owned = new Set();
+    saveOwned();
+    updateCounts();
+  }
+});
+
+function renderCollection() {
+  const grid = document.getElementById('collection-grid');
+  grid.innerHTML = '';
+  CARDS.forEach(card => {
+    const has = owned.has(card.id);
+    const el = makeCardEl(card, 'mini-card');
+    if (!has) el.classList.add('locked');
+    grid.appendChild(el);
+  });
+}
+
+updateCounts();
+</script>
+</body>
+</html>
