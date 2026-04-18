@@ -48,23 +48,32 @@
   #score { font-size: 22px; font-weight: bold; color: #ffd; }
   #portalBtn {
     position: fixed;
-    top: 6px;
-    left: 6px;
-    z-index: 80;
-    background: rgba(30, 40, 70, 0.85);
+    top: calc(4px + env(safe-area-inset-top));
+    right: calc(4px + env(safe-area-inset-right));
+    z-index: 9999;
+    background: linear-gradient(to bottom, #3a5080, #1a2a50);
     color: #fff;
     text-decoration: none;
     padding: 6px 10px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 11px;
     font-weight: bold;
-    border: 1px solid #80a0d0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    border: 2px solid #80a0d0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   #portalBtn:active { transform: translateY(1px); opacity: 0.85; }
   @media (max-width: 720px) {
-    #portalBtn { font-size: 10px; padding: 4px 8px; }
+    #portalBtn {
+      font-size: 12px;
+      padding: 8px 12px;
+      min-width: 88px;
+      min-height: 32px;
+      text-align: center;
+      top: calc(2px + env(safe-area-inset-top));
+      right: calc(2px + env(safe-area-inset-right));
+    }
   }
   #over {
     position: fixed; inset: 0; display: none; align-items: center;
