@@ -1025,8 +1025,8 @@ const actionState = {
   coins: [],
   scroll: 0,
   coinsCollected: 0,
-  coinGoal: 100,
-  timeLimit: 150,
+  coinGoal: 50,
+  timeLimit: 60,
   lastSpawn: 0,
   groundY: 0,
   startTime: 0,
@@ -1168,25 +1168,24 @@ function actionLoop() {
     return;
   }
 
-  // spawn — denser to support 100-coin goal
+  // spawn — spaced out for relaxed pacing
   actionState.lastSpawn += dt * 16;
-  if (actionState.lastSpawn > 220) {
+  if (actionState.lastSpawn > 650) {
     actionState.lastSpawn = 0;
-    const lineCount = 3 + Math.floor(Math.random() * 3); // 3-5 coins in a row
-    // 50% ground-level (easy), 50% high (jump)
+    const lineCount = 1 + Math.floor(Math.random() * 2); // 1-2 coins
     const groundLevel = Math.random() < 0.55;
     const baseY = groundLevel
-      ? actionState.groundY - 38 // just above ground - catch by running
+      ? actionState.groundY - 38
       : actionState.groundY - (70 + Math.random() * 80);
     for (let i = 0; i < lineCount; i++) {
       actionState.coins.push({
-        x: W + 30 + i * 38,
+        x: W + 30 + i * 52,
         y: baseY,
         size: 20, collected: false,
       });
     }
     if (!groundLevel && Math.random() < 0.18) {
-      actionState.obstacles.push({ x: W + 30 + lineCount * 42 + 100, y: actionState.groundY - 36, w: 30, h: 36 });
+      actionState.obstacles.push({ x: W + 30 + lineCount * 60 + 140, y: actionState.groundY - 36, w: 30, h: 36 });
     }
   }
 
