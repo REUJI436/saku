@@ -645,144 +645,339 @@
 
 <script>
 // ====================== CHARACTER SVG ======================
+// Kurumi: extra detailed anime-style eyes, cute features
+// Mobs (haruka/miku/yuuta/sensei): simpler anime-lite look
 const CHARS = {
   kurumi: {
     name: 'くるみ',
     color: '#d63384',
-    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="100" cy="165" rx="60" ry="28" fill="#ff9ecd"/>
-      <path d="M50 80 Q40 40 100 30 Q160 40 150 80 L150 130 Q130 125 100 125 Q70 125 50 130 Z" fill="#d4a574"/>
-      <circle cx="100" cy="100" r="48" fill="#ffe4c4"/>
-      <ellipse cx="100" cy="150" rx="35" ry="25" fill="#ffb0d0"/>
-      <path d="M50 85 Q45 120 55 140" stroke="#d4a574" stroke-width="12" fill="none" stroke-linecap="round"/>
-      <path d="M150 85 Q155 120 145 140" stroke="#d4a574" stroke-width="12" fill="none" stroke-linecap="round"/>
-      <circle cx="82" cy="100" r="7" fill="#333"/>
-      <circle cx="118" cy="100" r="7" fill="#333"/>
-      <circle cx="80" cy="97" r="2" fill="#fff"/>
-      <circle cx="116" cy="97" r="2" fill="#fff"/>
-      <ellipse cx="75" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
-      <ellipse cx="125" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
-      <path d="M92 118 Q100 125 108 118" stroke="#d63384" stroke-width="2" fill="none" stroke-linecap="round"/>
+    svg: `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- shoulders/uniform -->
+      <path d="M30 220 L55 170 L145 170 L170 220 Z" fill="#ffc4dc"/>
+      <rect x="75" y="166" width="50" height="7" rx="3" fill="#fff"/>
+      <path d="M100 175 L96 183 L100 182 L104 183 Z" fill="#ff6fa8"/>
+      <rect x="92" y="153" width="16" height="16" fill="#ffd8b8"/>
+      <!-- back hair long -->
+      <path d="M36 100 Q26 48 100 28 Q174 48 164 100 Q172 145 155 168 L130 164 L130 105 Q100 90 70 105 L70 164 L45 168 Q28 145 36 100 Z" fill="#c19469"/>
+      <!-- face -->
+      <ellipse cx="100" cy="108" rx="37" ry="44" fill="#ffe8d0"/>
+      <!-- bangs -->
+      <path d="M63 82 Q72 52 100 55 Q128 52 137 82 Q131 88 118 84 Q110 92 100 90 Q90 92 82 84 Q69 88 63 82 Z" fill="#c19469"/>
+      <!-- side hair -->
+      <path d="M63 88 Q54 135 66 168 L78 164 L76 95 Z" fill="#c19469"/>
+      <path d="M137 88 Q146 135 134 168 L122 164 L124 95 Z" fill="#c19469"/>
+      <!-- hair highlight -->
+      <path d="M85 60 Q100 56 115 60 L112 68 Q100 64 88 68 Z" fill="#d9b08a" opacity="0.6"/>
+      <!-- Eyes -->
+      <g transform="translate(85, 115)">
+        <ellipse cx="0" cy="0" rx="10" ry="13" fill="#fff"/>
+        <ellipse cx="0" cy="0" rx="8.5" ry="12" fill="#6b3c1a"/>
+        <ellipse cx="0" cy="2" rx="5.5" ry="9" fill="#c48020"/>
+        <ellipse cx="0" cy="4" rx="2.8" ry="6" fill="#1a0e05"/>
+        <ellipse cx="-2.5" cy="-4" rx="3.2" ry="4.8" fill="#fff"/>
+        <circle cx="2.5" cy="5" r="1.3" fill="#fff"/>
+      </g>
+      <g transform="translate(115, 115)">
+        <ellipse cx="0" cy="0" rx="10" ry="13" fill="#fff"/>
+        <ellipse cx="0" cy="0" rx="8.5" ry="12" fill="#6b3c1a"/>
+        <ellipse cx="0" cy="2" rx="5.5" ry="9" fill="#c48020"/>
+        <ellipse cx="0" cy="4" rx="2.8" ry="6" fill="#1a0e05"/>
+        <ellipse cx="-2.5" cy="-4" rx="3.2" ry="4.8" fill="#fff"/>
+        <circle cx="2.5" cy="5" r="1.3" fill="#fff"/>
+      </g>
+      <!-- eyelashes -->
+      <path d="M77 102 Q82 99 88 102" stroke="#3a2515" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <path d="M112 102 Q118 99 123 102" stroke="#3a2515" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <!-- eyebrows -->
+      <path d="M75 96 Q85 92 94 96" stroke="#7a5230" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M106 96 Q115 92 125 96" stroke="#7a5230" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <!-- nose -->
+      <path d="M99 131 Q97 134 100 135 Q103 134 101 131" stroke="#d4a88a" stroke-width="1" fill="none"/>
+      <!-- mouth -->
+      <path d="M94 144 Q100 150 106 144" stroke="#c02060" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <path d="M95 145 Q100 148 105 145 Q100 147.5 95 145 Z" fill="#ff7a9e"/>
+      <!-- blush -->
+      <ellipse cx="77" cy="135" rx="7" ry="3.5" fill="#ff9ab5" opacity="0.55"/>
+      <ellipse cx="123" cy="135" rx="7" ry="3.5" fill="#ff9ab5" opacity="0.55"/>
+      <!-- hair ribbon -->
+      <g transform="translate(72, 73)">
+        <ellipse cx="-5" cy="0" rx="4" ry="3" fill="#ff6fa8"/>
+        <ellipse cx="5" cy="0" rx="4" ry="3" fill="#ff6fa8"/>
+        <circle cx="0" cy="0" r="2.2" fill="#d63384"/>
+      </g>
     </svg>`
   },
   kurumiPre: {
-    name: 'プリキュア くるみ',
+    name: 'くるみ',
     color: '#d63384',
-    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    svg: `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <radialGradient id="shine" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stop-color="#fff" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stop-color="#ffd700" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#ff6fa8" stop-opacity="0"/>
         </radialGradient>
       </defs>
-      <circle cx="100" cy="100" r="95" fill="url(#shine)"/>
-      <path d="M100 170 L70 190 L130 190 Z" fill="#ff6fa8"/>
-      <ellipse cx="100" cy="170" rx="55" ry="30" fill="#ff9ecd"/>
-      <ellipse cx="100" cy="165" rx="62" ry="14" fill="#ffd700"/>
-      <path d="M45 80 Q35 30 100 20 Q165 30 155 80 L160 140 Q150 145 140 135 L140 90 Q100 80 60 90 L60 135 Q50 145 40 140 Z" fill="#e8b07a"/>
-      <circle cx="100" cy="100" r="48" fill="#ffe4c4"/>
-      <path d="M60 70 Q80 40 100 50 Q120 40 140 70 L135 85 Q100 75 65 85 Z" fill="#e8b07a"/>
-      <g transform="translate(65, 55)">
-        <path d="M0 10 Q-15 -5 -5 -15 Q10 -15 10 0 Q25 -15 30 5 Q25 15 10 15 Q-5 20 0 10 Z" fill="#ff6fa8"/>
-        <circle cx="10" cy="0" r="6" fill="#ffd700"/>
+      <!-- halo glow -->
+      <circle cx="100" cy="100" r="100" fill="url(#halo)"/>
+      <!-- frilly skirt -->
+      <path d="M40 220 L55 175 L145 175 L160 220 Z" fill="#ff6fa8"/>
+      <path d="M55 180 Q70 185 85 180 Q100 185 115 180 Q130 185 145 180" stroke="#ffd700" stroke-width="2" fill="none"/>
+      <!-- dress bodice -->
+      <path d="M65 175 L72 150 L128 150 L135 175 Z" fill="#ff9ecd"/>
+      <!-- gold heart badge -->
+      <path d="M100 162 L95 157 Q91 153 95 157 Q100 164 105 157 Q109 153 105 157 Z" fill="#ffd700" stroke="#c09010" stroke-width="0.8"/>
+      <!-- white collar cape -->
+      <path d="M68 155 Q100 148 132 155 L126 142 L74 142 Z" fill="#fff" stroke="#ffd700" stroke-width="1"/>
+      <!-- neck -->
+      <rect x="92" y="140" width="16" height="12" fill="#ffd8b8"/>
+      <!-- curly hair back -->
+      <path d="M28 105 Q20 45 100 22 Q180 45 172 105 Q175 140 162 165 Q170 180 158 180 L132 168 L132 100 Q100 88 68 100 L68 168 L42 180 Q30 180 38 165 Q25 140 28 105 Z" fill="#c19469"/>
+      <!-- face -->
+      <ellipse cx="100" cy="103" rx="37" ry="44" fill="#ffe8d0"/>
+      <!-- bangs -->
+      <path d="M63 78 Q72 48 100 50 Q128 48 137 78 Q131 85 118 80 Q110 87 100 85 Q90 87 82 80 Q69 85 63 78 Z" fill="#c19469"/>
+      <!-- side curly hair -->
+      <path d="M63 85 Q46 125 52 170 Q62 172 72 170 L76 92 Z" fill="#c19469"/>
+      <path d="M137 85 Q154 125 148 170 Q138 172 128 170 L124 92 Z" fill="#c19469"/>
+      <!-- hair highlight -->
+      <path d="M82 58 Q100 55 118 58 L115 66 Q100 62 85 66 Z" fill="#e5c5a0" opacity="0.7"/>
+      <!-- Tiara -->
+      <g transform="translate(100, 54)">
+        <path d="M-23 2 L-12 -10 L0 -16 L12 -10 L23 2 Z" fill="#ffd700" stroke="#c8a000" stroke-width="1.2"/>
+        <path d="M-15 -4 L0 -12 L15 -4" stroke="#c8a000" stroke-width="0.8" fill="none"/>
+        <path d="M-4 -8 L0 -14 L4 -8 L2 -6 L0 -10 L-2 -6 Z" fill="#ff4090" stroke="#c02078" stroke-width="0.5"/>
+        <circle cx="-12" cy="-2" r="1.2" fill="#fff"/>
+        <circle cx="12" cy="-2" r="1.2" fill="#fff"/>
       </g>
-      <circle cx="82" cy="100" r="9" fill="#d63384"/>
-      <circle cx="118" cy="100" r="9" fill="#d63384"/>
-      <circle cx="79" cy="96" r="3" fill="#fff"/>
-      <circle cx="115" cy="96" r="3" fill="#fff"/>
-      <circle cx="84" cy="104" r="1.5" fill="#fff"/>
-      <circle cx="120" cy="104" r="1.5" fill="#fff"/>
-      <ellipse cx="75" cy="115" rx="6" ry="4" fill="#ff8080"/>
-      <ellipse cx="125" cy="115" rx="6" ry="4" fill="#ff8080"/>
-      <path d="M90 118 Q100 128 110 118" stroke="#d63384" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <text x="165" y="45" font-size="20" fill="#ffd700">✨</text>
-      <text x="30" y="140" font-size="18" fill="#ffd700">✨</text>
-      <text x="170" y="160" font-size="16" fill="#ffd700">✨</text>
+      <!-- big pink ribbons -->
+      <g transform="translate(58, 78)">
+        <ellipse cx="-7" cy="0" rx="7" ry="5" fill="#ff4090"/>
+        <ellipse cx="7" cy="0" rx="7" ry="5" fill="#ff4090"/>
+        <circle cx="0" cy="0" r="3" fill="#c02078"/>
+        <path d="M-2 5 L-4 14 M2 5 L4 14" stroke="#ff4090" stroke-width="4" fill="none" stroke-linecap="round"/>
+      </g>
+      <g transform="translate(142, 78)">
+        <ellipse cx="-7" cy="0" rx="7" ry="5" fill="#ff4090"/>
+        <ellipse cx="7" cy="0" rx="7" ry="5" fill="#ff4090"/>
+        <circle cx="0" cy="0" r="3" fill="#c02078"/>
+        <path d="M-2 5 L-4 14 M2 5 L4 14" stroke="#ff4090" stroke-width="4" fill="none" stroke-linecap="round"/>
+      </g>
+      <!-- SPARKLY Eyes (extra bling) -->
+      <g transform="translate(85, 110)">
+        <ellipse cx="0" cy="0" rx="11" ry="14" fill="#fff"/>
+        <ellipse cx="0" cy="0" rx="9" ry="13" fill="#9b1f58"/>
+        <ellipse cx="0" cy="3" rx="6" ry="10" fill="#ff4090"/>
+        <ellipse cx="0" cy="4" rx="3" ry="7" fill="#3a0a20"/>
+        <ellipse cx="-2.5" cy="-4" rx="3.8" ry="5.5" fill="#fff"/>
+        <circle cx="2.5" cy="5" r="1.5" fill="#fff"/>
+        <circle cx="4" cy="-4" r="1" fill="#fff"/>
+      </g>
+      <g transform="translate(115, 110)">
+        <ellipse cx="0" cy="0" rx="11" ry="14" fill="#fff"/>
+        <ellipse cx="0" cy="0" rx="9" ry="13" fill="#9b1f58"/>
+        <ellipse cx="0" cy="3" rx="6" ry="10" fill="#ff4090"/>
+        <ellipse cx="0" cy="4" rx="3" ry="7" fill="#3a0a20"/>
+        <ellipse cx="-2.5" cy="-4" rx="3.8" ry="5.5" fill="#fff"/>
+        <circle cx="2.5" cy="5" r="1.5" fill="#fff"/>
+        <circle cx="4" cy="-4" r="1" fill="#fff"/>
+      </g>
+      <!-- eyelashes longer -->
+      <path d="M74 98 Q82 94 89 98" stroke="#3a0a20" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M111 98 Q118 94 126 98" stroke="#3a0a20" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- eyebrows -->
+      <path d="M75 92 Q85 88 94 91" stroke="#7a5230" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M106 91 Q115 88 125 92" stroke="#7a5230" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <!-- nose -->
+      <path d="M99 126 Q97 129 100 130 Q103 129 101 126" stroke="#d4a88a" stroke-width="1" fill="none"/>
+      <!-- happy mouth -->
+      <path d="M93 139 Q100 147 107 139" stroke="#c02060" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M95 140 Q100 145 105 140 Q100 144 95 140 Z" fill="#ff7a9e"/>
+      <!-- blush (stronger) -->
+      <ellipse cx="76" cy="130" rx="7" ry="4" fill="#ff8fa5" opacity="0.7"/>
+      <ellipse cx="124" cy="130" rx="7" ry="4" fill="#ff8fa5" opacity="0.7"/>
+      <!-- scattered sparkles -->
+      <text x="18" y="32" font-size="14" fill="#ffd700">✨</text>
+      <text x="172" y="42" font-size="16" fill="#ffd700">✨</text>
+      <text x="15" y="170" font-size="12" fill="#ffd700">✨</text>
+      <text x="178" y="180" font-size="14" fill="#ffd700">✨</text>
+      <text x="160" y="120" font-size="10" fill="#ffd700">♡</text>
+      <text x="28" y="130" font-size="10" fill="#ffd700">♡</text>
     </svg>`
   },
   haruka: {
     name: 'はるかちゃん',
     color: '#ff6b6b',
-    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="100" cy="170" rx="55" ry="25" fill="#ffeb3b"/>
-      <path d="M55 80 Q50 45 100 35 Q150 45 145 80 L140 110 Q100 100 60 110 Z" fill="#ff4040"/>
-      <circle cx="100" cy="100" r="47" fill="#ffe4c4"/>
-      <circle cx="82" cy="100" r="7" fill="#333"/>
-      <circle cx="118" cy="100" r="7" fill="#333"/>
-      <circle cx="80" cy="97" r="2" fill="#fff"/>
-      <circle cx="116" cy="97" r="2" fill="#fff"/>
-      <ellipse cx="75" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
-      <ellipse cx="125" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
-      <path d="M92 120 Q100 130 108 120" stroke="#d63384" stroke-width="2" fill="none" stroke-linecap="round"/>
+    svg: `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 220 L60 172 L140 172 L160 220 Z" fill="#ffeb3b"/>
+      <rect x="92" y="158" width="16" height="15" fill="#ffd8b8"/>
+      <!-- back hair short -->
+      <path d="M55 100 Q50 55 100 40 Q150 55 145 100 L145 130 L55 130 Z" fill="#d84040"/>
+      <!-- face -->
+      <ellipse cx="100" cy="110" rx="35" ry="42" fill="#ffe8d0"/>
+      <!-- bangs -->
+      <path d="M65 88 Q78 60 100 63 Q122 60 135 88 L128 92 Q100 80 72 92 Z" fill="#d84040"/>
+      <!-- side hair -->
+      <path d="M64 92 Q60 125 70 142 L78 138 L78 98 Z" fill="#d84040"/>
+      <path d="M136 92 Q140 125 130 142 L122 138 L122 98 Z" fill="#d84040"/>
+      <!-- simple eyes -->
+      <g transform="translate(88, 117)">
+        <ellipse cx="0" cy="0" rx="6" ry="8" fill="#fff"/>
+        <ellipse cx="0" cy="1" rx="4.5" ry="7" fill="#6b3c1a"/>
+        <circle cx="0" cy="2" r="2.2" fill="#1a0e05"/>
+        <circle cx="-1.2" cy="-1.5" r="1.3" fill="#fff"/>
+      </g>
+      <g transform="translate(112, 117)">
+        <ellipse cx="0" cy="0" rx="6" ry="8" fill="#fff"/>
+        <ellipse cx="0" cy="1" rx="4.5" ry="7" fill="#6b3c1a"/>
+        <circle cx="0" cy="2" r="2.2" fill="#1a0e05"/>
+        <circle cx="-1.2" cy="-1.5" r="1.3" fill="#fff"/>
+      </g>
+      <!-- eyebrows -->
+      <path d="M81 103 Q88 100 95 103" stroke="#7a2020" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M105 103 Q112 100 119 103" stroke="#7a2020" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- mouth -->
+      <path d="M93 142 Q100 147 107 142" stroke="#c02060" stroke-width="1.8" fill="none" stroke-linecap="round"/>
     </svg>`
   },
   miku: {
     name: 'みくちゃん',
     color: '#a855f7',
-    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="100" cy="170" rx="55" ry="25" fill="#c9a0ff"/>
-      <path d="M45 100 Q40 50 100 40 Q160 50 155 100 L160 150 L135 145 L135 90 Q100 85 65 90 L65 145 L40 150 Z" fill="#2a2a2a"/>
-      <circle cx="100" cy="100" r="47" fill="#ffe4c4"/>
-      <circle cx="82" cy="100" r="7" fill="#333"/>
-      <circle cx="118" cy="100" r="7" fill="#333"/>
-      <circle cx="80" cy="97" r="2" fill="#fff"/>
-      <circle cx="116" cy="97" r="2" fill="#fff"/>
-      <ellipse cx="75" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
-      <ellipse cx="125" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
-      <path d="M92 118 Q100 123 108 118" stroke="#d63384" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <circle cx="60" cy="70" r="10" fill="#ff69b4"/>
-      <circle cx="140" cy="70" r="10" fill="#ff69b4"/>
+    svg: `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 220 L60 172 L140 172 L160 220 Z" fill="#c9a0ff"/>
+      <rect x="92" y="158" width="16" height="15" fill="#ffd8b8"/>
+      <!-- pigtails (left/right) -->
+      <ellipse cx="50" cy="135" rx="16" ry="30" fill="#2a2a2a"/>
+      <ellipse cx="150" cy="135" rx="16" ry="30" fill="#2a2a2a"/>
+      <!-- back hair -->
+      <path d="M55 100 Q48 50 100 40 Q152 50 145 100 L145 130 L55 130 Z" fill="#2a2a2a"/>
+      <!-- face -->
+      <ellipse cx="100" cy="112" rx="35" ry="42" fill="#ffe8d0"/>
+      <!-- bangs -->
+      <path d="M65 90 Q78 62 100 65 Q122 62 135 90 L128 94 Q100 82 72 94 Z" fill="#2a2a2a"/>
+      <!-- side hair -->
+      <path d="M64 94 Q60 124 68 138 L76 135 L76 100 Z" fill="#2a2a2a"/>
+      <path d="M136 94 Q140 124 132 138 L124 135 L124 100 Z" fill="#2a2a2a"/>
+      <!-- pigtail ribbons -->
+      <circle cx="50" cy="108" r="7" fill="#ff4090"/>
+      <circle cx="150" cy="108" r="7" fill="#ff4090"/>
+      <!-- eyes -->
+      <g transform="translate(88, 118)">
+        <ellipse cx="0" cy="0" rx="6" ry="8" fill="#fff"/>
+        <ellipse cx="0" cy="1" rx="4.5" ry="7" fill="#4a2080"/>
+        <circle cx="0" cy="2" r="2.2" fill="#1a0830"/>
+        <circle cx="-1.2" cy="-1.5" r="1.3" fill="#fff"/>
+      </g>
+      <g transform="translate(112, 118)">
+        <ellipse cx="0" cy="0" rx="6" ry="8" fill="#fff"/>
+        <ellipse cx="0" cy="1" rx="4.5" ry="7" fill="#4a2080"/>
+        <circle cx="0" cy="2" r="2.2" fill="#1a0830"/>
+        <circle cx="-1.2" cy="-1.5" r="1.3" fill="#fff"/>
+      </g>
+      <path d="M81 105 Q88 102 95 105" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M105 105 Q112 102 119 105" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- mouth -->
+      <path d="M94 144 Q100 148 106 144" stroke="#c02060" stroke-width="1.8" fill="none" stroke-linecap="round"/>
     </svg>`
   },
   yuuta: {
     name: 'ゆうたくん',
     color: '#4dc3ff',
-    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="100" cy="170" rx="55" ry="25" fill="#4dc3ff"/>
-      <path d="M55 75 Q50 40 100 30 Q150 40 145 75 Q140 85 135 88 Q100 78 65 88 Q60 85 55 75 Z" fill="#6b4423"/>
-      <circle cx="100" cy="100" r="47" fill="#ffe4c4"/>
-      <circle cx="82" cy="100" r="7" fill="#333"/>
-      <circle cx="118" cy="100" r="7" fill="#333"/>
-      <circle cx="80" cy="97" r="2" fill="#fff"/>
-      <circle cx="116" cy="97" r="2" fill="#fff"/>
-      <ellipse cx="75" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
-      <ellipse cx="125" cy="115" rx="5" ry="3" fill="#ffb0a0"/>
-      <path d="M90 120 Q100 132 110 120" stroke="#d63384" stroke-width="2" fill="none" stroke-linecap="round"/>
+    svg: `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 220 L60 172 L140 172 L160 220 Z" fill="#4dc3ff"/>
+      <rect x="92" y="158" width="16" height="15" fill="#ffd8b8"/>
+      <!-- short brown hair -->
+      <path d="M58 90 Q52 48 100 38 Q148 48 142 90 Q135 98 128 94 Q100 82 72 94 Q65 98 58 90 Z" fill="#6b4423"/>
+      <!-- face -->
+      <ellipse cx="100" cy="112" rx="35" ry="42" fill="#ffe8d0"/>
+      <!-- eyes -->
+      <g transform="translate(88, 117)">
+        <ellipse cx="0" cy="0" rx="6" ry="8" fill="#fff"/>
+        <ellipse cx="0" cy="1" rx="4.5" ry="7" fill="#2a4a80"/>
+        <circle cx="0" cy="2" r="2.2" fill="#0a1a3a"/>
+        <circle cx="-1.2" cy="-1.5" r="1.3" fill="#fff"/>
+      </g>
+      <g transform="translate(112, 117)">
+        <ellipse cx="0" cy="0" rx="6" ry="8" fill="#fff"/>
+        <ellipse cx="0" cy="1" rx="4.5" ry="7" fill="#2a4a80"/>
+        <circle cx="0" cy="2" r="2.2" fill="#0a1a3a"/>
+        <circle cx="-1.2" cy="-1.5" r="1.3" fill="#fff"/>
+      </g>
+      <path d="M81 104 Q88 101 95 104" stroke="#4a3015" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M105 104 Q112 101 119 104" stroke="#4a3015" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- grin -->
+      <path d="M90 142 Q100 150 110 142" stroke="#c02060" stroke-width="1.8" fill="none" stroke-linecap="round"/>
     </svg>`
   },
   sensei: {
     name: 'ともこせんせい',
     color: '#8b4513',
-    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="100" cy="175" rx="60" ry="22" fill="#87ceeb"/>
-      <path d="M55 85 Q50 40 100 30 Q150 40 145 85 L145 125 Q100 115 55 125 Z" fill="#8b4513"/>
-      <circle cx="100" cy="105" r="48" fill="#ffe4c4"/>
-      <circle cx="82" cy="105" r="6" fill="#333"/>
-      <circle cx="118" cy="105" r="6" fill="#333"/>
-      <ellipse cx="75" cy="120" rx="5" ry="3" fill="#ffb0a0"/>
-      <ellipse cx="125" cy="120" rx="5" ry="3" fill="#ffb0a0"/>
-      <path d="M88 128 Q100 138 112 128" stroke="#d63384" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    svg: `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- apron dress -->
+      <path d="M35 220 L55 170 L145 170 L165 220 Z" fill="#87ceeb"/>
+      <rect x="75" y="166" width="50" height="8" fill="#fff"/>
+      <rect x="92" y="155" width="16" height="15" fill="#ffd8b8"/>
+      <!-- adult hair long -->
+      <path d="M50 105 Q45 55 100 40 Q155 55 150 105 L150 155 L130 152 L130 105 Q100 95 70 105 L70 152 L50 155 Z" fill="#8b5a33"/>
+      <!-- face -->
+      <ellipse cx="100" cy="110" rx="35" ry="42" fill="#ffe8d0"/>
+      <!-- side-swept bangs -->
+      <path d="M65 88 Q80 60 110 65 Q130 70 135 88 L128 92 Q110 80 75 92 Z" fill="#8b5a33"/>
+      <!-- eyes (softer adult) -->
+      <g transform="translate(88, 117)">
+        <ellipse cx="0" cy="0" rx="5.5" ry="7" fill="#fff"/>
+        <ellipse cx="0" cy="1" rx="4" ry="6" fill="#5a3010"/>
+        <circle cx="0" cy="2" r="2" fill="#1a0e05"/>
+        <circle cx="-1" cy="-1.5" r="1.2" fill="#fff"/>
+      </g>
+      <g transform="translate(112, 117)">
+        <ellipse cx="0" cy="0" rx="5.5" ry="7" fill="#fff"/>
+        <ellipse cx="0" cy="1" rx="4" ry="6" fill="#5a3010"/>
+        <circle cx="0" cy="2" r="2" fill="#1a0e05"/>
+        <circle cx="-1" cy="-1.5" r="1.2" fill="#fff"/>
+      </g>
+      <path d="M81 104 Q88 102 95 104" stroke="#5a3010" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <path d="M105 104 Q112 102 119 104" stroke="#5a3010" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <!-- gentle smile -->
+      <path d="M90 141 Q100 148 110 141" stroke="#c02060" stroke-width="2" fill="none" stroke-linecap="round"/>
     </svg>`
   },
   pochi: {
     name: 'ポチ',
     color: '#8b4513',
-    svg: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="100" cy="180" rx="70" ry="15" fill="rgba(0,0,0,0.2)"/>
-      <ellipse cx="100" cy="120" rx="75" ry="55" fill="#d4a574"/>
-      <ellipse cx="100" cy="120" rx="55" ry="42" fill="#e8c09a"/>
-      <path d="M45 90 Q35 110 50 130 Q55 115 60 105 Z" fill="#d4a574"/>
-      <path d="M155 90 Q165 110 150 130 Q145 115 140 105 Z" fill="#d4a574"/>
-      <ellipse cx="80" cy="115" rx="10" ry="14" fill="#fff"/>
-      <ellipse cx="120" cy="115" rx="10" ry="14" fill="#fff"/>
-      <circle cx="80" cy="118" r="5" fill="#333"/>
-      <circle cx="120" cy="118" r="5" fill="#333"/>
-      <ellipse cx="100" cy="135" rx="15" ry="12" fill="#6b4423"/>
-      <circle cx="100" cy="132" r="4" fill="#333"/>
-      <path d="M85 145 Q100 160 115 145" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M80 155 Q90 170 100 160 Q110 170 120 155" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <path d="M70 100 Q65 115 75 125" stroke="#8b4513" stroke-width="3" fill="none"/>
-      <path d="M130 100 Q135 115 125 125" stroke="#8b4513" stroke-width="3" fill="none"/>
+    svg: `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="100" cy="200" rx="70" ry="12" fill="rgba(0,0,0,0.2)"/>
+      <!-- body -->
+      <ellipse cx="100" cy="150" rx="55" ry="35" fill="#d4a574"/>
+      <!-- head (bulldog wide) -->
+      <ellipse cx="100" cy="110" rx="70" ry="55" fill="#d4a574"/>
+      <ellipse cx="100" cy="115" rx="55" ry="45" fill="#e8c09a"/>
+      <!-- wrinkles on forehead -->
+      <path d="M75 75 Q100 70 125 75" stroke="#a88555" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M80 85 Q100 80 120 85" stroke="#a88555" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- ears (droopy) -->
+      <path d="M40 80 Q25 100 42 130 Q50 110 55 95 Z" fill="#b88858"/>
+      <path d="M160 80 Q175 100 158 130 Q150 110 145 95 Z" fill="#b88858"/>
+      <!-- eye whites -->
+      <ellipse cx="78" cy="105" rx="10" ry="12" fill="#fff"/>
+      <ellipse cx="122" cy="105" rx="10" ry="12" fill="#fff"/>
+      <!-- pupils -->
+      <circle cx="78" cy="108" r="5" fill="#3a2010"/>
+      <circle cx="122" cy="108" r="5" fill="#3a2010"/>
+      <circle cx="76" cy="106" r="1.8" fill="#fff"/>
+      <circle cx="120" cy="106" r="1.8" fill="#fff"/>
+      <!-- droopy eye bags -->
+      <path d="M70 117 Q78 122 88 117" stroke="#a88555" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M112 117 Q122 122 130 117" stroke="#a88555" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- big bulldog nose -->
+      <ellipse cx="100" cy="132" rx="18" ry="13" fill="#3a2010"/>
+      <ellipse cx="95" cy="129" rx="3" ry="2" fill="#1a1008"/>
+      <ellipse cx="105" cy="129" rx="3" ry="2" fill="#1a1008"/>
+      <!-- mouth (bulldog underbite) -->
+      <path d="M80 150 Q100 165 120 150" stroke="#3a2010" stroke-width="3" fill="#8b4020" stroke-linecap="round"/>
+      <path d="M88 153 Q92 158 96 153" fill="#fff"/>
+      <path d="M104 153 Q108 158 112 153" fill="#fff"/>
+      <!-- tongue -->
+      <ellipse cx="100" cy="160" rx="8" ry="5" fill="#ff7a9e"/>
     </svg>`
   },
   narrator: { name: 'おはなし', color: '#666', svg: '' },
@@ -805,7 +1000,7 @@ const CASE1 = [
   { type: 'dialogue', speaker: 'kurumi', text: 'こんなときは... くるみに まかせて！<br><ruby>変身<rt>へんしん</rt></ruby>〜〜！！' },
 
   { type: 'bg', bg: 'transform' },
-  { type: 'char', char: 'kurumiPre' },
+  { type: 'transform' },
   { type: 'sparkle' },
   { type: 'dialogue', speaker: 'kurumi', text: '✨ ピンクの ドレスに へんしん！ ✨<br>めいたんてい くるみ、まいりまーす！' },
 
@@ -909,7 +1104,14 @@ let state = {
   bg: 'kindergarten',
   char: null,
   coins: 0,
+  transformed: false,
 };
+
+// When kurumi is transformed, all 'kurumi' char/speaker refs show the precure form
+function resolveChar(key) {
+  if (key === 'kurumi' && state.transformed) return 'kurumiPre';
+  return key;
+}
 
 function save() {
   localStorage.setItem(SAVE_KEY, JSON.stringify(state));
@@ -917,7 +1119,16 @@ function save() {
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (s && typeof s.scriptIdx === 'number') { state = s; return true; }
+    if (s && typeof s.scriptIdx === 'number') {
+      state = Object.assign({ scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false }, s);
+      // Re-apply visual state on load
+      if (state.bg) setBackground(state.bg);
+      if (state.char) {
+        const el = document.getElementById('char-portrait');
+        el.innerHTML = CHARS[state.char]?.svg || '';
+      }
+      return true;
+    }
   } catch (e) {}
   return false;
 }
@@ -1054,9 +1265,10 @@ function setBackground(bg) {
 }
 
 function setCharacter(charKey) {
-  state.char = charKey;
+  const resolved = resolveChar(charKey);
+  state.char = resolved;
   const el = document.getElementById('char-portrait');
-  el.innerHTML = CHARS[charKey]?.svg || '';
+  el.innerHTML = CHARS[resolved]?.svg || '';
 }
 
 // ====================== DIALOGUE ENGINE ======================
@@ -1112,6 +1324,12 @@ function runScript() {
       setTimeout(advance, 400);
       return;
 
+    case 'transform':
+      state.transformed = true;
+      setCharacter('kurumi'); // will resolve to kurumiPre
+      advance();
+      return;
+
     case 'dialogue':
       showScene('story-scene');
       ensureBGM('story');
@@ -1144,7 +1362,8 @@ function runScript() {
 function showDialogue(step) {
   // Auto-sync character portrait to speaker (unless narrator)
   if (step.speaker && step.speaker !== 'narrator' && CHARS[step.speaker]) {
-    if (state.char !== step.speaker) setCharacter(step.speaker);
+    const resolved = resolveChar(step.speaker);
+    if (state.char !== resolved) setCharacter(step.speaker);
   }
   const char = CHARS[step.speaker] || CHARS.narrator;
   document.getElementById('speaker-name').textContent = char.name;
@@ -1556,7 +1775,7 @@ function showResult(step) {
 
 document.getElementById('result-btn').addEventListener('click', () => {
   localStorage.removeItem(SAVE_KEY);
-  state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0 };
+  state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
   transientQueue = [];
   currentStep = null;
   stopBGM();
@@ -1659,7 +1878,7 @@ function updateContinueBtn() {
 updateContinueBtn();
 
 document.getElementById('btn-new-game').addEventListener('click', () => {
-  state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0 };
+  state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
   transientQueue = [];
   currentStep = null;
   save();
