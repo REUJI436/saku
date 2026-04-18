@@ -85,9 +85,26 @@
   }
   #stamp-popup.open { display: grid; }
   #stamp-popup .btn { width: 44px; height: 44px; font-size: 24px; }
+
+  .portal-back {
+    position: fixed;
+    top: calc(6px + env(safe-area-inset-top, 0px));
+    left: 8px;
+    background: rgba(255,255,255,0.9);
+    border: 2px solid #ff6fa8;
+    border-radius: 16px;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #d63384;
+    text-decoration: none;
+    z-index: 50;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
 </style>
 </head>
 <body>
+  <a href="./" class="portal-back">🏠</a>
   <div id="canvas-wrap">
     <canvas id="canvas"></canvas>
     <canvas id="sparkles"></canvas>

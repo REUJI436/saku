@@ -265,6 +265,22 @@
 
   /* Sparkle overlay */
   #sparkle-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 200; }
+
+  .portal-back {
+    position: fixed;
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    left: 8px;
+    background: rgba(255,255,255,0.9);
+    border: 2px solid #ff6fa8;
+    border-radius: 18px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #d63384;
+    text-decoration: none;
+    z-index: 250;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
 </style>
 </head>
 <body>
@@ -296,6 +312,7 @@
   </div>
 
   <canvas id="sparkle-canvas"></canvas>
+  <a href="./" class="portal-back">🏠 ゲームせんたく</a>
 
 <script>
 const CARDS = [
