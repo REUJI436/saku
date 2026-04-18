@@ -3942,16 +3942,6 @@
       }
       ctx.restore();
 
-      // ヒットフレームでは画面全体白フラッシュ
-      const hitFrames = [220, 200, 180, 160, 140];
-      for (const hf of hitFrames) {
-        const d = hf - t;
-        if (d >= 0 && d < 8) {
-          const flashA = 1 - d / 8;
-          ctx.fillStyle = `rgba(255,255,255,${flashA * 0.8})`;
-          ctx.fillRect(0, 0, W, H);
-        }
-      }
     }
 
     // タイトル「ぺろぺろありーな」— init〜attack 中は大きく表示
@@ -4018,6 +4008,22 @@
           ctx.fillStyle = '#ffee40';
           ctx.fillText('バキッ！', 0, 0);
           ctx.restore();
+        }
+      }
+    }
+
+    // ★ 瞬獄殺風 完全真っ白フラッシュ（ヒット音タイミングで画面全部を覆う）
+    // すべての描画の後に乗せる
+    if (isAttack) {
+      const hitFrames = [220, 200, 180, 160, 140];
+      for (const hf of hitFrames) {
+        const d = hf - t;  // 0:ヒット瞬間 → 増加で減衰
+        if (d >= 0 && d < 12) {
+          let flashA;
+          if (d < 5) flashA = 1.0;              // 5F完全真っ白
+          else flashA = 1.0 - (d - 5) / 7;       // 7Fかけて消える
+          ctx.fillStyle = `rgba(255,255,255,${flashA})`;
+          ctx.fillRect(0, 0, W, H);
         }
       }
     }
