@@ -759,6 +759,102 @@ function speak(text) {
   speechSynthesis.speak(u);
 }
 
+// ====================== BGM ======================
+let audioCtx = null;
+let bgmActive = null; // 'story' | 'action' | null
+let bgmTimer = null;
+let bgmMasterGain = null;
+
+function ensureAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+    bgmMasterGain = audioCtx.createGain();
+    bgmMasterGain.gain.value = 0.5;
+    bgmMasterGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playBgmNote(freq, startOffset, duration, volume, type) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime + startOffset;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(bgmMasterGain);
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(volume, t + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  osc.start(t);
+  osc.stop(t + duration + 0.05);
+}
+
+// Gentle story BGM: C - Am - F - G progression, soft sine
+const STORY_BGM = {
+  melody: [
+    [523, 0.0, 0.45], [659, 0.5, 0.45], [784, 1.0, 0.45], [659, 1.5, 0.45],
+    [523, 2.0, 0.45], [659, 2.5, 0.45], [784, 3.0, 0.9],
+    [440, 4.0, 0.45], [523, 4.5, 0.45], [659, 5.0, 0.45], [523, 5.5, 0.45],
+    [698, 6.0, 0.45], [880, 6.5, 0.45], [784, 7.0, 0.9],
+  ],
+  bass: [
+    [131, 0, 1.8], [220, 2, 1.8], [175, 4, 1.8], [196, 6, 1.8],
+  ],
+  loopDuration: 8.0,
+  melodyVol: 0.05,
+  bassVol: 0.04,
+  melodyType: 'sine',
+  bassType: 'triangle',
+};
+
+// Upbeat action BGM: bouncy C major arpeggios, square wave
+const ACTION_BGM = {
+  melody: [
+    [523, 0.0, 0.18], [659, 0.22, 0.18], [784, 0.44, 0.18], [1047, 0.66, 0.28],
+    [784, 1.0, 0.18], [659, 1.22, 0.18], [784, 1.44, 0.28],
+    [880, 1.78, 0.18], [1047, 2.0, 0.18], [988, 2.22, 0.18], [880, 2.44, 0.18],
+    [784, 2.66, 0.18], [659, 2.88, 0.18], [523, 3.1, 0.5],
+  ],
+  bass: [
+    [131, 0, 0.3], [131, 0.4, 0.3], [196, 0.8, 0.3], [196, 1.2, 0.3],
+    [175, 1.6, 0.3], [175, 2.0, 0.3], [196, 2.4, 0.3], [131, 2.8, 0.3],
+    [131, 3.2, 0.3], [196, 3.6, 0.3],
+  ],
+  loopDuration: 4.0,
+  melodyVol: 0.08,
+  bassVol: 0.06,
+  melodyType: 'square',
+  bassType: 'triangle',
+};
+
+function startBGM(track) {
+  if (!ensureAudioCtx()) return;
+  if (bgmActive === track) return;
+  stopBGM();
+  bgmActive = track;
+  const bgm = track === 'action' ? ACTION_BGM : STORY_BGM;
+  const loop = () => {
+    if (bgmActive !== track) return;
+    bgm.melody.forEach(n => playBgmNote(n[0], n[1], n[2], bgm.melodyVol, bgm.melodyType));
+    bgm.bass.forEach(n => playBgmNote(n[0], n[1], n[2], bgm.bassVol, bgm.bassType));
+    bgmTimer = setTimeout(loop, bgm.loopDuration * 1000);
+  };
+  loop();
+}
+
+function stopBGM() {
+  bgmActive = null;
+  if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+}
+
+function ensureBGM(track) {
+  if (bgmActive !== track) startBGM(track);
+}
+
 // ====================== SCENE MANAGEMENT ======================
 function showScene(id) {
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
@@ -778,63 +874,92 @@ function setCharacter(charKey) {
 }
 
 // ====================== DIALOGUE ENGINE ======================
+// Transient queue: for one-off steps (quiz reactions, etc) that don't persist in CASE1
+let transientQueue = [];
+let currentStep = null; // the step we're currently displaying/waiting on
+
+function nextStep() {
+  // Pull from transient queue first
+  if (transientQueue.length) {
+    currentStep = { step: transientQueue.shift(), transient: true };
+  } else if (state.scriptIdx < CASE1.length) {
+    currentStep = { step: CASE1[state.scriptIdx], transient: false };
+  } else {
+    currentStep = null;
+  }
+  return currentStep;
+}
+
+function advance() {
+  // Called to move past the currently-displayed step
+  if (currentStep && !currentStep.transient) {
+    state.scriptIdx++;
+    save();
+  }
+  currentStep = null;
+  runScript();
+}
+
 function runScript() {
-  if (state.scriptIdx >= CASE1.length) {
+  const cur = nextStep();
+  if (!cur) {
     showScene('title-scene');
+    updateContinueBtn();
+    stopBGM();
     return;
   }
-  const step = CASE1[state.scriptIdx];
+  const step = cur.step;
 
   switch (step.type) {
     case 'bg':
       setBackground(step.bg);
-      state.scriptIdx++;
-      save();
-      runScript();
+      advance();
       return;
 
     case 'char':
       setCharacter(step.char);
-      state.scriptIdx++;
-      save();
-      runScript();
+      advance();
       return;
 
     case 'sparkle':
       burstSparkles(window.innerWidth/2, window.innerHeight/2, 80, true);
-      state.scriptIdx++;
-      save();
-      setTimeout(runScript, 400);
+      setTimeout(advance, 400);
       return;
 
     case 'dialogue':
       showScene('story-scene');
+      ensureBGM('story');
       showDialogue(step);
       return;
 
     case 'quiz':
+      ensureBGM('story');
       showQuiz(step);
       return;
 
     case 'action':
       startActionGame(() => {
-        state.scriptIdx++;
-        save();
-        runScript();
+        advance();
       });
       return;
 
     case 'deduction':
+      ensureBGM('story');
       showDeduction(step);
       return;
 
     case 'result':
+      stopBGM();
       showResult(step);
       return;
   }
 }
 
 function showDialogue(step) {
+  // Auto-sync character portrait to speaker (unless narrator)
+  if (step.speaker && step.speaker !== 'narrator' && CHARS[step.speaker]) {
+    if (state.char !== step.speaker) setCharacter(step.speaker);
+  }
   const char = CHARS[step.speaker] || CHARS.narrator;
   document.getElementById('speaker-name').textContent = char.name;
   document.getElementById('speaker-name').style.color = char.color;
@@ -846,9 +971,7 @@ function showDialogue(step) {
 document.getElementById('dialogue-box').addEventListener('click', () => {
   document.getElementById('char-portrait').classList.remove('speaking');
   speechSynthesis.cancel();
-  state.scriptIdx++;
-  save();
-  runScript();
+  advance();
 });
 
 // ====================== QUIZ ======================
@@ -879,12 +1002,9 @@ function handleQuizAnswer(step, picked, btn) {
     burstSparkles(window.innerWidth/2, window.innerHeight/2, 40, false);
     speak('せいかい！' + step.reactCorrect.replace(/<[^>]+>/g, ' '));
     setTimeout(() => {
-      state.scriptIdx++;
-      // Insert a quick reaction dialogue
-      const reactionStep = { type: 'dialogue', speaker: step.questioner, text: step.reactCorrect };
-      CASE1.splice(state.scriptIdx, 0, reactionStep);
-      save();
-      runScript();
+      // queue reaction as transient, then advance past quiz
+      transientQueue.push({ type: 'dialogue', speaker: step.questioner, text: step.reactCorrect });
+      advance();
     }, 1200);
   } else {
     speak('ちがうよ、もういっかい');
@@ -906,7 +1026,7 @@ const actionState = {
   scroll: 0,
   coinsCollected: 0,
   coinGoal: 100,
-  timeLimit: 90,
+  timeLimit: 150,
   lastSpawn: 0,
   groundY: 0,
   startTime: 0,
@@ -936,6 +1056,7 @@ function startActionGame(onComplete) {
   actionCallback = onComplete;
   actionState.ended = false;
   showScene('action-scene');
+  startBGM('action');
 
   const canvas = document.getElementById('action-canvas');
   actionState.canvas = canvas;
@@ -1018,6 +1139,7 @@ function endActionGame() {
   if (actionState.ended) return;
   actionState.ended = true;
   actionState.running = false;
+  stopBGM();
   const scene = document.getElementById('action-scene');
   scene.removeEventListener('touchstart', actionState.tapHandler);
   scene.removeEventListener('mousedown', actionState.tapHandler);
@@ -1048,20 +1170,23 @@ function actionLoop() {
 
   // spawn — denser to support 100-coin goal
   actionState.lastSpawn += dt * 16;
-  if (actionState.lastSpawn > 260) {
+  if (actionState.lastSpawn > 220) {
     actionState.lastSpawn = 0;
-    // spawn a small line of coins
-    const lineCount = 2 + Math.floor(Math.random() * 3); // 2-4 coins in a row
-    const baseY = actionState.groundY - (40 + Math.random() * 110);
+    const lineCount = 3 + Math.floor(Math.random() * 3); // 3-5 coins in a row
+    // 50% ground-level (easy), 50% high (jump)
+    const groundLevel = Math.random() < 0.55;
+    const baseY = groundLevel
+      ? actionState.groundY - 38 // just above ground - catch by running
+      : actionState.groundY - (70 + Math.random() * 80);
     for (let i = 0; i < lineCount; i++) {
       actionState.coins.push({
-        x: W + 30 + i * 42,
+        x: W + 30 + i * 38,
         y: baseY,
         size: 20, collected: false,
       });
     }
-    if (Math.random() < 0.22) {
-      actionState.obstacles.push({ x: W + 30 + lineCount * 42 + 80, y: actionState.groundY - 38, w: 32, h: 38 });
+    if (!groundLevel && Math.random() < 0.18) {
+      actionState.obstacles.push({ x: W + 30 + lineCount * 42 + 100, y: actionState.groundY - 36, w: 30, h: 36 });
     }
   }
 
@@ -1232,11 +1357,7 @@ function handleDeduction(step, picked, el) {
     el.style.background = '#a8f5a8';
     burstSparkles(window.innerWidth/2, window.innerHeight/2, 60, true);
     speak('せいかい！' + step.reactCorrect);
-    setTimeout(() => {
-      state.scriptIdx++;
-      save();
-      runScript();
-    }, 1500);
+    setTimeout(() => { advance(); }, 1500);
   } else {
     el.style.background = '#ffb0b0';
     speak('ちがうかも。もういっかい かんがえよう');
@@ -1256,9 +1377,11 @@ function showResult(step) {
 }
 
 document.getElementById('result-btn').addEventListener('click', () => {
-  // clear save
   localStorage.removeItem(SAVE_KEY);
   state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0 };
+  transientQueue = [];
+  currentStep = null;
+  stopBGM();
   showScene('title-scene');
   updateContinueBtn();
 });
@@ -1335,6 +1458,8 @@ updateContinueBtn();
 
 document.getElementById('btn-new-game').addEventListener('click', () => {
   state = { scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0 };
+  transientQueue = [];
+  currentStep = null;
   save();
   runScript();
 });
@@ -1342,16 +1467,23 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
 document.getElementById('btn-continue').addEventListener('click', () => {
   if (!hasSave()) return;
   load();
+  transientQueue = [];
+  currentStep = null;
   runScript();
 });
 
-// Prime voice on first user interaction (required by browsers)
+// Prime voice + audio on first user interaction (required by browsers)
 document.body.addEventListener('click', () => {
-  if (!voiceEnabled) return;
-  try {
-    const u = new SpeechSynthesisUtterance('');
-    speechSynthesis.speak(u);
-  } catch(e) {}
+  ensureAudioCtx();
+  if (voiceEnabled) {
+    try {
+      const u = new SpeechSynthesisUtterance('');
+      speechSynthesis.speak(u);
+    } catch(e) {}
+  }
+}, { once: true });
+document.body.addEventListener('touchstart', () => {
+  ensureAudioCtx();
 }, { once: true });
 
 </script>
