@@ -3364,6 +3364,24 @@
     requestAnimationFrame(loop);
   }
 
+  // ====== デバッグ用: URLパラメータでカットシーン直接再生 ======
+  // 例: ?cs=teach-punch / ?cs=teach-slash / ?cs=final-reveal
+  (() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const cs = params.get('cs');
+      if (cs && CUTSCENES[cs]) {
+        // 最低限のステージを読んで必要なグローバルだけセット
+        ensureAudio();
+        currentStage = 0;
+        loadStage(0);
+        // BGM 止める（カットシーン中は再生しない）
+        stopBGM();
+        startCutscene(cs);
+      }
+    } catch(e) { console.error(e); }
+  })();
+
   loop();
 })();
 </script>
