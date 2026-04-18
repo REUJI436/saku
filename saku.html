@@ -77,6 +77,15 @@
     min-height: 64px;
     font-size: 14px;
   }
+  #pad button.ult.ready {
+    animation: ultPulse 0.5s ease-in-out infinite alternate;
+    border-color: #ffee40 !important;
+    box-shadow: 0 0 16px #ffee40, 0 0 32px #ffaa20;
+  }
+  @keyframes ultPulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.1); }
+  }
   #pad button:active, #pad button.pressed {
     transform: translateY(2px);
     box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
@@ -93,34 +102,19 @@
   }
   #hint { font-size: 12px; opacity: 0.8; text-align: center; margin: 4px; }
   #portalBtn {
-    position: fixed;
-    top: calc(4px + env(safe-area-inset-top));
-    right: calc(4px + env(safe-area-inset-right));
-    z-index: 9999;
     background: linear-gradient(to bottom, #3a5080, #1a2a50);
     color: #fff;
     text-decoration: none;
-    padding: 6px 10px;
-    border-radius: 10px;
-    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: bold;
-    border: 2px solid #80a0d0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    border: 1px solid #80a0d0;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    display: inline-block;
   }
   #portalBtn:active { transform: translateY(1px); opacity: 0.85; }
-  @media (max-width: 720px) {
-    #portalBtn {
-      font-size: 12px;
-      padding: 8px 12px;
-      min-width: 88px;
-      min-height: 32px;
-      text-align: center;
-      top: calc(2px + env(safe-area-inset-top));
-      right: calc(2px + env(safe-area-inset-right));
-    }
-  }
 
   @media (max-width: 720px) {
     html, body { height: 100%; height: 100dvh; overflow: hidden; }
@@ -154,9 +148,8 @@
 </head>
 <body>
 
-<a id="portalBtn" href="https://reuji436.github.io/saku/">🏠 ポータル</a>
-
 <div id="hud">
+  <a id="portalBtn" href="https://reuji436.github.io/saku/">🏠</a>
   <div class="item">🌸<span id="stage">1-1</span></div>
   <div class="item">🎒<span id="score">0</span></div>
   <div class="item">🍣<span id="coins">0</span></div>
@@ -1541,6 +1534,7 @@
     saku.selectedUlt = (saku.selectedUlt + 1) % saku.unlockedUlts.length;
     beep(600, 0.05, 'square', 0.1);
   }
+  let ultBanner = null;  // 必殺技発動バナー
   function tryActivateUlt() {
     if (saku.ultActive) return;
     if (saku.unlockedUlts.length === 0) return;
@@ -1548,19 +1542,28 @@
     const ult = ULTIMATES.find(u => u.id === ultId);
     if (!ult) return;
     if (saku.ultGauge < ult.cost) {
-      beep(200, 0.1, 'sawtooth', 0.1);
+      // ブザー＋「まだゲージが足りない」フィードバック
+      beep(200, 0.15, 'sawtooth', 0.15);
+      ultPopups.push({
+        x: saku.x + saku.w/2, y: saku.y - 6,
+        text: 'ゲージ不足',
+        life: 60, maxLife: 60,
+        color: '#ff8080',
+      });
       return;
     }
     saku.ultGauge -= ult.cost;
+    // 発動バナー
+    ultBanner = { name: ult.name, timer: 80, maxTimer: 80 };
     if (ultId === 'punch') activatePunch();
     else if (ultId === 'slash') activateSlash();
     else if (ultId === 'peropero') activatePeropero();
   }
   function activatePunch() {
-    saku.ultActive = { type: 'punch', timer: 40, phase: 'swing' };
-    // 前方に強力な突き：3タイル分の敵＆ボスにダメージ
-    beep(160, 0.1, 'sawtooth', 0.2);
-    setTimeout(()=>beep(80, 0.2, 'sawtooth', 0.22), 80);
+    saku.ultActive = { type: 'punch', timer: 60, phase: 'swing' };
+    beep(160, 0.12, 'sawtooth', 0.22);
+    setTimeout(()=>beep(80, 0.24, 'sawtooth', 0.24), 80);
+    setTimeout(()=>beep(40, 0.2, 'sine', 0.2), 160);
     applyPunchDamage();
   }
   function applyPunchDamage() {
@@ -2942,7 +2945,47 @@
     drawHPGauge();
     drawUltGauge();
     drawUltPopups();
+    drawUltBanner();
     if (saku.ultActive && saku.ultActive.type === 'peropero') drawPeroperoCutin();
+  }
+
+  function drawUltBanner() {
+    if (!ultBanner) return;
+    ultBanner.timer--;
+    if (ultBanner.timer <= 0) { ultBanner = null; return; }
+    const t = 1 - ultBanner.timer / ultBanner.maxTimer;
+    // スライドイン〜保持〜フェードアウト
+    let slideX = 0;
+    let alpha = 1;
+    if (t < 0.15) slideX = (0.15 - t) * 800;
+    else if (t > 0.75) alpha = (1 - t) * 4;
+    if (alpha < 0) alpha = 0;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const y = H * 0.28;
+    // 帯
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0 + slideX, y - 22, W, 44);
+    ctx.strokeStyle = '#ffee40';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(0 + slideX, y - 22, W, 44);
+    // 「必殺技」
+    ctx.font = 'bold 12px serif';
+    ctx.fillStyle = '#ffcc80';
+    ctx.fillText('必殺技', W/2 + slideX, y - 10);
+    // 技名
+    ctx.font = 'bold 22px "Hiragino Maru Gothic ProN", sans-serif';
+    ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+    ctx.strokeText(ultBanner.name, W/2 + slideX, y + 6);
+    const tg = ctx.createLinearGradient(0, y, 0, y + 15);
+    tg.addColorStop(0, '#fff');
+    tg.addColorStop(0.5, '#ffcc60');
+    tg.addColorStop(1, '#ff4488');
+    ctx.fillStyle = tg;
+    ctx.fillText(ultBanner.name, W/2 + slideX, y + 6);
+    ctx.restore();
   }
 
   function drawUltPopups() {
@@ -2968,64 +3011,116 @@
     }
   }
 
-  // 必殺技ゲージ（HPバーの下）
+  // 必殺技ゲージ（大きめで目立つデザイン）
   function drawUltGauge() {
     if (state === 'title') return;
-    const x0 = 10, y0 = 24;
-    const labelW = 22;
-    const barW = 10 * 8 + 9 * 2;  // 既存HPバーと同じ幅感
-    ctx.save();
-    ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-    ctx.strokeText('UL', x0, y0);
-    ctx.fillStyle = '#ffcc88';
-    ctx.fillText('UL', x0, y0);
-    ctx.restore();
-    const bx = x0 + labelW, by = y0 + 2;
-    ctx.fillStyle = 'rgba(0,0,0,0.65)';
-    ctx.fillRect(bx - 2, by - 2, barW + 4, 8);
-    // ゲージ内容
+    if (saku.unlockedUlts.length === 0) {
+      // 必殺ボタンを隠す
+      const b = document.querySelector('#pad button.ult');
+      if (b) b.style.display = 'none';
+      return;
+    } else {
+      const b = document.querySelector('#pad button.ult');
+      if (b) b.style.display = '';
+    }
+
     const pct = saku.ultGauge / saku.maxUlt;
+    const ready = (pct >= 1);
+    // 必殺ボタンに ready クラス付与
+    const btn = document.querySelector('#pad button.ult');
+    if (btn) {
+      if (ready && !btn.classList.contains('ready')) btn.classList.add('ready');
+      else if (!ready && btn.classList.contains('ready')) btn.classList.remove('ready');
+    }
+    const ult = ULTIMATES.find(u => u.id === saku.unlockedUlts[saku.selectedUlt]);
+
+    // 画面下中央に大きめのゲージを配置
+    const barW = 200;
+    const barH = 16;
+    const bx = (W - barW) / 2;
+    const by = H - 34;
+
+    ctx.save();
+    // 背景パネル
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(bx - 8, by - 14, barW + 16, barH + 24);
+    ctx.strokeStyle = ready ? '#ffee40' : '#80a0d0';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx - 8, by - 14, barW + 16, barH + 24);
+
+    // 技名とゲージ値
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(ult ? ult.name : '必殺技', bx, by - 6);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = ready ? '#ffee40' : '#c0d0ee';
+    ctx.fillText(Math.floor(saku.ultGauge) + '/' + saku.maxUlt, bx + barW, by - 6);
+
+    // バー本体
+    ctx.fillStyle = '#222';
+    ctx.fillRect(bx, by, barW, barH);
     const fillW = pct * barW;
-    const g = ctx.createLinearGradient(bx, by, bx + barW, by);
-    g.addColorStop(0, '#ff60d0');
-    g.addColorStop(0.5, '#e018b0');
-    g.addColorStop(1, '#ff80e0');
+    const g = ctx.createLinearGradient(bx, by, bx, by + barH);
+    if (ready) {
+      const f = Math.sin(titleFrame * 0.3) * 0.2 + 0.8;
+      g.addColorStop(0, `rgba(255,255,200,${f})`);
+      g.addColorStop(0.5, '#ffaa20');
+      g.addColorStop(1, '#ff4488');
+    } else {
+      g.addColorStop(0, '#ff60d0');
+      g.addColorStop(0.5, '#c81890');
+      g.addColorStop(1, '#80105a');
+    }
     ctx.fillStyle = g;
-    ctx.fillRect(bx, by, fillW, 4);
-    // 満タン時に光るエッジ
-    if (pct >= 1) {
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(bx - 0.5, by - 0.5, barW + 1, 5);
-      // 点滅
-      if (Math.floor(titleFrame / 10) % 2 === 0) {
-        ctx.save();
-        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-        ctx.strokeText('READY!', bx + barW + 4, by + 2);
-        ctx.fillStyle = '#ffff80';
-        ctx.fillText('READY!', bx + barW + 4, by + 2);
-        ctx.restore();
-      }
+    ctx.fillRect(bx, by, fillW, barH);
+    // セグメント区切り線
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 4; i++) {
+      const x = bx + (barW * i / 4);
+      ctx.beginPath();
+      ctx.moveTo(x, by);
+      ctx.lineTo(x, by + barH);
+      ctx.stroke();
     }
-    // 選択中の必殺技名
-    if (saku.unlockedUlts.length > 0) {
-      const ult = ULTIMATES.find(u => u.id === saku.unlockedUlts[saku.selectedUlt]);
-      if (ult) {
-        ctx.save();
-        ctx.font = 'bold 9px sans-serif';
-        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-        ctx.lineWidth = 2.5; ctx.strokeStyle = '#000';
-        ctx.strokeText(ult.name, bx, by + 7);
-        ctx.fillStyle = '#ffccff';
-        ctx.fillText(ult.name, bx, by + 7);
-        ctx.restore();
-      }
+    ctx.strokeStyle = ready ? '#ffffff' : '#446090';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx, by, barW, barH);
+
+    // READY! 表示
+    if (ready) {
+      const pulse = 1 + 0.15 * Math.sin(titleFrame * 0.25);
+      ctx.save();
+      ctx.translate(bx + barW / 2, by + barH / 2);
+      ctx.scale(pulse, pulse);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.lineWidth = 3.5; ctx.strokeStyle = '#000';
+      ctx.strokeText('READY!  押して発動', 0, 0);
+      ctx.fillStyle = '#ffff60';
+      ctx.fillText('READY!  押して発動', 0, 0);
+      ctx.restore();
+      // 光の矢（必殺ボタンを指す）
+      const arrowX = W - 80;
+      const arrowY = by + barH / 2 + Math.sin(titleFrame * 0.2) * 4;
+      ctx.save();
+      ctx.fillStyle = '#ffee40';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(arrowX, arrowY);
+      ctx.lineTo(arrowX - 14, arrowY - 8);
+      ctx.lineTo(arrowX - 14, arrowY + 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
     }
+    ctx.restore();
   }
 
   // 必殺技エフェクト（プレイヤー周辺）
