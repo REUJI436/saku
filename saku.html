@@ -4149,18 +4149,61 @@
     requestAnimationFrame(loop);
   }
 
-  // ====== デバッグ用: URLパラメータでカットシーン直接再生 ======
+  // ====== デバッグ用: URLパラメータで直接再生 ======
   // 例: ?cs=teach-punch / ?cs=teach-slash / ?cs=final-reveal
+  //    ?stage=10-5  ←任意ステージ＋全技解放でスタート
+  //    ?stage=10-5&ults=all / ?stage=3-1&ults=punch,slash
   (() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const cs = params.get('cs');
+      const stageParam = params.get('stage');
+      const ultsParam = params.get('ults');
+
+      if (stageParam) {
+        ensureAudio();
+        // X-Y 形式または数値
+        let idx = 0;
+        if (stageParam.includes('-')) {
+          const [w, s] = stageParam.split('-').map(n => parseInt(n) - 1);
+          idx = w * 5 + s;
+        } else {
+          idx = parseInt(stageParam) || 0;
+        }
+        idx = Math.max(0, Math.min(STAGES.length - 1, idx));
+
+        // 必殺技の解放
+        if (ultsParam) {
+          saku.unlockedUlts = [];
+          if (ultsParam === 'all') {
+            saku.unlockedUlts = ['punch','slash','peropero'];
+          } else {
+            const wanted = ultsParam.split(',').map(s => s.trim());
+            for (const u of ['punch','slash','peropero']) {
+              if (wanted.includes(u)) saku.unlockedUlts.push(u);
+            }
+          }
+        } else {
+          // デフォルト: ステージ番号に応じた技を自動解放
+          saku.unlockedUlts = [];
+          if (idx >= 14) saku.unlockedUlts.push('punch');     // 3-5クリア後
+          if (idx >= 29) saku.unlockedUlts.push('slash');     // 6-5クリア後
+          if (idx >= 44) saku.unlockedUlts.push('peropero');  // 9-5クリア後
+        }
+        saku.selectedUlt = Math.max(0, saku.unlockedUlts.length - 1);
+
+        currentStage = idx;
+        loadStage(idx);
+        saku.ultGauge = saku.maxUlt;  // ゲージ満タンでスタート
+        state = 'playing';
+        startBGM();
+        return;
+      }
+
       if (cs && CUTSCENES[cs]) {
-        // 最低限のステージを読んで必要なグローバルだけセット
         ensureAudio();
         currentStage = 0;
         loadStage(0);
-        // BGM 止める（カットシーン中は再生しない）
         stopBGM();
         startCutscene(cs);
       }
