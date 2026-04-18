@@ -635,7 +635,25 @@
       ensureAudio();
       btn.classList.add('pressed');
       keys[code] = true;
-      if (state === 'title') startGame();
+      // カットシーン / チュートリアル / タイトルの各状態で送信するイベントを直接処理
+      if (state === 'title') {
+        if (code === 'Space' || code === 'KeyC') {
+          confirmTitleMenu();
+        } else {
+          startGame();
+        }
+      } else if (state === 'cutscene') {
+        advanceCutscene();
+      } else if (state === 'tutorial') {
+        dismissUltTutorial();
+      } else if (state === 'playing') {
+        // 必殺技ボタン（KeyC / KeyX）は押した瞬間に発動
+        if (code === 'KeyC' || code === 'KeyX') {
+          tryActivateUlt();
+        } else if (code === 'KeyV') {
+          switchUlt();
+        }
+      }
     };
     const release = e => {
       if (e) e.preventDefault();
