@@ -3950,60 +3950,14 @@
       ctx.restore();
     }
 
-    // ★ 攻撃フェーズ: 基本真っ白、うっすら観音様だけ透ける、衝撃波で殴打を表現
+    // ★ 攻撃フェーズ: ずっと真っ白、うっすら観音様だけ透ける（チカチカしない）
     if (isAttack) {
-      // 画面を真っ白で覆う（すべての描画の上に乗せる）
-      ctx.fillStyle = 'rgba(255,255,255,0.96)';
+      // 画面を完全に真っ白で覆う（常に同じ不透明度、点滅なし）
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, W, H);
 
-      // 白の上にうっすらと観音様を再描画
-      drawKannon(W/2, H * 0.48, 0.18);
-
-      // 衝撃波エフェクト（殴打のタイミングで広がるリング＋放射状ヒビ割れ線）
-      const hitFrames = [220, 200, 180, 160, 140];
-      for (const hf of hitFrames) {
-        const d = hf - t;
-        if (d >= 0 && d < 30) {
-          const p = d / 30;  // 0→1
-          const cx0 = (hf * 37) % (W - 100) + 50;
-          const cy0 = ((hf * 17) % (H - 200)) + 100;
-
-          // 衝撃リング（薄グレー、白の上で見えるように）
-          const ringR = 10 + p * 180;
-          ctx.save();
-          ctx.globalAlpha = Math.max(0, 1 - p) * 0.75;
-          ctx.strokeStyle = '#555';
-          ctx.lineWidth = 8 * (1 - p) + 2;
-          ctx.beginPath();
-          ctx.arc(cx0, cy0, ringR, 0, Math.PI * 2);
-          ctx.stroke();
-          // 内側にもう一本（やや色味）
-          ctx.strokeStyle = '#a85030';
-          ctx.lineWidth = 4 * (1 - p) + 1;
-          ctx.beginPath();
-          ctx.arc(cx0, cy0, ringR * 0.7, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
-
-          // 放射状ヒビ割れ線（濃いめで白地に映える）
-          ctx.save();
-          ctx.translate(cx0, cy0);
-          ctx.globalAlpha = Math.max(0, 1 - p * 1.5) * 0.8;
-          ctx.strokeStyle = '#333';
-          ctx.lineWidth = 3;
-          const numSpokes = 10;
-          for (let i = 0; i < numSpokes; i++) {
-            const a = (i / numSpokes) * Math.PI * 2 + hf * 0.13;
-            const r1 = 20;
-            const r2 = 40 + p * 200;
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
-            ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
-            ctx.stroke();
-          }
-          ctx.restore();
-        }
-      }
+      // 白の上にうっすらと観音様を再描画（ゆらぎなし、固定の薄さ）
+      drawKannon(W/2, H * 0.48, 0.2);
     }
   }
 
