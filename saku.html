@@ -497,7 +497,12 @@
   document.addEventListener('keydown', e => {
     if (['Space','ArrowUp','ArrowLeft','ArrowRight','ArrowDown'].includes(e.code)) e.preventDefault();
     keys[e.code] = true;
-    if (state === 'title' && (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyZ')) startGame();
+    if (state === 'title') {
+      if (e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'KeyW' || e.code === 'KeyA') { moveMenu(-1); e.preventDefault(); return; }
+      if (e.code === 'ArrowDown' || e.code === 'ArrowRight' || e.code === 'KeyS' || e.code === 'KeyD') { moveMenu(1); e.preventDefault(); return; }
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyZ') { confirmTitleMenu(); e.preventDefault(); return; }
+      return;
+    }
   });
   document.addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -526,11 +531,39 @@
     btn.addEventListener('contextmenu', e => e.preventDefault());
   }
 
+  function titleTapAt(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = (clientX - rect.left) * (W / rect.width);
+    const cy = (clientY - rect.top) * (H / rect.height);
+    const menuY = H * 0.50;
+    const gap = 48;
+    // 各メニュー項目との距離チェック
+    for (let i = 0; i < titleMenu.items.length; i++) {
+      const iy = menuY + i * gap;
+      if (cy >= iy - 20 && cy <= iy + 28) {
+        if (i === 1 && !loadSave()) return;  // セーブなしなら無視
+        if (titleMenu.selected === i) {
+          confirmTitleMenu();
+        } else {
+          titleMenu.selected = i;
+          beep(440, 0.05, 'square', 0.08);
+        }
+        return;
+      }
+    }
+    // メニュー外タップは確定
+    confirmTitleMenu();
+  }
+
   canvas.addEventListener('touchstart', e => {
-    if (state === 'title') { e.preventDefault(); startGame(); }
+    if (state === 'title') {
+      e.preventDefault();
+      const t = e.touches[0];
+      titleTapAt(t.clientX, t.clientY);
+    }
   }, { passive: false });
-  canvas.addEventListener('click', () => {
-    if (state === 'title') startGame();
+  canvas.addEventListener('click', e => {
+    if (state === 'title') titleTapAt(e.clientX, e.clientY);
   });
 
   // ====== 音声 ======
@@ -1036,8 +1069,17 @@
     sfxGoal();
     setTimeout(() => sfxRescue(), 1500);
     stopBGM();
-    // 次ステージへ進むので前ステージのチェックポイントは破棄
     respawnPoint = null;
+    // ステージクリア時に自動セーブ（次ステージから再開できるように）
+    const nextStage = currentStage + 1;
+    const saveData = {
+      currentStage: Math.min(nextStage, STAGES.length - 1),
+      score: score,
+      coinCount: coinCount,
+      lives: lives,
+      timestamp: Date.now(),
+    };
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(saveData)); } catch(e) {}
     setTimeout(() => {
       state = 'stageTransition';
       stateTimer = 0;
@@ -1050,16 +1092,79 @@
     stateTimer = 0;
     startBGM();
   }
-  function startGame() {
+  // ====== セーブ / ロード ======
+  const SAVE_KEY = 'saku_adv_save_v1';
+  function saveGame() {
+    try {
+      const data = {
+        currentStage: currentStage,
+        score: score,
+        coinCount: coinCount,
+        lives: lives,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch(e) {}
+  }
+  function loadSave() {
+    try {
+      const s = localStorage.getItem(SAVE_KEY);
+      return s ? JSON.parse(s) : null;
+    } catch(e) { return null; }
+  }
+  function clearSave() {
+    try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+  }
+
+  function startGame(fromSave) {
     if (state !== 'title') return;
     ensureAudio();
-    score = 0; coinCount = 0; lives = 3;
-    scoreEl.textContent = 0; coinEl.textContent = 0; livesEl.textContent = 3;
-    currentStage = 0;
+    if (fromSave) {
+      const save = loadSave();
+      if (save) {
+        currentStage = save.currentStage || 0;
+        score = save.score || 0;
+        coinCount = save.coinCount || 0;
+        lives = Math.max(3, save.lives || 3);
+      } else {
+        // セーブが無ければ最初から
+        currentStage = 0; score = 0; coinCount = 0; lives = 3;
+      }
+    } else {
+      // はじめから（セーブを消す）
+      clearSave();
+      currentStage = 0; score = 0; coinCount = 0; lives = 3;
+    }
+    scoreEl.textContent = score;
+    coinEl.textContent = coinCount;
+    livesEl.textContent = lives;
     respawnPoint = null;
-    loadStage(0);
+    loadStage(currentStage);
     state = 'playing';
     startBGM();
+  }
+
+  // タイトルメニューの決定
+  function confirmTitleMenu() {
+    const hasSave = !!loadSave();
+    if (titleMenu.selected === 1 && !hasSave) {
+      // セーブ無しなのに「つづきから」→ 効果音なし、選択だけ自動で戻す
+      titleMenu.selected = 0;
+      return;
+    }
+    beep(880, 0.08, 'square', 0.14);
+    setTimeout(() => beep(1319, 0.12, 'square', 0.12), 80);
+    const fromSave = (titleMenu.selected === 1);
+    startGame(fromSave);
+  }
+  function moveMenu(dir) {
+    const n = titleMenu.items.length;
+    titleMenu.selected = (titleMenu.selected + dir + n) % n;
+    // セーブ無しで「つづきから」を避ける
+    if (titleMenu.selected === 1 && !loadSave()) {
+      titleMenu.selected = 0;
+    }
+    beep(440, 0.05, 'square', 0.08);
   }
 
   // ====== コンティニュー／タイトル戻り ======
@@ -1943,90 +2048,276 @@
     ctx.restore();
   }
 
+  // ====== FF7風タイトル画面 ======
+  const titleStars = Array.from({length: 80}, () => ({
+    x: Math.random(), y: Math.random(),
+    s: 0.5 + Math.random() * 1.8,
+    v: 0.1 + Math.random() * 0.5,
+    ph: Math.random() * Math.PI * 2,
+  }));
+  const titleParticles = Array.from({length: 25}, () => ({
+    x: Math.random(), y: 0.6 + Math.random() * 0.4,
+    v: 0.15 + Math.random() * 0.4,
+    s: 1 + Math.random() * 2,
+    ph: Math.random() * Math.PI * 2,
+  }));
+
   function drawTitle() {
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, '#66b3ff'); sky.addColorStop(1, '#b3d9ff');
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-    // 雲
-    ctx.fillStyle = '#fff';
-    for (let i = 0; i < 5; i++) {
-      const cx = ((i*120 + titleFrame*0.3) % (W+80)) - 40;
-      const cy = 30 + i*15;
+    // 深い青黒グラデ（FF7 OP 風）
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#010314');
+    bg.addColorStop(0.55, '#0a1a32');
+    bg.addColorStop(1, '#1a2848');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // 星
+    for (const s of titleStars) {
+      const sx = s.x * W;
+      const sy = ((s.y + titleFrame * 0.0002 * s.v) % 1) * H;
+      const tw = 0.6 + 0.4 * Math.sin(titleFrame * 0.05 + s.ph);
+      ctx.fillStyle = `rgba(220,235,255,${0.3 + tw * 0.5})`;
       ctx.beginPath();
-      ctx.arc(cx, cy, 14, 0, Math.PI*2);
-      ctx.arc(cx+12, cy-4, 12, 0, Math.PI*2);
-      ctx.arc(cx+24, cy, 14, 0, Math.PI*2);
+      ctx.arc(sx, sy, s.s * tw, 0, Math.PI * 2);
       ctx.fill();
     }
-    // 丘
-    ctx.fillStyle = '#4aa84a';
-    ctx.beginPath(); ctx.ellipse(120, H-32, 200, 80, 0, 0, Math.PI, true); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(400, H-32, 200, 80, 0, 0, Math.PI, true); ctx.fill();
-    ctx.fillStyle = '#7a3b11';
-    ctx.fillRect(0, H-32, W, 32);
-    ctx.fillStyle = '#3ea43e';
-    ctx.fillRect(0, H-32, W, 8);
 
-    // タイトル
+    // 放射状グロー（中央に青白い光）
+    const glow = ctx.createRadialGradient(W/2, H*0.38, 10, W/2, H*0.38, Math.max(W, H) * 0.8);
+    glow.addColorStop(0, 'rgba(60, 120, 200, 0.55)');
+    glow.addColorStop(0.3, 'rgba(30, 60, 140, 0.3)');
+    glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    // 遠景シルエットの山々（FF7ぽい暗い山影）
+    ctx.fillStyle = '#060a1a';
+    const silhouetteY = H * 0.66;
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    ctx.lineTo(0, silhouetteY);
+    for (let i = 0; i <= 8; i++) {
+      const px = (i / 8) * W;
+      const py = silhouetteY - 15 - Math.sin(i * 1.3) * 35 - (i % 2 === 0 ? 25 : 0);
+      ctx.lineTo(px, py);
+    }
+    ctx.lineTo(W, silhouetteY);
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+
+    // 前景のシルエット（もう少し低い山）
+    ctx.fillStyle = '#020410';
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    ctx.lineTo(0, H * 0.8);
+    for (let i = 0; i <= 10; i++) {
+      const px = (i / 10) * W;
+      const py = H * 0.8 - 10 - Math.abs(Math.sin(i * 1.7)) * 25;
+      ctx.lineTo(px, py);
+    }
+    ctx.lineTo(W, H * 0.8);
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+
+    // 上昇パーティクル（光の粒）
+    for (const p of titleParticles) {
+      const px = p.x * W;
+      const py = ((p.y - titleFrame * 0.001 * p.v) % 1 + 1) % 1 * H;
+      const tw = 0.5 + 0.5 * Math.sin(titleFrame * 0.06 + p.ph);
+      ctx.fillStyle = `rgba(140,200,255,${tw * 0.7})`;
+      ctx.beginPath();
+      ctx.arc(px, py, p.s * (0.7 + tw * 0.4), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // タイトルロゴ（メタリック / FF7 風）
     ctx.save();
-    ctx.translate(W/2, H*0.28);
-    const bounce = Math.sin(titleFrame*0.1) * 4;
-    ctx.translate(0, bounce);
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 38px "Arial Black", sans-serif';
-    ctx.lineWidth = 10; ctx.strokeStyle = '#000';
-    ctx.strokeText('さくの大ぼうけん', 0, 0);
-    ctx.lineWidth = 5; ctx.strokeStyle = '#d62';
-    ctx.strokeText('さくの大ぼうけん', 0, 0);
-    const g = ctx.createLinearGradient(0, -25, 0, 25);
-    g.addColorStop(0, '#fff'); g.addColorStop(0.5, '#ffcd42'); g.addColorStop(1, '#ff5a22');
-    ctx.fillStyle = g;
-    ctx.fillText('さくの大ぼうけん', 0, 0);
+    const titleY = H * 0.28;
+    ctx.translate(W/2, titleY);
+    // ロゴバック光
+    const halo = ctx.createRadialGradient(0, 0, 2, 0, 0, 180);
+    halo.addColorStop(0, 'rgba(160, 200, 255, 0.35)');
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 220, 70, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // さく
+    ctx.font = 'bold 52px "Times New Roman", serif';
+    const title = 'さくの大ぼうけん';
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillText(title, 4, 6);
+    // 輪郭
+    ctx.lineWidth = 6; ctx.strokeStyle = '#0a1a3a';
+    ctx.strokeText(title, 0, 0);
+    ctx.lineWidth = 3; ctx.strokeStyle = '#a0b8e0';
+    ctx.strokeText(title, 0, 0);
+    // メタリック本体
+    const mg = ctx.createLinearGradient(0, -28, 0, 28);
+    mg.addColorStop(0, '#e8f0ff');
+    mg.addColorStop(0.35, '#b8c8e8');
+    mg.addColorStop(0.5, '#6a80b0');
+    mg.addColorStop(0.55, '#7890c0');
+    mg.addColorStop(0.85, '#c8d8f0');
+    mg.addColorStop(1, '#5a6e9a');
+    ctx.fillStyle = mg;
+    ctx.fillText(title, 0, 0);
+    // 上部ハイライト
+    ctx.save();
+    ctx.globalCompositeOperation = 'overlay';
+    const hl = ctx.createLinearGradient(0, -26, 0, -5);
+    hl.addColorStop(0, 'rgba(255,255,255,0.7)');
+    hl.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hl;
+    ctx.fillText(title, 0, 0);
+    ctx.restore();
     ctx.restore();
 
-    // サブタイトル
+    // サブタイトル（淡い青文字、FF7ぽい細字）
     ctx.save();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.lineWidth = 5; ctx.strokeStyle = '#000';
-    ctx.strokeText('〜 キノピオをたすけよう 〜', W/2, H*0.42);
-    ctx.fillStyle = '#fff';
-    ctx.fillText('〜 キノピオをたすけよう 〜', W/2, H*0.42);
+    ctx.font = 'italic 14px serif';
+    ctx.fillStyle = 'rgba(160, 200, 255, 0.85)';
+    ctx.fillText('〜 キノピオをたすけるたび 〜', W/2, titleY + 48);
     ctx.restore();
 
-    // キャラ（さくとキノピオ）
+    // キャラ（小さく、左下にシルエット風に浮かばせる）
     ctx.save();
-    ctx.translate(W*0.32, H*0.68);
-    ctx.scale(2.5, 2.5);
-    const savedFlag = flagPos; flagPos = null;
+    ctx.translate(W * 0.14, H * 0.75);
+    ctx.scale(1.8, 1.8);
     const savedSaku = {...saku};
-    saku.x = cameraX; saku.y = 0; saku.vx = 0; saku.onGround = true; saku.facing = 1; saku.anim = 0; saku.invuln = 0; saku.starTimer = 0; saku.swordTimer = 0;
+    saku.x = cameraX; saku.y = 0; saku.vx = 0; saku.onGround = true;
+    saku.facing = 1; saku.anim = titleFrame * 0.08;
+    saku.invuln = 0; saku.starTimer = 0; saku.swordTimer = 0;
     drawSaku(cameraX, 0);
     Object.assign(saku, savedSaku);
+    ctx.restore();
+    // キノピオ（右下）
+    ctx.save();
+    ctx.translate(W * 0.86, H * 0.78);
+    ctx.scale(1.6, 1.6);
+    const fakeFlag = { x: cameraX, y: 0 };
+    const savedFlag = flagPos; flagPos = fakeFlag;
+    const savedRows = LEVEL_ROWS; LEVEL_ROWS = 3;
+    drawKinopio();
+    LEVEL_ROWS = savedRows;
     flagPos = savedFlag;
     ctx.restore();
 
-    // キノピオ（右側）
-    ctx.save();
-    ctx.translate(W*0.7, H*0.73);
-    ctx.scale(2.2, 2.2);
-    const fakeFlag = { x: cameraX, y: 0 };
-    const savedFlag2 = flagPos; flagPos = fakeFlag;
-    const savedLEVELROWS = LEVEL_ROWS; LEVEL_ROWS = 3;
-    drawKinopio();
-    LEVEL_ROWS = savedLEVELROWS;
-    flagPos = savedFlag2;
-    ctx.restore();
+    // ===== メニュー =====
+    drawTitleMenu();
 
-    // PRESS SPACE
-    if (Math.floor(titleFrame/30)%2 === 0) {
+    // フッターのコピー表記風
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '9px serif';
+    ctx.fillStyle = 'rgba(160,180,220,0.55)';
+    ctx.fillText('© SAKU ADVENTURE', W/2, H - 12);
+    ctx.restore();
+  }
+
+  // タイトルメニュー
+  const titleMenu = {
+    items: ['はじめから', 'つづきから'],
+    selected: 0,
+    holdCooldown: 0,
+  };
+
+  function drawTitleMenu() {
+    const save = loadSave();
+    const hasSave = !!save;
+    const menuY = H * 0.50;
+    const gap = 48;
+
+    for (let i = 0; i < titleMenu.items.length; i++) {
+      const label = titleMenu.items[i];
+      const y = menuY + i * gap;
+      const selected = (titleMenu.selected === i);
+      const disabled = (i === 1 && !hasSave);
+
+      // 行の背景パネル（FF7メニュー風・青い枠）
+      if (selected) {
+        // 光るハイライト
+        const hg = ctx.createLinearGradient(W*0.2, y, W*0.8, y);
+        hg.addColorStop(0, 'rgba(60,120,220,0)');
+        hg.addColorStop(0.5, 'rgba(80,150,255,0.5)');
+        hg.addColorStop(1, 'rgba(60,120,220,0)');
+        ctx.fillStyle = hg;
+        ctx.fillRect(W*0.2, y - 20, W*0.6, 40);
+        // 枠
+        ctx.strokeStyle = '#7aa0e0';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(W*0.2 + 1, y - 19, W*0.6 - 2, 38);
+        ctx.strokeStyle = 'rgba(180,210,255,0.5)';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(W*0.2 + 4, y - 16, W*0.6 - 8, 32);
+      }
+
+      // カーソル（▶）
+      if (selected) {
+        const blink = Math.floor(titleFrame / 15) % 2;
+        ctx.save();
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.font = 'bold 20px serif';
+        ctx.fillStyle = blink ? '#a0d0ff' : '#6a90d0';
+        ctx.fillText('▶', W*0.24, y);
+        ctx.restore();
+      }
+
+      // テキスト本体
+      ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.lineWidth = 5; ctx.strokeStyle = '#000';
-      ctx.strokeText('▶ タップ or SPACE でスタート ◀', W/2, H-50);
-      ctx.fillStyle = '#fff';
-      ctx.fillText('▶ タップ or SPACE でスタート ◀', W/2, H-50);
+      ctx.font = 'bold 22px serif';
+      if (disabled) {
+        ctx.fillStyle = 'rgba(140,160,190,0.35)';
+        ctx.fillText(label, W/2, y);
+      } else {
+        // 影
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillText(label, W/2 + 2, y + 2);
+        if (selected) {
+          const tg = ctx.createLinearGradient(0, y - 14, 0, y + 14);
+          tg.addColorStop(0, '#ffffff');
+          tg.addColorStop(0.5, '#c8dcff');
+          tg.addColorStop(1, '#7ba0d8');
+          ctx.fillStyle = tg;
+        } else {
+          ctx.fillStyle = '#a8bfe0';
+        }
+        ctx.fillText(label, W/2, y);
+      }
+      ctx.restore();
+
+      // 「つづきから」にセーブ情報を表示
+      if (i === 1) {
+        ctx.save();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = 'italic 11px serif';
+        if (hasSave) {
+          const prog = STAGES[Math.min(save.currentStage || 0, STAGES.length - 1)];
+          ctx.fillStyle = 'rgba(200,220,255,0.75)';
+          ctx.fillText(`${prog.label}  SCORE ${save.score || 0}`, W/2, y + 18);
+        } else {
+          ctx.fillStyle = 'rgba(140,160,190,0.35)';
+          ctx.fillText('(セーブなし)', W/2, y + 18);
+        }
+        ctx.restore();
+      }
     }
+
+    // 操作ヒント
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '11px serif';
+    ctx.fillStyle = 'rgba(160,190,230,0.6)';
+    ctx.fillText('↑↓ : 選択  /  Space・Z・タップ : けってい', W/2, H - 30);
+    ctx.restore();
   }
 
   function drawStageTransition() {
