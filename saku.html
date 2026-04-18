@@ -341,6 +341,17 @@
       if (isBoss && ex > width - 50) continue;
       if (lvl[12][ex] === ' ' && lvl[13][ex] === 'G') lvl[12][ex] = rand() < 0.55 ? 'E' : 'T';
     }
+    // 空飛ぶおじさん（ワールド3-5を超えると出現＝必殺技を習得したあたりから）
+    // ステージ index: 0-4(W1), 5-9(W2), 10-14(W3:boss@14), 15+ から登場
+    const gStageIdx = worldIdx * 5 + stageIdx;
+    if (gStageIdx >= 15) {  // 4-1（index 15）から
+      const toriCount = 2 + Math.floor((gStageIdx - 15) * 0.3);
+      for (let i = 0; i < toriCount; i++) {
+        const tx = 40 + Math.floor(rand() * (width - 80));
+        const ty = randRange(3, 7);  // 空高め
+        if (lvl[ty][tx] === ' ') lvl[ty][tx] = 'H';
+      }
+    }
     // コイン（寿司）
     const coinCount = 12 + Math.floor(difficulty * 2);
     for (let i = 0; i < coinCount; i++) {
@@ -533,6 +544,7 @@
           case 'C': coins.push({ x: px + TILE/2, y: py + TILE/2, taken: false, anim: Math.random()*Math.PI*2, type: SUSHI_TYPES[Math.floor(Math.random()*SUSHI_TYPES.length)] }); break;
           case 'E': enemies.push({ type: 'kuri', x: px, y: py + 4, vx: -0.8, vy: 0, alive: true, squashTimer: 0 }); break;
           case 'T': enemies.push({ type: 'kame', x: px, y: py + 4, vx: -0.6, vy: 0, alive: true, squashTimer: 0 }); break;
+          case 'H': enemies.push({ type: 'tori', x: px, y: py, baseY: py, vx: -1.2, vy: 0, alive: true, squashTimer: 0, anim: 0 }); break;
           case 'F':
             tiles[r][c] = T_FLAG;
             if (!flagPos) flagPos = { x: px + TILE/2, y: py };
@@ -949,22 +961,18 @@
       }
       if (saku.ultActive.type === 'slash') {
         const t = saku.ultActive.timer;
-        // t: 110→85 小ジャンプ＋前方突進
-        // t: 85→0  斬撃波を 85, 70, 55 F でスポーン、さくは空中浮遊＆前進
         const fx = saku.ultActive;
-        if (t <= 85) {
-          // 空中で前方突進（物理無効化・ジャンプ斬りっぽく前にすべる）
-          saku.vy = 0;
-          saku.vx = fx.dashX;
-          const spawnFrames = [85, 70, 55];
-          for (const f of spawnFrames) {
-            if (t === f) spawnSlashWave();
-          }
-        }
-        // 40F 以降はゆっくり降下させる
-        if (t < 40) {
-          saku.vy = 4;
-          saku.vx = fx.dashX * 0.3;
+        // 空中ホバー（左右に動かない）
+        saku.vx = 0;
+        // t: 110→85 小ジャンプ上昇（vy=-10のまま自然落下）
+        // t: 85→40 空中静止＋斬撃波スポーン
+        // t: 40→0  ゆっくり着地
+        if (t <= 85 && t > 40) {
+          saku.vy = 0;  // 空中静止
+          // 斬撃波を 85, 70, 55 F でスポーン
+          if (t === 85 || t === 70 || t === 55) spawnSlashWave();
+        } else if (t <= 40) {
+          saku.vy = 3;  // ゆっくり降りる
         }
         updateSlashWaves(fx);
       }
@@ -1059,28 +1067,41 @@
         if (en.flying) { en.vy += 0.3; en.y += en.vy; en.x += en.vx; if (en.y > LEVEL_H + 80) en.remove = true; }
         continue;
       }
-      en.vy += 0.55;
-      if (en.vy > 12) en.vy = 12;
-      en.x += en.vx;
-      let eh = rectVsTiles(en.x, en.y, 28, 28);
-      if (eh.length) {
-        if (en.vx > 0) en.x = Math.min(...eh.map(h=>h.tx)) * TILE - 28 - 0.01;
-        else en.x = (Math.max(...eh.map(h=>h.tx)) + 1) * TILE + 0.01;
-        en.vx *= -1;
+      // とり（空飛ぶ敵）は重力無視・サイン波で上下
+      if (en.type === 'tori') {
+        en.anim += 0.1;
+        en.x += en.vx;
+        en.y = en.baseY + Math.sin(en.anim) * 10;
+        // 画面外にはみ出しそうなら折り返し
+        let eh = rectVsTiles(en.x, en.y, 28, 28);
+        if (eh.length || en.x < 0 || en.x > LEVEL_W - 28) {
+          en.vx *= -1;
+          en.x = Math.max(1, Math.min(LEVEL_W - 29, en.x));
+        }
+      } else {
+        en.vy += 0.55;
+        if (en.vy > 12) en.vy = 12;
+        en.x += en.vx;
+        let eh = rectVsTiles(en.x, en.y, 28, 28);
+        if (eh.length) {
+          if (en.vx > 0) en.x = Math.min(...eh.map(h=>h.tx)) * TILE - 28 - 0.01;
+          else en.x = (Math.max(...eh.map(h=>h.tx)) + 1) * TILE + 0.01;
+          en.vx *= -1;
+        }
+        en.y += en.vy;
+        eh = rectVsTiles(en.x, en.y, 28, 28);
+        let grounded = false;
+        if (eh.length) {
+          if (en.vy > 0) { en.y = Math.min(...eh.map(h=>h.ty)) * TILE - 28 - 0.01; en.vy = 0; grounded = true; }
+          else { en.y = (Math.max(...eh.map(h=>h.ty)) + 1) * TILE + 0.01; en.vy = 0.5; }
+        }
+        if (grounded) {
+          const ahead = en.x + (en.vx > 0 ? 30 : -2);
+          const below = en.y + 30;
+          if (!isSolid(tileAt(ahead, below))) en.vx *= -1;
+        }
+        if (en.y > LEVEL_H + 40) en.remove = true;
       }
-      en.y += en.vy;
-      eh = rectVsTiles(en.x, en.y, 28, 28);
-      let grounded = false;
-      if (eh.length) {
-        if (en.vy > 0) { en.y = Math.min(...eh.map(h=>h.ty)) * TILE - 28 - 0.01; en.vy = 0; grounded = true; }
-        else { en.y = (Math.max(...eh.map(h=>h.ty)) + 1) * TILE + 0.01; en.vy = 0.5; }
-      }
-      if (grounded) {
-        const ahead = en.x + (en.vx > 0 ? 30 : -2);
-        const below = en.y + 30;
-        if (!isSolid(tileAt(ahead, below))) en.vx *= -1;
-      }
-      if (en.y > LEVEL_H + 40) en.remove = true;
 
       if (!saku.dead) {
         const px1 = saku.x, py1 = saku.y;
@@ -1599,34 +1620,35 @@
       if (bx >= x1 && bx <= x2) damageBoss(2);
     }
   }
-  // ジャンプ斬り: 小ジャンプ→空中で素早く前方に弾丸突進→地面近くで3連の横薙ぎ斬撃波
-  // 地上の敵をしっかり薙ぎ払う
+  // ジャンプ斬り: 垂直小ジャンプ→空中から前方に3連の地面斬撃波を飛ばす
+  // さくは左右に動かない。斬撃波が地面を這うように進む
   function activateSlash() {
     saku.ultActive = {
       type: 'slash',
       timer: 110,
       phase: 'rise',
       slashWaves: [],
-      groundY: saku.y + saku.h,   // 発動時点の足元を記憶
-      dashX: saku.facing * 5,     // 前方突進スピード
+      groundY: saku.y + saku.h,    // 発動時の足元（地面の高さ）を記憶
+      startX: saku.x + saku.w/2,   // 発動時の中心X
+      facing: saku.facing,         // 発動時の向き
       hitBoss: false,
     };
-    saku.vy = -11;
-    saku.vx = saku.facing * 5;
+    saku.vy = -10;
+    saku.vx = 0;   // ★ 左右移動はゼロにする
     beep(520, 0.08, 'triangle', 0.15);
     setTimeout(()=>beep(780, 0.08, 'triangle', 0.14), 90);
     setTimeout(()=>beep(1040, 0.12, 'triangle', 0.15), 180);
   }
   function spawnSlashWave() {
     if (!saku.ultActive) return;
-    // 斬撃波の y は「発動時の地面Y - 20」（地上の敵をしっかりヒット）
-    const groundY = saku.ultActive.groundY;
+    const fx = saku.ultActive;
+    // 常に発動時点の位置から、発動時点の地面Y-20 の高さで飛ばす
     saku.ultActive.slashWaves.push({
-      x: saku.x + saku.w/2 + saku.facing * 18,
-      y: groundY - 20,
-      vx: saku.facing * 7,
-      life: 60,
-      maxLife: 60,
+      x: fx.startX + fx.facing * 18,
+      y: fx.groundY - 20,
+      vx: fx.facing * 7,
+      life: 70,
+      maxLife: 70,
       hit: new Set(),
       angle: (Math.random() - 0.5) * 0.3,
     });
@@ -2184,8 +2206,85 @@
       const y = en.y;
       if (x < -32 || x > W + 32) continue;
       if (en.type === 'kuri') drawKuri(x, y, en);
-      else drawKame(x, y, en);
+      else if (en.type === 'kame') drawKame(x, y, en);
+      else if (en.type === 'tori') drawTori(x, y, en);
     }
+  }
+
+  // とり（空飛ぶおじさん）
+  function drawTori(x, y, en) {
+    if (!en.alive) {
+      // 墜落したおじさん
+      ctx.fillStyle = '#4a4a58';
+      ctx.beginPath();
+      ctx.ellipse(x + 14, y + 22, 14, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    const facing = en.vx >= 0 ? 1 : -1;
+    const flap = Math.sin(en.anim * 2) * 0.5;
+    ctx.save();
+    ctx.translate(x + 14, y + 14);
+    if (facing < 0) ctx.scale(-1, 1);
+    // 翼（羽ばたき）
+    ctx.fillStyle = '#c8dcff';
+    ctx.strokeStyle = '#446080';
+    ctx.lineWidth = 1;
+    // 左翼
+    ctx.beginPath();
+    ctx.moveTo(-4, -2);
+    ctx.quadraticCurveTo(-18, -10 + flap * 5, -22, 2 + flap * 3);
+    ctx.quadraticCurveTo(-14, -2 + flap * 2, -4, 4);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // 右翼
+    ctx.beginPath();
+    ctx.moveTo(4, -2);
+    ctx.quadraticCurveTo(18, -10 + flap * 5, 22, 2 + flap * 3);
+    ctx.quadraticCurveTo(14, -2 + flap * 2, 4, 4);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // 胴（スーツおじさん）
+    ctx.fillStyle = '#2a3a6a';
+    ctx.fillRect(-6, -4, 12, 12);
+    // 襟・シャツ
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(-3, -4);
+    ctx.lineTo(0, -1);
+    ctx.lineTo(3, -4);
+    ctx.closePath();
+    ctx.fill();
+    // ネクタイ
+    ctx.fillStyle = '#c22';
+    ctx.fillRect(-1.5, -4, 3, 7);
+    // 頭
+    ctx.fillStyle = '#f2c8a2';
+    ctx.beginPath();
+    ctx.arc(0, -8, 5, 0, Math.PI * 2);
+    ctx.fill();
+    // 髪
+    ctx.fillStyle = '#1a1008';
+    ctx.beginPath();
+    ctx.arc(0, -10, 5, Math.PI, 0);
+    ctx.fill();
+    // メガネ
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(-2, -7, 1.8, 0, Math.PI * 2);
+    ctx.arc(2, -7, 1.8, 0, Math.PI * 2);
+    ctx.moveTo(-0.3, -7);
+    ctx.lineTo(0.3, -7);
+    ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(-2.5, -7.3, 1, 0.6);
+    ctx.fillRect(1.5, -7.3, 1, 0.6);
+    // 足（スーツ）
+    ctx.fillStyle = '#1a1a24';
+    ctx.fillRect(-5, 8, 3, 4);
+    ctx.fillRect(2, 8, 3, 4);
+    ctx.restore();
   }
   function drawSquashedOji(x, y, topCol, frameCol = '#000') {
     ctx.fillStyle = topCol;
