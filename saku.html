@@ -952,14 +952,30 @@
     if (saku.ultActive) {
       saku.ultActive.timer--;
       if (saku.ultActive.type === 'peropero') {
-        // ぺろぺろありーな：時間停止中に連撃発動
-        const phase = saku.ultActive.timer;
-        if (phase === 150 || phase === 125 || phase === 100 || phase === 75 || phase === 50) {
-          applyPeroperoHit();
-          saku.ultActive.hitCount++;
+        const t = saku.ultActive.timer;
+        saku.ultActive.auraFrame++;
+        // フェーズ: init (280-220) / attack (220-120、5ヒット) / aftermath (120-0)
+        if (t > 220) {
+          saku.ultActive.phase = 'init';
+          saku.vy = 0; saku.vx = 0;
+        } else if (t > 120) {
+          saku.ultActive.phase = 'attack';
+          saku.vy = 0; saku.vx = 0;
+          // バキッ！バキッ！5ヒット
+          if (t === 220 || t === 200 || t === 180 || t === 160 || t === 140) {
+            applyPeroperoHit();
+            saku.ultActive.hitCount++;
+          }
+        } else {
+          saku.ultActive.phase = 'aftermath';
+          // さくがふんわり降下（青いオーラを纏って）
+          // 通常の重力を置き換えて一定速度で降下
+          saku.vy = Math.min(2, saku.vy + 0.03);
+          saku.vx = 0;
         }
         if (saku.ultActive.timer <= 0) saku.ultActive = null;
-        return;  // 他の処理スキップ
+        // init/attack 中は他の処理スキップ、aftermath では物理を許可
+        if (t > 120) return;
       }
       if (saku.ultActive.type === 'slash') {
         const t = saku.ultActive.timer;
@@ -1751,9 +1767,18 @@
     fx.slashWaves = fx.slashWaves.filter(w => w.life > 0);
   }
   function activatePeropero() {
-    saku.ultActive = { type: 'peropero', timer: 180, phase: 'init', hitCount: 0 };
-    // カットイン中はゲーム停止（update内で扱う）
-    // 豪快な下降→上昇音
+    // フェーズ: init (60F) → attack (100F、5ヒット) → aftermath (120F、青オーラ着地)
+    saku.ultActive = {
+      type: 'peropero',
+      timer: 280,
+      phase: 'init',
+      hitCount: 0,
+      auraFrame: 0,
+      // 発動時のさくの位置を記憶（戻る用）
+      origX: saku.x,
+      origY: saku.y,
+    };
+    // 発動直後の咆哮
     try {
       ensureAudio();
       const now = audioCtx.currentTime;
@@ -1767,9 +1792,48 @@
       o.connect(g).connect(audioCtx.destination);
       o.start(now); o.stop(now + 1.1);
     } catch(e) {}
+    // さくを一旦見えない空中位置へ飛ばす（ボスまたは画面中央方向）
+    const targetX = boss ? boss.x - 30 : (saku.x + saku.facing * 80);
+    saku.x = targetX;
+    saku.y -= 60;  // 空中に浮かぶ
+    saku.vx = 0;
+    saku.vy = 0;
+  }
+  // バキッ！という殴打音
+  function sfxBakiHit() {
+    try {
+      ensureAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      // 低音のドスン
+      const o1 = audioCtx.createOscillator();
+      const g1 = audioCtx.createGain();
+      o1.type = 'sine';
+      o1.frequency.setValueAtTime(180, now);
+      o1.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+      g1.gain.setValueAtTime(0.35, now);
+      g1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      o1.connect(g1).connect(audioCtx.destination);
+      o1.start(now); o1.stop(now + 0.13);
+      // ホワイトノイズでバキッ感
+      const bufSize = Math.floor(audioCtx.sampleRate * 0.08);
+      const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) d[i] = (Math.random()*2-1) * 0.6;
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const filt = audioCtx.createBiquadFilter();
+      filt.type = 'bandpass';
+      filt.frequency.value = 900;
+      filt.Q.value = 0.8;
+      const ng = audioCtx.createGain();
+      ng.gain.setValueAtTime(0.25, now);
+      ng.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      src.connect(filt).connect(ng).connect(audioCtx.destination);
+      src.start(now); src.stop(now + 0.09);
+    } catch(e) {}
   }
   function applyPeroperoHit() {
-    // 画面上の全敵にダメージ
     for (const en of enemies) {
       if (!en.alive) continue;
       const ex = en.x - cameraX;
@@ -1780,11 +1844,9 @@
         score += 500; scoreEl.textContent = score;
       }
     }
-    if (boss && !boss.defeated) damageBoss(3);  // ぺろぺろの各ヒットで3ダメ×5回 = 最大15
-    // 連撃音
-    for (let i = 0; i < 6; i++) {
-      setTimeout(() => beep(800 + Math.random()*600, 0.05, 'square', 0.1), i * 50);
-    }
+    if (boss && !boss.defeated) damageBoss(3);
+    // バキッ！の殴打音
+    sfxBakiHit();
   }
 
   // ====== セーブ / ロード ======
@@ -3038,6 +3100,42 @@
         ctx.beginPath(); ctx.arc(sx, sy, 2.5, 0, Math.PI*2); ctx.fill();
       }
     }
+    // ぺろぺろありーな発動後の青オーラ（aftermath 中）
+    if (saku.ultActive && saku.ultActive.type === 'peropero' && saku.ultActive.phase === 'aftermath') {
+      const af = saku.ultActive.auraFrame;
+      // 外側の青いオーラ
+      const ag = ctx.createRadialGradient(cx, y + 15, 2, cx, y + 15, 32);
+      ag.addColorStop(0, `rgba(140,200,255,${0.6 + 0.2 * Math.sin(af * 0.15)})`);
+      ag.addColorStop(0.5, 'rgba(70,130,240,0.4)');
+      ag.addColorStop(1, 'rgba(20,40,120,0)');
+      ctx.fillStyle = ag;
+      ctx.beginPath();
+      ctx.arc(cx, y + 15, 32, 0, Math.PI * 2);
+      ctx.fill();
+      // オーラ粒子（上昇）
+      for (let i = 0; i < 10; i++) {
+        const ang = (i / 10) * Math.PI * 2 + af * 0.1;
+        const rr = 14 + Math.sin(af * 0.15 + i) * 4;
+        const sx2 = cx + Math.cos(ang) * rr;
+        const sy2 = y + 18 + Math.sin(ang) * rr - (af * 0.3) % 30;
+        ctx.fillStyle = `rgba(200,230,255,${0.6 + 0.4 * Math.sin(af * 0.2 + i)})`;
+        ctx.beginPath();
+        ctx.arc(sx2, sy2, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 下から立ち昇る青い線
+      ctx.strokeStyle = `rgba(150,210,255,${0.4 + 0.3 * Math.sin(af * 0.2)})`;
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 5; i++) {
+        const lx = cx + (i - 2) * 6;
+        const ly0 = y + 30;
+        const ly1 = y + 30 - 30 + Math.sin(af * 0.15 + i) * 3;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly0);
+        ctx.quadraticCurveTo(lx + Math.sin(af * 0.1 + i) * 5, ly0 - 15, lx, ly1);
+        ctx.stroke();
+      }
+    }
     if (saku.invuln > 0 && Math.floor(saku.invuln/4)%2 === 0) ctx.globalAlpha = 0.4;
     // 影
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
@@ -3451,7 +3549,13 @@
     drawUltGauge();
     drawUltPopups();
     drawUltBanner();
-    if (saku.ultActive && saku.ultActive.type === 'peropero') drawPeroperoCutin();
+    if (saku.ultActive && saku.ultActive.type === 'peropero') {
+      drawPeroperoCutin();
+      // aftermath フェーズではさくを再描画して前面に表示（青オーラ付き）
+      if (saku.ultActive.phase === 'aftermath') {
+        drawSaku(saku.x, saku.y);
+      }
+    }
   }
 
   function drawUltBanner() {
@@ -3734,22 +3838,59 @@
     ctx.restore();
   }
 
-  // ぺろぺろありーなカットイン（画面全体）
+  // ぺろぺろありーなカットイン（百式観音＋バキバキ連撃＋青オーラ余韻）
   function drawPeroperoCutin() {
     const fx = saku.ultActive;
-    const t = (180 - fx.timer) / 180;  // 0→1
-    // 背景白フラッシュ
-    const alpha = t < 0.2 ? 1 : (1 - (t - 0.2) * 1.2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, alpha)})`;
+    const t = fx.timer;  // 280→0
+    const tMax = 280;
+    const progress = (tMax - t) / tMax;  // 0→1
+
+    // === フェーズ 1: init (t: 280-220) === 観音出現＋暗転
+    // === フェーズ 2: attack (t: 220-120) === バキバキ連撃
+    // === フェーズ 3: aftermath (t: 120-0) === 青オーラ余韻
+
+    const isInit = t > 220;
+    const isAttack = t <= 220 && t > 120;
+    const isAftermath = t <= 120;
+
+    // 背景の暗転度
+    let bgAlpha = 0;
+    if (isInit) bgAlpha = ((tMax - t) / 60) * 0.85;  // 0→0.85
+    else if (isAttack) bgAlpha = 0.85;
+    else if (isAftermath) bgAlpha = Math.max(0, 0.5 * (t / 120));  // 0.5→0
+    ctx.fillStyle = `rgba(5, 3, 20, ${bgAlpha})`;
     ctx.fillRect(0, 0, W, H);
+
+    // 金色の光源（観音の光輪）
+    const halo = ctx.createRadialGradient(W/2, H*0.4, 20, W/2, H*0.4, Math.max(W, H) * 0.8);
+    let haloStrength = 0;
+    if (isInit) haloStrength = (tMax - t) / 60 * 0.5;
+    else if (isAttack) haloStrength = 0.4 + 0.2 * Math.sin(t * 0.3);
+    else if (isAftermath) haloStrength = Math.max(0, (t / 120) * 0.3);
+    halo.addColorStop(0, `rgba(255, 220, 100, ${haloStrength})`);
+    halo.addColorStop(0.4, `rgba(200, 100, 40, ${haloStrength * 0.5})`);
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, W, H);
+
+    // 百式観音
+    if (!isAftermath || t > 30) {
+      let kannonAlpha = 0;
+      if (isInit) kannonAlpha = Math.min(1, (tMax - t) / 60);
+      else if (isAttack) kannonAlpha = 1;
+      else if (isAftermath) kannonAlpha = Math.max(0, (t - 30) / 90);
+      drawKannon(W/2, H * 0.48, kannonAlpha);
+    }
+
     // 桜吹雪
-    for (let i = 0; i < 30; i++) {
+    const sakuraCount = isAftermath ? 40 : 25;
+    for (let i = 0; i < sakuraCount; i++) {
       const seed = i * 37;
-      const sx = ((seed + fx.timer * 2) % W);
-      const sy = ((seed * 3 + fx.timer * 3 + i * 40) % H);
+      const sx = ((seed + fx.auraFrame * 2) % W);
+      const sy = ((seed * 3 + fx.auraFrame * 2.5 + i * 40) % H);
       ctx.save();
       ctx.translate(sx, sy);
-      ctx.rotate((fx.timer * 0.1 + i) % (Math.PI * 2));
+      ctx.rotate((fx.auraFrame * 0.08 + i) % (Math.PI * 2));
       const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, 6);
       grad.addColorStop(0, '#fff');
       grad.addColorStop(0.5, '#ffc0d8');
@@ -3760,46 +3901,71 @@
       ctx.fill();
       ctx.restore();
     }
-    // 連撃フラッシュ（複数斜線）
-    const flashing = (fx.timer < 170 && fx.timer > 50);
-    if (flashing) {
-      for (let i = 0; i < 5; i++) {
-        const bx = Math.random() * W;
-        const by = Math.random() * H;
-        const len = 120 + Math.random() * 120;
-        const ang = Math.random() * Math.PI * 2;
-        ctx.save();
-        ctx.translate(bx, by);
-        ctx.rotate(ang);
-        const g = ctx.createLinearGradient(0, 0, len, 0);
-        g.addColorStop(0, 'rgba(0,0,0,0)');
-        g.addColorStop(0.5, 'rgba(255,255,255,1)');
-        g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, -2, len, 4);
-        ctx.restore();
+
+    // 攻撃フェーズ: バキバキの殴打フラッシュ
+    if (isAttack) {
+      // 拳形のフラッシュ（ランダム位置に）
+      const numFlashes = 4;
+      for (let i = 0; i < numFlashes; i++) {
+        const fx_x = (Math.sin(fx.auraFrame * 0.4 + i * 1.3) * 0.5 + 0.5) * W;
+        const fx_y = (Math.cos(fx.auraFrame * 0.35 + i * 1.7) * 0.5 + 0.5) * H * 0.8 + H * 0.1;
+        const fx_r = 20 + Math.abs(Math.sin(fx.auraFrame * 0.3 + i)) * 15;
+        const punchG = ctx.createRadialGradient(fx_x, fx_y, 1, fx_x, fx_y, fx_r);
+        punchG.addColorStop(0, 'rgba(255,255,255,0.9)');
+        punchG.addColorStop(0.5, 'rgba(255,220,100,0.5)');
+        punchG.addColorStop(1, 'rgba(200,40,0,0)');
+        ctx.fillStyle = punchG;
+        ctx.beginPath();
+        ctx.arc(fx_x, fx_y, fx_r, 0, Math.PI * 2);
+        ctx.fill();
       }
-    }
-    // タイトル「ぺろぺろありーな」
-    if (fx.timer < 170 && fx.timer > 30) {
+      // 白い衝撃線（集中線）
       ctx.save();
       ctx.translate(W/2, H/2);
-      const scale = 1 + 0.08 * Math.sin(fx.timer * 0.2);
-      const shake = (Math.random() - 0.5) * 6;
+      for (let i = 0; i < 20; i++) {
+        const a = (i / 20) * Math.PI * 2 + fx.auraFrame * 0.1;
+        const r1 = 30 + (fx.auraFrame * 4 + i * 7) % 40;
+        const r2 = Math.max(W, H);
+        ctx.strokeStyle = `rgba(255,240,200,${0.2 + 0.3 * Math.abs(Math.sin(fx.auraFrame * 0.2 + i))})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
+        ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // ヒットフレームでは画面全体白フラッシュ
+      const hitFrames = [220, 200, 180, 160, 140];
+      for (const hf of hitFrames) {
+        const d = hf - t;
+        if (d >= 0 && d < 8) {
+          const flashA = 1 - d / 8;
+          ctx.fillStyle = `rgba(255,255,255,${flashA * 0.8})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+    }
+
+    // タイトル「ぺろぺろありーな」— init〜attack 中は大きく表示
+    if (isInit || isAttack) {
+      ctx.save();
+      ctx.translate(W/2, H * 0.28);
+      const scale = 1 + 0.05 * Math.sin(fx.auraFrame * 0.3);
+      const shake = isAttack ? (Math.random() - 0.5) * 5 : 0;
       ctx.translate(shake, shake);
       ctx.scale(scale, scale);
-      ctx.rotate(-0.05);
+      ctx.rotate(-0.03);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = 'bold 42px "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif';
-      // 多重縁取り
-      ctx.lineWidth = 14; ctx.strokeStyle = '#000';
+      ctx.font = 'bold 40px "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif';
+      ctx.lineWidth = 13; ctx.strokeStyle = '#000';
       ctx.strokeText('ぺろぺろありーな', 0, 0);
-      ctx.lineWidth = 9; ctx.strokeStyle = '#7a1a5a';
+      ctx.lineWidth = 8; ctx.strokeStyle = '#7a1a5a';
       ctx.strokeText('ぺろぺろありーな', 0, 0);
       ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff';
       ctx.strokeText('ぺろぺろありーな', 0, 0);
-      const tg = ctx.createLinearGradient(0, -30, 0, 30);
+      const tg = ctx.createLinearGradient(0, -28, 0, 28);
       tg.addColorStop(0, '#ffffff');
       tg.addColorStop(0.5, '#ffccf0');
       tg.addColorStop(1, '#ff4488');
@@ -3807,20 +3973,137 @@
       ctx.fillText('ぺろぺろありーな', 0, 0);
       ctx.restore();
     }
-    // 「秘奥義」表記
-    if (fx.timer > 140) {
+
+    // 「秘奥義」表記（init 中のみ）
+    if (isInit) {
+      const op = Math.min(1, (tMax - t) / 30);
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = 'bold 24px serif';
-      const op = Math.min(1, (180 - fx.timer) / 20);
       ctx.globalAlpha = op;
       ctx.lineWidth = 6; ctx.strokeStyle = '#000';
-      ctx.strokeText('秘奥義', W/2, H * 0.25);
+      ctx.strokeText('秘奥義', W/2, H * 0.18);
       ctx.fillStyle = '#ffeb4a';
-      ctx.fillText('秘奥義', W/2, H * 0.25);
+      ctx.fillText('秘奥義', W/2, H * 0.18);
       ctx.restore();
     }
+
+    // バキッのテキスト演出
+    if (isAttack) {
+      const hitFrames = [220, 200, 180, 160, 140];
+      for (const hf of hitFrames) {
+        const d = hf - t;
+        if (d >= 0 && d < 25) {
+          const p = d / 25;
+          const ox = (hf * 37) % W;
+          const oy = ((hf * 17) % (H - 100)) + 60;
+          ctx.save();
+          ctx.translate(ox, oy);
+          ctx.rotate((hf * 0.7) % 0.3 - 0.15);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const sz = 34 * (1 - p * 0.3);
+          ctx.font = `bold ${sz}px "Hiragino Maru Gothic ProN", sans-serif`;
+          ctx.globalAlpha = 1 - p;
+          ctx.lineWidth = 7; ctx.strokeStyle = '#000';
+          ctx.strokeText('バキッ！', 0, 0);
+          ctx.fillStyle = '#ffee40';
+          ctx.fillText('バキッ！', 0, 0);
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  // 百式観音のシルエット（金色/橙）
+  function drawKannon(cx, cy, alpha) {
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // 大きな光輪
+    const ringR = 160;
+    const ringG = ctx.createRadialGradient(cx, cy - 40, 30, cx, cy - 40, ringR);
+    ringG.addColorStop(0, 'rgba(255, 230, 120, 0.5)');
+    ringG.addColorStop(0.5, 'rgba(255, 180, 50, 0.35)');
+    ringG.addColorStop(1, 'rgba(255, 120, 40, 0)');
+    ctx.fillStyle = ringG;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 40, ringR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 観音本体（金色シルエット）
+    const bodyG = ctx.createLinearGradient(cx, cy - 120, cx, cy + 120);
+    bodyG.addColorStop(0, '#ffd880');
+    bodyG.addColorStop(0.5, '#c88620');
+    bodyG.addColorStop(1, '#663a08');
+    ctx.fillStyle = bodyG;
+
+    // 胴体（大きな衣のような）
+    ctx.beginPath();
+    ctx.moveTo(cx - 55, cy + 120);
+    ctx.lineTo(cx - 80, cy + 180);
+    ctx.lineTo(cx + 80, cy + 180);
+    ctx.lineTo(cx + 55, cy + 120);
+    ctx.quadraticCurveTo(cx + 50, cy + 20, cx + 30, cy - 30);
+    ctx.quadraticCurveTo(cx + 20, cy - 60, cx, cy - 65);
+    ctx.quadraticCurveTo(cx - 20, cy - 60, cx - 30, cy - 30);
+    ctx.quadraticCurveTo(cx - 50, cy + 20, cx - 55, cy + 120);
+    ctx.closePath();
+    ctx.fill();
+
+    // 左右に広がる多腕（3本ずつ）
+    for (let side of [-1, 1]) {
+      for (let i = 0; i < 3; i++) {
+        const a = (i - 1) * 0.4;
+        const ax1 = cx + side * 30;
+        const ay1 = cy - 10;
+        const ax2 = cx + side * (70 + i * 10);
+        const ay2 = cy + 20 + i * 30;
+        ctx.fillStyle = `rgba(200, 130, 40, ${alpha * 0.9})`;
+        ctx.beginPath();
+        ctx.moveTo(ax1, ay1);
+        ctx.quadraticCurveTo(ax2, ay1 + a * 20, ax2, ay2);
+        ctx.quadraticCurveTo(ax2 - side * 10, ay2 + 10, ax1 - side * 5, ay1 + 40);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // 頭（楕円）
+    ctx.fillStyle = '#e8b854';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 80, 30, 38, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 髪飾り/冠
+    ctx.fillStyle = '#ffd880';
+    ctx.beginPath();
+    ctx.moveTo(cx - 26, cy - 100);
+    ctx.lineTo(cx - 14, cy - 120);
+    ctx.lineTo(cx, cy - 110);
+    ctx.lineTo(cx + 14, cy - 120);
+    ctx.lineTo(cx + 26, cy - 100);
+    ctx.closePath();
+    ctx.fill();
+    // 顔の閉じた目（慈悲の表情）
+    ctx.strokeStyle = '#4a2a10';
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(cx - 10, cy - 80, 4, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.arc(cx + 10, cy - 80, 4, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
+    // 口
+    ctx.beginPath();
+    ctx.arc(cx, cy - 68, 3, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+    // 額の印
+    ctx.fillStyle = '#ff4040';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 96, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 
   // カットシーン
