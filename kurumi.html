@@ -1079,14 +1079,12 @@ function startActionGame(onComplete) {
   actionState.startTime = Date.now();
   actionState.lastFrame = Date.now();
 
-  // Pre-spawn a couple of coins so something visible happens immediately
-  for (let i = 0; i < 3; i++) {
-    actionState.coins.push({
-      x: actionState.W + i * 180,
-      y: actionState.groundY - 50 - (i % 2) * 70,
-      size: 22, collected: false,
-    });
-  }
+  // Pre-spawn first coin near-visible so game starts with something
+  actionState.coins.push({
+    x: actionState.W + 60,
+    y: actionState.groundY - 38,
+    size: 20, collected: false,
+  });
 
   document.getElementById('coin-count').textContent = '0';
   document.getElementById('coin-goal').textContent = actionState.coinGoal;
@@ -1168,24 +1166,19 @@ function actionLoop() {
     return;
   }
 
-  // spawn — spaced out for relaxed pacing
+  // spawn — 1 coin per second, no clusters
   actionState.lastSpawn += dt * 16;
-  if (actionState.lastSpawn > 650) {
+  if (actionState.lastSpawn > 1000) {
     actionState.lastSpawn = 0;
-    const lineCount = 1 + Math.floor(Math.random() * 2); // 1-2 coins
-    const groundLevel = Math.random() < 0.55;
+    const groundLevel = Math.random() < 0.6;
     const baseY = groundLevel
       ? actionState.groundY - 38
       : actionState.groundY - (70 + Math.random() * 80);
-    for (let i = 0; i < lineCount; i++) {
-      actionState.coins.push({
-        x: W + 30 + i * 52,
-        y: baseY,
-        size: 20, collected: false,
-      });
-    }
-    if (!groundLevel && Math.random() < 0.18) {
-      actionState.obstacles.push({ x: W + 30 + lineCount * 60 + 140, y: actionState.groundY - 36, w: 30, h: 36 });
+    actionState.coins.push({
+      x: W + 30, y: baseY, size: 20, collected: false,
+    });
+    if (!groundLevel && Math.random() < 0.15) {
+      actionState.obstacles.push({ x: W + 200, y: actionState.groundY - 36, w: 30, h: 36 });
     }
   }
 
