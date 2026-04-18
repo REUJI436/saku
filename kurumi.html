@@ -905,7 +905,8 @@ const actionState = {
   coins: [],
   scroll: 0,
   coinsCollected: 0,
-  coinGoal: 10,
+  coinGoal: 100,
+  timeLimit: 90,
   lastSpawn: 0,
   groundY: 0,
   startTime: 0,
@@ -968,7 +969,7 @@ function startActionGame(onComplete) {
 
   document.getElementById('coin-count').textContent = '0';
   document.getElementById('coin-goal').textContent = actionState.coinGoal;
-  document.getElementById('action-time').textContent = '30';
+  document.getElementById('action-time').textContent = actionState.timeLimit;
   const hint = document.getElementById('action-tap-hint');
   hint.style.display = '';
   setTimeout(() => { hint.style.display = 'none'; }, 1800);
@@ -1037,7 +1038,7 @@ function actionLoop() {
   actionState.lastFrame = now;
 
   // time remaining
-  const remaining = Math.max(0, 30 - Math.floor((now - actionState.startTime) / 1000));
+  const remaining = Math.max(0, actionState.timeLimit - Math.floor((now - actionState.startTime) / 1000));
   document.getElementById('action-time').textContent = remaining;
 
   if (actionState.coinsCollected >= actionState.coinGoal || remaining <= 0) {
@@ -1045,17 +1046,22 @@ function actionLoop() {
     return;
   }
 
-  // spawn
+  // spawn — denser to support 100-coin goal
   actionState.lastSpawn += dt * 16;
-  if (actionState.lastSpawn > 550) {
+  if (actionState.lastSpawn > 260) {
     actionState.lastSpawn = 0;
-    const yOff = 40 + Math.random() * 90;
-    actionState.coins.push({
-      x: W + 30, y: actionState.groundY - yOff,
-      size: 22, collected: false,
-    });
-    if (Math.random() < 0.25) {
-      actionState.obstacles.push({ x: W + 30, y: actionState.groundY - 38, w: 32, h: 38 });
+    // spawn a small line of coins
+    const lineCount = 2 + Math.floor(Math.random() * 3); // 2-4 coins in a row
+    const baseY = actionState.groundY - (40 + Math.random() * 110);
+    for (let i = 0; i < lineCount; i++) {
+      actionState.coins.push({
+        x: W + 30 + i * 42,
+        y: baseY,
+        size: 20, collected: false,
+      });
+    }
+    if (Math.random() < 0.22) {
+      actionState.obstacles.push({ x: W + 30 + lineCount * 42 + 80, y: actionState.groundY - 38, w: 32, h: 38 });
     }
   }
 
