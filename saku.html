@@ -3880,17 +3880,16 @@
     ctx.fillStyle = halo;
     ctx.fillRect(0, 0, W, H);
 
-    // 百式観音
-    if (!isAftermath || t > 30) {
+    // 百式観音（attackフェーズは白の上にうっすら描き直すので、ここではスキップ）
+    if (!isAttack && (!isAftermath || t > 30)) {
       let kannonAlpha = 0;
       if (isInit) kannonAlpha = Math.min(1, (tMax - t) / 60);
-      else if (isAttack) kannonAlpha = 1;
       else if (isAftermath) kannonAlpha = Math.max(0, (t - 30) / 90);
       drawKannon(W/2, H * 0.48, kannonAlpha);
     }
 
-    // 桜吹雪
-    const sakuraCount = isAftermath ? 40 : 25;
+    // 桜吹雪（attackフェーズは白で隠れるのでスキップ）
+    const sakuraCount = isAftermath ? 40 : (isAttack ? 0 : 25);
     for (let i = 0; i < sakuraCount; i++) {
       const seed = i * 37;
       const sx = ((seed + fx.auraFrame * 2) % W);
@@ -3909,43 +3908,8 @@
       ctx.restore();
     }
 
-    // 攻撃フェーズ: バキバキの殴打フラッシュ
-    if (isAttack) {
-      // 拳形のフラッシュ（ランダム位置に）
-      const numFlashes = 4;
-      for (let i = 0; i < numFlashes; i++) {
-        const fx_x = (Math.sin(fx.auraFrame * 0.4 + i * 1.3) * 0.5 + 0.5) * W;
-        const fx_y = (Math.cos(fx.auraFrame * 0.35 + i * 1.7) * 0.5 + 0.5) * H * 0.8 + H * 0.1;
-        const fx_r = 20 + Math.abs(Math.sin(fx.auraFrame * 0.3 + i)) * 15;
-        const punchG = ctx.createRadialGradient(fx_x, fx_y, 1, fx_x, fx_y, fx_r);
-        punchG.addColorStop(0, 'rgba(255,255,255,0.9)');
-        punchG.addColorStop(0.5, 'rgba(255,220,100,0.5)');
-        punchG.addColorStop(1, 'rgba(200,40,0,0)');
-        ctx.fillStyle = punchG;
-        ctx.beginPath();
-        ctx.arc(fx_x, fx_y, fx_r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      // 白い衝撃線（集中線）
-      ctx.save();
-      ctx.translate(W/2, H/2);
-      for (let i = 0; i < 20; i++) {
-        const a = (i / 20) * Math.PI * 2 + fx.auraFrame * 0.1;
-        const r1 = 30 + (fx.auraFrame * 4 + i * 7) % 40;
-        const r2 = Math.max(W, H);
-        ctx.strokeStyle = `rgba(255,240,200,${0.2 + 0.3 * Math.abs(Math.sin(fx.auraFrame * 0.2 + i))})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
-        ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-    }
-
-    // タイトル「ぺろぺろありーな」— init〜attack 中は大きく表示
-    if (isInit || isAttack) {
+    // タイトル「ぺろぺろありーな」— init 中のみ表示（attack中は真っ白なので隠す）
+    if (isInit) {
       ctx.save();
       ctx.translate(W/2, H * 0.28);
       const scale = 1 + 0.05 * Math.sin(fx.auraFrame * 0.3);
@@ -3986,8 +3950,16 @@
       ctx.restore();
     }
 
-    // 衝撃波エフェクト（バキッのタイミングで広がるリング＋ヒビ割れ放射線）
+    // ★ 攻撃フェーズ: 基本真っ白、うっすら観音様だけ透ける、衝撃波で殴打を表現
     if (isAttack) {
+      // 画面を真っ白で覆う（すべての描画の上に乗せる）
+      ctx.fillStyle = 'rgba(255,255,255,0.96)';
+      ctx.fillRect(0, 0, W, H);
+
+      // 白の上にうっすらと観音様を再描画
+      drawKannon(W/2, H * 0.48, 0.18);
+
+      // 衝撃波エフェクト（殴打のタイミングで広がるリング＋放射状ヒビ割れ線）
       const hitFrames = [220, 200, 180, 160, 140];
       for (const hf of hitFrames) {
         const d = hf - t;
@@ -3996,28 +3968,28 @@
           const cx0 = (hf * 37) % (W - 100) + 50;
           const cy0 = ((hf * 17) % (H - 200)) + 100;
 
-          // 白い衝撃リング（急速に広がって消える）
+          // 衝撃リング（薄グレー、白の上で見えるように）
           const ringR = 10 + p * 180;
           ctx.save();
-          ctx.globalAlpha = 1 - p;
-          ctx.strokeStyle = '#ffffff';
+          ctx.globalAlpha = Math.max(0, 1 - p) * 0.75;
+          ctx.strokeStyle = '#555';
           ctx.lineWidth = 8 * (1 - p) + 2;
           ctx.beginPath();
           ctx.arc(cx0, cy0, ringR, 0, Math.PI * 2);
           ctx.stroke();
-          // 内側にもう一本
-          ctx.strokeStyle = 'rgba(255, 220, 120, 0.8)';
+          // 内側にもう一本（やや色味）
+          ctx.strokeStyle = '#a85030';
           ctx.lineWidth = 4 * (1 - p) + 1;
           ctx.beginPath();
           ctx.arc(cx0, cy0, ringR * 0.7, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
 
-          // 放射状ヒビ割れ線
+          // 放射状ヒビ割れ線（濃いめで白地に映える）
           ctx.save();
           ctx.translate(cx0, cy0);
-          ctx.globalAlpha = Math.max(0, 1 - p * 1.5);
-          ctx.strokeStyle = '#ffffff';
+          ctx.globalAlpha = Math.max(0, 1 - p * 1.5) * 0.8;
+          ctx.strokeStyle = '#333';
           ctx.lineWidth = 3;
           const numSpokes = 10;
           for (let i = 0; i < numSpokes; i++) {
@@ -4030,27 +4002,6 @@
             ctx.stroke();
           }
           ctx.restore();
-        }
-      }
-    }
-
-    // ★ 瞬獄殺風 完全真っ白フラッシュ（ヒット音タイミングで画面全部を覆う）
-    // すべての描画の後に乗せる
-    if (isAttack) {
-      // 攻撃フェーズ中は全体的に白めのベース
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.fillRect(0, 0, W, H);
-
-      // ヒットごとに強烈な真っ白フラッシュ（重なって持続感を出す）
-      const hitFrames = [220, 200, 180, 160, 140];
-      for (const hf of hitFrames) {
-        const d = hf - t;  // 0:ヒット瞬間 → 増加で減衰
-        if (d >= 0 && d < 18) {
-          let flashA;
-          if (d < 12) flashA = 1.0;              // 12F完全真っ白
-          else flashA = 1.0 - (d - 12) / 6;      // 6Fかけて消える
-          ctx.fillStyle = `rgba(255,255,255,${flashA})`;
-          ctx.fillRect(0, 0, W, H);
         }
       }
     }
