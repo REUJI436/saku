@@ -1844,7 +1844,10 @@
         score += 500; scoreEl.textContent = score;
       }
     }
-    if (boss && !boss.defeated) damageBoss(3);
+    // ボスダメージは1回の発動につき3（5ヒットのうち最初の1回だけ）
+    if (boss && !boss.defeated && saku.ultActive && saku.ultActive.type === 'peropero' && saku.ultActive.hitCount === 0) {
+      damageBoss(3);
+    }
     // バキッ！の殴打音
     sfxBakiHit();
   }
