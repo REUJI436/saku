@@ -82,9 +82,35 @@
   const hudStats = document.getElementById('hudStats');
 
   // ====== ゲーム状態 ======
-  const STATE = { TITLE: 'title', CHAR_SELECT: 'charSelect', PLAYING: 'playing', STAGE_CLEAR: 'stageClear', CLEARED: 'cleared', GAMEOVER: 'gameover' };
+  const STATE = { TITLE: 'title', CHAR_SELECT: 'charSelect', PLAYING: 'playing', DEAD: 'dead', STAGE_CLEAR: 'stageClear', CLEARED: 'cleared', GAMEOVER: 'gameover' };
   let state = STATE.TITLE;
   let stateTimer = 0;
+
+  // ====== オートセーブ ======
+  const SAVE_KEY = 'sakudragon_save_v1';
+  function saveGame() {
+    try {
+      const data = {
+        stageIdx: currentStageIdx,
+        charIdx: selectIdx,
+        transform: player.transform,
+        hp: player.hp,
+        kiGauge: player.kiGauge,
+        power: player.power,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+  function loadSave() {
+    try {
+      const s = localStorage.getItem(SAVE_KEY);
+      return s ? JSON.parse(s) : null;
+    } catch (e) { return null; }
+  }
+  function clearSave() {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  }
 
   // ====== 入力 ======
   const keys = {};
@@ -222,7 +248,21 @@
   }
   function handleCanvasTap(e) {
     ensureAudio();
-    if (state === STATE.TITLE) { gotoCharSelect(); return; }
+    if (state === STATE.TITLE) {
+      const pos = getCanvasPos(e);
+      if (titleContinueBtn && pos.x > titleContinueBtn.x && pos.x < titleContinueBtn.x + titleContinueBtn.w && pos.y > titleContinueBtn.y && pos.y < titleContinueBtn.y + titleContinueBtn.h) {
+        continueGame();
+        return;
+      }
+      if (titleNewBtn && pos.x > titleNewBtn.x && pos.x < titleNewBtn.x + titleNewBtn.w && pos.y > titleNewBtn.y && pos.y < titleNewBtn.y + titleNewBtn.h) {
+        clearSave();
+        gotoCharSelect();
+        return;
+      }
+      // 枠外タップも はじめから扱い
+      gotoCharSelect();
+      return;
+    }
     if (state === STATE.CHAR_SELECT) {
       const pos = getCanvasPos(e);
       // キャラカードの当たり判定：1タップで即スタート
@@ -447,6 +487,7 @@
   let popups = [];
   let banner = null;
   let bannerSub = null;  // サブバナー（フレーバーテキスト）
+  let comboCount = 0, comboMax = 0, comboTimer = 0;
   let currentBgPalette = { top: '#040012', mid: '#100828', bot: '#20104a' };
   let cameraShake = 0;
 
@@ -541,6 +582,20 @@
     beep(880, 0.1, 'triangle', 0.14);
   }
 
+  function continueGame() {
+    ensureAudio();
+    const sv = loadSave();
+    if (!sv) { gotoCharSelect(); return; }
+    selectIdx = sv.charIdx || 0;
+    resetPlayer(CHARACTERS[selectIdx]);
+    currentStageIdx = sv.stageIdx || 0;
+    player.transform = sv.transform || 0;
+    player.hp = sv.hp || player.maxHp;
+    player.kiGauge = sv.kiGauge || 0;
+    player.power = sv.power || 0;
+    startStage();
+  }
+
   function startGame() {
     ensureAudio();
     resetPlayer(CHARACTERS[selectIdx]);
@@ -566,6 +621,9 @@
     const stg = STAGES_CONFIG[currentStageIdx];
     enemies = []; projectiles = []; enemyProjectiles = []; particles = []; popups = [];
     boss = null; banner = null;
+    comboCount = 0; comboTimer = 0;
+    // ステージ開始時にオートセーブ
+    saveGame();
     // プレイヤー位置リセット（HPは引継ぎ）
     player.x = W/2; player.y = H - 100;
     player.vx = 0; player.vy = 0;
@@ -647,11 +705,11 @@
   // ====== 敵ウェーブ管理 ======
   let waveState = null;
   const WAVES = [
-    { saibai: 14, spawnInterval: 30 },
-    { saibai: 20, namek: 4, spawnInterval: 25 },
-    { saibai: 24, namek: 10, freezer: 2, spawnInterval: 22 },
-    { saibai: 30, namek: 14, freezer: 4, spawnInterval: 18 },
-    { saibai: 36, namek: 18, freezer: 6, spawnInterval: 15 },
+    { saibai: 28, spawnInterval: 18, spawnBurst: 2 },
+    { saibai: 40, namek: 8, spawnInterval: 15, spawnBurst: 2 },
+    { saibai: 50, namek: 20, freezer: 4, spawnInterval: 13, spawnBurst: 3 },
+    { saibai: 60, namek: 28, freezer: 8, spawnInterval: 11, spawnBurst: 3 },
+    { saibai: 72, namek: 36, freezer: 12, spawnInterval: 9, spawnBurst: 4 },
   ];
 
   function updateWaves() {
@@ -673,19 +731,25 @@
         waveState.spawnTimer = w.spawnInterval;
       } else {
         const w = waveState.currentWave;
-        // 残敵タイプからランダムにスポーン
         const types = [];
-        for (const k in w) { if (k !== 'spawnInterval' && w[k] > 0) types.push(k); }
+        for (const k in w) { if (k !== 'spawnInterval' && k !== 'spawnBurst' && w[k] > 0) types.push(k); }
         if (types.length === 0) {
-          // ウェーブ終了、次へ
           waveState.inWave = false;
-          waveState.spawnTimer = 90;
+          waveState.spawnTimer = 60;
           waveState.waveIdx++;
           return;
         }
-        const t = types[Math.floor(Math.random() * types.length)];
-        spawnEnemy(t);
-        w[t]--;
+        // 複数体を同時スポーン（一騎当千感）
+        const burst = w.spawnBurst || 1;
+        for (let b = 0; b < burst && types.length > 0; b++) {
+          const t = types[Math.floor(Math.random() * types.length)];
+          spawnEnemy(t);
+          w[t]--;
+          if (w[t] <= 0) {
+            const idx = types.indexOf(t);
+            if (idx >= 0) types.splice(idx, 1);
+          }
+        }
         waveState.spawnTimer = w.spawnInterval;
       }
     }
@@ -777,10 +841,22 @@
     sfxHit();
     if (player.hp <= 0) {
       player.hp = 0;
-      state = STATE.GAMEOVER;
+      state = STATE.DEAD;
       stateTimer = 0;
-      spawnExplosion(player.x, player.y, '#ffcc40', 40);
+      spawnExplosion(player.x, player.y, '#ffcc40', 50);
       sfxExplode();
+      banner = { text: 'やられた…！', color: '#ff4040', life: 150, maxLife: 150 };
+      // 2.5秒後に現在ステージを最初からやり直し
+      setTimeout(() => {
+        if (state === STATE.DEAD) {
+          // 変身段階はステージのunlock値に戻す
+          const stg = STAGES_CONFIG[currentStageIdx];
+          player.transform = stg ? stg.transformUnlock : 0;
+          player.power = 0;
+          player.hp = player.maxHp;
+          startStage();
+        }
+      }, 2500);
     }
   }
 
@@ -971,31 +1047,41 @@
         e.y += 8;
       }
     }
-    // 自プロジェクタイルとの衝突
+    // 自プロジェクタイルとの衝突（SSJ以降は貫通）
     for (const p of projectiles) {
+      if (!p.hitSet) p.hitSet = new Set();  // 既ヒット敵（貫通時の重複防止）
+      const pierce = (p.transform >= 2);  // SSJ以上で貫通
       for (const e of enemies) {
         if (e.dead) continue;
+        if (p.hitSet.has(e)) continue;
         const d = Math.hypot(p.x - e.x, p.y - e.y);
         if (d < p.r + e.r) {
           e.hp -= p.dmg;
           e.hurtTimer = 15;
-          p.life = 0;
-          // ヒットスパーク
-          for (let i = 0; i < 5; i++) {
+          p.hitSet.add(e);
+          if (!pierce) p.life = 0;
+          // ヒットスパーク（大きめ）
+          const sparkCount = pierce ? 8 : 5;
+          for (let i = 0; i < sparkCount; i++) {
             spawnParticle(p.x, p.y, {
-              vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4,
-              life: 15, color: '#ffee80', size: 2,
+              vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+              life: 18, color: '#ffee80', size: 2.5,
             });
           }
           if (e.hp <= 0) {
             e.dead = true;
-            spawnExplosion(e.x, e.y, e.color, 12);
+            // キル数でコンボアップ
+            comboCount++;
+            if (comboCount > comboMax) comboMax = comboCount;
+            comboTimer = 90;
+            spawnExplosion(e.x, e.y, e.color, 22);  // 爆発強化
             addPopup(e.x, e.y, '+' + e.score, '#ffee80');
             player.kills++;
-            gainPower(e.score / 200);  // スコアに応じてパワーチャージ
+            gainPower(e.score / 200);
             sfxExplode();
+            addShake(3);  // 小さな揺れ
           }
-          break;
+          if (!pierce) break;  // 非貫通なら他の敵に衝突させない
         }
       }
       // ボス衝突
@@ -1046,6 +1132,16 @@
   // ====== 敵弾更新 ======
   function updateEnemyProjectiles() {
     for (const p of enemyProjectiles) {
+      // ホーミング弾：追尾
+      if (p.homing && p.life > 30) {
+        const dx = player.x - p.x, dy = player.y - p.y;
+        const d = Math.hypot(dx, dy);
+        if (d > 0) {
+          const turnRate = 0.08;
+          p.vx = p.vx * (1 - turnRate) + (dx / d) * 4 * turnRate;
+          p.vy = p.vy * (1 - turnRate) + (dy / d) * 4 * turnRate;
+        }
+      }
       p.x += p.vx;
       p.y += p.vy;
       p.life--;
@@ -1142,29 +1238,8 @@
         damagePlayer(boss.dmg);
       }
     } else if (boss.attackCD <= 0) {
-      // 次の攻撃を選ぶ
-      const r = Math.random();
-      if (r < 0.35 || enraged) {
-        // 魔貫光殺砲風ビーム（予告 → 本発射）
-        // 激昂時も充分な回避時間を残す
-        boss.beamCharging = enraged ? 70 : 110;
-        boss.beamLocked = false;
-        boss.attackCD = enraged ? 120 : 180;
-      } else {
-        // 気弾散弾
-        const count = enraged ? 5 : 3;
-        for (let i = 0; i < count; i++) {
-          const baseAng = Math.atan2(player.y - boss.y, player.x - boss.x);
-          const ang = baseAng + (i - (count-1)/2) * 0.25;
-          enemyProjectiles.push({
-            x: boss.x, y: boss.y,
-            vx: Math.cos(ang) * 4.5, vy: Math.sin(ang) * 4.5,
-            r: 8, life: 160, dmg: boss.dmg, color: '#a0f080',
-          });
-        }
-        boss.attackCD = enraged ? 45 : 70;
-        beep(180, 0.12, 'sawtooth', 0.1);
-      }
+      // 次の攻撃をボス種別ごとに選ぶ
+      pickBossAttack(enraged);
     }
 
     // プレイヤーと接触
@@ -1172,6 +1247,156 @@
     if (pd < boss.r + player.r - 4 && player.invuln === 0) {
       damagePlayer(boss.dmg);
     }
+  }
+
+  // ====== ボス別攻撃パターン ======
+  function pickBossAttack(enraged) {
+    if (!boss) return;
+    const type = boss.type;
+    const rand = Math.random();
+    if (type === 'piccolo') {
+      // 魔貫光殺砲 / 散弾
+      if (rand < 0.4 || enraged) {
+        startBossBeam(enraged);
+      } else {
+        spreadKi(enraged ? 5 : 3, 0.25, 4.5);
+        boss.attackCD = enraged ? 40 : 65;
+      }
+    } else if (type === 'vegeta') {
+      // ギャリック砲（ビーム）／ラピッドファイア
+      if (rand < 0.35 || enraged) {
+        startBossBeam(enraged);
+      } else {
+        // ラピッドファイア：連射で8発
+        rapidFire(enraged ? 10 : 8, 4.8);
+        boss.attackCD = enraged ? 50 : 80;
+      }
+    } else if (type === 'freezer') {
+      // デスボール（ゆっくり大玉）／散弾／ビーム
+      if (rand < 0.3) startBossBeam(enraged);
+      else if (rand < 0.65) {
+        deathBall(enraged);
+        boss.attackCD = enraged ? 60 : 90;
+      } else {
+        spreadKi(enraged ? 7 : 5, 0.28, 4.2);
+        boss.attackCD = enraged ? 40 : 60;
+      }
+    } else if (type === 'cell') {
+      // テレポート→ビーム／散弾／広角スプレッド
+      if (rand < 0.4 || enraged) {
+        // テレポート前に位置を変える
+        teleport();
+        setTimeout(() => { if (boss && !boss.dead) startBossBeam(enraged); }, 300);
+        boss.attackCD = enraged ? 100 : 160;
+      } else {
+        spreadKi(enraged ? 9 : 7, 0.22, 4.6);
+        boss.attackCD = enraged ? 45 : 70;
+      }
+    } else if (type === 'buu') {
+      // ホーミング弾／ビーム／散弾
+      if (rand < 0.3) startBossBeam(enraged);
+      else if (rand < 0.65 || enraged) {
+        spawnHomingShots(enraged ? 5 : 3);
+        boss.attackCD = enraged ? 70 : 100;
+      } else {
+        spreadKi(enraged ? 8 : 6, 0.30, 4.0);
+        boss.attackCD = enraged ? 40 : 60;
+      }
+    } else {
+      // デフォルト
+      if (rand < 0.35) startBossBeam(enraged);
+      else {
+        spreadKi(3, 0.25, 4.5);
+        boss.attackCD = 70;
+      }
+    }
+  }
+
+  function startBossBeam(enraged) {
+    boss.beamCharging = enraged ? 70 : 110;
+    boss.beamLocked = false;
+    boss.attackCD = enraged ? 120 : 180;
+  }
+
+  function spreadKi(count, spread, speed) {
+    for (let i = 0; i < count; i++) {
+      const baseAng = Math.atan2(player.y - boss.y, player.x - boss.x);
+      const ang = baseAng + (i - (count - 1) / 2) * spread;
+      enemyProjectiles.push({
+        x: boss.x, y: boss.y,
+        vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
+        r: 8, life: 160, dmg: boss.dmg, color: boss.beamColor || '#a0f080',
+      });
+    }
+    beep(180, 0.12, 'sawtooth', 0.1);
+  }
+
+  function rapidFire(count, speed) {
+    // 一瞬で連射：setTimeout でずらしながら発射
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        if (!boss || boss.dead) return;
+        const ang = Math.atan2(player.y - boss.y, player.x - boss.x) + (Math.random() - 0.5) * 0.15;
+        enemyProjectiles.push({
+          x: boss.x, y: boss.y,
+          vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
+          r: 6, life: 140, dmg: boss.dmg, color: boss.beamColor || '#ffb080',
+        });
+        beep(260, 0.05, 'square', 0.08);
+      }, i * 60);
+    }
+  }
+
+  function deathBall(enraged) {
+    const ang = Math.atan2(player.y - boss.y, player.x - boss.x);
+    const sp = enraged ? 3.2 : 2.4;
+    enemyProjectiles.push({
+      x: boss.x, y: boss.y + 20,
+      vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+      r: 18, life: 300, dmg: boss.dmg + 1, color: boss.beamColor || '#ff80ff',
+      deathBall: true,
+    });
+    beep(120, 0.3, 'sawtooth', 0.15);
+  }
+
+  function teleport() {
+    if (!boss) return;
+    // 画面揺れ＋煙
+    addShake(8);
+    for (let i = 0; i < 20; i++) {
+      spawnParticle(boss.x, boss.y, {
+        vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+        life: 40, color: '#60ff80', size: 3,
+      });
+    }
+    // 新しい位置へ（プレイヤー上方、左右どちらか）
+    const side = Math.random() < 0.5 ? -1 : 1;
+    boss.x = W/2 + side * 200;
+    boss.y = H * 0.18;
+    for (let i = 0; i < 20; i++) {
+      spawnParticle(boss.x, boss.y, {
+        vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+        life: 40, color: '#60ff80', size: 3,
+      });
+    }
+    beep(500, 0.15, 'sine', 0.15);
+  }
+
+  function spawnHomingShots(count) {
+    if (!boss.homingShots) boss.homingShots = [];
+    for (let i = 0; i < count; i++) {
+      const ang = (i / count) * Math.PI * 2;
+      const proj = {
+        x: boss.x, y: boss.y,
+        vx: Math.cos(ang) * 2, vy: Math.sin(ang) * 2,
+        r: 7, life: 180, dmg: boss.dmg, color: boss.beamColor || '#ff80ff',
+        homing: true,
+      };
+      enemyProjectiles.push(proj);
+      boss.homingShots.push(proj);
+    }
+    beep(320, 0.12, 'triangle', 0.12);
+    // ホーミング弾は通常弾と一緒に更新される。homingフラグで追尾処理
   }
 
   // ====== パーティクル ======
@@ -1305,18 +1530,50 @@
     ctx.fillText('さく', tcx, tcy + 94);
     ctx.restore();
 
-    // 「タップでスタート」点滅
-    if (Math.floor(stateTimer / 30) % 2 === 0) {
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 22px sans-serif';
+    // メニュー：はじめから / つづきから
+    const sv = loadSave();
+    const menuY = H - 120;
+    const btnW = 240, btnH = 44;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 20px sans-serif';
+
+    // はじめから
+    const nx = W/2, ny = menuY;
+    ctx.fillStyle = 'rgba(80,40,10,0.85)';
+    ctx.fillRect(nx - btnW/2, ny - btnH/2, btnW, btnH);
+    ctx.strokeStyle = '#ffa040';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(nx - btnW/2, ny - btnH/2, btnW, btnH);
+    ctx.fillStyle = '#ffee80';
+    ctx.lineWidth = 4; ctx.strokeStyle = '#000';
+    ctx.strokeText('はじめから', nx, ny + 7);
+    ctx.fillText('はじめから', nx, ny + 7);
+    titleNewBtn = { x: nx - btnW/2, y: ny - btnH/2, w: btnW, h: btnH };
+
+    // つづきから（セーブがある場合のみ）
+    if (sv) {
+      const cy = ny + 58;
+      ctx.fillStyle = 'rgba(10,40,80,0.85)';
+      ctx.fillRect(nx - btnW/2, cy - btnH/2, btnW, btnH);
+      ctx.strokeStyle = '#60a0ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(nx - btnW/2, cy - btnH/2, btnW, btnH);
+      ctx.fillStyle = '#80c0ff';
       ctx.lineWidth = 4; ctx.strokeStyle = '#000';
-      ctx.strokeText('タップ / Space キーでスタート', W/2, H - 70);
-      ctx.fillStyle = '#ffee80';
-      ctx.fillText('タップ / Space キーでスタート', W/2, H - 70);
-      ctx.restore();
+      ctx.strokeText('つづきから', nx, cy + 7);
+      ctx.fillText('つづきから', nx, cy + 7);
+      // セーブ内容
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = '#ccc';
+      ctx.fillText(`ステージ ${sv.stageIdx + 1}（${CHARACTERS[sv.charIdx]?.name || ''}）`, nx, cy + 30);
+      titleContinueBtn = { x: nx - btnW/2, y: cy - btnH/2, w: btnW, h: btnH };
+    } else {
+      titleContinueBtn = null;
     }
+    ctx.restore();
   }
+  let titleNewBtn = null, titleContinueBtn = null;
 
   // ====== キャラ選択画面 ======
   function drawCharSelect() {
@@ -2661,6 +2918,23 @@
     ctx.lineWidth = 3; ctx.strokeStyle = '#000';
     ctx.strokeText('KILLS: ' + player.kills, W - 12, 30);
     ctx.fillText('KILLS: ' + player.kills, W - 12, 30);
+    // コンボ表示（大きく派手に）
+    if (comboCount >= 3) {
+      const t = Math.min(1, comboTimer / 90);
+      const scale = 1 + Math.min(0.5, (comboCount - 3) * 0.03);
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.translate(W / 2, 90);
+      ctx.scale(scale, scale);
+      ctx.font = 'bold 36px serif';
+      ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+      const hue = (comboCount * 12) % 360;
+      ctx.strokeText(`${comboCount} HIT COMBO！`, 0, 0);
+      ctx.fillStyle = `hsl(${hue},100%,70%)`;
+      ctx.globalAlpha = t;
+      ctx.fillText(`${comboCount} HIT COMBO！`, 0, 0);
+      ctx.restore();
+    }
     // 変身状態
     if (player.transform >= 1) {
       ctx.textAlign = 'right';
@@ -2748,8 +3022,16 @@
     } else if (state === STATE.STAGE_CLEAR) {
       updateParticles();
       updateProjectiles();
+    } else if (state === STATE.DEAD) {
+      updateParticles();
+      updateEnemyProjectiles();
     } else if (state === STATE.CLEARED || state === STATE.GAMEOVER) {
       updateParticles();
+    }
+    // コンボタイマー（キルが止まるとリセット）
+    if (state === STATE.PLAYING) {
+      if (comboTimer > 0) comboTimer--;
+      else comboCount = 0;
     }
     // HUDテキスト更新
     if (state === STATE.PLAYING) {
