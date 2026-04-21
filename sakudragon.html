@@ -1422,75 +1422,91 @@
     ctx.beginPath();
     ctx.arc(0, -12, 9, 0, Math.PI*2);
     ctx.fill();
-    // 髪
+    // 髪（目は y=-12。前髪は y=-14 までで止める）
     ctx.fillStyle = c.hairCol;
     if (c.id === 'saku') {
-      // さくの髪：サラサラ・イケメン（サイドスイープ）
+      // さくの髪：頭頂部から側面（耳の上）まで、前髪は額のみ
       ctx.beginPath();
-      ctx.arc(0, -13, 9, Math.PI, 0);
-      ctx.lineTo(9, -9);
-      ctx.lineTo(-9, -9);
+      ctx.arc(0, -12, 9, Math.PI, 0);        // 頭頂の丸みだけ
+      ctx.lineTo(9, -14);
+      ctx.lineTo(-9, -14);
       ctx.closePath();
       ctx.fill();
-      // 斜めの前髪（サイドスイープ）
+      // 斜めの前髪（サイドスイープ・額のみ、目にかからない）
       ctx.beginPath();
-      ctx.moveTo(-9, -12);
-      ctx.bezierCurveTo(-8, -8, -2, -6, 4, -8);
-      ctx.bezierCurveTo(7, -9, 9, -11, 9, -13);
-      ctx.lineTo(8, -9);
-      ctx.lineTo(-8, -9);
+      ctx.moveTo(-9, -15);
+      ctx.bezierCurveTo(-6, -13, 0, -13.5, 5, -14);
+      ctx.bezierCurveTo(8, -14.5, 9, -15.5, 9, -17);
+      ctx.lineTo(8, -15);
+      ctx.lineTo(-9, -15);
+      ctx.closePath();
+      ctx.fill();
+      // サイドのもみあげ（耳の上まで、目の高さで止める）
+      ctx.beginPath();
+      ctx.moveTo(-9, -14);
+      ctx.lineTo(-9, -11);
+      ctx.lineTo(-7, -11);
+      ctx.lineTo(-7, -14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(9, -14);
+      ctx.lineTo(9, -11);
+      ctx.lineTo(7, -11);
+      ctx.lineTo(7, -14);
       ctx.closePath();
       ctx.fill();
       // ハイライト（サラサラ感）
       ctx.strokeStyle = '#3a2820';
       ctx.lineWidth = 0.4;
       ctx.beginPath();
-      ctx.moveTo(-7, -15); ctx.lineTo(-3, -18);
-      ctx.moveTo(2, -17); ctx.lineTo(6, -14);
+      ctx.moveTo(-5, -18); ctx.lineTo(-2, -20);
+      ctx.moveTo(2, -19); ctx.lineTo(5, -17);
       ctx.stroke();
     } else {
-      // くるみの髪：ミディアム（肩まで）・柔らかい毛先
+      // くるみ：ミディアム（肩まで）・前髪は目にかけない
+      // サイドと後ろの髪（頭の丸みから肩まで）
       ctx.beginPath();
-      ctx.arc(0, -14, 10, Math.PI, 0);
-      ctx.bezierCurveTo(10, -10, 11, -4, 9, 0);   // 右サイド（肩まで）
+      ctx.arc(0, -13, 10, Math.PI, 0);
+      ctx.bezierCurveTo(10, -9, 11, -4, 9, 0);
       ctx.lineTo(7, 2);
-      ctx.bezierCurveTo(4, -4, -4, -4, -7, 2);   // 内側の縁
+      ctx.bezierCurveTo(4, -2, -4, -2, -7, 2);
       ctx.lineTo(-9, 0);
-      ctx.bezierCurveTo(-11, -4, -10, -10, -10, -14);  // 左サイド（肩まで）
+      ctx.bezierCurveTo(-11, -4, -10, -9, -10, -13);
       ctx.closePath();
       ctx.fill();
-      // 前髪（ふんわり）
+      // 前髪（ふんわり・額のみで、目にかからない）
       ctx.beginPath();
-      ctx.moveTo(-10, -13);
-      ctx.quadraticCurveTo(-5, -10, -1, -11);
-      ctx.quadraticCurveTo(4, -12, 10, -12);
-      ctx.lineTo(8, -9);
-      ctx.lineTo(-8, -9);
+      ctx.moveTo(-10, -16);
+      ctx.quadraticCurveTo(-5, -13, 0, -14);
+      ctx.quadraticCurveTo(5, -15, 10, -15);
+      ctx.lineTo(9, -16);
+      ctx.bezierCurveTo(8, -19, -8, -19, -10, -16);
       ctx.closePath();
       ctx.fill();
       // ハイライト
       ctx.strokeStyle = '#b88050';
       ctx.lineWidth = 0.5;
       ctx.beginPath();
-      ctx.moveTo(-8, -15); ctx.lineTo(-3, -18);
-      ctx.moveTo(3, -18); ctx.lineTo(8, -14);
+      ctx.moveTo(-6, -18); ctx.lineTo(-2, -20);
+      ctx.moveTo(3, -20); ctx.lineTo(7, -17);
       ctx.stroke();
-      // ピンクリボン（サイド・カチューシャ風）
+      // ピンクリボン（頭頂の左サイド）
       ctx.fillStyle = '#ff80b0';
       ctx.beginPath();
-      ctx.moveTo(-11, -17);
-      ctx.lineTo(-7, -19);
-      ctx.lineTo(-7, -14);
+      ctx.moveTo(-11, -19);
+      ctx.lineTo(-7, -21);
+      ctx.lineTo(-7, -16);
       ctx.closePath();
       ctx.fill();
       ctx.beginPath();
-      ctx.moveTo(-3, -17);
-      ctx.lineTo(-7, -19);
-      ctx.lineTo(-7, -14);
+      ctx.moveTo(-3, -19);
+      ctx.lineTo(-7, -21);
+      ctx.lineTo(-7, -16);
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = '#d06090';
-      ctx.fillRect(-8, -18, 2, 3);
+      ctx.fillRect(-8, -20, 2, 3);
     }
     // 目（イケメンは少し細目、くるみは大きく丸い）
     const eyeW = c.id === 'saku' ? 1.4 : 1.8;
