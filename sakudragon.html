@@ -71,7 +71,7 @@
     <div class="box" id="hudStats"></div>
   </div>
   <div id="touchUI">
-    <button id="chargeBtn">ため撃ち<small>長押し→離す</small></button>
+    <button id="chargeBtn">必殺技<small>かめはめ波</small></button>
   </div>
 </div>
 <script>
@@ -294,18 +294,23 @@
   let selectIdx = 0;
 
   // ====== プレイヤー ======
+  const TRANSFORM_NAMES = ['ノーマル', '界王拳', 'スーパーサイヤ人', '超サイヤ人2', '超サイヤ人3', '超サイヤ人4'];
+  const TRANSFORM_MAX = 5;
+  // 各ティアに必要な power（累積ではなく各ティアごとリセット）
+  const TRANSFORM_COST = [25, 35, 50, 65, 80];
   const player = {
     x: W/2, y: H - 100, r: 14, facing: 1, hp: 10, maxHp: 10,
     vx: 0, vy: 0, speed: 3, atkRate: 14, atkDmg: 1,
     shotCD: 0, invuln: 0,
-    transform: 0,  // 0: 通常, 1: スーパーサイヤ人, 2: SSJ2, 3: SSJ3, 4: SSJ4
-    power: 0, powerMax: 30,  // キルでたまる
+    transform: 0,  // 0: ノーマル, 1: 界王拳, 2: SSJ, 3: SSJ2, 4: SSJ3, 5: SSJ4
+    power: 0,
+    kiGauge: 0, kiGaugeMax: 100,  // 必殺技ゲージ
+    ultActive: null,  // { timer } ... かめはめ波発動中
     kills: 0,
     charId: 'saku',
     hairCol: '#1a1008', skinCol: '#ffddbb',
     shirtCol: '#ff6030', pantsCol: '#204080',
     anim: 0,
-    chargeTime: 0,  // ため撃ちタイマー
   };
   function resetPlayer(char) {
     player.charId = char.id;
@@ -322,7 +327,8 @@
     player.facing = 1;
     player.shotCD = 0; player.invuln = 0;
     player.transform = 0; player.power = 0; player.kills = 0;
-    player.anim = 0; player.chargeTime = 0;
+    player.kiGauge = 0; player.ultActive = null;
+    player.anim = 0;
   }
 
   // ====== エンティティ管理 ======
@@ -504,51 +510,55 @@
     if (mx !== 0) player.facing = mx > 0 ? 1 : -1;
     player.moving = mag > 0.1;
 
-    // 射撃（自動連射：ため撃ち中は停止）
+    // 自動連射：変身段階で発射間隔UP
     if (player.shotCD > 0) player.shotCD--;
-    const chargeKey = keys['KeyZ'] || keys['ShiftLeft'] || keys['Space'] || chargeHeld || fireHeld;
-    if (!chargeKey && player.shotCD <= 0) {
-      const atkRate = Math.max(5, player.atkRate - player.transform * 10);
+    if (player.shotCD <= 0 && !player.ultActive) {
+      // 発射間隔：各ティアで -4F（Kaioken 以降は段階的に速く）
+      const atkRate = Math.max(6, player.atkRate - player.transform * 4);
       player.shotCD = atkRate;
-      spawnKiBlast(false);
-      // 音は連射では1/2の頻度に間引いて疲れないように
+      spawnKiBlast();
+      // 音は連射で 1/2 に間引き
       player.shotSoundTick = (player.shotSoundTick || 0) + 1;
       if (player.shotSoundTick % 2 === 0) sfxShoot();
     }
 
-    // ため撃ち（Z / Shift / Space / ため撃ちボタン / 気弾ボタン どれでも）
-    if (chargeKey) {
-      player.chargeTime = Math.min(90, player.chargeTime + 1);
-    } else {
-      if (player.chargeTime > 20) {
-        // ため撃ち発射
-        const charge = player.chargeTime / 90;
-        spawnKiBlast(true, charge);
-        sfxShoot();
-        addShake(4);
-      }
-      player.chargeTime = 0;
+    // 必殺技ゲージ：時間経過で蓄積
+    if (!player.ultActive) {
+      player.kiGauge = Math.min(player.kiGaugeMax, player.kiGauge + 0.18);
+    }
+
+    // 必殺技発動：Z / Shift / Space / 必殺技ボタン
+    const ultKey = keys['KeyZ'] || keys['ShiftLeft'] || keys['Space'] || chargeHeld || fireHeld;
+    if (ultKey && player.kiGauge >= player.kiGaugeMax && !player.ultActive) {
+      fireKamehameha();
+    }
+
+    // 必殺技発動中の更新
+    if (player.ultActive) {
+      updateKamehameha();
     }
   }
 
-  function spawnKiBlast(charged, chargeStr) {
-    // 縦スクロール：真上に直進（自動追尾なし）
-    const sp = charged ? 12 : 10;
-    const dmg = charged ? Math.floor(2 + chargeStr * 5) + player.transform * 2 : (player.atkDmg + Math.floor(player.transform * 1.5));
-    const baseR = charged ? 10 + chargeStr * 10 : 5;
-    // 変身してない時は1発、SSJ1以上で3way（真っ直ぐ＋斜め左右）
-    const shots = player.transform >= 1 ? 3 : 1;
+  function spawnKiBlast() {
+    // 縦スクロール：真上に直進（全弾まっすぐ）
+    const sp = 10;
+    const dmg = player.atkDmg + Math.floor(player.transform * 0.6);
+    const r = 5;
+    // 弾数：ノーマル〜SSJ は 1発、SSJ2 で 2発、SSJ3 で 3発、SSJ4 で 4発
+    // transform: 0=ノーマル, 1=Kaioken, 2=SSJ, 3=SSJ2, 4=SSJ3, 5=SSJ4
+    let shots;
+    if (player.transform <= 2) shots = 1;
+    else shots = player.transform - 1;
+    const spacing = 11;
     for (let i = 0; i < shots; i++) {
-      const angOffset = (i - (shots - 1) / 2) * 0.22;
-      const ang = -Math.PI / 2 + angOffset;
+      const offset = (i - (shots - 1) / 2) * spacing;
       projectiles.push({
-        x: player.x + (i - (shots - 1) / 2) * 6,
+        x: player.x + offset,
         y: player.y - player.r,
-        vx: Math.cos(ang) * sp,
-        vy: Math.sin(ang) * sp,
-        life: 90, dmg,
-        r: baseR,
-        charged, transform: player.transform,
+        vx: 0,
+        vy: -sp,
+        life: 90, dmg, r,
+        transform: player.transform,
       });
     }
   }
@@ -569,29 +579,122 @@
   }
 
   function gainPower(amount) {
-    if (player.transform >= 1) return;  // Phase 1では SSJ 1段階のみ
+    if (player.transform >= TRANSFORM_MAX) return;
     player.power += amount;
-    if (player.power >= player.powerMax) {
+    const needed = TRANSFORM_COST[player.transform];
+    if (player.power >= needed) {
       triggerTransform();
     }
   }
 
   function triggerTransform() {
-    player.transform = Math.min(1, player.transform + 1);  // Phase 1: SSJまで
+    player.transform = Math.min(TRANSFORM_MAX, player.transform + 1);
     player.power = 0;
-    player.invuln = 30;
-    banner = { text: 'スーパーサイヤ人 覚醒！', color: '#ffee40', life: 140, maxLife: 140 };
+    player.invuln = 40;
+    const name = TRANSFORM_NAMES[player.transform];
+    banner = { text: name + ' 覚醒！', color: auraColorFor(player.transform), life: 140, maxLife: 140 };
     sfxTransform();
-    addShake(20);
+    addShake(22);
     // オーラ爆発
-    for (let i = 0; i < 40; i++) {
-      const a = (i / 40) * Math.PI * 2;
-      const sp = 3 + Math.random() * 3;
+    const auraCol = auraColorFor(player.transform);
+    for (let i = 0; i < 50; i++) {
+      const a = (i / 50) * Math.PI * 2;
+      const sp = 3 + Math.random() * 4;
       spawnParticle(player.x, player.y, {
         vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-        life: 60, color: '#ffee60', size: 3,
+        life: 70, color: auraCol, size: 3,
       });
     }
+  }
+
+  function auraColorFor(t) {
+    // 0:ノーマル, 1:界王拳(赤), 2:SSJ(金), 3:SSJ2(金+青電), 4:SSJ3(金), 5:SSJ4(赤)
+    switch (t) {
+      case 1: return '#ff4040';  // 赤（界王拳）
+      case 2: return '#ffee40';  // 金（SSJ）
+      case 3: return '#ffff80';  // 金＋青白い稲妻のベース
+      case 4: return '#ffdc20';  // 金（SSJ3）
+      case 5: return '#ff6010';  // 赤（SSJ4）
+      default: return '#ffffff';
+    }
+  }
+
+  // ====== 必殺技：かめはめ波 ======
+  function fireKamehameha() {
+    player.kiGauge = 0;
+    player.ultActive = { timer: 70, phase: 'charge', enemiesHit: new Set() };
+    banner = { text: 'かめはめ波ーっ！', color: '#80d0ff', life: 80, maxLife: 80 };
+    addShake(18);
+    ensureAudio();
+    if (audioCtx) {
+      const now = audioCtx.currentTime;
+      // チャージ音
+      const o1 = audioCtx.createOscillator();
+      const g1 = audioCtx.createGain();
+      o1.type = 'sine';
+      o1.frequency.setValueAtTime(220, now);
+      o1.frequency.exponentialRampToValueAtTime(880, now + 0.7);
+      g1.gain.setValueAtTime(0.001, now);
+      g1.gain.exponentialRampToValueAtTime(0.25, now + 0.6);
+      g1.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+      o1.connect(g1).connect(audioCtx.destination);
+      o1.start(now); o1.stop(now + 0.8);
+      // 発射音
+      const o2 = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o2.type = 'sawtooth';
+      o2.frequency.setValueAtTime(1200, now + 0.7);
+      o2.frequency.exponentialRampToValueAtTime(300, now + 1.8);
+      g2.gain.setValueAtTime(0.001, now + 0.7);
+      g2.gain.exponentialRampToValueAtTime(0.3, now + 0.75);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + 1.9);
+      o2.connect(g2).connect(audioCtx.destination);
+      o2.start(now + 0.7); o2.stop(now + 2);
+    }
+  }
+
+  function updateKamehameha() {
+    const u = player.ultActive;
+    u.timer--;
+    // phase: 0-30F → charge, 30-70F → fire
+    if (u.timer > 40) { u.phase = 'charge'; }
+    else { u.phase = 'fire'; }
+    if (u.phase === 'fire') {
+      // 当たり判定：プレイヤーの x を中心とした縦の帯
+      const bw = 60;  // ビーム幅
+      const bx1 = player.x - bw/2;
+      const bx2 = player.x + bw/2;
+      // 敵：範囲内なら即死
+      for (const e of enemies) {
+        if (e.dead) continue;
+        if (e.x + e.r > bx1 && e.x - e.r < bx2 && e.y < player.y) {
+          e.dead = true;
+          spawnExplosion(e.x, e.y, e.color, 18);
+          addPopup(e.x, e.y, '+' + e.score, '#80d0ff');
+          player.kills++;
+          gainPower(e.score / 40);
+        }
+      }
+      // ボス：範囲内なら1F毎にダメージ
+      if (boss && !boss.dead) {
+        if (boss.x + boss.r > bx1 && boss.x - boss.r < bx2) {
+          boss.hp -= 0.6;  // 40Fで24ダメージ
+          boss.hurtTimer = 5;
+          if (boss.hp <= 0) {
+            boss.dead = true;
+            spawnExplosion(boss.x, boss.y, '#80ff80', 60);
+            state = STATE.CLEARED;
+            stateTimer = 0;
+            banner = { text: 'ピッコロとーと 撃破！', color: '#80ff80', life: 180, maxLife: 180 };
+            addShake(25);
+            sfxExplode();
+          }
+        }
+      }
+      // 敵弾を消去
+      enemyProjectiles = enemyProjectiles.filter(p => !(p.x > bx1 && p.x < bx2 && p.y < player.y));
+    }
+    if (u.timer <= 0) player.ultActive = null;
   }
 
   // ====== 敵更新 ======
@@ -1216,50 +1319,150 @@
     ctx.save();
     if (flash) ctx.globalAlpha = 0.5;
 
-    // オーラ（変身中）
+    // オーラ（変身段階ごとに色と形が変わる）
     if (t >= 1) {
-      const auraR = 28 + Math.sin(player.anim * 0.5) * 4;
+      const auraR = 28 + Math.sin(player.anim * 0.5) * 4 + t * 3;
       const ag = ctx.createRadialGradient(x, y, 5, x, y, auraR);
-      ag.addColorStop(0, 'rgba(255,238,100,0.55)');
-      ag.addColorStop(0.5, 'rgba(255,170,40,0.3)');
-      ag.addColorStop(1, 'rgba(255,100,20,0)');
+      if (t === 1) {
+        // 界王拳：赤いオーラ
+        ag.addColorStop(0, 'rgba(255,80,80,0.55)');
+        ag.addColorStop(0.5, 'rgba(200,30,30,0.3)');
+        ag.addColorStop(1, 'rgba(80,0,0,0)');
+      } else if (t === 2) {
+        // SSJ：金オーラ
+        ag.addColorStop(0, 'rgba(255,238,100,0.55)');
+        ag.addColorStop(0.5, 'rgba(255,170,40,0.3)');
+        ag.addColorStop(1, 'rgba(255,100,20,0)');
+      } else if (t === 3) {
+        // SSJ2：金＋青白い稲妻
+        ag.addColorStop(0, 'rgba(255,255,150,0.6)');
+        ag.addColorStop(0.5, 'rgba(255,200,60,0.3)');
+        ag.addColorStop(1, 'rgba(180,220,255,0)');
+      } else if (t === 4) {
+        // SSJ3：より激しい金オーラ
+        ag.addColorStop(0, 'rgba(255,240,80,0.65)');
+        ag.addColorStop(0.5, 'rgba(255,180,30,0.4)');
+        ag.addColorStop(1, 'rgba(255,80,0,0)');
+      } else if (t === 5) {
+        // SSJ4：赤＋金
+        ag.addColorStop(0, 'rgba(255,120,40,0.65)');
+        ag.addColorStop(0.5, 'rgba(200,30,20,0.4)');
+        ag.addColorStop(1, 'rgba(60,0,0,0)');
+      }
       ctx.fillStyle = ag;
       ctx.beginPath(); ctx.arc(x, y, auraR, 0, Math.PI * 2); ctx.fill();
       // 上方向のオーラ炎
-      for (let i = 0; i < 6; i++) {
-        const a = -Math.PI/2 + (i - 2.5) * 0.25;
+      const flameCount = 6 + t;
+      for (let i = 0; i < flameCount; i++) {
+        const a = -Math.PI/2 + (i - (flameCount - 1) / 2) * 0.2;
         const fr = 18 + Math.sin(player.anim * 0.4 + i) * 4;
         const fx = x + Math.cos(a) * fr;
         const fy = y + Math.sin(a) * fr - 10;
-        ctx.fillStyle = `rgba(255,${200 + Math.sin(player.anim*0.5+i)*40},60,0.6)`;
+        let flameCol;
+        if (t === 1) flameCol = `rgba(255,80,60,0.6)`;
+        else if (t === 5) flameCol = `rgba(255,120,40,0.7)`;
+        else flameCol = `rgba(255,${200 + Math.sin(player.anim*0.5+i)*40},60,0.6)`;
+        ctx.fillStyle = flameCol;
         ctx.beginPath();
         ctx.ellipse(fx, fy, 3, 7, 0, 0, Math.PI*2);
         ctx.fill();
       }
+      // SSJ2以降：青白い稲妻
+      if (t >= 3) {
+        ctx.strokeStyle = 'rgba(180,220,255,0.7)';
+        ctx.lineWidth = 1.5;
+        const bolts = 3 + (t - 3);
+        for (let i = 0; i < bolts; i++) {
+          const a = (Math.random() * Math.PI * 2);
+          const r1 = auraR * 0.5;
+          const r2 = auraR * 1.1;
+          ctx.beginPath();
+          ctx.moveTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1);
+          const midA = a + (Math.random() - 0.5) * 0.4;
+          const midR = (r1 + r2) / 2;
+          ctx.lineTo(x + Math.cos(midA) * midR, y + Math.sin(midA) * midR);
+          ctx.lineTo(x + Math.cos(a) * r2, y + Math.sin(a) * r2);
+          ctx.stroke();
+        }
+      }
     }
 
-    // ため撃ちチャージ表示
-    if (player.chargeTime > 10) {
-      const ct = player.chargeTime / 90;
-      const cR = 12 + ct * 16;
-      ctx.strokeStyle = `rgba(100,180,255,${0.3 + ct * 0.5})`;
-      ctx.lineWidth = 3;
+    // 必殺技チャージ演出（発動前の気溜め）
+    if (player.ultActive && player.ultActive.phase === 'charge') {
+      const c = 1 - (player.ultActive.timer - 40) / 30;
+      const cR = 14 + c * 22;
+      // 両手を腰に構える感じの気弾
+      ctx.fillStyle = `rgba(140,220,255,${0.4 + c * 0.5})`;
       ctx.beginPath();
-      ctx.arc(x, y, cR, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.arc(x, y + 6, cR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(255,255,255,${c})`;
+      ctx.beginPath();
+      ctx.arc(x, y + 6, cR * 0.5, 0, Math.PI * 2);
+      ctx.fill();
       // 収束粒子
-      for (let i = 0; i < 5; i++) {
-        const a = player.anim + i * 1.3;
-        const r = cR + 10 + Math.sin(a) * 4;
-        ctx.fillStyle = `rgba(140,210,255,${0.6 * ct})`;
+      for (let i = 0; i < 6; i++) {
+        const a = player.anim + i * 1.1;
+        const r = cR + 14 + Math.sin(a) * 4;
+        ctx.fillStyle = `rgba(140,210,255,${0.6 * c})`;
         ctx.beginPath();
-        ctx.arc(x + Math.cos(a) * r, y + Math.sin(a) * r, 2, 0, Math.PI*2);
+        ctx.arc(x + Math.cos(a) * r, y + 6 + Math.sin(a) * r, 2, 0, Math.PI*2);
         ctx.fill();
       }
     }
 
     drawCharInBattle(player, x, y, t);
     ctx.restore();
+
+    // かめはめ波ビーム（本体の後に上書き描画）
+    if (player.ultActive && player.ultActive.phase === 'fire') {
+      drawKamehameha();
+    }
+  }
+
+  function drawKamehameha() {
+    const u = player.ultActive;
+    if (!u) return;
+    const progress = 1 - u.timer / 40;
+    const x = player.x;
+    const topY = 0;
+    const botY = player.y - 6;
+    // 外側グロー
+    const outW = 90 + Math.sin(u.timer * 0.4) * 10;
+    const og = ctx.createLinearGradient(x - outW/2, 0, x + outW/2, 0);
+    og.addColorStop(0, 'rgba(100,200,255,0)');
+    og.addColorStop(0.5, 'rgba(180,230,255,0.75)');
+    og.addColorStop(1, 'rgba(100,200,255,0)');
+    ctx.fillStyle = og;
+    ctx.fillRect(x - outW/2, topY, outW, botY);
+    // 中間
+    const midW = 50;
+    ctx.fillStyle = 'rgba(140,230,255,0.9)';
+    ctx.fillRect(x - midW/2, topY, midW, botY);
+    // 白コア
+    const coreW = 24;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - coreW/2, topY, coreW, botY);
+    // 発射口の大輝き
+    const glowR = 40 + Math.sin(u.timer * 0.4) * 8;
+    const gg = ctx.createRadialGradient(x, botY, 5, x, botY, glowR);
+    gg.addColorStop(0, 'rgba(255,255,255,0.9)');
+    gg.addColorStop(0.4, 'rgba(140,230,255,0.6)');
+    gg.addColorStop(1, 'rgba(100,200,255,0)');
+    ctx.fillStyle = gg;
+    ctx.beginPath();
+    ctx.arc(x, botY, glowR, 0, Math.PI*2);
+    ctx.fill();
+    // ランダムな電光
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 4; i++) {
+      const sy = Math.random() * botY;
+      ctx.beginPath();
+      ctx.moveTo(x - 4 + (Math.random() - 0.5) * 6, sy);
+      ctx.lineTo(x + 4 + (Math.random() - 0.5) * 6, sy + 8);
+      ctx.stroke();
+    }
   }
 
   // バトル中のキャラ描画（トップダウン）
@@ -1279,6 +1482,30 @@
     // 胴（道着）
     ctx.fillStyle = c.shirtCol;
     ctx.fillRect(-7, -6, 14, 12);
+    // SSJ4：上半身の赤い毛
+    if (transformLvl === 5) {
+      ctx.fillStyle = '#c03020';
+      // 肩と胸の赤い毛（細かい線）
+      for (let i = 0; i < 8; i++) {
+        const hx = -6 + i * 1.8;
+        ctx.beginPath();
+        ctx.moveTo(hx, -5);
+        ctx.lineTo(hx + Math.sin(player.anim + i) * 0.5, -9);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#a01810';
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < 10; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-7 + i * 1.4, -6);
+        ctx.lineTo(-7 + i * 1.4 + Math.sin(i) * 0.6, -10);
+        ctx.stroke();
+      }
+      // 腕にも赤い毛
+      ctx.fillStyle = '#c03020';
+      ctx.fillRect(-10, -5, 3, 3);
+      ctx.fillRect(7, -5, 3, 3);
+    }
     // 帯
     ctx.fillStyle = '#ffee60';
     ctx.fillRect(-7, 2, 14, 2);
@@ -1298,13 +1525,52 @@
     ctx.beginPath();
     ctx.arc(0, -11, 7, 0, Math.PI*2);
     ctx.fill();
-    // 髪（変身で金髪に）
-    const hairCol = transformLvl >= 1 ? '#ffdc20' : c.hairCol;
+    // 髪の色：SSJ(2+)は金髪、SSJ4は赤
+    // transform: 0=ノーマル, 1=Kaioken(元の色), 2-4=SSJ系(金), 5=SSJ4(赤）
+    let hairCol;
+    if (transformLvl >= 2 && transformLvl <= 4) hairCol = '#ffdc20';  // 金
+    else if (transformLvl === 5) hairCol = '#c02010';  // 赤
+    else hairCol = c.hairCol;
     ctx.fillStyle = hairCol;
-    if (c.charId === 'saku' || c.id === 'saku') {
-      // さく髪
-      if (transformLvl >= 1) {
-        // スーパーサイヤ人：逆立った金髪
+
+    const isSaku = (c.charId === 'saku' || c.id === 'saku');
+    if (isSaku) {
+      if (transformLvl >= 4) {
+        // SSJ3：膝下まで伸びた金髪
+        ctx.beginPath();
+        ctx.moveTo(-8, -14);
+        ctx.lineTo(-11, -28);
+        ctx.lineTo(-6, -20);
+        ctx.lineTo(-3, -30);
+        ctx.lineTo(0, -22);
+        ctx.lineTo(3, -30);
+        ctx.lineTo(6, -20);
+        ctx.lineTo(11, -28);
+        ctx.lineTo(8, -14);
+        ctx.lineTo(8, -11);
+        ctx.lineTo(-8, -11);
+        ctx.closePath();
+        ctx.fill();
+        // 膝下まで長い髪（後ろに流れる）
+        ctx.beginPath();
+        ctx.moveTo(-8, -9);
+        ctx.quadraticCurveTo(-11, 0, -10, 14);
+        ctx.lineTo(-6, 14);
+        ctx.quadraticCurveTo(-6, 4, -4, -9);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(8, -9);
+        ctx.quadraticCurveTo(11, 0, 10, 14);
+        ctx.lineTo(6, 14);
+        ctx.quadraticCurveTo(6, 4, 4, -9);
+        ctx.closePath();
+        ctx.fill();
+        // ハイライト
+        ctx.fillStyle = '#ffffa0';
+        ctx.fillRect(-3, -25, 1.5, 10);
+      } else if (transformLvl >= 2) {
+        // SSJ / SSJ2 / SSJ4：逆立った髪
         ctx.beginPath();
         ctx.moveTo(-7, -14);
         ctx.lineTo(-9, -26);
@@ -1318,10 +1584,10 @@
         ctx.lineTo(-7, -11);
         ctx.closePath();
         ctx.fill();
-        // ハイライト
-        ctx.fillStyle = '#ffffa0';
+        ctx.fillStyle = transformLvl === 5 ? '#ff8060' : '#ffffa0';
         ctx.fillRect(-2, -22, 1.5, 8);
       } else {
+        // ノーマル / 界王拳：黒髪
         ctx.beginPath();
         ctx.moveTo(-7, -13);
         ctx.lineTo(-5, -18);
@@ -1337,23 +1603,40 @@
       }
     } else {
       // くるみ髪：ツインテール
-      if (transformLvl >= 1) {
-        // 金髪ツインテール（逆立ち気味）
+      if (transformLvl >= 4) {
+        // SSJ3：金ロングツインテール（長い）
         ctx.beginPath();
         ctx.arc(0, -13, 7, Math.PI, 0);
         ctx.lineTo(7, -10); ctx.lineTo(-7, -10); ctx.closePath();
         ctx.fill();
-        // ツインテール逆立ち
+        // 長い金ツインテール（膝下まで）
+        ctx.beginPath();
+        ctx.ellipse(-10, 4, 3, 16, -0.1, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(10, 4, 3, 16, 0.1, 0, Math.PI*2);
+        ctx.fill();
+        // 逆立ち部
+        ctx.beginPath();
+        ctx.moveTo(-11, -10); ctx.lineTo(-13, -22); ctx.lineTo(-8, -14); ctx.closePath();
+        ctx.moveTo(11, -10); ctx.lineTo(13, -22); ctx.lineTo(8, -14); ctx.closePath();
+        ctx.fill();
+      } else if (transformLvl >= 2) {
+        // SSJ系：金髪ツインテール（逆立ち気味）
+        ctx.beginPath();
+        ctx.arc(0, -13, 7, Math.PI, 0);
+        ctx.lineTo(7, -10); ctx.lineTo(-7, -10); ctx.closePath();
+        ctx.fill();
         ctx.beginPath();
         ctx.moveTo(-10, -7); ctx.lineTo(-13, -18); ctx.lineTo(-9, -12); ctx.lineTo(-11, -20); ctx.lineTo(-7, -10); ctx.closePath();
         ctx.moveTo(10, -7); ctx.lineTo(13, -18); ctx.lineTo(9, -12); ctx.lineTo(11, -20); ctx.lineTo(7, -10); ctx.closePath();
         ctx.fill();
       } else {
+        // ノーマル / 界王拳
         ctx.beginPath();
         ctx.arc(0, -13, 7, Math.PI, 0);
         ctx.lineTo(7, -10); ctx.lineTo(-7, -10); ctx.closePath();
         ctx.fill();
-        // ツインテール
         ctx.beginPath();
         ctx.ellipse(-9, -6, 2.5, 6, -0.3, 0, Math.PI*2);
         ctx.ellipse(9, -6, 2.5, 6, 0.3, 0, Math.PI*2);
@@ -1366,8 +1649,10 @@
       ctx.arc(9, -10, 1.5, 0, Math.PI*2);
       ctx.fill();
     }
-    // 目
-    const eyeCol = transformLvl >= 1 ? '#40c8ff' : '#000';  // SSJは青い目
+    // 目の色：SSJ以降は青、SSJ4は赤、界王拳は変わらず
+    let eyeCol = '#000';
+    if (transformLvl >= 2 && transformLvl <= 4) eyeCol = '#40c8ff';
+    else if (transformLvl === 5) eyeCol = '#ff4040';
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.ellipse(-2.5, -11, 1.3, 1.6, 0, 0, Math.PI*2);
@@ -1640,14 +1925,22 @@
   function drawProjectiles() {
     for (const p of projectiles) {
       ctx.save();
-      const col = p.transform >= 1 ? '#ffee40' : '#ffcc30';
-      // グロー
-      ctx.fillStyle = p.transform >= 1 ? 'rgba(255,255,100,0.5)' : 'rgba(255,200,60,0.4)';
+      // 変身段階ごとの色
+      let bodyCol, glowCol;
+      if (p.transform === 1) {
+        bodyCol = '#ff5050'; glowCol = 'rgba(255,60,60,0.5)';  // 界王拳赤
+      } else if (p.transform >= 2 && p.transform <= 4) {
+        bodyCol = '#ffee40'; glowCol = 'rgba(255,255,100,0.5)';  // SSJ金
+      } else if (p.transform === 5) {
+        bodyCol = '#ff7030'; glowCol = 'rgba(255,140,40,0.6)';  // SSJ4赤金
+      } else {
+        bodyCol = '#ffcc30'; glowCol = 'rgba(255,200,60,0.4)';  // ノーマル
+      }
+      ctx.fillStyle = glowCol;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r + 4, 0, Math.PI * 2);
       ctx.fill();
-      // 本体
-      ctx.fillStyle = col;
+      ctx.fillStyle = bodyCol;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fill();
@@ -1655,15 +1948,6 @@
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r * 0.5, 0, Math.PI * 2);
       ctx.fill();
-      // チャージ弾は軌跡
-      if (p.charged) {
-        ctx.strokeStyle = 'rgba(100,200,255,0.6)';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(p.x - p.vx * 2, p.y - p.vy * 2);
-        ctx.lineTo(p.x, p.y);
-        ctx.stroke();
-      }
       ctx.restore();
     }
   }
@@ -1727,7 +2011,7 @@
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText('HP', hpX + 4, hpY - 2);
-    // パワーゲージ
+    // パワーゲージ（次の変身まで）
     const pwY = hpY + 22;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(hpX, pwY, hpW, hpH);
@@ -1735,12 +2019,42 @@
     pg.addColorStop(0, '#ffee40');
     pg.addColorStop(1, '#ff8020');
     ctx.fillStyle = pg;
-    const pwPct = Math.min(1, player.power / player.powerMax);
+    const nextCost = player.transform < TRANSFORM_MAX ? TRANSFORM_COST[player.transform] : 1;
+    const pwPct = Math.min(1, player.power / nextCost);
     ctx.fillRect(hpX + 2, pwY + 2, (hpW - 4) * pwPct, hpH - 4);
     ctx.strokeStyle = '#fff';
     ctx.strokeRect(hpX, pwY, hpW, hpH);
     ctx.fillStyle = '#fff';
-    ctx.fillText('POWER', hpX + 4, pwY - 2);
+    const pwLabel = player.transform < TRANSFORM_MAX
+      ? `POWER → ${TRANSFORM_NAMES[player.transform + 1]}`
+      : 'POWER MAX';
+    ctx.fillText(pwLabel, hpX + 4, pwY - 2);
+
+    // 気ゲージ（かめはめ波）
+    const kiY = pwY + 22;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(hpX, kiY, hpW, hpH);
+    const kiFull = player.kiGauge >= player.kiGaugeMax;
+    const kig = ctx.createLinearGradient(hpX, kiY, hpX + hpW, kiY);
+    if (kiFull) {
+      // MAX は点滅グラデ
+      const t = Math.sin(Date.now() * 0.008);
+      kig.addColorStop(0, `rgba(180,${200 + t * 50},255,1)`);
+      kig.addColorStop(1, '#ffffff');
+    } else {
+      kig.addColorStop(0, '#40a0ff');
+      kig.addColorStop(1, '#80d0ff');
+    }
+    ctx.fillStyle = kig;
+    const kiPct = Math.min(1, player.kiGauge / player.kiGaugeMax);
+    ctx.fillRect(hpX + 2, kiY + 2, (hpW - 4) * kiPct, hpH - 4);
+    ctx.strokeStyle = kiFull ? '#ffee80' : '#fff';
+    ctx.lineWidth = kiFull ? 2 : 1;
+    ctx.strokeRect(hpX, kiY, hpW, hpH);
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(kiFull ? '気 MAX！必殺技OK' : '気（かめはめ波）', hpX + 4, kiY - 2);
+
     // キル数
     ctx.textAlign = 'right';
     ctx.font = 'bold 15px sans-serif';
@@ -1753,9 +2067,9 @@
       ctx.textAlign = 'right';
       ctx.font = 'bold 13px sans-serif';
       ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-      const label = ['', 'スーパーサイヤ人', '超サイヤ人2', '超サイヤ人3', '超サイヤ人4'][player.transform];
+      const label = TRANSFORM_NAMES[player.transform];
       ctx.strokeText(label, W - 12, 50);
-      ctx.fillStyle = '#ffee40';
+      ctx.fillStyle = auraColorFor(player.transform);
       ctx.fillText(label, W - 12, 50);
     }
     ctx.restore();
@@ -1803,17 +2117,6 @@
     ctx.restore();
     banner.life--;
     if (banner.life <= 0) banner = null;
-  }
-
-  function handleFirePress() {
-    // スマホのタップでも即発射扱い
-    if (state !== STATE.PLAYING) return;
-    if (player.shotCD <= 0) {
-      const atkRate = Math.max(5, player.atkRate - player.transform * 10);
-      player.shotCD = atkRate;
-      spawnKiBlast(false);
-      sfxShoot();
-    }
   }
 
   // ====== メイン更新 ======
