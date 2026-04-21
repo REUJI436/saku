@@ -162,7 +162,7 @@
     if (state === STATE.TITLE) { gotoCharSelect(); return; }
     if (state === STATE.CHAR_SELECT) {
       const pos = getCanvasPos(e);
-      // キャラカードの当たり判定
+      // キャラカードの当たり判定：1タップで即スタート
       const cardW = 260, cardH = 320, gap = 60;
       const totalW = cardW * CHARACTERS.length + gap * (CHARACTERS.length - 1);
       const startX = (W - totalW) / 2;
@@ -171,25 +171,10 @@
         const cy = 120;
         if (pos.x >= cx && pos.x <= cx + cardW && pos.y >= cy && pos.y <= cy + cardH) {
           selectIdx = i;
-          if (!charSelectTapped) {
-            // 初回タップ → ハイライト
-            charSelectTapped = i;
-            return;
-          } else if (charSelectTapped === i) {
-            // 選択中のキャラを再タップ → ゲーム開始
-            startGame();
-            return;
-          } else {
-            // 別のキャラタップ → そちらをハイライト
-            charSelectTapped = i;
-            return;
-          }
+          charSelectTapped = i;
+          startGame();
+          return;
         }
-      }
-      // 画面下の「START」ボタン押下
-      if (pos.y > H - 90 && pos.y < H - 20 && pos.x > W/2 - 100 && pos.x < W/2 + 100) {
-        startGame();
-        return;
       }
       return;
     }
@@ -1010,39 +995,20 @@
       ctx.fillText(c.desc, cx + cardW/2, cy + 290);
       ctx.restore();
     }
-    // START ボタン（スマホ用）
-    if (charSelectTapped !== null) {
-      const btnX = W/2 - 100, btnY = H - 90, btnW = 200, btnH = 56;
-      ctx.save();
-      const pulse = 0.85 + Math.sin(stateTimer * 0.15) * 0.15;
-      ctx.globalAlpha = pulse;
-      const g5 = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH);
-      g5.addColorStop(0, '#ffdc40');
-      g5.addColorStop(1, '#ff7020');
-      ctx.fillStyle = g5;
-      ctx.fillRect(btnX, btnY, btnW, btnH);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(btnX, btnY, btnW, btnH);
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 24px serif';
-      ctx.lineWidth = 4; ctx.strokeStyle = '#000';
-      ctx.strokeText('START！', btnX + btnW/2, btnY + btnH/2 + 8);
-      ctx.fillText('START！', btnX + btnW/2, btnY + btnH/2 + 8);
-      ctx.restore();
-    }
-
     // 操作説明
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillStyle = '#ccc';
-    if (charSelectTapped === null) {
-      ctx.fillText('キャラをタップ（PC：← → で選択、Space でスタート）', W/2, H - 20);
-    } else {
-      ctx.fillText('もう一度タップするか START ボタンでスタート', W/2, H - 20);
-    }
+    ctx.font = 'bold 18px sans-serif';
+    ctx.lineWidth = 4; ctx.strokeStyle = '#000';
+    const hintText = 'キャラをタップして スタート！';
+    ctx.strokeText(hintText, W/2, H - 55);
+    // 点滅
+    const pulse = Math.floor(stateTimer / 20) % 2 === 0 ? '#ffee40' : '#ffa040';
+    ctx.fillStyle = pulse;
+    ctx.fillText(hintText, W/2, H - 55);
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#999';
+    ctx.fillText('PC：← → で選択、Space でスタート', W/2, H - 25);
     ctx.restore();
   }
 
