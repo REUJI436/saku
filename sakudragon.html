@@ -8,8 +8,14 @@
   :root { --bg: #101018; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
   html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); overflow: hidden; font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; }
-  body { display: flex; flex-direction: column; align-items: center; color: #fff; touch-action: manipulation; }
-  #wrap { position: relative; width: 100%; max-width: 960px; aspect-ratio: 16/9; background: #000; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; touch-action: manipulation; }
+  #wrap {
+    position: relative;
+    width: min(100vw, calc(100vh * 16 / 9));
+    max-width: 960px;
+    aspect-ratio: 16 / 9;
+    background: #000;
+  }
   canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
   #hud { position: absolute; top: 6px; left: 6px; right: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; pointer-events: none; font-size: 13px; }
   #hud .box { background: rgba(0,0,0,0.55); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; }
@@ -23,9 +29,43 @@
   #chargeBtn { position: absolute; right: 28px; bottom: 28px; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #80b0ff, #2040a0); border: 4px solid #60a0ff; color: #fff; font-weight: bold; font-size: 18px; pointer-events: auto; touch-action: none; text-shadow: 0 1px 0 #000; line-height: 1.1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
   #chargeBtn:active { transform: scale(0.95); }
   #chargeBtn small { font-size: 10px; font-weight: normal; opacity: 0.8; }
+
+  /* 縦持ち警告（スマホのみ） */
+  #rotatePrompt {
+    display: none;
+    position: fixed; inset: 0;
+    background: #000;
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    font-size: 20px;
+    padding: 20px;
+    gap: 20px;
+  }
+  #rotatePrompt .icon {
+    font-size: 80px;
+    animation: rotateTip 1.6s ease-in-out infinite;
+  }
+  @keyframes rotateTip {
+    0%, 100% { transform: rotate(0); }
+    50% { transform: rotate(90deg); }
+  }
+  /* スマホの縦向き時だけ表示 */
+  @media (max-width: 900px) and (orientation: portrait) {
+    #rotatePrompt { display: flex; }
+    #wrap { visibility: hidden; }
+  }
 </style>
 </head>
 <body>
+<div id="rotatePrompt">
+  <div class="icon">📱</div>
+  <div>スマホを<b style="color:#ffee40">横向き</b>にしてね！</div>
+  <div style="font-size:14px;opacity:0.8;">横持ち専用のゲームです</div>
+</div>
 <div id="wrap">
   <canvas id="cv" width="960" height="540"></canvas>
   <div id="hud">
@@ -56,8 +96,8 @@
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
     if (state === STATE.TITLE && (e.code === 'Space' || e.code === 'Enter')) gotoCharSelect();
     else if (state === STATE.CHAR_SELECT) {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') selectIdx = (selectIdx + CHARACTERS.length - 1) % CHARACTERS.length;
-      else if (e.code === 'ArrowRight' || e.code === 'KeyD') selectIdx = (selectIdx + 1) % CHARACTERS.length;
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') { selectIdx = (selectIdx + CHARACTERS.length - 1) % CHARACTERS.length; charSelectTapped = selectIdx; }
+      else if (e.code === 'ArrowRight' || e.code === 'KeyD') { selectIdx = (selectIdx + 1) % CHARACTERS.length; charSelectTapped = selectIdx; }
       else if (e.code === 'Space' || e.code === 'Enter') startGame();
     } else if (state === STATE.GAMEOVER || state === STATE.CLEARED) {
       if (e.code === 'Space' || e.code === 'Enter') state = STATE.TITLE;
@@ -108,11 +148,56 @@
   chargeBtn.addEventListener('mousedown', e => { chargeHeld = true; });
   chargeBtn.addEventListener('mouseup', e => { chargeHeld = false; });
 
-  // タッチ以外でもキャンバスクリックでタイトル→次へ
-  cv.addEventListener('click', () => {
-    if (state === STATE.TITLE) gotoCharSelect();
-    else if (state === STATE.GAMEOVER || state === STATE.CLEARED) state = STATE.TITLE;
-  });
+  // タッチ／クリック：タイトル・キャラ選択・ゲームオーバー時の操作
+  function getCanvasPos(e) {
+    const rect = cv.getBoundingClientRect();
+    const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+    return {
+      x: (t.clientX - rect.left) * (W / rect.width),
+      y: (t.clientY - rect.top) * (H / rect.height),
+    };
+  }
+  function handleCanvasTap(e) {
+    ensureAudio();
+    if (state === STATE.TITLE) { gotoCharSelect(); return; }
+    if (state === STATE.CHAR_SELECT) {
+      const pos = getCanvasPos(e);
+      // キャラカードの当たり判定
+      const cardW = 260, cardH = 320, gap = 60;
+      const totalW = cardW * CHARACTERS.length + gap * (CHARACTERS.length - 1);
+      const startX = (W - totalW) / 2;
+      for (let i = 0; i < CHARACTERS.length; i++) {
+        const cx = startX + i * (cardW + gap);
+        const cy = 120;
+        if (pos.x >= cx && pos.x <= cx + cardW && pos.y >= cy && pos.y <= cy + cardH) {
+          selectIdx = i;
+          if (!charSelectTapped) {
+            // 初回タップ → ハイライト
+            charSelectTapped = i;
+            return;
+          } else if (charSelectTapped === i) {
+            // 選択中のキャラを再タップ → ゲーム開始
+            startGame();
+            return;
+          } else {
+            // 別のキャラタップ → そちらをハイライト
+            charSelectTapped = i;
+            return;
+          }
+        }
+      }
+      // 画面下の「START」ボタン押下
+      if (pos.y > H - 90 && pos.y < H - 20 && pos.x > W/2 - 100 && pos.x < W/2 + 100) {
+        startGame();
+        return;
+      }
+      return;
+    }
+    if (state === STATE.GAMEOVER || state === STATE.CLEARED) { state = STATE.TITLE; return; }
+  }
+  let charSelectTapped = null;  // タップ選択状態
+  cv.addEventListener('click', handleCanvasTap);
+  cv.addEventListener('touchend', e => { handleCanvasTap(e); e.preventDefault(); }, { passive: false });
 
   // ====== 音（Web Audio API） ======
   let audioCtx = null;
@@ -307,6 +392,7 @@
     ensureAudio();
     state = STATE.CHAR_SELECT;
     stateTimer = 0;
+    charSelectTapped = null;
     beep(880, 0.1, 'triangle', 0.14);
   }
 
@@ -924,12 +1010,39 @@
       ctx.fillText(c.desc, cx + cardW/2, cy + 290);
       ctx.restore();
     }
+    // START ボタン（スマホ用）
+    if (charSelectTapped !== null) {
+      const btnX = W/2 - 100, btnY = H - 90, btnW = 200, btnH = 56;
+      ctx.save();
+      const pulse = 0.85 + Math.sin(stateTimer * 0.15) * 0.15;
+      ctx.globalAlpha = pulse;
+      const g5 = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH);
+      g5.addColorStop(0, '#ffdc40');
+      g5.addColorStop(1, '#ff7020');
+      ctx.fillStyle = g5;
+      ctx.fillRect(btnX, btnY, btnW, btnH);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(btnX, btnY, btnW, btnH);
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 24px serif';
+      ctx.lineWidth = 4; ctx.strokeStyle = '#000';
+      ctx.strokeText('START！', btnX + btnW/2, btnY + btnH/2 + 8);
+      ctx.fillText('START！', btnX + btnW/2, btnY + btnH/2 + 8);
+      ctx.restore();
+    }
+
     // 操作説明
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = 'bold 16px sans-serif';
+    ctx.font = 'bold 15px sans-serif';
     ctx.fillStyle = '#ccc';
-    ctx.fillText('← → / A D で切り替え　Space でスタート（タップでもOK）', W/2, H - 30);
+    if (charSelectTapped === null) {
+      ctx.fillText('キャラをタップ（PC：← → で選択、Space でスタート）', W/2, H - 20);
+    } else {
+      ctx.fillText('もう一度タップするか START ボタンでスタート', W/2, H - 20);
+    }
     ctx.restore();
   }
 
