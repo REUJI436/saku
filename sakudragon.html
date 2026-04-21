@@ -329,7 +329,7 @@
       num: 1, name: '地球',
       bossType: 'piccolo', bossName: 'ピッコロとーと',
       bossHp: 55, bossColor: '#68b868', beamColor: '#a0f080',
-      triggerKills: 30,
+      triggerKills: 60,
       transformUnlock: 0,
       // 地球：青空と緑の地平線
       bgPalette: { top: '#88c8f0', mid: '#50a8e0', bot: '#3a7a40' },
@@ -340,7 +340,7 @@
       num: 2, name: '荒野',
       bossType: 'vegeta', bossName: 'ベジとーと',
       bossHp: 75, bossColor: '#d0a080', beamColor: '#ff80ff',
-      triggerKills: 40,
+      triggerKills: 80,
       transformUnlock: 1,
       // 荒野：茜空と砂塵
       bgPalette: { top: '#e8a050', mid: '#c87030', bot: '#8a5028' },
@@ -356,7 +356,7 @@
       num: 3, name: 'ナメック星',
       bossType: 'freezer', bossName: 'フリーザとーと',
       bossHp: 100, bossColor: '#e8e8f8', beamColor: '#c080ff',
-      triggerKills: 50,
+      triggerKills: 100,
       transformUnlock: 2,
       // ナメック星：緑の空と青い水
       bgPalette: { top: '#a0e060', mid: '#70c060', bot: '#3088a8' },
@@ -373,7 +373,7 @@
       num: 4, name: '地球（夕景）',
       bossType: 'cell', bossName: 'セルとーと',
       bossHp: 130, bossColor: '#80b060', beamColor: '#60ffa0',
-      triggerKills: 60,
+      triggerKills: 120,
       transformUnlock: 3,
       // 地球（夕焼け）：オレンジ→紫
       bgPalette: { top: '#ff9060', mid: '#d04080', bot: '#3a2850' },
@@ -390,7 +390,7 @@
       num: 5, name: '界王神界',
       bossType: 'buu', bossName: '魔神とーと',
       bossHp: 180, bossColor: '#ff80b0', beamColor: '#ffb0d8',
-      triggerKills: 70,
+      triggerKills: 150,
       transformUnlock: 4,
       // 界王神界：ピンク空と黄金の雲、神秘的な紫
       bgPalette: { top: '#ffccea', mid: '#ffd890', bot: '#c890d8' },
@@ -786,6 +786,11 @@
 
   function gainPower(amount) {
     if (player.transform >= TRANSFORM_MAX) return;
+    // パワー取得は現在ステージで解放される変身段階までに制限
+    // （それ以上は各ステージ入場時のスクリプトイベントで解放）
+    const stg = STAGES_CONFIG[currentStageIdx];
+    const cap = stg ? stg.transformUnlock : TRANSFORM_MAX;
+    if (player.transform >= cap) return;
     player.power += amount;
     const needed = TRANSFORM_COST[player.transform];
     if (player.power >= needed) {
@@ -878,7 +883,7 @@
           spawnExplosion(e.x, e.y, e.color, 18);
           addPopup(e.x, e.y, '+' + e.score, '#80d0ff');
           player.kills++;
-          gainPower(e.score / 40);
+          gainPower(e.score / 200);
         }
       }
       // ボス：範囲内なら1F毎にダメージ
@@ -987,7 +992,7 @@
             spawnExplosion(e.x, e.y, e.color, 12);
             addPopup(e.x, e.y, '+' + e.score, '#ffee80');
             player.kills++;
-            gainPower(e.score / 40);  // スコアに応じてパワーチャージ
+            gainPower(e.score / 200);  // スコアに応じてパワーチャージ
             sfxExplode();
           }
           break;
