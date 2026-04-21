@@ -97,6 +97,8 @@
         hp: player.hp,
         kiGauge: player.kiGauge,
         power: player.power,
+        totalScore,
+        comboMax,
         timestamp: Date.now(),
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -488,12 +490,17 @@
   let banner = null;
   let bannerSub = null;  // サブバナー（フレーバーテキスト）
   let comboCount = 0, comboMax = 0, comboTimer = 0;
+  let totalScore = 0;  // 通算スコア
+  let screenFlash = 0;  // 画面フラッシュ（ボス撃破などの演出）
   let currentBgPalette = { top: '#040012', mid: '#100828', bot: '#20104a' };
   let cameraShake = 0;
 
   function addShake(v) { cameraShake = Math.max(cameraShake, v); }
 
+  const MAX_PARTICLES = 250;
   function spawnParticle(x, y, opts) {
+    // 上限を超えたら古いものを削除（パフォーマンス維持）
+    if (particles.length >= MAX_PARTICLES) particles.splice(0, 10);
     particles.push({
       x, y,
       vx: (opts.vx != null) ? opts.vx : (Math.random() - 0.5) * 4,
@@ -505,13 +512,13 @@
   }
 
   function spawnExplosion(x, y, color, count) {
-    count = count || 18;
+    count = Math.min(count || 14, 30);  // 最大30個に制限
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
       const sp = 2 + Math.random() * 4;
       spawnParticle(x, y, {
         vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-        life: 30 + Math.random() * 20,
+        life: 28 + Math.random() * 18,
         color: color || ['#ffcc40','#ff8020','#ffee80'][Math.floor(Math.random()*3)],
         size: 2 + Math.random() * 2,
       });
@@ -593,6 +600,8 @@
     player.hp = sv.hp || player.maxHp;
     player.kiGauge = sv.kiGauge || 0;
     player.power = sv.power || 0;
+    totalScore = sv.totalScore || 0;
+    comboMax = sv.comboMax || 0;
     startStage();
   }
 
@@ -600,6 +609,8 @@
     ensureAudio();
     resetPlayer(CHARACTERS[selectIdx]);
     currentStageIdx = 0;
+    totalScore = 0;
+    comboMax = 0;
     startStage();
     // デバッグ：URL ?transform=N で開始変身段階指定（0-5）
     const params = new URLSearchParams(window.location.search);
@@ -705,11 +716,13 @@
   // ====== 敵ウェーブ管理 ======
   let waveState = null;
   const WAVES = [
-    { saibai: 28, spawnInterval: 18, spawnBurst: 2 },
-    { saibai: 40, namek: 8, spawnInterval: 15, spawnBurst: 2 },
-    { saibai: 50, namek: 20, freezer: 4, spawnInterval: 13, spawnBurst: 3 },
-    { saibai: 60, namek: 28, freezer: 8, spawnInterval: 11, spawnBurst: 3 },
-    { saibai: 72, namek: 36, freezer: 12, spawnInterval: 9, spawnBurst: 4 },
+    { saibai: 24, spawnInterval: 22, spawnBurst: 2 },                              // 序盤
+    { saibai: 30, namek: 6, spawnInterval: 18, spawnBurst: 2 },
+    { saibai: 40, namek: 14, spawnInterval: 16, spawnBurst: 2, banner: '敵の増援！' },
+    { saibai: 50, namek: 20, freezer: 4, spawnInterval: 14, spawnBurst: 3 },
+    { saibai: 60, namek: 28, freezer: 8, spawnInterval: 12, spawnBurst: 3, banner: '激戦…！' },
+    { saibai: 72, namek: 36, freezer: 12, spawnInterval: 10, spawnBurst: 4 },
+    { saibai: 90, namek: 48, freezer: 16, spawnInterval: 9, spawnBurst: 4, banner: 'ボス接近…！' },
   ];
 
   function updateWaves() {
@@ -729,6 +742,10 @@
         const w = WAVES[Math.min(waveState.waveIdx, WAVES.length - 1)];
         waveState.currentWave = { ...w };
         waveState.spawnTimer = w.spawnInterval;
+        // ウェーブバナー（演出）
+        if (w.banner) {
+          banner = { text: w.banner, color: '#ff8040', life: 90, maxLife: 90 };
+        }
       } else {
         const w = waveState.currentWave;
         const types = [];
@@ -969,7 +986,8 @@
           boss.hurtTimer = 5;
           if (boss.hp <= 0) {
             boss.dead = true;
-            spawnExplosion(boss.x, boss.y, '#80ff80', 60);
+            screenFlash = 1.0;  // 白フラッシュ
+            spawnExplosion(boss.x, boss.y, '#80ff80', 30);
             const isLast = (currentStageIdx >= STAGES_CONFIG.length - 1);
             banner = { text: (boss.name || 'とーと') + ' 撃破！', color: '#80ff80', life: 180, maxLife: 180 };
             addShake(25);
@@ -1047,10 +1065,11 @@
         e.y += 8;
       }
     }
-    // 自プロジェクタイルとの衝突（SSJ以降は貫通）
+    // 自プロジェクタイルとの衝突（SSJ以降は貫通・最大5体まで）
     for (const p of projectiles) {
-      if (!p.hitSet) p.hitSet = new Set();  // 既ヒット敵（貫通時の重複防止）
-      const pierce = (p.transform >= 2);  // SSJ以上で貫通
+      if (!p.hitSet) p.hitSet = new Set();
+      const pierce = (p.transform >= 2);
+      const maxHits = pierce ? 5 : 1;
       for (const e of enemies) {
         if (e.dead) continue;
         if (p.hitSet.has(e)) continue;
@@ -1059,29 +1078,27 @@
           e.hp -= p.dmg;
           e.hurtTimer = 15;
           p.hitSet.add(e);
-          if (!pierce) p.life = 0;
-          // ヒットスパーク（大きめ）
-          const sparkCount = pierce ? 8 : 5;
-          for (let i = 0; i < sparkCount; i++) {
+          if (p.hitSet.size >= maxHits) p.life = 0;
+          // ヒットスパーク（抑えめ）
+          for (let i = 0; i < 3; i++) {
             spawnParticle(p.x, p.y, {
               vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
-              life: 18, color: '#ffee80', size: 2.5,
+              life: 15, color: '#ffee80', size: 2.5,
             });
           }
           if (e.hp <= 0) {
             e.dead = true;
-            // キル数でコンボアップ
             comboCount++;
             if (comboCount > comboMax) comboMax = comboCount;
             comboTimer = 90;
-            spawnExplosion(e.x, e.y, e.color, 22);  // 爆発強化
+            spawnExplosion(e.x, e.y, e.color, 12);
             addPopup(e.x, e.y, '+' + e.score, '#ffee80');
             player.kills++;
+            totalScore += e.score;
             gainPower(e.score / 200);
             sfxExplode();
-            addShake(3);  // 小さな揺れ
           }
-          if (!pierce) break;  // 非貫通なら他の敵に衝突させない
+          if (!pierce) break;
         }
       }
       // ボス衝突
@@ -1433,6 +1450,13 @@
     if (state === STATE.TITLE) drawTitle();
     else if (state === STATE.CHAR_SELECT) drawCharSelect();
     else drawGame();
+
+    // 画面フラッシュ（ボス撃破などの演出）
+    if (screenFlash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${screenFlash})`;
+      ctx.fillRect(0, 0, W, H);
+      screenFlash = Math.max(0, screenFlash - 0.04);
+    }
 
     ctx.restore();
   }
@@ -1862,24 +1886,35 @@
     if (banner) drawBanner();
 
     if (state === STATE.STAGE_CLEAR) {
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
       ctx.fillRect(0, 0, W, H);
       ctx.save();
       ctx.textAlign = 'center';
-      ctx.font = 'bold 48px serif';
+      ctx.font = 'bold 44px serif';
       ctx.lineWidth = 7; ctx.strokeStyle = '#000';
       const stg = STAGES_CONFIG[currentStageIdx];
-      ctx.strokeText(`STAGE ${stg.num} CLEAR!`, W/2, H/2 - 10);
-      const g = ctx.createLinearGradient(0, H/2 - 40, 0, H/2);
+      ctx.strokeText(`STAGE ${stg.num} CLEAR!`, W/2, H/2 - 60);
+      const g = ctx.createLinearGradient(0, H/2 - 90, 0, H/2 - 40);
       g.addColorStop(0, '#ffee60');
       g.addColorStop(1, '#ff8030');
       ctx.fillStyle = g;
-      ctx.fillText(`STAGE ${stg.num} CLEAR!`, W/2, H/2 - 10);
+      ctx.fillText(`STAGE ${stg.num} CLEAR!`, W/2, H/2 - 60);
+      // 統計表示
       ctx.font = 'bold 18px sans-serif';
       ctx.fillStyle = '#fff';
+      ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+      ctx.strokeText(`KILLS: ${player.kills}`, W/2, H/2 - 10);
+      ctx.fillText(`KILLS: ${player.kills}`, W/2, H/2 - 10);
+      ctx.strokeText(`MAX COMBO: ${comboMax}`, W/2, H/2 + 14);
+      ctx.fillText(`MAX COMBO: ${comboMax}`, W/2, H/2 + 14);
+      ctx.fillStyle = '#ffee40';
+      ctx.strokeText(`SCORE: ${totalScore.toLocaleString()}`, W/2, H/2 + 40);
+      ctx.fillText(`SCORE: ${totalScore.toLocaleString()}`, W/2, H/2 + 40);
+      // 次のステージ予告
+      ctx.fillStyle = '#a0c0ff';
+      ctx.font = '16px sans-serif';
       const nextStg = STAGES_CONFIG[currentStageIdx + 1];
-      if (nextStg) ctx.fillText(`次：${nextStg.name}（${nextStg.bossName}）`, W/2, H/2 + 30);
-      ctx.fillText('移動中...', W/2, H/2 + 60);
+      if (nextStg) ctx.fillText(`次：${nextStg.name}（${nextStg.bossName}）`, W/2, H/2 + 75);
       ctx.restore();
     } else if (state === STATE.CLEARED) {
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
@@ -2911,28 +2946,30 @@
     ctx.fillStyle = '#fff';
     ctx.fillText(kiFull ? '気 MAX！必殺技OK' : '気（かめはめ波）', hpX + 4, kiY - 2);
 
-    // キル数
+    // スコア
     ctx.textAlign = 'right';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillStyle = '#fff';
     ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-    ctx.strokeText('KILLS: ' + player.kills, W - 12, 30);
-    ctx.fillText('KILLS: ' + player.kills, W - 12, 30);
-    // コンボ表示（大きく派手に）
+    ctx.strokeText('SCORE: ' + totalScore.toLocaleString(), W - 12, 30);
+    ctx.fillStyle = '#ffee40';
+    ctx.fillText('SCORE: ' + totalScore.toLocaleString(), W - 12, 30);
+    // キル数（スコアの下）
+    ctx.fillStyle = '#fff';
+    ctx.strokeText('KILLS: ' + player.kills, W - 12, 50);
+    ctx.fillText('KILLS: ' + player.kills, W - 12, 50);
+    // コンボ表示（右上に小さく）
     if (comboCount >= 3) {
       const t = Math.min(1, comboTimer / 90);
-      const scale = 1 + Math.min(0.5, (comboCount - 3) * 0.03);
       ctx.save();
-      ctx.textAlign = 'center';
-      ctx.translate(W / 2, 90);
-      ctx.scale(scale, scale);
-      ctx.font = 'bold 36px serif';
-      ctx.lineWidth = 6; ctx.strokeStyle = '#000';
-      const hue = (comboCount * 12) % 360;
-      ctx.strokeText(`${comboCount} HIT COMBO！`, 0, 0);
-      ctx.fillStyle = `hsl(${hue},100%,70%)`;
       ctx.globalAlpha = t;
-      ctx.fillText(`${comboCount} HIT COMBO！`, 0, 0);
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+      const hue = (comboCount * 10) % 360;
+      const txt = `${comboCount} COMBO`;
+      ctx.strokeText(txt, W - 12, 72);
+      ctx.fillStyle = `hsl(${hue},100%,70%)`;
+      ctx.fillText(txt, W - 12, 72);
       ctx.restore();
     }
     // 変身状態
