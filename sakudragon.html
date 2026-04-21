@@ -1425,66 +1425,131 @@
     // 髪
     ctx.fillStyle = c.hairCol;
     if (c.id === 'saku') {
-      // さくの髪：つんつん
+      // さくの髪：サラサラ・イケメン（サイドスイープ）
       ctx.beginPath();
-      ctx.moveTo(-9, -14);
-      ctx.lineTo(-7, -22);
-      ctx.lineTo(-4, -16);
-      ctx.lineTo(-1, -23);
-      ctx.lineTo(2, -16);
-      ctx.lineTo(5, -22);
-      ctx.lineTo(8, -14);
-      ctx.lineTo(8, -10);
-      ctx.lineTo(-9, -10);
+      ctx.arc(0, -13, 9, Math.PI, 0);
+      ctx.lineTo(9, -9);
+      ctx.lineTo(-9, -9);
       ctx.closePath();
       ctx.fill();
+      // 斜めの前髪（サイドスイープ）
+      ctx.beginPath();
+      ctx.moveTo(-9, -12);
+      ctx.bezierCurveTo(-8, -8, -2, -6, 4, -8);
+      ctx.bezierCurveTo(7, -9, 9, -11, 9, -13);
+      ctx.lineTo(8, -9);
+      ctx.lineTo(-8, -9);
+      ctx.closePath();
+      ctx.fill();
+      // ハイライト（サラサラ感）
+      ctx.strokeStyle = '#3a2820';
+      ctx.lineWidth = 0.4;
+      ctx.beginPath();
+      ctx.moveTo(-7, -15); ctx.lineTo(-3, -18);
+      ctx.moveTo(2, -17); ctx.lineTo(6, -14);
+      ctx.stroke();
     } else {
-      // くるみの髪：ツインテール
+      // くるみの髪：ミディアム（肩まで）・柔らかい毛先
       ctx.beginPath();
-      ctx.arc(0, -14, 9, Math.PI, 0);
-      ctx.lineTo(9, -10);
-      ctx.lineTo(-9, -10);
+      ctx.arc(0, -14, 10, Math.PI, 0);
+      ctx.bezierCurveTo(10, -10, 11, -4, 9, 0);   // 右サイド（肩まで）
+      ctx.lineTo(7, 2);
+      ctx.bezierCurveTo(4, -4, -4, -4, -7, 2);   // 内側の縁
+      ctx.lineTo(-9, 0);
+      ctx.bezierCurveTo(-11, -4, -10, -10, -10, -14);  // 左サイド（肩まで）
       ctx.closePath();
       ctx.fill();
-      // ツインテール
+      // 前髪（ふんわり）
       ctx.beginPath();
-      ctx.ellipse(-11, -4, 3, 9, -0.3, 0, Math.PI*2);
+      ctx.moveTo(-10, -13);
+      ctx.quadraticCurveTo(-5, -10, -1, -11);
+      ctx.quadraticCurveTo(4, -12, 10, -12);
+      ctx.lineTo(8, -9);
+      ctx.lineTo(-8, -9);
+      ctx.closePath();
       ctx.fill();
+      // ハイライト
+      ctx.strokeStyle = '#b88050';
+      ctx.lineWidth = 0.5;
       ctx.beginPath();
-      ctx.ellipse(11, -4, 3, 9, 0.3, 0, Math.PI*2);
-      ctx.fill();
-      // ピンクリボン
+      ctx.moveTo(-8, -15); ctx.lineTo(-3, -18);
+      ctx.moveTo(3, -18); ctx.lineTo(8, -14);
+      ctx.stroke();
+      // ピンクリボン（サイド・カチューシャ風）
       ctx.fillStyle = '#ff80b0';
       ctx.beginPath();
-      ctx.moveTo(-14, -8); ctx.lineTo(-11, -10); ctx.lineTo(-11, -4); ctx.closePath();
-      ctx.moveTo(-8, -8); ctx.lineTo(-11, -10); ctx.lineTo(-11, -4); ctx.closePath();
-      ctx.moveTo(14, -8); ctx.lineTo(11, -10); ctx.lineTo(11, -4); ctx.closePath();
-      ctx.moveTo(8, -8); ctx.lineTo(11, -10); ctx.lineTo(11, -4); ctx.closePath();
+      ctx.moveTo(-11, -17);
+      ctx.lineTo(-7, -19);
+      ctx.lineTo(-7, -14);
+      ctx.closePath();
       ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-3, -17);
+      ctx.lineTo(-7, -19);
+      ctx.lineTo(-7, -14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#d06090';
+      ctx.fillRect(-8, -18, 2, 3);
     }
-    // 目
+    // 目（イケメンは少し細目、くるみは大きく丸い）
+    const eyeW = c.id === 'saku' ? 1.4 : 1.8;
+    const eyeH = c.id === 'saku' ? 1.7 : 2.3;
     ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.ellipse(-3, -12, 1.6, 2, 0, 0, Math.PI*2);
-    ctx.ellipse(3, -12, 1.6, 2, 0, 0, Math.PI*2);
+    ctx.ellipse(-3, -12, eyeW, eyeH, 0, 0, Math.PI*2);
+    ctx.ellipse(3, -12, eyeW, eyeH, 0, 0, Math.PI*2);
     ctx.fill();
-    ctx.fillStyle = '#000';
+    // 瞳
+    const eyeColor = c.id === 'saku' ? '#2a1a0a' : '#8a4820';  // さく:濃茶, くるみ:明茶
+    ctx.fillStyle = eyeColor;
     ctx.beginPath();
-    ctx.arc(-3, -12, 1, 0, Math.PI*2);
-    ctx.arc(3, -12, 1, 0, Math.PI*2);
+    ctx.ellipse(-3, -12, eyeW*0.7, eyeH*0.7, 0, 0, Math.PI*2);
+    ctx.ellipse(3, -12, eyeW*0.7, eyeH*0.7, 0, 0, Math.PI*2);
     ctx.fill();
+    // キラキラハイライト
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-3.3, -12.5, 0.4, 0, Math.PI*2);
+    ctx.arc(2.7, -12.5, 0.4, 0, Math.PI*2);
+    ctx.fill();
+    // まつげ（くるみは長め）
+    if (c.id === 'kurumi') {
+      ctx.strokeStyle = '#2a1608';
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(-5, -13.5); ctx.lineTo(-5.5, -14.5);
+      ctx.moveTo(-4, -14); ctx.lineTo(-4, -15);
+      ctx.moveTo(5, -13.5); ctx.lineTo(5.5, -14.5);
+      ctx.moveTo(4, -14); ctx.lineTo(4, -15);
+      ctx.stroke();
+    } else {
+      // さく：涼やかな眉
+      ctx.strokeStyle = '#1a1008';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-5, -14.5); ctx.lineTo(-1.5, -14.8);
+      ctx.moveTo(1.5, -14.8); ctx.lineTo(5, -14.5);
+      ctx.stroke();
+    }
     // 口
     ctx.strokeStyle = '#a05030';
     ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.arc(0, -8, 1.5, 0.1*Math.PI, 0.9*Math.PI);
-    ctx.stroke();
-    // ほっぺ（くるみのみ）
-    if (c.id === 'kurumi') {
-      ctx.fillStyle = 'rgba(255,120,160,0.6)';
+    if (c.id === 'saku') {
+      // イケメン：薄く微笑
       ctx.beginPath();
-      ctx.arc(-6, -9, 1.5, 0, Math.PI*2);
-      ctx.arc(6, -9, 1.5, 0, Math.PI*2);
+      ctx.moveTo(-1.5, -8); ctx.lineTo(1.5, -8);
+      ctx.stroke();
+    } else {
+      // くるみ：ニコニコ
+      ctx.beginPath();
+      ctx.arc(0, -8, 1.5, 0.1*Math.PI, 0.9*Math.PI);
+      ctx.stroke();
+      // ほっぺ（かわいく濃い）
+      ctx.fillStyle = 'rgba(255,140,170,0.7)';
+      ctx.beginPath();
+      ctx.arc(-6, -9, 1.8, 0, Math.PI*2);
+      ctx.arc(6, -9, 1.8, 0, Math.PI*2);
       ctx.fill();
     }
     ctx.restore();
@@ -1785,117 +1850,103 @@
     const isSaku = (c.charId === 'saku' || c.id === 'saku');
     if (isSaku) {
       if (transformLvl >= 4) {
-        // SSJ3：膝下まで伸びた金髪
+        // SSJ3：膝下まで伸びた金髪（ストレート）
+        ctx.beginPath();
+        ctx.arc(0, -14, 8, Math.PI, 0);
+        ctx.lineTo(9, -10);
+        ctx.bezierCurveTo(11, 0, 10, 8, 8, 14);
+        ctx.lineTo(-8, 14);
+        ctx.bezierCurveTo(-10, 8, -11, 0, -9, -10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffffa0';
+        ctx.fillRect(-2, -20, 1.5, 10);
+      } else if (transformLvl >= 2) {
+        // SSJ/SSJ2/SSJ4：少し逆立ちながらもサラサラ感
         ctx.beginPath();
         ctx.moveTo(-8, -14);
-        ctx.lineTo(-11, -28);
-        ctx.lineTo(-6, -20);
-        ctx.lineTo(-3, -30);
-        ctx.lineTo(0, -22);
-        ctx.lineTo(3, -30);
-        ctx.lineTo(6, -20);
-        ctx.lineTo(11, -28);
-        ctx.lineTo(8, -14);
+        ctx.lineTo(-6, -22);
+        ctx.lineTo(-2, -16);
+        ctx.lineTo(1, -23);
+        ctx.lineTo(5, -16);
+        ctx.lineTo(9, -20);
         ctx.lineTo(8, -11);
         ctx.lineTo(-8, -11);
         ctx.closePath();
         ctx.fill();
-        // 膝下まで長い髪（後ろに流れる）
-        ctx.beginPath();
-        ctx.moveTo(-8, -9);
-        ctx.quadraticCurveTo(-11, 0, -10, 14);
-        ctx.lineTo(-6, 14);
-        ctx.quadraticCurveTo(-6, 4, -4, -9);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(8, -9);
-        ctx.quadraticCurveTo(11, 0, 10, 14);
-        ctx.lineTo(6, 14);
-        ctx.quadraticCurveTo(6, 4, 4, -9);
-        ctx.closePath();
-        ctx.fill();
-        // ハイライト
-        ctx.fillStyle = '#ffffa0';
-        ctx.fillRect(-3, -25, 1.5, 10);
-      } else if (transformLvl >= 2) {
-        // SSJ / SSJ2 / SSJ4：逆立った髪
-        ctx.beginPath();
-        ctx.moveTo(-7, -14);
-        ctx.lineTo(-9, -26);
-        ctx.lineTo(-5, -17);
-        ctx.lineTo(-2, -28);
-        ctx.lineTo(1, -18);
-        ctx.lineTo(4, -28);
-        ctx.lineTo(7, -17);
-        ctx.lineTo(9, -24);
-        ctx.lineTo(7, -11);
-        ctx.lineTo(-7, -11);
-        ctx.closePath();
-        ctx.fill();
         ctx.fillStyle = transformLvl === 5 ? '#ff8060' : '#ffffa0';
-        ctx.fillRect(-2, -22, 1.5, 8);
+        ctx.fillRect(-2, -20, 1.5, 7);
       } else {
-        // ノーマル / 界王拳：黒髪
+        // ノーマル/界王拳：サラサラヘアー（サイドスイープ）
         ctx.beginPath();
-        ctx.moveTo(-7, -13);
-        ctx.lineTo(-5, -18);
-        ctx.lineTo(-2, -14);
-        ctx.lineTo(0, -19);
-        ctx.lineTo(2, -14);
-        ctx.lineTo(5, -18);
-        ctx.lineTo(7, -13);
+        ctx.arc(0, -13, 8, Math.PI, 0);
+        ctx.lineTo(8, -9);
+        ctx.lineTo(-8, -9);
+        ctx.closePath();
+        ctx.fill();
+        // サイドに流れる前髪
+        ctx.beginPath();
+        ctx.moveTo(-8, -12);
+        ctx.quadraticCurveTo(-3, -8, 4, -9);
+        ctx.quadraticCurveTo(7, -10, 8, -12);
         ctx.lineTo(7, -9);
         ctx.lineTo(-7, -9);
         ctx.closePath();
         ctx.fill();
       }
     } else {
-      // くるみ髪：ツインテール
+      // くるみ：ミディアムヘアー
       if (transformLvl >= 4) {
-        // SSJ3：金ロングツインテール（長い）
+        // SSJ3：金ロング（膝下）
         ctx.beginPath();
-        ctx.arc(0, -13, 7, Math.PI, 0);
-        ctx.lineTo(7, -10); ctx.lineTo(-7, -10); ctx.closePath();
-        ctx.fill();
-        // 長い金ツインテール（膝下まで）
-        ctx.beginPath();
-        ctx.ellipse(-10, 4, 3, 16, -0.1, 0, Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(10, 4, 3, 16, 0.1, 0, Math.PI*2);
-        ctx.fill();
-        // 逆立ち部
-        ctx.beginPath();
-        ctx.moveTo(-11, -10); ctx.lineTo(-13, -22); ctx.lineTo(-8, -14); ctx.closePath();
-        ctx.moveTo(11, -10); ctx.lineTo(13, -22); ctx.lineTo(8, -14); ctx.closePath();
+        ctx.arc(0, -13, 8, Math.PI, 0);
+        ctx.lineTo(10, -10);
+        ctx.bezierCurveTo(12, 0, 11, 8, 9, 14);
+        ctx.lineTo(-9, 14);
+        ctx.bezierCurveTo(-11, 8, -12, 0, -10, -10);
+        ctx.closePath();
         ctx.fill();
       } else if (transformLvl >= 2) {
-        // SSJ系：金髪ツインテール（逆立ち気味）
+        // SSJ/SSJ2/SSJ4：金ミディアム逆立ち気味
         ctx.beginPath();
-        ctx.arc(0, -13, 7, Math.PI, 0);
-        ctx.lineTo(7, -10); ctx.lineTo(-7, -10); ctx.closePath();
+        ctx.arc(0, -14, 8, Math.PI, 0);
+        ctx.lineTo(10, -8);
+        ctx.bezierCurveTo(11, -4, 10, 0, 8, 2);
+        ctx.lineTo(-8, 2);
+        ctx.bezierCurveTo(-10, 0, -11, -4, -10, -8);
+        ctx.closePath();
         ctx.fill();
+        // 前髪（少し逆立ち）
         ctx.beginPath();
-        ctx.moveTo(-10, -7); ctx.lineTo(-13, -18); ctx.lineTo(-9, -12); ctx.lineTo(-11, -20); ctx.lineTo(-7, -10); ctx.closePath();
-        ctx.moveTo(10, -7); ctx.lineTo(13, -18); ctx.lineTo(9, -12); ctx.lineTo(11, -20); ctx.lineTo(7, -10); ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(-8, -14); ctx.lineTo(-5, -18); ctx.lineTo(-2, -14);
+        ctx.moveTo(2, -14); ctx.lineTo(5, -18); ctx.lineTo(8, -14);
+        ctx.stroke();
       } else {
-        // ノーマル / 界王拳
+        // ノーマル/界王拳：ミディアムヘアー（ふんわり・肩まで）
         ctx.beginPath();
-        ctx.arc(0, -13, 7, Math.PI, 0);
-        ctx.lineTo(7, -10); ctx.lineTo(-7, -10); ctx.closePath();
+        ctx.arc(0, -13, 8, Math.PI, 0);
+        ctx.bezierCurveTo(10, -8, 10, -2, 8, 0);
+        ctx.lineTo(6, 2);
+        ctx.bezierCurveTo(3, -2, -3, -2, -6, 2);
+        ctx.lineTo(-8, 0);
+        ctx.bezierCurveTo(-10, -2, -10, -8, -10, -12);
+        ctx.closePath();
         ctx.fill();
+        // 前髪（ふわっと）
         ctx.beginPath();
-        ctx.ellipse(-9, -6, 2.5, 6, -0.3, 0, Math.PI*2);
-        ctx.ellipse(9, -6, 2.5, 6, 0.3, 0, Math.PI*2);
+        ctx.moveTo(-8, -12);
+        ctx.quadraticCurveTo(-3, -9, 0, -10);
+        ctx.quadraticCurveTo(4, -11, 8, -11);
+        ctx.lineTo(7, -9);
+        ctx.lineTo(-7, -9);
+        ctx.closePath();
         ctx.fill();
       }
-      // ピンクリボン
+      // ピンクリボン（サイドにちょこん）
       ctx.fillStyle = '#ff80b0';
       ctx.beginPath();
-      ctx.arc(-9, -10, 1.5, 0, Math.PI*2);
-      ctx.arc(9, -10, 1.5, 0, Math.PI*2);
+      ctx.moveTo(-10, -15); ctx.lineTo(-7, -17); ctx.lineTo(-7, -13); ctx.closePath();
+      ctx.moveTo(-4, -15); ctx.lineTo(-7, -17); ctx.lineTo(-7, -13); ctx.closePath();
       ctx.fill();
     }
     // 目の色：SSJ以降は青、SSJ4は赤、界王拳は変わらず
