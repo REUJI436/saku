@@ -302,14 +302,14 @@
   const CHARACTERS = [
     {
       id: 'saku', name: 'さく',
-      hp: 10, speed: 3.4, atkDmg: 1, atkRate: 28,
+      hp: 10, speed: 3.4, atkDmg: 1, atkRate: 14,
       hairCol: '#1a1008', skinCol: '#ffddbb',
       shirtCol: '#ff6030', pantsCol: '#204080',
       desc: 'バランス型・火力UP',
     },
     {
       id: 'kurumi', name: 'くるみ',
-      hp: 8, speed: 4.2, atkDmg: 1, atkRate: 20,
+      hp: 8, speed: 4.2, atkDmg: 1, atkRate: 10,
       hairCol: '#9a5a2a', skinCol: '#ffddbb',
       shirtCol: '#ffffff', pantsCol: '#ff80b0',
       desc: 'スピード型・連射UP',
@@ -329,7 +329,7 @@
       num: 1, name: '地球',
       bossType: 'piccolo', bossName: 'ピッコロとーと',
       bossHp: 55, bossColor: '#68b868', beamColor: '#a0f080',
-      triggerKills: 15,
+      triggerKills: 30,
       transformUnlock: 0,
       // 地球：青空と緑の地平線
       bgPalette: { top: '#88c8f0', mid: '#50a8e0', bot: '#3a7a40' },
@@ -340,7 +340,7 @@
       num: 2, name: '荒野',
       bossType: 'vegeta', bossName: 'ベジとーと',
       bossHp: 75, bossColor: '#d0a080', beamColor: '#ff80ff',
-      triggerKills: 20,
+      triggerKills: 40,
       transformUnlock: 1,
       // 荒野：茜空と砂塵
       bgPalette: { top: '#e8a050', mid: '#c87030', bot: '#8a5028' },
@@ -356,7 +356,7 @@
       num: 3, name: 'ナメック星',
       bossType: 'freezer', bossName: 'フリーザとーと',
       bossHp: 100, bossColor: '#e8e8f8', beamColor: '#c080ff',
-      triggerKills: 25,
+      triggerKills: 50,
       transformUnlock: 2,
       // ナメック星：緑の空と青い水
       bgPalette: { top: '#a0e060', mid: '#70c060', bot: '#3088a8' },
@@ -373,7 +373,7 @@
       num: 4, name: '地球（夕景）',
       bossType: 'cell', bossName: 'セルとーと',
       bossHp: 130, bossColor: '#80b060', beamColor: '#60ffa0',
-      triggerKills: 30,
+      triggerKills: 60,
       transformUnlock: 3,
       // 地球（夕焼け）：オレンジ→紫
       bgPalette: { top: '#ff9060', mid: '#d04080', bot: '#3a2850' },
@@ -390,7 +390,7 @@
       num: 5, name: '界王神界',
       bossType: 'buu', bossName: '魔神とーと',
       bossHp: 180, bossColor: '#ff80b0', beamColor: '#ffb0d8',
-      triggerKills: 35,
+      triggerKills: 70,
       transformUnlock: 4,
       // 界王神界：ピンク空と黄金の雲、神秘的な紫
       bgPalette: { top: '#ffccea', mid: '#ffd890', bot: '#c890d8' },
@@ -647,10 +647,11 @@
   // ====== 敵ウェーブ管理 ======
   let waveState = null;
   const WAVES = [
-    { saibai: 6, spawnInterval: 60 },
-    { saibai: 8, namek: 2, spawnInterval: 50 },
-    { saibai: 10, namek: 4, freezer: 1, spawnInterval: 40 },
-    { saibai: 12, namek: 6, freezer: 2, spawnInterval: 35 },
+    { saibai: 14, spawnInterval: 30 },
+    { saibai: 20, namek: 4, spawnInterval: 25 },
+    { saibai: 24, namek: 10, freezer: 2, spawnInterval: 22 },
+    { saibai: 30, namek: 14, freezer: 4, spawnInterval: 18 },
+    { saibai: 36, namek: 18, freezer: 6, spawnInterval: 15 },
   ];
 
   function updateWaves() {
