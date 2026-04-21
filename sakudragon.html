@@ -326,51 +326,80 @@
   // ====== ステージ構成 ======
   const STAGES_CONFIG = [
     {
-      num: 1, name: 'とーと修行場',
+      num: 1, name: '地球',
       bossType: 'piccolo', bossName: 'ピッコロとーと',
       bossHp: 55, bossColor: '#68b868', beamColor: '#a0f080',
       triggerKills: 15,
-      transformUnlock: 0,  // ノーマルのまま
-      bgPalette: { top: '#040012', mid: '#100828', bot: '#20104a' },
+      transformUnlock: 0,
+      // 地球：青空と緑の地平線
+      bgPalette: { top: '#88c8f0', mid: '#50a8e0', bot: '#3a7a40' },
+      bgStyle: 'earth',
       eventText: 'ピッコロとーと、待ち構える！',
     },
     {
-      num: 2, name: 'ベジータ基地',
+      num: 2, name: '荒野',
       bossType: 'vegeta', bossName: 'ベジとーと',
       bossHp: 75, bossColor: '#d0a080', beamColor: '#ff80ff',
       triggerKills: 20,
-      transformUnlock: 1,  // 界王拳
-      bgPalette: { top: '#1a0820', mid: '#301040', bot: '#40186a' },
+      transformUnlock: 1,
+      // 荒野：茜空と砂塵
+      bgPalette: { top: '#e8a050', mid: '#c87030', bot: '#8a5028' },
+      bgStyle: 'wasteland',
+      preludeLines: [
+        'ベジとーと：「フン…この程度か」',
+        'さく：「くっ…もっと力が…！」',
+      ],
       eventText: '覚醒…界王拳！',
       eventFlavor: '闘いの熱で さくの内なる力が目覚める',
     },
     {
-      num: 3, name: '氷の星ナメック',
+      num: 3, name: 'ナメック星',
       bossType: 'freezer', bossName: 'フリーザとーと',
       bossHp: 100, bossColor: '#e8e8f8', beamColor: '#c080ff',
       triggerKills: 25,
-      transformUnlock: 2,  // スーパーサイヤ人
-      bgPalette: { top: '#001020', mid: '#082040', bot: '#104060' },
+      transformUnlock: 2,
+      // ナメック星：緑の空と青い水
+      bgPalette: { top: '#a0e060', mid: '#70c060', bot: '#3088a8' },
+      bgStyle: 'namek',
+      preludeLines: [
+        'フリーザとーと：「クソムシどもが…消えろ」',
+        'さく：「…許さない…！」',
+        'さく：「許さないぞォォォッ！！」',
+      ],
       eventText: '怒り爆発…スーパーサイヤ人！',
       eventFlavor: '仲間の危機が 伝説の力を呼び覚ます',
     },
     {
-      num: 4, name: '未来の廃墟',
+      num: 4, name: '地球（夕景）',
       bossType: 'cell', bossName: 'セルとーと',
       bossHp: 130, bossColor: '#80b060', beamColor: '#60ffa0',
       triggerKills: 30,
-      transformUnlock: 3,  // SSJ2
-      bgPalette: { top: '#200810', mid: '#401820', bot: '#603030' },
+      transformUnlock: 3,
+      // 地球（夕焼け）：オレンジ→紫
+      bgPalette: { top: '#ff9060', mid: '#d04080', bot: '#3a2850' },
+      bgStyle: 'earth-sunset',
+      preludeLines: [
+        'セルとーと：「さあ…完全体を見せてやろう」',
+        'さく：「（ぐっ…押されてる…）」',
+        'さく：「…限界？そんなもの、越えてやる…！」',
+      ],
       eventText: '超越…超サイヤ人2！',
       eventFlavor: '雷鳴とともに 新たな境地へ',
     },
     {
-      num: 5, name: '神の領域',
+      num: 5, name: '界王神界',
       bossType: 'buu', bossName: '魔神とーと',
       bossHp: 180, bossColor: '#ff80b0', beamColor: '#ffb0d8',
       triggerKills: 35,
-      transformUnlock: 4,  // SSJ3
-      bgPalette: { top: '#100020', mid: '#300850', bot: '#500880' },
+      transformUnlock: 4,
+      // 界王神界：ピンク空と黄金の雲、神秘的な紫
+      bgPalette: { top: '#ffccea', mid: '#ffd890', bot: '#c890d8' },
+      bgStyle: 'kaio',
+      preludeLines: [
+        '魔神とーと：「フォッフォッフォ…オイシソウ…」',
+        'さく：「……もう失うものは、何もない」',
+        'さく：「この一撃に…全てを懸ける！！」',
+      ],
       eventText: '限界突破…超サイヤ人3！',
       eventFlavor: '宇宙を揺るがす 究極の気',
     },
@@ -559,7 +588,24 @@
     setTimeout(() => beep(990, 0.12, 'square', 0.1), 120);
     // 変身イベント（ステージ2以降、未到達の変身を強制解放）
     if (stg.transformUnlock > 0 && player.transform < stg.transformUnlock) {
-      setTimeout(() => triggerScriptedTransform(stg.transformUnlock, stg.eventText, stg.eventFlavor), 1800);
+      // 前置きセリフを順番に表示
+      const lines = stg.preludeLines || [];
+      const lineDur = 1500;
+      let t = 1800;  // ステージ名バナー終了後
+      lines.forEach((line, i) => {
+        setTimeout(() => {
+          if (state !== STATE.PLAYING) return;
+          banner = { text: line, color: i === lines.length - 1 ? '#ffa040' : '#ffffff', life: 90, maxLife: 90 };
+          beep(500 + i * 80, 0.08, 'triangle', 0.1);
+        }, t);
+        t += lineDur;
+      });
+      // 最後のセリフ後に変身
+      setTimeout(() => {
+        if (state === STATE.PLAYING) {
+          triggerScriptedTransform(stg.transformUnlock, stg.eventText, stg.eventFlavor);
+        }
+      }, t + 200);
     }
   }
 
