@@ -23,12 +23,10 @@
   #portalBtn:active { transform: translateY(1px); opacity: 0.85; }
 
   /* タッチ／マウス共通の操作UI（PCでも表示） */
-  #touchUI { position: absolute; left: 0; right: 0; bottom: 0; height: 45%; pointer-events: none; }
-  #stick { position: absolute; left: 20px; bottom: 20px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.25); pointer-events: auto; touch-action: none; }
-  #stickKnob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.35); transform: translate(-50%, -50%); pointer-events: none; }
-  #chargeBtn { position: absolute; right: 28px; bottom: 28px; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #80b0ff, #2040a0); border: 4px solid #60a0ff; color: #fff; font-weight: bold; font-size: 18px; pointer-events: auto; touch-action: none; text-shadow: 0 1px 0 #000; line-height: 1.1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
-  #chargeBtn:active { transform: scale(0.95); }
-  #chargeBtn small { font-size: 10px; font-weight: normal; opacity: 0.8; }
+  #touchUI { position: absolute; left: 0; right: 0; bottom: 0; top: 0; pointer-events: none; }
+  #chargeBtn { position: absolute; right: 20px; bottom: 20px; width: 96px; height: 96px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(128,176,255,0.85), rgba(32,64,160,0.85)); border: 3px solid rgba(96,160,255,0.9); color: #fff; font-weight: bold; font-size: 16px; pointer-events: auto; touch-action: none; text-shadow: 0 1px 0 #000; line-height: 1.1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; opacity: 0.88; }
+  #chargeBtn:active { transform: scale(0.94); opacity: 1; }
+  #chargeBtn small { font-size: 9px; font-weight: normal; opacity: 0.85; }
 
   /* 縦持ち警告（スマホのみ） */
   #rotatePrompt {
@@ -73,7 +71,6 @@
     <div class="box" id="hudStats"></div>
   </div>
   <div id="touchUI">
-    <div id="stick"><div id="stickKnob"></div></div>
     <button id="chargeBtn">ため撃ち<small>長押し→離す</small></button>
   </div>
 </div>
@@ -105,46 +102,88 @@
   });
   window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-  // タッチスティック
-  const stick = document.getElementById('stick');
-  const stickKnob = document.getElementById('stickKnob');
   const chargeBtn = document.getElementById('chargeBtn');
-  let stickVec = { x: 0, y: 0 };
-  let stickActive = false;
-  let fireHeld = false;  // 互換性のため残すが使わない
+  let stickVec = { x: 0, y: 0 };  // キーボード互換用（使わない）
+  let fireHeld = false;
   let chargeHeld = false;
 
-  function stickMove(e) {
-    if (!stickActive) return;
-    const rect = stick.getBoundingClientRect();
-    const t = e.touches ? e.touches[0] : e;
-    const cx = rect.left + rect.width/2;
-    const cy = rect.top + rect.height/2;
-    let dx = t.clientX - cx;
-    let dy = t.clientY - cy;
-    const r = rect.width / 2 - 10;
-    const d = Math.hypot(dx, dy);
-    if (d > r) { dx = dx / d * r; dy = dy / d * r; }
-    stickKnob.style.left = (50 + dx * 50 / r) + '%';
-    stickKnob.style.top = (50 + dy * 50 / r) + '%';
-    stickVec.x = dx / r;
-    stickVec.y = dy / r;
-  }
-  function stickEnd() {
-    stickActive = false;
-    stickKnob.style.left = '50%';
-    stickKnob.style.top = '50%';
-    stickVec.x = 0; stickVec.y = 0;
-  }
-  stick.addEventListener('touchstart', e => { stickActive = true; stickMove(e); e.preventDefault(); });
-  stick.addEventListener('touchmove', e => { stickMove(e); e.preventDefault(); });
-  stick.addEventListener('touchend', e => { stickEnd(); e.preventDefault(); });
-  stick.addEventListener('mousedown', e => { stickActive = true; stickMove(e); });
-  window.addEventListener('mousemove', e => { if (stickActive) stickMove(e); });
-  window.addEventListener('mouseup', e => { if (stickActive) stickEnd(); });
+  // 画面ドラッグでプレイヤー移動（相対ドラッグ方式・マルチタッチ対応）
+  let dragActive = false;
+  let dragTouchId = null;  // 追跡中の指のID（マルチタッチ対応）
+  let dragStart = { x: 0, y: 0 };
+  let dragStartPlayer = { x: 0, y: 0 };
 
-  chargeBtn.addEventListener('touchstart', e => { chargeHeld = true; e.preventDefault(); });
-  chargeBtn.addEventListener('touchend', e => { chargeHeld = false; e.preventDefault(); });
+  function canvasPosFromClient(cx, cy) {
+    const rect = cv.getBoundingClientRect();
+    return {
+      x: (cx - rect.left) * (W / rect.width),
+      y: (cy - rect.top) * (H / rect.height),
+    };
+  }
+  function dragStartHandler(e, touch) {
+    if (state !== STATE.PLAYING) return;
+    if (dragActive) return;
+    let cx, cy, id;
+    if (touch) { cx = touch.clientX; cy = touch.clientY; id = touch.identifier; }
+    else { cx = e.clientX; cy = e.clientY; id = 'mouse'; }
+    const pos = canvasPosFromClient(cx, cy);
+    dragActive = true;
+    dragTouchId = id;
+    dragStart.x = pos.x; dragStart.y = pos.y;
+    dragStartPlayer.x = player.x; dragStartPlayer.y = player.y;
+  }
+  function dragMoveHandler(e, touch) {
+    if (!dragActive) return;
+    if (state !== STATE.PLAYING) { dragActive = false; dragTouchId = null; return; }
+    let cx, cy;
+    if (touch) { cx = touch.clientX; cy = touch.clientY; }
+    else { cx = e.clientX; cy = e.clientY; }
+    const pos = canvasPosFromClient(cx, cy);
+    const dx = pos.x - dragStart.x;
+    const dy = pos.y - dragStart.y;
+    player.x = dragStartPlayer.x + dx;
+    player.y = dragStartPlayer.y + dy;
+    player.x = Math.max(player.r, Math.min(W - player.r, player.x));
+    player.y = Math.max(H * 0.35, Math.min(H - player.r - 20, player.y));
+  }
+  function dragEndHandler() {
+    dragActive = false;
+    dragTouchId = null;
+  }
+  cv.addEventListener('touchstart', e => {
+    if (dragTouchId !== null) return;
+    const t = e.changedTouches[0];
+    dragStartHandler(e, t);
+  }, { passive: true });
+  cv.addEventListener('touchmove', e => {
+    // 追跡中の指だけ拾う
+    if (dragTouchId === null || dragTouchId === 'mouse') return;
+    for (let i = 0; i < e.touches.length; i++) {
+      if (e.touches[i].identifier === dragTouchId) {
+        dragMoveHandler(e, e.touches[i]);
+        e.preventDefault();
+        return;
+      }
+    }
+  }, { passive: false });
+  cv.addEventListener('touchend', e => {
+    if (dragTouchId === null || dragTouchId === 'mouse') return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === dragTouchId) {
+        dragEndHandler();
+        return;
+      }
+    }
+  });
+  cv.addEventListener('touchcancel', () => dragEndHandler());
+  cv.addEventListener('mousedown', e => { dragStartHandler(e); });
+  window.addEventListener('mousemove', e => { if (dragTouchId === 'mouse') dragMoveHandler(e); });
+  window.addEventListener('mouseup', () => { if (dragTouchId === 'mouse') dragEndHandler(); });
+
+  // ため撃ちボタン
+  chargeBtn.addEventListener('touchstart', e => { chargeHeld = true; e.preventDefault(); }, { passive: false });
+  chargeBtn.addEventListener('touchend', e => { chargeHeld = false; e.preventDefault(); }, { passive: false });
+  chargeBtn.addEventListener('touchcancel', () => { chargeHeld = false; });
   chargeBtn.addEventListener('mousedown', e => { chargeHeld = true; });
   chargeBtn.addEventListener('mouseup', e => { chargeHeld = false; });
 
