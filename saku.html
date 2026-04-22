@@ -844,6 +844,8 @@
   // ====== ステージ読み込み ======
   function loadStage(idx) {
     const stage = STAGES[idx];
+    // ワールド訪問記録
+    markWorldVisited(parseInt(stage.label.split('-')[0]) - 1);
     theme = THEMES[stage.theme];
     const levelStr = stage.level;
     LEVEL_ROWS = levelStr.length;
@@ -989,6 +991,10 @@
       return;
     }
     keys[e.code] = true;
+    if (state === 'stageSelect') {
+      if (e.code === 'Escape' || e.code === 'Backspace') { state = 'title'; e.preventDefault(); return; }
+      return;
+    }
     if (state === 'title') {
       if (e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'KeyW' || e.code === 'KeyA') { moveMenu(-1); e.preventDefault(); return; }
       if (e.code === 'ArrowDown' || e.code === 'ArrowRight' || e.code === 'KeyS' || e.code === 'KeyD') { moveMenu(1); e.preventDefault(); return; }
@@ -1106,11 +1112,31 @@
     confirmTitleMenu();
   }
 
+  function stageSelectTapAt(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = (clientX - rect.left) * (W / rect.width);
+    const sy = (clientY - rect.top) * (H / rect.height);
+    const inBtn = (b) => b && sx > b.x && sx < b.x + b.w && sy > b.y && sy < b.y + b.h;
+    if (inBtn(stageSelectBackBtn)) { state = 'title'; beep(440, 0.08, 'square', 0.1); return; }
+    if (inBtn(stageSelectPageBtn)) { stageSelectPage = 1 - stageSelectPage; beep(550, 0.08, 'square', 0.1); return; }
+    for (const b of stageSelectButtons) {
+      if (b.unlocked && sx > b.x && sx < b.x + b.w && sy > b.y && sy < b.y + b.h) {
+        beep(880, 0.08, 'square', 0.14);
+        startFromWorld(b.worldIdx);
+        return;
+      }
+    }
+  }
+
   canvas.addEventListener('touchstart', e => {
     if (state === 'title') {
       e.preventDefault();
       const t = e.touches[0];
       titleTapAt(t.clientX, t.clientY);
+    } else if (state === 'stageSelect') {
+      e.preventDefault();
+      const t = e.touches[0];
+      stageSelectTapAt(t.clientX, t.clientY);
     } else if (state === 'cutscene') {
       e.preventDefault();
       advanceCutscene();
@@ -1121,6 +1147,7 @@
   }, { passive: false });
   canvas.addEventListener('click', e => {
     if (state === 'title') titleTapAt(e.clientX, e.clientY);
+    else if (state === 'stageSelect') stageSelectTapAt(e.clientX, e.clientY);
     else if (state === 'cutscene') advanceCutscene();
     else if (state === 'tutorial') dismissUltTutorial();
   });
@@ -2977,6 +3004,11 @@
     setTimeout(() => beep(1319, 0.12, 'square', 0.12), 80);
     if (choice === 'ダークコース') {
       startDarkCourse();
+      return;
+    }
+    if (choice === 'ステージ選択') {
+      state = 'stageSelect';
+      stageSelectPage = 0;
       return;
     }
     const fromSave = (choice === 'つづきから');
@@ -5283,9 +5315,178 @@
   function markTrueCleared() {
     try { localStorage.setItem('saku_true_cleared', '1'); } catch(e) {}
   }
+  // ステージ選択画面の状態
+  let stageSelectPage = 0;  // 0=通常コース, 1=ダークコース
+  let stageSelectButtons = [];
+  let stageSelectBackBtn = null;
+  let stageSelectPageBtn = null;
+
+  function drawStageSelect() {
+    ctx.fillStyle = '#100820';
+    ctx.fillRect(0, 0, W, H);
+    // 星背景
+    for (let i = 0; i < 80; i++) {
+      const x = (i * 137) % W;
+      const y = (i * 97 + 13) % H;
+      ctx.fillStyle = `rgba(255,255,255,${0.2 + (i % 3) * 0.2})`;
+      ctx.fillRect(x, y, i % 4 === 0 ? 2 : 1, i % 4 === 0 ? 2 : 1);
+    }
+    // タイトル
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 28px serif';
+    ctx.lineWidth = 5; ctx.strokeStyle = '#000';
+    const titleText = (stageSelectPage === 0 ? 'ステージ選択 - 通常コース' : 'ステージ選択 - ダークコース');
+    ctx.strokeText(titleText, W/2, 40);
+    ctx.fillStyle = '#ffee60';
+    ctx.fillText(titleText, W/2, 40);
+
+    // 戻るボタン
+    const bx = 50, by = 30, bw = 70, bh = 30;
+    ctx.fillStyle = 'rgba(80,40,40,0.9)';
+    ctx.fillRect(bx - bw/2, by - bh/2, bw, bh);
+    ctx.strokeStyle = '#c08080';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx - bw/2, by - bh/2, bw, bh);
+    ctx.fillStyle = '#ffccaa';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('← 戻る', bx, by + 5);
+    stageSelectBackBtn = { x: bx - bw/2, y: by - bh/2, w: bw, h: bh };
+
+    // 通常/ダーク切替ボタン（ダークコース解放後のみ表示）
+    if (hasNormalCleared()) {
+      const px = W - 90, py = 30, pw = 140;
+      ctx.fillStyle = 'rgba(40,20,80,0.9)';
+      ctx.fillRect(px - pw/2, py - bh/2, pw, bh);
+      ctx.strokeStyle = '#a080d0';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px - pw/2, py - bh/2, pw, bh);
+      ctx.fillStyle = '#ccaadd';
+      ctx.fillText(stageSelectPage === 0 ? 'ダーク →' : '← 通常', px, py + 5);
+      stageSelectPageBtn = { x: px - pw/2, y: py - bh/2, w: pw, h: bh };
+    } else {
+      stageSelectPageBtn = null;
+    }
+    ctx.restore();
+
+    // ワールド一覧（5列×2行）
+    const visited = getVisitedWorlds();
+    const cols = 5, rows = 2;
+    const cardW = 130, cardH = 90, gapX = 12, gapY = 16;
+    const totalW = cardW * cols + gapX * (cols - 1);
+    const startX = (W - totalW) / 2;
+    const startY = 85;
+    stageSelectButtons = [];
+    const baseWorld = stageSelectPage === 0 ? 0 : 10;
+    for (let i = 0; i < 10; i++) {
+      const worldIdx = baseWorld + i;
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const cx = startX + col * (cardW + gapX);
+      const cy = startY + row * (cardH + gapY);
+      const unlocked = visited.has(worldIdx);
+      stageSelectButtons.push({ x: cx, y: cy, w: cardW, h: cardH, worldIdx, unlocked });
+      // カード
+      if (unlocked) {
+        // テーマ色で塗る
+        const themeName = (stageSelectPage === 0 ? WORLD_THEMES[worldIdx] : WORLD_THEMES[worldIdx]) || 'grass';
+        const th = THEMES[themeName];
+        const g = ctx.createLinearGradient(cx, cy, cx, cy + cardH);
+        g.addColorStop(0, th.sky[0]);
+        g.addColorStop(1, th.groundBot);
+        ctx.fillStyle = g;
+      } else {
+        ctx.fillStyle = '#202030';
+      }
+      ctx.fillRect(cx, cy, cardW, cardH);
+      ctx.strokeStyle = unlocked ? '#ffee60' : '#404050';
+      ctx.lineWidth = unlocked ? 2 : 1;
+      ctx.strokeRect(cx, cy, cardW, cardH);
+      // ラベル
+      if (unlocked) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+        ctx.strokeText(`WORLD ${worldIdx + 1}`, cx + cardW/2, cy + 22);
+        ctx.fillText(`WORLD ${worldIdx + 1}`, cx + cardW/2, cy + 22);
+        ctx.font = 'bold 18px serif';
+        ctx.strokeText(WORLD_NAMES[worldIdx], cx + cardW/2, cy + 50);
+        ctx.fillText(WORLD_NAMES[worldIdx], cx + cardW/2, cy + 50);
+        // クリア済みなら✓
+        const labelCheck = stageSelectPage === 0 ? `${worldIdx+1}-5` : `${worldIdx+1}-10`;
+        // 単純化：visited で足りる（クリア細分化は省略）
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#ffee80';
+        ctx.fillText(`${worldIdx+1}-1 からスタート`, cx + cardW/2, cy + 76);
+      } else {
+        ctx.fillStyle = '#666';
+        ctx.font = 'bold 30px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔒', cx + cardW/2, cy + cardH/2 + 12);
+      }
+    }
+    // 操作説明
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillStyle = '#aaaaaa';
+    ctx.fillText('タップでそのワールドの最初から遊べるよ', W/2, H - 12);
+    ctx.restore();
+  }
+
+  function startFromWorld(worldIdx) {
+    ensureAudio();
+    // 該当ワールドの最初のステージを探す
+    const targetLabel = `${worldIdx + 1}-1`;
+    const idx = STAGES.findIndex(s => s.label === targetLabel);
+    if (idx < 0) return;
+    currentStage = idx;
+    score = 0; coinCount = 0; lives = 5;
+    // ワールドに応じて必殺技を解放
+    saku.unlockedUlts = [];
+    if (worldIdx >= 3) saku.unlockedUlts.push('punch');  // W4 から
+    if (worldIdx >= 6) saku.unlockedUlts.push('slash');  // W7 から
+    if (worldIdx >= 9) saku.unlockedUlts.push('peropero');  // W10 から
+    // ダークコースは全必殺技
+    if (worldIdx >= 10) {
+      saku.unlockedUlts = ['punch', 'slash', 'peropero'];
+    }
+    saku.selectedUlt = 0;
+    saku.ultGauge = saku.maxUlt;
+    comboMax = 0;
+    scoreEl.textContent = score.toLocaleString();
+    coinEl.textContent = coinCount;
+    livesEl.textContent = lives;
+    respawnPoint = null;
+    loadStage(currentStage);
+    state = 'playing';
+    startBGM();
+  }
+
+  // ワールド訪問記録（ステージ選択画面で使用）
+  function getVisitedWorlds() {
+    try {
+      const s = localStorage.getItem('saku_visited_worlds');
+      return s ? new Set(JSON.parse(s)) : new Set([0]);  // W1 は常に開放
+    } catch(e) { return new Set([0]); }
+  }
+  function markWorldVisited(worldIdx) {
+    try {
+      const set = getVisitedWorlds();
+      if (!set.has(worldIdx)) {
+        set.add(worldIdx);
+        localStorage.setItem('saku_visited_worlds', JSON.stringify([...set]));
+      }
+    } catch(e) {}
+  }
+  function hasAnyStageSelectUnlock() {
+    return getVisitedWorlds().size > 1;  // W1 以外に何か訪問してたら
+  }
   function getTitleMenuItems() {
     const items = ['はじめから', 'つづきから'];
     if (hasNormalCleared()) items.push('ダークコース');
+    if (hasAnyStageSelectUnlock()) items.push('ステージ選択');
     return items;
   }
 
@@ -7136,6 +7337,8 @@
       if (state === 'title') {
         titleFrame++;
         drawTitle();
+      } else if (state === 'stageSelect') {
+        drawStageSelect();
       } else if (state === 'cutscene') {
         update();
         drawCutscene();
