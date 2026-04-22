@@ -548,18 +548,17 @@
     },
     {
       num: 6, name: '[宇宙|うちゅう]',
-      bossType: 'bills', bossName: 'ビルス[様|さま]',
+      bossType: 'bills', bossName: '[破壊神|はかいしん]ビルとーと',
       bossHp: 450, bossColor: '#a060d0', beamColor: '#e080ff',
       triggerKills: 600,
       enemyMultiplier: 5.0,
       spawnBurstBonus: 3,
-      transformUnlock: 6,  // ゴッド
-      bossIntroLine: '[我|わ]が[名|な]はビルス。この[宇宙|うちゅう]の[破壊神|はかいしん]。[私|わたし]を[楽|たの]しませてくれるのだろうな？',
-      // 宇宙：漆黒の宇宙＋遠くの星雲
+      transformUnlock: 6,
+      bossIntroLine: '[我|わ]が[名|な]はビルとーと。この[宇宙|うちゅう]の[破壊神|はかいしん]。[私|わたし]を[楽|たの]しませてくれるのだろうな？',
       bgPalette: { top: '#00000a', mid: '#100030', bot: '#2a0855' },
       bgStyle: 'space',
       preludeLines: [
-        'ビルス[様|さま]：「[力|ちから]不足だ…やはり、これでは[私|わたし]を[倒|たお]せぬ」',
+        'ビルとーと：「[力|ちから]不足だ…やはり、これでは[私|わたし]を[倒|たお]せぬ」',
         '「[純粋|じゅんすい]なる5人のサイヤ[人|じん]が [力|ちから]を[託|たく]す…」',
         '「これが [神|かみ]の[領域|りょういき]の[力|ちから] ― [儀式|ぎしき]、[成立|せいりつ]！」',
       ],
@@ -2314,7 +2313,7 @@
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.beginPath(); ctx.ellipse(0, 31, 24, 5, 0, 0, Math.PI*2); ctx.fill();
     drawer(0, 0, mockBoss);
-    if (stg.bossType !== 'bills') drawTotoGlasses(0, -13);
+    drawTotoGlasses(0, -13);
     ctx.restore();
 
     // ボス名タブ
@@ -3251,8 +3250,8 @@
     const drawer = BOSS_DRAWERS[boss.type] || BOSS_DRAWERS.piccolo;
     drawer(x, y, boss);
 
-    // とーとメガネ（ビルス様以外の全ボス）
-    if (boss.type !== 'bills') drawTotoGlasses(x, y - 13);
+    // とーとメガネ（全ボス共通）
+    drawTotoGlasses(x, y - 13);
 
     // 激昂オーラ（HP40%以下で赤くなる）
     if (boss.hp / boss.maxHp < 0.4) {
