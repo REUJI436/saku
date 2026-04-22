@@ -480,7 +480,7 @@
       bgStyle: 'wasteland',
       preludeLines: [
         'ベジとーと：「フン…この[程度|ていど]か」',
-        'さく：「くっ…もっと[力|ちから]が…！」',
+        '「くっ…もっと[力|ちから]が…！」',
       ],
       eventText: '[覚醒|かくせい]…[界王拳|かいおうけん]！',
       eventFlavor: '[闘|たたか]いの[熱|ねつ]で さくの[内|うち]なる[力|ちから]が[目覚|めざ]める',
@@ -496,8 +496,8 @@
       bgStyle: 'namek',
       preludeLines: [
         'フリーザとーと：「クソムシどもが…[消|き]えろ」',
-        'さく：「…[許|ゆる]さない…！」',
-        'さく：「[許|ゆる]さないぞォォォッ！！」',
+        '「…[許|ゆる]さない…！」',
+        '「[許|ゆる]さないぞォォォッ！！」',
       ],
       eventText: '[怒|いか]り[爆発|ばくはつ]…スーパーサイヤ[人|じん]！',
       eventFlavor: '[仲間|なかま]の[危機|きき]が [伝説|でんせつ]の[力|ちから]を[呼|よ]び[覚|さ]ます',
@@ -513,8 +513,8 @@
       bgStyle: 'earth-sunset',
       preludeLines: [
         'セルとーと：「さあ…[完全体|かんぜんたい]を[見|み]せてやろう」',
-        'さく：「（ぐっ…[押|お]されてる…）」',
-        'さく：「…[限界|げんかい]？そんなもの、[越|こ]えてやる…！」',
+        '「（ぐっ…[押|お]されてる…）」',
+        '「…[限界|げんかい]？そんなもの、[越|こ]えてやる…！」',
       ],
       eventText: '[超越|ちょうえつ]…[超|ちょう]サイヤ[人|じん]2！',
       eventFlavor: '[雷鳴|らいめい]とともに [新|あら]たな[境地|きょうち]へ',
@@ -530,8 +530,8 @@
       bgStyle: 'kaio',
       preludeLines: [
         '[魔神|まじん]とーと：「フォッフォッフォ…オイシソウ…」',
-        'さく：「……もう[失|うしな]うものは、[何|なに]もない」',
-        'さく：「この[一撃|いちげき]に…[全|すべ]てを[懸|か]ける！！」',
+        '「……もう[失|うしな]うものは、[何|なに]もない」',
+        '「この[一撃|いちげき]に…[全|すべ]てを[懸|か]ける！！」',
       ],
       eventText: '[限界突破|げんかいとっぱ]…[超|ちょう]サイヤ[人|じん]3！',
       eventFlavor: '[宇宙|うちゅう]を[揺|ゆ]るがす [究極|きゅうきょく]の[気|き]',
@@ -749,24 +749,24 @@
     setTimeout(() => beep(990, 0.12, 'square', 0.1), 120);
     // 変身イベント（ステージ2以降、未到達の変身を強制解放）
     if (stg.transformUnlock > 0 && player.transform < stg.transformUnlock) {
-      // 前置きセリフを順番に表示
+      // 前置きセリフを順番に表示（ゆっくり読める時間に調整）
       const lines = stg.preludeLines || [];
-      const lineDur = 1500;
-      let t = 1800;  // ステージ名バナー終了後
+      const lineDur = 2400;  // 1行2.4秒
+      let t = 2000;  // ステージ名バナー後の間
       lines.forEach((line, i) => {
         setTimeout(() => {
           if (state !== STATE.PLAYING) return;
-          banner = { text: line, color: i === lines.length - 1 ? '#ffa040' : '#ffffff', life: 90, maxLife: 90 };
+          banner = { text: line, color: i === lines.length - 1 ? '#ffa040' : '#ffffff', life: 150, maxLife: 150 };
           beep(500 + i * 80, 0.08, 'triangle', 0.1);
         }, t);
         t += lineDur;
       });
-      // 最後のセリフ後に変身
+      // 最後のセリフ後にワンテンポ置いて変身
       setTimeout(() => {
         if (state === STATE.PLAYING) {
           triggerScriptedTransform(stg.transformUnlock, stg.eventText, stg.eventFlavor);
         }
-      }, t + 200);
+      }, t + 500);
     }
   }
 
