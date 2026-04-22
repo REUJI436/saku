@@ -512,7 +512,8 @@
       num: 1, name: '[地球|ちきゅう]',
       bossType: 'piccolo', bossName: 'ピッコロとーと',
       bossHp: 55, bossColor: '#68b868', beamColor: '#a0f080',
-      triggerKills: 60,
+      triggerKills: 40,
+      enemyMultiplier: 0.7,
       transformUnlock: 0,
       bossIntroLine: 'フッ…[吾輩|わがはい]こそピッコロとーと。この[星|ほし]を[支配|しはい]するのは[我|われ]だ！',
       // 地球：青空と緑の地平線
@@ -524,7 +525,8 @@
       num: 2, name: '[荒野|こうや]',
       bossType: 'vegeta', bossName: 'ベジとーと',
       bossHp: 75, bossColor: '#d0a080', beamColor: '#ff80ff',
-      triggerKills: 80,
+      triggerKills: 55,
+      enemyMultiplier: 0.85,
       transformUnlock: 1,
       bossIntroLine: 'フハハハ！[我|われ]こそ[誇|ほこ]り[高|たか]きサイヤ[人|じん]の[王子|おうじ]、ベジとーと。この[星|ほし]…[滅|ほろ]ぼさせてもらうぞ！',
       // 荒野：茜空と砂塵
@@ -541,7 +543,7 @@
       num: 3, name: 'ナメック[星|せい]',
       bossType: 'freezer', bossName: 'フリーザとーと',
       bossHp: 100, bossColor: '#e8e8f8', beamColor: '#c080ff',
-      triggerKills: 100,
+      triggerKills: 75,
       transformUnlock: 2,
       bossIntroLine: 'ウフフ…[私|わたくし]はフリーザとーと。[宇宙|うちゅう]の[帝王|ていおう]。このナメック[星|せい]のドラゴンボールで[永遠|えいえん]の[命|いのち]を[頂戴|ちょうだい]しましょう',
       // ナメック星：緑の空と青い水
@@ -559,7 +561,7 @@
       num: 4, name: '[地球|ちきゅう]（[夕景|ゆうけい]）',
       bossType: 'cell', bossName: 'セルとーと',
       bossHp: 130, bossColor: '#80b060', beamColor: '#60ffa0',
-      triggerKills: 120,
+      triggerKills: 95,
       transformUnlock: 3,
       bossIntroLine: 'フフフ…[私|わたくし]こそ[完全体|かんぜんたい]セルとーと。[最強|さいきょう]の[存在|そんざい]だ。[君|きみ]たちを[倒|たお]して[歴史|れきし]に[名|な]を[刻|きざ]もう',
       // 地球（夕焼け）：オレンジ→紫
@@ -577,9 +579,9 @@
       num: 5, name: '[界王神界|かいおうしんかい]',
       bossType: 'buu', bossName: '[魔神|まじん]とーと',
       bossHp: 360, bossColor: '#ff80b0', beamColor: '#ffb0d8',
-      triggerKills: 500,
-      enemyMultiplier: 4.0,
-      spawnBurstBonus: 2,
+      triggerKills: 250,
+      enemyMultiplier: 2.5,
+      spawnBurstBonus: 1,
       transformUnlock: 4,
       bossIntroLine: 'ブーブブゥー！ボクは[魔神|まじん]とーと！[地球|ちきゅう]も[宇宙|うちゅう]もぜーんぶ、[僕|ぼく]のお[菓子|かし]にしちゃうよ！',
       // 界王神界：ピンク空と黄金の雲、神秘的な紫
@@ -597,9 +599,9 @@
       num: 6, name: '[宇宙|うちゅう]',
       bossType: 'bills', bossName: '[破壊神|はかいしん]ビルとーと',
       bossHp: 450, bossColor: '#a060d0', beamColor: '#e080ff',
-      triggerKills: 600,
-      enemyMultiplier: 5.0,
-      spawnBurstBonus: 3,
+      triggerKills: 300,
+      enemyMultiplier: 3.0,
+      spawnBurstBonus: 1,
       transformUnlock: 6,
       bossIntroLine: '[我|わ]が[名|な]はビルとーと。この[宇宙|うちゅう]の[破壊神|はかいしん]。[私|わたし]を[楽|たの]しませてくれるのだろうな？',
       bgPalette: { top: '#00000a', mid: '#100030', bot: '#2a0855' },
@@ -616,9 +618,9 @@
       num: 7, name: '[復活|ふっかつ]の[戦|たたか]い',
       bossType: 'goldfrieza', bossName: '[黄金|おうごん]フリザとーと',
       bossHp: 500, bossColor: '#ffd040', beamColor: '#ffee80',
-      triggerKills: 450,
-      enemyMultiplier: 3.5,
-      spawnBurstBonus: 2,
+      triggerKills: 200,
+      enemyMultiplier: 2.2,
+      spawnBurstBonus: 1,
       transformUnlock: 7,
       bossIntroLine: 'フフフ…[地獄|じごく]から[甦|よみがえ]ったぞ。[究極|きゅうきょく]の[進化|しんか]―[黄金|おうごん]の[姿|すがた]、[拝|おが]むがいい',
       bgPalette: { top: '#181020', mid: '#402030', bot: '#601818' },
@@ -634,9 +636,9 @@
       num: 8, name: '[宇宙間|うちゅうかん]トーナメント',
       bossType: 'hit', bossName: 'ヒッとーと',
       bossHp: 550, bossColor: '#6858a0', beamColor: '#c080ff',
-      triggerKills: 500,
-      enemyMultiplier: 4.0,
-      spawnBurstBonus: 2,
+      triggerKills: 220,
+      enemyMultiplier: 2.4,
+      spawnBurstBonus: 1,
       transformUnlock: 7,
       bossIntroLine: '[我|わ]が[名|な]はヒッとーと…[第|だい]6[宇宙|うちゅう]の[暗殺者|あんさつしゃ]。[時|とき]を[止|と]め、[貴様|きさま]を[葬|ほうむ]ろう',
       bgPalette: { top: '#080030', mid: '#180858', bot: '#301078' },
@@ -650,9 +652,9 @@
       num: 9, name: '[未来|みらい]の[終末|しゅうまつ]',
       bossType: 'zamasu', bossName: '[合体|がったい]ザマとーと',
       bossHp: 700, bossColor: '#70c068', beamColor: '#e040c0',
-      triggerKills: 600,
-      enemyMultiplier: 4.5,
-      spawnBurstBonus: 3,
+      triggerKills: 250,
+      enemyMultiplier: 2.8,
+      spawnBurstBonus: 2,
       transformUnlock: 7,
       bossIntroLine: '[我|われ]こそ[神|かみ]。[人間|にんげん]よ、[滅|ほろ]びよ―[我|われ]が[聖|せい]なる[裁|さば]きを[受|う]けるがいい',
       bgPalette: { top: '#200818', mid: '#401040', bot: '#801048' },
@@ -666,9 +668,9 @@
       num: 10, name: '[力|ちから]の[大会|たいかい]',
       bossType: 'jiren', bossName: '[最強|さいきょう]ジレとーと',
       bossHp: 800, bossColor: '#d03040', beamColor: '#ff4060',
-      triggerKills: 700,
-      enemyMultiplier: 4.5,
-      spawnBurstBonus: 3,
+      triggerKills: 280,
+      enemyMultiplier: 3.0,
+      spawnBurstBonus: 2,
       transformUnlock: 8,  // 身勝手兆
       bossIntroLine: '[我|わ]が[名|な]はジレとーと。[第|だい]11[宇宙|うちゅう][最強|さいきょう]の[戦士|せんし]。[正義|せいぎ]の[前|まえ]に[敗北|はいぼく]はない',
       bgPalette: { top: '#080020', mid: '#200830', bot: '#401848' },
@@ -684,9 +686,9 @@
       num: 11, name: '[伝説|でんせつ]の[闇|やみ]',
       bossType: 'broly', bossName: '[伝説|でんせつ]ブロとーと',
       bossHp: 900, bossColor: '#8ac060', beamColor: '#80ff40',
-      triggerKills: 800,
-      enemyMultiplier: 5.0,
-      spawnBurstBonus: 3,
+      triggerKills: 300,
+      enemyMultiplier: 3.2,
+      spawnBurstBonus: 2,
       transformUnlock: 8,
       bossIntroLine: 'カカカ…カカロット…カカロォォット！！[伝説|でんせつ]の[超|ちょう]サイヤ[人|じん]、ここに[在|あ]り！',
       bgPalette: { top: '#081810', mid: '#183018', bot: '#304820' },
@@ -700,9 +702,9 @@
       num: 12, name: '[惑星|わくせい]シリアル',
       bossType: 'granola', bossName: '[宇宙最強|うちゅうさいきょう]グラノとーと',
       bossHp: 1100, bossColor: '#80e0e8', beamColor: '#c0fff0',
-      triggerKills: 900,
-      enemyMultiplier: 5.5,
-      spawnBurstBonus: 4,
+      triggerKills: 340,
+      enemyMultiplier: 3.5,
+      spawnBurstBonus: 2,
       transformUnlock: 9,  // 身勝手完成
       bossIntroLine: 'オレの[名|な]はグラノとーと…[惑星|わくせい]シリアルの[最後|さいご]の[生|い]き[残|のこ]り。[復讐|ふくしゅう]を[果|は]たす',
       bgPalette: { top: '#101828', mid: '#304858', bot: '#506878' },
@@ -718,9 +720,9 @@
       num: 13, name: '[賞金稼|しょうきんかせ]ぎの[本拠|ほんきょ]',
       bossType: 'gas', bossName: '[絶対者|ぜったいしゃ]ガスとーと',
       bossHp: 1300, bossColor: '#80c060', beamColor: '#c0ff60',
-      triggerKills: 1000,
-      enemyMultiplier: 6.0,
-      spawnBurstBonus: 4,
+      triggerKills: 380,
+      enemyMultiplier: 3.8,
+      spawnBurstBonus: 3,
       transformUnlock: 9,
       bossIntroLine: 'ボクがガスとーと。[宇宙最強|うちゅうさいきょう]の[称号|しょうごう]、もらった。[君|きみ]たちは[ここ|･･]で[終|お]わりだ',
       bgPalette: { top: '#202010', mid: '#403818', bot: '#585028' },
@@ -734,9 +736,9 @@
       num: 14, name: 'レッドリボン[軍|ぐん][基地|きち]',
       bossType: 'gamma', bossName: 'ガンとーと1[号|ごう]&2[号|ごう]',
       bossHp: 1500, bossColor: '#ffdc40', beamColor: '#ffee80',
-      triggerKills: 1100,
-      enemyMultiplier: 6.0,
-      spawnBurstBonus: 4,
+      triggerKills: 420,
+      enemyMultiplier: 4.0,
+      spawnBurstBonus: 3,
       transformUnlock: 9,
       bossIntroLine: '[我|われ]ら、[正義|せいぎ]のスーパーヒーロー！レッドリボン[軍|ぐん][最新|さいしん]の[人造人間|じんぞうにんげん]、ガンとーとだ！',
       bgPalette: { top: '#400808', mid: '#702020', bot: '#a04040' },
@@ -750,9 +752,9 @@
       num: 15, name: '[最終兵器|さいしゅうへいき][解放|かいほう]',
       bossType: 'cellmax', bossName: '[最終兵器|さいしゅうへいき]セルマックとーと',
       bossHp: 2000, bossColor: '#60c040', beamColor: '#a0ff40',
-      triggerKills: 1200,
-      enemyMultiplier: 7.0,
-      spawnBurstBonus: 5,
+      triggerKills: 500,
+      enemyMultiplier: 4.5,
+      spawnBurstBonus: 3,
       transformUnlock: 10,  // ビースト
       bossIntroLine: 'グオオオオ…セルマックとーと、[覚醒|かくせい]！！[全|すべ]てを[破壊|はかい]し[尽|つ]くす…！',
       bgPalette: { top: '#200000', mid: '#500810', bot: '#801830' },
@@ -1180,7 +1182,7 @@
   function spawnKiBlast() {
     const sp = 10;
     const isSaku = player.charId === 'saku';
-    const r = isSaku ? 17 : 11;
+    const r = isSaku ? 12 : 7;
     const dmg = player.atkDmg + Math.floor(player.transform * 0.6) + (isSaku ? 1 : 0);
     let shots;
     if (player.transform <= 2) shots = 1;
@@ -1190,7 +1192,7 @@
     else if (player.transform === 9) shots = 5;  // 身勝手（斜め4追加）
     else if (player.transform === 10) shots = 7; // ビースト（斜め4追加）
     else shots = player.transform - 1;
-    const spacing = isSaku ? 28 : 16;
+    const spacing = isSaku ? 22 : 12;
     // 直進の弾
     for (let i = 0; i < shots; i++) {
       const offset = (i - (shots - 1) / 2) * spacing;
