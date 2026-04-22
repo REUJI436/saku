@@ -530,8 +530,9 @@
       num: 5, name: '[界王神界|かいおうしんかい]',
       bossType: 'buu', bossName: '[魔神|まじん]とーと',
       bossHp: 180, bossColor: '#ff80b0', beamColor: '#ffb0d8',
-      triggerKills: 250,           // ラスト：長めに（プレイヤー強くなってる分）
-      enemyMultiplier: 1.5,        // ラスト：敵の数 1.5倍
+      triggerKills: 350,           // ラスト：ボリュームたっぷり
+      enemyMultiplier: 2.0,        // ラスト：敵の数 2倍
+      spawnBurstBonus: 1,          // 同時スポーン数 +1
       transformUnlock: 4,
       bossIntroLine: 'ブーブブゥー！ボクは[魔神|まじん]とーと！[地球|ちきゅう]も[宇宙|うちゅう]もぜーんぶ、[僕|ぼく]のお[菓子|かし]にしちゃうよ！',
       // 界王神界：ピンク空と黄金の雲、神秘的な紫
@@ -850,7 +851,7 @@
         waveState.inWave = true;
         const w = WAVES[Math.min(waveState.waveIdx, WAVES.length - 1)];
         waveState.currentWave = { ...w };
-        // ステージ固有の敵数倍率を適用
+        // ステージ固有の敵数倍率・同時スポーン数ボーナスを適用
         const stg = STAGES_CONFIG[currentStageIdx];
         const mult = (stg && stg.enemyMultiplier) || 1;
         if (mult !== 1) {
@@ -859,6 +860,9 @@
               waveState.currentWave[k] = Math.ceil(waveState.currentWave[k] * mult);
             }
           }
+        }
+        if (stg && stg.spawnBurstBonus) {
+          waveState.currentWave.spawnBurst = (waveState.currentWave.spawnBurst || 1) + stg.spawnBurstBonus;
         }
         waveState.spawnTimer = w.spawnInterval;
         // ウェーブバナー（演出）
