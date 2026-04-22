@@ -3122,15 +3122,16 @@
       ctx.fillText(txt, W - 12, 72);
       ctx.restore();
     }
-    // 変身状態
+    // 変身状態（コンボの下）
     if (player.transform >= 1) {
       ctx.textAlign = 'right';
       ctx.font = 'bold 13px sans-serif';
       ctx.lineWidth = 3; ctx.strokeStyle = '#000';
       const label = TRANSFORM_NAMES[player.transform];
-      ctx.strokeText(label, W - 12, 50);
+      const ty = (comboCount >= 3) ? 94 : 72;  // コンボ表示中は下に、なければコンボ位置に
+      ctx.strokeText(label, W - 12, ty);
       ctx.fillStyle = auraColorFor(player.transform);
-      ctx.fillText(label, W - 12, 50);
+      ctx.fillText(label, W - 12, ty);
     }
     ctx.restore();
 
