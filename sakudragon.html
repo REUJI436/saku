@@ -81,7 +81,7 @@
   // hudStats 削除（HUDはCanvas内で描画）
 
   // ====== ゲーム状態 ======
-  const STATE = { TITLE: 'title', CHAR_SELECT: 'charSelect', PLAYING: 'playing', DEAD: 'dead', STAGE_CLEAR: 'stageClear', CLEARED: 'cleared', GAMEOVER: 'gameover' };
+  const STATE = { TITLE: 'title', CHAR_SELECT: 'charSelect', BOSS_INTRO: 'bossIntro', PLAYING: 'playing', DEAD: 'dead', STAGE_CLEAR: 'stageClear', CLEARED: 'cleared', GAMEOVER: 'gameover' };
   let state = STATE.TITLE;
   let stateTimer = 0;
 
@@ -125,6 +125,8 @@
       else if (e.code === 'Space' || e.code === 'Enter') startGame();
     } else if (state === STATE.GAMEOVER) {
       if (e.code === 'Space' || e.code === 'Enter') state = STATE.TITLE;
+    } else if (state === STATE.BOSS_INTRO) {
+      if ((e.code === 'Space' || e.code === 'Enter') && bossIntroAnim > 20) beginStagePlay();
     } else if (state === STATE.CLEARED) {
       if ((e.code === 'Space' || e.code === 'Enter') && stateTimer > 120) {
         clearSave();
@@ -289,6 +291,7 @@
       return;
     }
     if (state === STATE.GAMEOVER) { state = STATE.TITLE; return; }
+    if (state === STATE.BOSS_INTRO && bossIntroAnim > 20) { beginStagePlay(); return; }
     if (state === STATE.CLEARED) {
       // エンディング：序盤は読ませる（最低2秒待ち）
       if (stateTimer > 120) {
@@ -464,6 +467,7 @@
       bossHp: 55, bossColor: '#68b868', beamColor: '#a0f080',
       triggerKills: 60,
       transformUnlock: 0,
+      bossIntroLine: 'フッ…[吾輩|わがはい]こそピッコロとーと。この[星|ほし]を[支配|しはい]するのは[我|われ]だ！',
       // 地球：青空と緑の地平線
       bgPalette: { top: '#88c8f0', mid: '#50a8e0', bot: '#3a7a40' },
       bgStyle: 'earth',
@@ -475,6 +479,7 @@
       bossHp: 75, bossColor: '#d0a080', beamColor: '#ff80ff',
       triggerKills: 80,
       transformUnlock: 1,
+      bossIntroLine: 'フハハハ！[我|われ]こそ[誇|ほこ]り[高|たか]きサイヤ[人|じん]の[王子|おうじ]、ベジとーと。この[星|ほし]…[滅|ほろ]ぼさせてもらうぞ！',
       // 荒野：茜空と砂塵
       bgPalette: { top: '#e8a050', mid: '#c87030', bot: '#8a5028' },
       bgStyle: 'wasteland',
@@ -491,6 +496,7 @@
       bossHp: 100, bossColor: '#e8e8f8', beamColor: '#c080ff',
       triggerKills: 100,
       transformUnlock: 2,
+      bossIntroLine: 'ウフフ…[私|わたくし]はフリーザとーと。[宇宙|うちゅう]の[帝王|ていおう]。このナメック[星|せい]のドラゴンボールで[永遠|えいえん]の[命|いのち]を[頂戴|ちょうだい]しましょう',
       // ナメック星：緑の空と青い水
       bgPalette: { top: '#a0e060', mid: '#70c060', bot: '#3088a8' },
       bgStyle: 'namek',
@@ -508,6 +514,7 @@
       bossHp: 130, bossColor: '#80b060', beamColor: '#60ffa0',
       triggerKills: 120,
       transformUnlock: 3,
+      bossIntroLine: 'フフフ…[私|わたくし]こそ[完全体|かんぜんたい]セルとーと。[最強|さいきょう]の[存在|そんざい]だ。[君|きみ]たちを[倒|たお]して[歴史|れきし]に[名|な]を[刻|きざ]もう',
       // 地球（夕焼け）：オレンジ→紫
       bgPalette: { top: '#ff9060', mid: '#d04080', bot: '#3a2850' },
       bgStyle: 'earth-sunset',
@@ -525,6 +532,7 @@
       bossHp: 180, bossColor: '#ff80b0', beamColor: '#ffb0d8',
       triggerKills: 150,
       transformUnlock: 4,
+      bossIntroLine: 'ブーブブゥー！ボクは[魔神|まじん]とーと！[地球|ちきゅう]も[宇宙|うちゅう]もぜーんぶ、[僕|ぼく]のお[菓子|かし]にしちゃうよ！',
       // 界王神界：ピンク空と黄金の雲、神秘的な紫
       bgPalette: { top: '#ffccea', mid: '#ffd890', bot: '#c890d8' },
       bgStyle: 'kaio',
@@ -723,36 +731,44 @@
   function startStage() {
     const stg = STAGES_CONFIG[currentStageIdx];
     enemies = []; projectiles = []; enemyProjectiles = []; particles = []; popups = [];
-    boss = null; banner = null;
+    boss = null; banner = null; bannerSub = null;
     comboCount = 0; comboTimer = 0;
-    // ステージ開始時にオートセーブ
     saveGame();
     // プレイヤー位置リセット（HPは引継ぎ）
     player.x = W/2; player.y = H - 100;
     player.vx = 0; player.vy = 0;
     player.invuln = 60;
-    player.kiGauge = Math.min(player.kiGaugeMax, player.kiGauge + 30);  // 新ステージで少し回復
+    player.kiGauge = Math.min(player.kiGaugeMax, player.kiGauge + 30);
     if (currentStageIdx > 0) {
-      // ステージ間で HP を最大値まで 60% 回復
       const healAmt = Math.ceil(player.maxHp * 0.6);
       player.hp = Math.min(player.maxHp, player.hp + healAmt);
     }
     waveState = { waveIdx: 0, spawnTimer: 30, inWave: false, bossSpawned: false, bossTriggerKills: stg.triggerKills };
-    player.kills = 0;  // ステージごとキルカウントリセット
+    player.kills = 0;
+    currentBgPalette = stg.bgPalette;
+    // ボス入場カットイン → ゲームプレイ開始の流れ
+    if (stg.bossIntroLine) {
+      state = STATE.BOSS_INTRO;
+      stateTimer = 0;
+      bossIntroAnim = 0;
+      sfxBoss();
+    } else {
+      beginStagePlay();
+    }
+  }
+
+  function beginStagePlay() {
+    const stg = STAGES_CONFIG[currentStageIdx];
     state = STATE.PLAYING;
     stateTimer = 0;
-    // 背景パレット更新
-    currentBgPalette = stg.bgPalette;
-    // イントロバナー
     banner = { text: `STAGE ${stg.num} - ${stg.name}`, color: '#ffee40', life: 160, maxLife: 160 };
     beep(660, 0.1, 'square', 0.14);
     setTimeout(() => beep(990, 0.12, 'square', 0.1), 120);
     // 変身イベント（ステージ2以降、未到達の変身を強制解放）
     if (stg.transformUnlock > 0 && player.transform < stg.transformUnlock) {
-      // 前置きセリフを順番に表示（ゆっくり読める時間に調整）
       const lines = stg.preludeLines || [];
-      const lineDur = 2400;  // 1行2.4秒
-      let t = 2000;  // ステージ名バナー後の間
+      const lineDur = 2400;
+      let t = 2000;
       lines.forEach((line, i) => {
         setTimeout(() => {
           if (state !== STATE.PLAYING) return;
@@ -761,7 +777,6 @@
         }, t);
         t += lineDur;
       });
-      // 最後のセリフ後にワンテンポ置いて変身
       setTimeout(() => {
         if (state === STATE.PLAYING) {
           triggerScriptedTransform(stg.transformUnlock, stg.eventText, stg.eventFlavor);
@@ -769,6 +784,7 @@
       }, t + 500);
     }
   }
+  let bossIntroAnim = 0;
 
   function triggerScriptedTransform(toLevel, eventText, flavor) {
     player.transform = toLevel;
@@ -1757,6 +1773,7 @@
 
     if (state === STATE.TITLE) drawTitle();
     else if (state === STATE.CHAR_SELECT) drawCharSelect();
+    else if (state === STATE.BOSS_INTRO) drawBossIntro();
     else drawGame();
 
     // 画面フラッシュ（ボス撃破などの演出）
@@ -2200,6 +2217,80 @@
       ctx.fill();
     }
     ctx.restore();
+  }
+
+  // ====== ボス入場カットイン ======
+  function drawBossIntro() {
+    bossIntroAnim++;
+    const stg = STAGES_CONFIG[currentStageIdx];
+    // 背景：暗い紫にステージ背景を暗く重ねる
+    ctx.fillStyle = '#050014';
+    ctx.fillRect(0, 0, W, H);
+    // ステージカラーのフェードグラデ
+    const pal = stg.bgPalette || { top: '#040012', mid: '#100828', bot: '#20104a' };
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, pal.top);
+    bg.addColorStop(1, pal.bot);
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    // 放射状スポットライト
+    const spotG = ctx.createRadialGradient(W/2, H/2 - 60, 50, W/2, H/2, 480);
+    spotG.addColorStop(0, 'rgba(255,240,180,0.25)');
+    spotG.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = spotG;
+    ctx.fillRect(0, 0, W, H);
+
+    // ステージ名（上）
+    drawRubyText(`STAGE ${stg.num} - ${stg.name}`, W/2, 60, { size: 26, fill: '#ffee80', strokeW: 5, family: 'serif' });
+
+    // ボスのポートレート（中央・大きめ）
+    const bcx = W / 2;
+    const bcy = 230;
+    ctx.save();
+    ctx.translate(bcx, bcy);
+    ctx.scale(3.2, 3.2);
+    const mockBoss = {
+      x: 0, y: 0, r: 28,
+      hp: 100, maxHp: 100,
+      color: stg.bossColor, beamColor: stg.beamColor,
+      anim: bossIntroAnim * 0.08,
+      hurtTimer: 0,
+    };
+    const drawer = BOSS_DRAWERS[stg.bossType] || BOSS_DRAWERS.piccolo;
+    // 影だけ別にキャンセル（translateで済ます）
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath(); ctx.ellipse(0, 31, 24, 5, 0, 0, Math.PI*2); ctx.fill();
+    drawer(0, 0, mockBoss);
+    drawTotoGlasses(0, -13);
+    ctx.restore();
+
+    // ボス名タブ
+    const nameBoxW = 320, nameBoxH = 36;
+    const nbx = W/2 - nameBoxW/2, nby = 360;
+    ctx.fillStyle = 'rgba(60,0,20,0.85)';
+    ctx.fillRect(nbx, nby, nameBoxW, nameBoxH);
+    ctx.strokeStyle = '#c0a070';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(nbx, nby, nameBoxW, nameBoxH);
+    drawRubyText(stg.bossName, W/2, nby + 24, { size: 22, fill: '#ffaa60', strokeW: 4, family: 'serif' });
+
+    // セリフボックス
+    const boxY = 410;
+    const boxH = 80;
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillRect(24, boxY, W - 48, boxH);
+    ctx.strokeStyle = 'rgba(200,230,255,0.45)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(24, boxY, W - 48, boxH);
+    // セリフ本文（複数行対応）
+    drawRubyText(stg.bossIntroLine, W/2, boxY + 48, { size: 20, fill: '#ffffff', strokeW: 4, family: 'serif' });
+
+    // 「タップで進む」点滅
+    if (bossIntroAnim > 40 && Math.floor(bossIntroAnim / 30) % 2 === 0) {
+      drawRubyText('タップ / Space キーで[進|すす]む', W/2, H - 18, { size: 14, fill: '#ffcc80', strokeW: 3 });
+    }
   }
 
   // ====== ステージ切替フェード ======
