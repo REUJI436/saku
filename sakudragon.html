@@ -3710,10 +3710,18 @@
     }
   }
 
+  // 必殺技ボタンの表示・非表示
+  function updateChargeBtnVisibility() {
+    // プレイ中のみ表示（タイトル/キャラ選択/ボス入場/死亡/クリア中は非表示）
+    const visible = (state === STATE.PLAYING);
+    chargeBtn.style.display = visible ? 'flex' : 'none';
+  }
+
   // メインループ
   function loop() {
     update();
     draw();
+    updateChargeBtnVisibility();
     requestAnimationFrame(loop);
   }
   loop();
