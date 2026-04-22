@@ -2147,58 +2147,158 @@
 
   // ====== タイトル画面 ======
   function drawTitle() {
-    // 背景：深い宇宙
+    // 背景：ブロリー風の紺色グラデ
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#200818');
-    g.addColorStop(1, '#080020');
+    g.addColorStop(0, '#0a1438');
+    g.addColorStop(0.5, '#1a2878');
+    g.addColorStop(1, '#060a1c');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
+
     // 星
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 80; i++) {
       const x = (i * 197) % W;
-      const y = (i * 131 + 17) % H;
+      const y = (i * 131 + 17) % (H * 0.6);
       const b = 0.3 + 0.6 * (Math.sin(stateTimer * 0.05 + i) * 0.5 + 0.5);
       ctx.fillStyle = `rgba(255,255,255,${b})`;
       ctx.fillRect(x, y, i % 4 === 0 ? 2 : 1, i % 4 === 0 ? 2 : 1);
     }
-    // 炎のオーラ（タイトル裏）
-    const tcx = W/2, tcy = H/2 - 40;
-    for (let i = 0; i < 5; i++) {
-      const r = 240 + Math.sin(stateTimer * 0.05 + i) * 20;
-      const g2 = ctx.createRadialGradient(tcx, tcy, 30, tcx, tcy, r);
-      g2.addColorStop(0, 'rgba(255,200,40,0.18)');
-      g2.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g2;
-      ctx.beginPath(); ctx.arc(tcx, tcy, r, 0, Math.PI * 2); ctx.fill();
+
+    // 下から立ち昇る緑・黄のオーラ
+    for (let i = 0; i < 6; i++) {
+      const ax = W/2 + Math.sin(stateTimer * 0.04 + i * 1.3) * 80;
+      const ay = H + 40;
+      const ar = 320 + Math.sin(stateTimer * 0.06 + i) * 30;
+      const ag = ctx.createRadialGradient(ax, ay, 40, ax, ay, ar);
+      ag.addColorStop(0, 'rgba(200,255,120,0.45)');
+      ag.addColorStop(0.4, 'rgba(80,200,60,0.3)');
+      ag.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = ag;
+      ctx.beginPath(); ctx.arc(ax, ay, ar, 0, Math.PI * 2); ctx.fill();
+    }
+    // 立ち昇る炎の線
+    for (let i = 0; i < 14; i++) {
+      const bx = 80 + i * 60 + Math.sin(stateTimer * 0.1 + i) * 10;
+      const by = H - (stateTimer * 3 + i * 40) % (H + 200);
+      const h = 60 + (i % 3) * 20;
+      const fg = ctx.createLinearGradient(bx, by, bx, by - h);
+      fg.addColorStop(0, 'rgba(180,255,80,0.5)');
+      fg.addColorStop(1, 'rgba(255,255,180,0)');
+      ctx.fillStyle = fg;
+      ctx.fillRect(bx - 2, by - h, 4, h);
     }
 
-    // タイトル「スーパードラゴンボール」
+    // 背景の稲妻（ブルーの気）
+    ctx.save();
+    ctx.strokeStyle = `rgba(120,180,255,${0.3 + 0.2 * Math.sin(stateTimer * 0.2)})`;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      const seed = Math.floor(stateTimer / 20) + i;
+      const sx = ((seed * 73) % W);
+      const sy = ((seed * 41) % 100) + 30;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      let cx = sx, cy = sy;
+      for (let j = 0; j < 5; j++) {
+        cx += (((seed + j) * 37) % 40) - 20;
+        cy += 20 + ((seed + j) * 13) % 20;
+        ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // キャラクター：さく（左）とくるみ（右）をSSJブルーで配置
+    const sakuChar = { ...CHARACTERS[0], hairCol: '#3078ff' };
+    const kurumiChar = { ...CHARACTERS[1], hairCol: '#3078ff' };
+    // オーラ（青）
+    const auraBlue = (cx, cy) => {
+      for (let k = 0; k < 4; k++) {
+        const rr = 90 + Math.sin(stateTimer * 0.08 + k) * 12;
+        const ag = ctx.createRadialGradient(cx, cy, 20, cx, cy, rr);
+        ag.addColorStop(0, 'rgba(120,180,255,0.55)');
+        ag.addColorStop(0.6, 'rgba(60,120,255,0.25)');
+        ag.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = ag;
+        ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2); ctx.fill();
+      }
+    };
+    auraBlue(220, 200);
+    auraBlue(740, 200);
+    drawCharPortrait(sakuChar, 220, 210, 4.2);
+    drawCharPortrait(kurumiChar, 740, 210, 4.2);
+
+    // 左端の縦書きキャッチコピー「最大の敵、咲玖！」
     ctx.save();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 46px serif';
-    ctx.lineWidth = 7; ctx.strokeStyle = '#000';
-    ctx.strokeText('スーパードラゴンボール', tcx, tcy - 40);
-    const g3 = ctx.createLinearGradient(0, tcy - 60, 0, tcy - 20);
+    const catchChars = ['最','大','の','敵','、','咲','玖','！'];
+    const catchRuby = { '最':'さい','大':'だい','敵':'てき','咲':'さ','玖':'く' };
+    const cyStart = 50;
+    for (let i = 0; i < catchChars.length; i++) {
+      const ch = catchChars[i];
+      const cx = 28;
+      const cy = cyStart + i * 44;
+      ctx.font = 'bold 34px serif';
+      ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+      ctx.strokeText(ch, cx, cy);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(ch, cx, cy);
+      if (catchRuby[ch]) {
+        ctx.font = 'bold 11px sans-serif';
+        ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+        ctx.strokeText(catchRuby[ch], cx + 20, cy);
+        ctx.fillStyle = '#ffdd60';
+        ctx.fillText(catchRuby[ch], cx + 20, cy);
+      }
+    }
+    ctx.restore();
+
+    // タイトルロゴ（中央）
+    const tcx = W/2 + 20, tcy = 260;
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+
+    // 上：ドラゴンボール「超」風
+    ctx.font = 'bold 36px serif';
+    ctx.lineWidth = 6; ctx.strokeStyle = '#000';
+    ctx.strokeText('スーパードラゴンボール', tcx, tcy - 30);
+    const g3 = ctx.createLinearGradient(0, tcy - 50, 0, tcy - 10);
     g3.addColorStop(0, '#ffee60');
-    g3.addColorStop(1, '#ff8020');
+    g3.addColorStop(1, '#ff9020');
     ctx.fillStyle = g3;
-    ctx.fillText('スーパードラゴンボール', tcx, tcy - 40);
-    // サブタイトル「咲玖（さく）」
-    ctx.font = 'bold 80px serif';
+    ctx.fillText('スーパードラゴンボール', tcx, tcy - 30);
+
+    // 下：「咲玖」（赤字）
+    ctx.font = 'bold 72px serif';
     ctx.lineWidth = 10; ctx.strokeStyle = '#000';
-    ctx.strokeText('咲玖', tcx, tcy + 40);
-    const g4 = ctx.createLinearGradient(0, tcy + 10, 0, tcy + 80);
-    g4.addColorStop(0, '#ff6020');
-    g4.addColorStop(0.5, '#ffc030');
-    g4.addColorStop(1, '#ff3000');
+    ctx.strokeText('咲玖', tcx, tcy + 30);
+    const g4 = ctx.createLinearGradient(0, tcy, 0, tcy + 70);
+    g4.addColorStop(0, '#ff4020');
+    g4.addColorStop(0.5, '#ff6030');
+    g4.addColorStop(1, '#c01810');
     ctx.fillStyle = g4;
-    ctx.fillText('咲玖', tcx, tcy + 40);
-    // ふりがな
+    ctx.fillText('咲玖', tcx, tcy + 30);
+    // ふりがな「さく」
     ctx.font = 'bold 18px sans-serif';
     ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-    ctx.strokeText('さく', tcx, tcy + 94);
+    ctx.strokeText('さく', tcx, tcy + 78);
     ctx.fillStyle = '#ffffff';
-    ctx.fillText('さく', tcx, tcy + 94);
+    ctx.fillText('さく', tcx, tcy + 78);
+
+    // 赤い星（タイトル上にアクセント）
+    const starX = tcx - 165, starY = tcy - 30;
+    ctx.fillStyle = '#d02020';
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const ang = -Math.PI/2 + i * Math.PI / 5;
+      const rr = i % 2 === 0 ? 14 : 6;
+      const px = starX + Math.cos(ang) * rr;
+      const py = starY + Math.sin(ang) * rr;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+    ctx.fill(); ctx.stroke();
     ctx.restore();
 
     // メニュー：はじめから / つづきから / ステージ選択
