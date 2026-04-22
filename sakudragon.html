@@ -17,9 +17,9 @@
     background: #000;
   }
   canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
-  #hud { position: absolute; top: 6px; left: 6px; right: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; pointer-events: none; font-size: 13px; }
-  #hud .box { background: rgba(0,0,0,0.55); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; }
-  #portalBtn { background: linear-gradient(to bottom, #806040, #403020); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; border: 1px solid #c0a070; text-decoration: none; pointer-events: auto; }
+  #hud { position: absolute; top: 4px; left: 4px; display: flex; gap: 6px; pointer-events: none; font-size: 13px; z-index: 10; }
+  #portalBtn { background: rgba(80,60,40,0.75); color: #fff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 1px solid #c0a070; text-decoration: none; pointer-events: auto; opacity: 0.7; }
+  #portalBtn:hover { opacity: 1; }
   #portalBtn:active { transform: translateY(1px); opacity: 0.85; }
 
   /* タッチ／マウス共通の操作UI（PCでも表示） */
@@ -309,6 +309,68 @@
     if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   }
+  // ====== ふりがな付きテキスト描画 ======
+  // 書式: '[漢字|かんじ]' が漢字＋ふりがなになる。通常の文字はそのまま。
+  // 例: '覚醒…[界王拳|かいおうけん]！'
+  function drawRubyText(text, x, y, opts) {
+    opts = opts || {};
+    const size = opts.size || 24;
+    const rubySize = opts.rubySize || Math.max(9, Math.floor(size * 0.4));
+    const align = opts.align || 'center';
+    const fill = opts.fill || '#fff';
+    const stroke = opts.stroke || '#000';
+    const strokeW = opts.strokeW || Math.max(2, Math.floor(size / 7));
+    const mainFont = `${opts.bold !== false ? 'bold ' : ''}${size}px ${opts.family || 'sans-serif'}`;
+    const rubyFont = `bold ${rubySize}px sans-serif`;
+
+    // パース：[kanji|furi] を検出
+    const segments = [];
+    const regex = /\[([^\|\]]+)\|([^\]]+)\]/g;
+    let lastIdx = 0, m;
+    while ((m = regex.exec(text)) !== null) {
+      if (m.index > lastIdx) segments.push({ t: 'plain', s: text.slice(lastIdx, m.index) });
+      segments.push({ t: 'ruby', s: m[1], r: m[2] });
+      lastIdx = m.index + m[0].length;
+    }
+    if (lastIdx < text.length) segments.push({ t: 'plain', s: text.slice(lastIdx) });
+
+    // 合計幅測定
+    ctx.save();
+    ctx.font = mainFont;
+    let totalW = 0;
+    for (const s of segments) totalW += ctx.measureText(s.s).width;
+
+    // 開始X
+    let curX;
+    if (align === 'center') curX = x - totalW / 2;
+    else if (align === 'right') curX = x - totalW;
+    else curX = x;
+
+    // 描画
+    ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round';
+    for (const s of segments) {
+      ctx.font = mainFont;
+      const w = ctx.measureText(s.s).width;
+      ctx.textAlign = 'left';
+      ctx.lineWidth = strokeW;
+      ctx.strokeStyle = stroke;
+      ctx.strokeText(s.s, curX, y);
+      ctx.fillStyle = fill;
+      ctx.fillText(s.s, curX, y);
+      if (s.t === 'ruby') {
+        ctx.font = rubyFont;
+        ctx.textAlign = 'center';
+        ctx.lineWidth = Math.max(1, strokeW - 1);
+        ctx.strokeText(s.r, curX + w / 2, y - size * 0.95);
+        ctx.fillStyle = fill;
+        ctx.fillText(s.r, curX + w / 2, y - size * 0.95);
+      }
+      curX += w;
+    }
+    ctx.restore();
+  }
+
   function beep(freq, dur, type, vol) {
     try {
       ensureAudio(); if (!audioCtx) return;
@@ -374,7 +436,14 @@
   let selectIdx = 0;
 
   // ====== プレイヤー ======
-  const TRANSFORM_NAMES = ['ノーマル', '界王拳', 'スーパーサイヤ人', '超サイヤ人2', '超サイヤ人3', '超サイヤ人4'];
+  const TRANSFORM_NAMES = [
+    'ノーマル',
+    '[界王拳|かいおうけん]',
+    'スーパーサイヤ[人|じん]',
+    '[超|ちょう]サイヤ[人|じん]2',
+    '[超|ちょう]サイヤ[人|じん]3',
+    '[超|ちょう]サイヤ[人|じん]4',
+  ];
   const TRANSFORM_MAX = 5;
   // 各ティアに必要な power（累積ではなく各ティアごとリセット）
   const TRANSFORM_COST = [25, 35, 50, 65, 80];
@@ -382,7 +451,7 @@
   // ====== ステージ構成 ======
   const STAGES_CONFIG = [
     {
-      num: 1, name: '地球',
+      num: 1, name: '[地球|ちきゅう]',
       bossType: 'piccolo', bossName: 'ピッコロとーと',
       bossHp: 55, bossColor: '#68b868', beamColor: '#a0f080',
       triggerKills: 60,
@@ -393,7 +462,7 @@
       eventText: 'ピッコロとーと、待ち構える！',
     },
     {
-      num: 2, name: '荒野',
+      num: 2, name: '[荒野|こうや]',
       bossType: 'vegeta', bossName: 'ベジとーと',
       bossHp: 75, bossColor: '#d0a080', beamColor: '#ff80ff',
       triggerKills: 80,
@@ -402,14 +471,14 @@
       bgPalette: { top: '#e8a050', mid: '#c87030', bot: '#8a5028' },
       bgStyle: 'wasteland',
       preludeLines: [
-        'ベジとーと：「フン…この程度か」',
-        'さく：「くっ…もっと力が…！」',
+        'ベジとーと：「フン…この[程度|ていど]か」',
+        'さく：「くっ…もっと[力|ちから]が…！」',
       ],
-      eventText: '覚醒…界王拳！',
-      eventFlavor: '闘いの熱で さくの内なる力が目覚める',
+      eventText: '[覚醒|かくせい]…[界王拳|かいおうけん]！',
+      eventFlavor: '[闘|たたか]いの[熱|ねつ]で さくの[内|うち]なる[力|ちから]が[目覚|めざ]める',
     },
     {
-      num: 3, name: 'ナメック星',
+      num: 3, name: 'ナメック[星|せい]',
       bossType: 'freezer', bossName: 'フリーザとーと',
       bossHp: 100, bossColor: '#e8e8f8', beamColor: '#c080ff',
       triggerKills: 100,
@@ -418,15 +487,15 @@
       bgPalette: { top: '#a0e060', mid: '#70c060', bot: '#3088a8' },
       bgStyle: 'namek',
       preludeLines: [
-        'フリーザとーと：「クソムシどもが…消えろ」',
-        'さく：「…許さない…！」',
-        'さく：「許さないぞォォォッ！！」',
+        'フリーザとーと：「クソムシどもが…[消|き]えろ」',
+        'さく：「…[許|ゆる]さない…！」',
+        'さく：「[許|ゆる]さないぞォォォッ！！」',
       ],
-      eventText: '怒り爆発…スーパーサイヤ人！',
-      eventFlavor: '仲間の危機が 伝説の力を呼び覚ます',
+      eventText: '[怒|いか]り[爆発|ばくはつ]…スーパーサイヤ[人|じん]！',
+      eventFlavor: '[仲間|なかま]の[危機|きき]が [伝説|でんせつ]の[力|ちから]を[呼|よ]び[覚|さ]ます',
     },
     {
-      num: 4, name: '地球（夕景）',
+      num: 4, name: '[地球|ちきゅう]（[夕景|ゆうけい]）',
       bossType: 'cell', bossName: 'セルとーと',
       bossHp: 130, bossColor: '#80b060', beamColor: '#60ffa0',
       triggerKills: 120,
@@ -435,16 +504,16 @@
       bgPalette: { top: '#ff9060', mid: '#d04080', bot: '#3a2850' },
       bgStyle: 'earth-sunset',
       preludeLines: [
-        'セルとーと：「さあ…完全体を見せてやろう」',
-        'さく：「（ぐっ…押されてる…）」',
-        'さく：「…限界？そんなもの、越えてやる…！」',
+        'セルとーと：「さあ…[完全体|かんぜんたい]を[見|み]せてやろう」',
+        'さく：「（ぐっ…[押|お]されてる…）」',
+        'さく：「…[限界|げんかい]？そんなもの、[越|こ]えてやる…！」',
       ],
-      eventText: '超越…超サイヤ人2！',
-      eventFlavor: '雷鳴とともに 新たな境地へ',
+      eventText: '[超越|ちょうえつ]…[超|ちょう]サイヤ[人|じん]2！',
+      eventFlavor: '[雷鳴|らいめい]とともに [新|あら]たな[境地|きょうち]へ',
     },
     {
-      num: 5, name: '界王神界',
-      bossType: 'buu', bossName: '魔神とーと',
+      num: 5, name: '[界王神界|かいおうしんかい]',
+      bossType: 'buu', bossName: '[魔神|まじん]とーと',
       bossHp: 180, bossColor: '#ff80b0', beamColor: '#ffb0d8',
       triggerKills: 150,
       transformUnlock: 4,
@@ -452,12 +521,12 @@
       bgPalette: { top: '#ffccea', mid: '#ffd890', bot: '#c890d8' },
       bgStyle: 'kaio',
       preludeLines: [
-        '魔神とーと：「フォッフォッフォ…オイシソウ…」',
-        'さく：「……もう失うものは、何もない」',
-        'さく：「この一撃に…全てを懸ける！！」',
+        '[魔神|まじん]とーと：「フォッフォッフォ…オイシソウ…」',
+        'さく：「……もう[失|うしな]うものは、[何|なに]もない」',
+        'さく：「この[一撃|いちげき]に…[全|すべ]てを[懸|か]ける！！」',
       ],
-      eventText: '限界突破…超サイヤ人3！',
-      eventFlavor: '宇宙を揺るがす 究極の気',
+      eventText: '[限界突破|げんかいとっぱ]…[超|ちょう]サイヤ[人|じん]3！',
+      eventFlavor: '[宇宙|うちゅう]を[揺|ゆ]るがす [究極|きゅうきょく]の[気|き]',
     },
   ];
   let currentStageIdx = 0;
@@ -844,14 +913,17 @@
   function spawnKiBlast() {
     // 縦スクロール：真上に直進（全弾まっすぐ）
     const sp = 10;
-    const dmg = player.atkDmg + Math.floor(player.transform * 0.6);
-    const r = 5;
+    // さくは大きくて火力高い、くるみは小さくて速い
+    const isSaku = player.charId === 'saku';
+    const r = isSaku ? 11 : 5;
+    const dmg = player.atkDmg + Math.floor(player.transform * 0.6) + (isSaku ? 1 : 0);
     // 弾数：ノーマル〜SSJ は 1発、SSJ2 で 2発、SSJ3 で 3発、SSJ4 で 4発
     // transform: 0=ノーマル, 1=Kaioken, 2=SSJ, 3=SSJ2, 4=SSJ3, 5=SSJ4
     let shots;
     if (player.transform <= 2) shots = 1;
     else shots = player.transform - 1;
-    const spacing = 11;
+    // さくは弾が大きいので間隔も広げる
+    const spacing = isSaku ? 20 : 11;
     for (let i = 0; i < shots; i++) {
       const offset = (i - (shots - 1) / 2) * spacing;
       projectiles.push({
@@ -1995,26 +2067,21 @@
 
     // セリフ 順番に表示
     const lines = [
-      { start: 40,  text: 'さくとくるみの活躍によって、',  color: '#ffffff' },
-      { start: 180, text: '世界に平和が訪れた…',         color: '#ffffff' },
-      { start: 340, text: '――しかし、戦いは続く。',      color: '#ffccaa' },
-      { start: 500, text: 'まだ見ぬ強敵を求めて――',     color: '#ff9060' },
+      { start: 40,  text: 'さくとくるみの[活躍|かつやく]によって、',  color: '#ffffff' },
+      { start: 180, text: '[世界|せかい]に[平和|へいわ]が[訪|おとず]れた…', color: '#ffffff' },
+      { start: 340, text: '――しかし、[戦|たたか]いは[続|つづ]く。',    color: '#ffccaa' },
+      { start: 500, text: 'まだ[見|み]ぬ[強敵|きょうてき]を[求|もと]めて――', color: '#ff9060' },
     ];
-    let textY = 90;
+    let textY = 96;
     for (const l of lines) {
       if (t < l.start) continue;
       const age = t - l.start;
       const alpha = Math.min(1, age / 40);
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 24px serif';
-      ctx.lineWidth = 5; ctx.strokeStyle = '#000';
-      ctx.strokeText(l.text, W/2, textY);
-      ctx.fillStyle = l.color;
-      ctx.fillText(l.text, W/2, textY);
+      drawRubyText(l.text, W/2, textY, { size: 24, fill: l.color, strokeW: 5, family: 'serif' });
       ctx.restore();
-      textY += 36;
+      textY += 42;
     }
 
     // To Be Continued...（最後のセリフの後）
@@ -2095,10 +2162,10 @@
       ctx.strokeText(`SCORE: ${totalScore.toLocaleString()}`, W/2, H/2 + 40);
       ctx.fillText(`SCORE: ${totalScore.toLocaleString()}`, W/2, H/2 + 40);
       // 次のステージ予告
-      ctx.fillStyle = '#a0c0ff';
-      ctx.font = '16px sans-serif';
       const nextStg = STAGES_CONFIG[currentStageIdx + 1];
-      if (nextStg) ctx.fillText(`次：${nextStg.name}（${nextStg.bossName}）`, W/2, H/2 + 75);
+      if (nextStg) {
+        drawRubyText(`[次|つぎ]：${nextStg.name}（${nextStg.bossName}）`, W/2, H/2 + 80, { size: 16, fill: '#a0c0ff', strokeW: 3 });
+      }
       ctx.restore();
     } else if (state === STATE.CLEARED) {
       drawEndingScene();
@@ -3037,9 +3104,9 @@
   }
 
   function drawHUD() {
-    // プレイヤー HP バー（左上・ポータルボタンの下）
+    // プレイヤー HP バー（左上・ポータルボタンの下に充分余裕を取る）
     const hpW = 220, hpH = 14;
-    const hpX = 12, hpY = 52;
+    const hpX = 12, hpY = 80;
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(hpX, hpY, hpW, hpH);
@@ -3124,14 +3191,9 @@
     }
     // 変身状態（コンボの下）
     if (player.transform >= 1) {
-      ctx.textAlign = 'right';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.lineWidth = 3; ctx.strokeStyle = '#000';
       const label = TRANSFORM_NAMES[player.transform];
-      const ty = (comboCount >= 3) ? 94 : 72;  // コンボ表示中は下に、なければコンボ位置に
-      ctx.strokeText(label, W - 12, ty);
-      ctx.fillStyle = auraColorFor(player.transform);
-      ctx.fillText(label, W - 12, ty);
+      const ty = (comboCount >= 3) ? 96 : 74;
+      drawRubyText(label, W - 12, ty, { size: 14, align: 'right', fill: auraColorFor(player.transform), strokeW: 3 });
     }
     ctx.restore();
 
@@ -3151,12 +3213,7 @@
       ctx.strokeStyle = '#ffa050';
       ctx.lineWidth = 2;
       ctx.strokeRect(bx, by, bw, 18);
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-      ctx.strokeText(boss.name, W/2, by + 13);
-      ctx.fillStyle = '#fff';
-      ctx.fillText(boss.name, W/2, by + 13);
+      drawRubyText(boss.name, W/2, by + 14, { size: 13, fill: '#fff', strokeW: 3 });
       ctx.restore();
     }
   }
@@ -3168,13 +3225,8 @@
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(0, H/2 - 40, W, 80);
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 34px serif';
-    ctx.lineWidth = 6; ctx.strokeStyle = '#000';
-    ctx.strokeText(banner.text, W/2, H/2);
-    ctx.fillStyle = banner.color || '#ffee40';
-    ctx.fillText(banner.text, W/2, H/2);
+    ctx.fillRect(0, H/2 - 44, W, 90);
+    drawRubyText(banner.text, W/2, H/2 + 5, { size: 34, fill: banner.color || '#ffee40', strokeW: 6, family: 'serif' });
     ctx.restore();
     banner.life--;
     if (banner.life <= 0) banner = null;
@@ -3184,12 +3236,7 @@
       const alpha2 = Math.min(1, t2 * 4, (bannerSub.life > bannerSub.maxLife - 15) ? (bannerSub.maxLife - bannerSub.life) / 15 : 1);
       ctx.save();
       ctx.globalAlpha = alpha2;
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.lineWidth = 4; ctx.strokeStyle = '#000';
-      ctx.strokeText(bannerSub.text, W/2, H/2 + 40);
-      ctx.fillStyle = bannerSub.color || '#fff';
-      ctx.fillText(bannerSub.text, W/2, H/2 + 40);
+      drawRubyText(bannerSub.text, W/2, H/2 + 48, { size: 18, fill: bannerSub.color || '#fff', strokeW: 4 });
       ctx.restore();
       bannerSub.life--;
       if (bannerSub.life <= 0) bannerSub = null;
