@@ -1157,23 +1157,7 @@
           boss.x += (Math.random() - 0.5) * 2.5;
           boss.y += (Math.random() - 0.5) * 1.5;
           if (boss.hp <= 0) {
-            boss.dead = true;
-            screenFlash = 1.0;  // 白フラッシュ
-            spawnExplosion(boss.x, boss.y, '#80ff80', 30);
-            const isLast = (currentStageIdx >= STAGES_CONFIG.length - 1);
-            banner = { text: (boss.name || 'とーと') + ' 撃破！', color: '#80ff80', life: 180, maxLife: 180 };
-            addShake(25);
-            sfxExplode();
-            if (isLast) {
-              state = STATE.CLEARED;
-              stateTimer = 0;
-            } else {
-              state = STATE.STAGE_CLEAR;
-              stateTimer = 0;
-              setTimeout(() => {
-                if (state === STATE.STAGE_CLEAR) nextStage();
-              }, 3000);
-            }
+            killBoss();
           }
         }
       }
@@ -1291,26 +1275,7 @@
             });
           }
           if (boss.hp <= 0) {
-            boss.dead = true;
-            spawnExplosion(boss.x, boss.y, boss.color || '#80ff80', 60);
-            const isLast = (currentStageIdx >= STAGES_CONFIG.length - 1);
-            banner = { text: (boss.name || 'とーと') + ' 撃破！', color: '#80ff80', life: 180, maxLife: 180 };
-            addShake(25);
-            sfxExplode();
-            if (isLast) {
-              // 最終ボス撃破 → 全クリア演出
-              state = STATE.CLEARED;
-              stateTimer = 0;
-            } else {
-              // 次ステージへ遷移（3秒後）
-              state = STATE.STAGE_CLEAR;
-              stateTimer = 0;
-              setTimeout(() => {
-                if (state === STATE.STAGE_CLEAR) {
-                  nextStage();
-                }
-              }, 3000);
-            }
+            killBoss();
           } else {
             addShake(5);
             sfxHit();
@@ -1367,7 +1332,8 @@
 
   // ====== ボス更新 ======
   function updateBoss() {
-    if (!boss || boss.dead) return;
+    if (!boss) return;
+    if (boss.dead) { updateBossDefeat(); return; }
     boss.anim += 0.1;
     if (boss.hurtTimer > 0) boss.hurtTimer--;
     const enraged = boss.hp / boss.maxHp < 0.4;
@@ -1445,6 +1411,72 @@
     const pd = Math.hypot(player.x - boss.x, player.y - boss.y);
     if (pd < boss.r + player.r - 4 && player.invuln === 0) {
       damagePlayer(boss.dmg);
+    }
+  }
+
+  // ====== ボス撃破演出（ロックマン風） ======
+  function killBoss() {
+    boss.dead = true;
+    boss.defeatTimer = 0;
+    boss.vanished = false;
+    banner = { text: (boss.name || 'とーと') + ' [撃破|げきは]！', color: '#80ff80', life: 220, maxLife: 220 };
+    addShake(20);
+    // 最初の小爆発
+    spawnExplosion(boss.x, boss.y, '#ffcc40', 14);
+    sfxExplode();
+    // 敵弾は全消滅
+    enemyProjectiles = [];
+  }
+
+  function updateBossDefeat() {
+    boss.defeatTimer++;
+    const t = boss.defeatTimer;
+    // 0〜80F：ボス周囲でランダムな小爆発が連鎖
+    if (t < 80 && t % 8 === 0) {
+      const ox = (Math.random() - 0.5) * boss.r * 2.8;
+      const oy = (Math.random() - 0.5) * boss.r * 2.2;
+      const cols = ['#ffcc40','#ff8020','#ffee80','#ffffff'];
+      spawnExplosion(boss.x + ox, boss.y + oy, cols[Math.floor(Math.random() * cols.length)], 10);
+      addShake(5);
+      beep(120 + Math.random() * 200, 0.08, 'sawtooth', 0.1);
+    }
+    // 80F：大爆発＆ボス消失
+    if (t === 80) {
+      spawnExplosion(boss.x, boss.y, '#ffffff', 25);
+      spawnExplosion(boss.x, boss.y, '#ffcc40', 20);
+      spawnExplosion(boss.x, boss.y, boss.color || '#80ff80', 20);
+      addShake(30);
+      screenFlash = 1.0;
+      sfxExplode();
+      // 低音のブーム
+      ensureAudio();
+      if (audioCtx) {
+        const now = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(80, now);
+        o.frequency.exponentialRampToValueAtTime(30, now + 0.8);
+        g.gain.setValueAtTime(0.4, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+        o.connect(g).connect(audioCtx.destination);
+        o.start(now); o.stop(now + 1);
+      }
+      boss.vanished = true;
+    }
+    // 100F：次ステージへ遷移開始（プレイヤーの飛び立ち演出）
+    if (t === 100) {
+      const isLast = (currentStageIdx >= STAGES_CONFIG.length - 1);
+      if (isLast) {
+        state = STATE.CLEARED;
+        stateTimer = 0;
+      } else {
+        state = STATE.STAGE_CLEAR;
+        stateTimer = 0;
+        setTimeout(() => {
+          if (state === STATE.STAGE_CLEAR) nextStage();
+        }, 1800);
+      }
     }
   }
 
@@ -2227,34 +2259,29 @@
     drawKamehameHaCutin();
 
     if (state === STATE.STAGE_CLEAR) {
-      ctx.fillStyle = 'rgba(0,0,0,0.65)';
-      ctx.fillRect(0, 0, W, H);
+      // 画面は暗転せず、キャラの飛び立ちが見えるようにする
       ctx.save();
       ctx.textAlign = 'center';
       ctx.font = 'bold 44px serif';
       ctx.lineWidth = 7; ctx.strokeStyle = '#000';
       const stg = STAGES_CONFIG[currentStageIdx];
-      ctx.strokeText(`STAGE ${stg.num} CLEAR!`, W/2, H/2 - 60);
-      const g = ctx.createLinearGradient(0, H/2 - 90, 0, H/2 - 40);
+      // 画面上部に「STAGE X CLEAR!」
+      ctx.strokeText(`STAGE ${stg.num} CLEAR!`, W/2, 80);
+      const g = ctx.createLinearGradient(0, 50, 0, 100);
       g.addColorStop(0, '#ffee60');
       g.addColorStop(1, '#ff8030');
       ctx.fillStyle = g;
-      ctx.fillText(`STAGE ${stg.num} CLEAR!`, W/2, H/2 - 60);
-      // 統計表示
-      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText(`STAGE ${stg.num} CLEAR!`, W/2, 80);
+      // 画面下部に統計
+      ctx.font = 'bold 16px sans-serif';
       ctx.fillStyle = '#fff';
       ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-      ctx.strokeText(`KILLS: ${player.kills}`, W/2, H/2 - 10);
-      ctx.fillText(`KILLS: ${player.kills}`, W/2, H/2 - 10);
-      ctx.strokeText(`MAX COMBO: ${comboMax}`, W/2, H/2 + 14);
-      ctx.fillText(`MAX COMBO: ${comboMax}`, W/2, H/2 + 14);
-      ctx.fillStyle = '#ffee40';
-      ctx.strokeText(`SCORE: ${totalScore.toLocaleString()}`, W/2, H/2 + 40);
-      ctx.fillText(`SCORE: ${totalScore.toLocaleString()}`, W/2, H/2 + 40);
-      // 次のステージ予告
+      ctx.strokeText(`KILLS: ${player.kills}　MAX COMBO: ${comboMax}　SCORE: ${totalScore.toLocaleString()}`, W/2, H - 60);
+      ctx.fillText(`KILLS: ${player.kills}　MAX COMBO: ${comboMax}　SCORE: ${totalScore.toLocaleString()}`, W/2, H - 60);
+      // 次ステージ予告
       const nextStg = STAGES_CONFIG[currentStageIdx + 1];
       if (nextStg) {
-        drawRubyText(`[次|つぎ]：${nextStg.name}（${nextStg.bossName}）`, W/2, H/2 + 80, { size: 16, fill: '#a0c0ff', strokeW: 3 });
+        drawRubyText(`[次|つぎ]：${nextStg.name}（${nextStg.bossName}）`, W/2, H - 30, { size: 15, fill: '#a0c0ff', strokeW: 3 });
       }
       ctx.restore();
     } else if (state === STATE.CLEARED) {
@@ -2865,9 +2892,15 @@
 
   function drawBoss() {
     if (!boss) return;
+    if (boss.vanished) return;
     const x = boss.x, y = boss.y;
     ctx.save();
     if (boss.hurtTimer > 0 && Math.floor(boss.hurtTimer/3) % 2 === 0) ctx.globalAlpha = 0.5;
+    // 撃破演出中：全体的に白く点滅＋時間経過で透明度UP
+    if (boss.dead) {
+      const fade = Math.max(0, 1 - boss.defeatTimer / 80);
+      ctx.globalAlpha = fade * (Math.floor(boss.defeatTimer / 3) % 2 === 0 ? 1 : 0.35);
+    }
 
     // ビームチャージ演出
     if (boss.beamCharging > 0) {
@@ -3425,6 +3458,24 @@
     } else if (state === STATE.STAGE_CLEAR) {
       updateParticles();
       updateProjectiles();
+      // プレイヤーを画面上に飛ばす
+      player.y -= 4.5;
+      // 推進トレイル
+      if (Math.random() < 0.6) {
+        spawnParticle(player.x + (Math.random() - 0.5) * 10, player.y + player.r + 4, {
+          vx: (Math.random() - 0.5) * 1.5, vy: 3 + Math.random() * 2,
+          life: 22, color: ['#ffcc40','#ff8020','#ffee80'][Math.floor(Math.random() * 3)],
+          size: 2.5 + Math.random() * 1.5,
+        });
+      }
+      // オーラ粒子（上方向に吹き出す）
+      if (Math.random() < 0.4) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 0.6;
+        spawnParticle(player.x + (Math.random() - 0.5) * 14, player.y, {
+          vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 - 1,
+          life: 28, color: '#fff8c0', size: 2.5,
+        });
+      }
     } else if (state === STATE.DEAD) {
       updateParticles();
       updateEnemyProjectiles();
