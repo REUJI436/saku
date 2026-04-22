@@ -499,9 +499,12 @@
     '[超|ちょう]サイヤ[人|じん]4',
     '[超|ちょう]サイヤ[人|じん]ゴッド',
     '[超|ちょう]サイヤ[人|じん]ブルー',
+    '[身勝手|みがって]の[極意|ごくい]「[兆|きざし]」',
+    '[身勝手|みがって]の[極意|ごくい]',
+    '[悟飯|ごはん]ビースト',
   ];
-  const TRANSFORM_MAX = 7;
-  const TRANSFORM_COST = [25, 35, 50, 65, 80, 120, 160];
+  const TRANSFORM_MAX = 10;
+  const TRANSFORM_COST = [25, 35, 50, 65, 80, 120, 160, 200, 250, 300];
 
   // ====== ステージ構成 ======
   const STAGES_CONFIG = [
@@ -658,6 +661,108 @@
         '「[全王|ぜんのう]さま…[介入|かいにゅう]は[間|ま]に[合|あ]わない…」',
         '「みんなを[守|まも]るため―この[剣|つるぎ]に[全|すべ]てを！」',
       ],
+    },
+    {
+      num: 10, name: '[力|ちから]の[大会|たいかい]',
+      bossType: 'jiren', bossName: '[最強|さいきょう]ジレとーと',
+      bossHp: 800, bossColor: '#d03040', beamColor: '#ff4060',
+      triggerKills: 700,
+      enemyMultiplier: 4.5,
+      spawnBurstBonus: 3,
+      transformUnlock: 8,  // 身勝手兆
+      bossIntroLine: '[我|わ]が[名|な]はジレとーと。[第|だい]11[宇宙|うちゅう][最強|さいきょう]の[戦士|せんし]。[正義|せいぎ]の[前|まえ]に[敗北|はいぼく]はない',
+      bgPalette: { top: '#080020', mid: '#200830', bot: '#401848' },
+      preludeLines: [
+        'ジレとーと：「[私|わたし]を[倒|たお]すには、[未知|みち]の[領域|りょういき]が[必要|ひつよう]だ」',
+        '「([全|すべ]ての[力|ちから]が[衝突|しょうとつ]し…)」',
+        '「[心|こころ]を[無|む]にする―[身勝手|みがって]の[極意|ごくい]！」',
+      ],
+      eventText: '[兆|きざし][現|あらわ]る…[身勝手|みがって]の[極意|ごくい]「[兆|きざし]」！',
+      eventFlavor: '[心|こころ]が[無|む]となり [体|からだ]が[勝手|かって]に[動|うご]く',
+    },
+    {
+      num: 11, name: '[伝説|でんせつ]の[闇|やみ]',
+      bossType: 'broly', bossName: '[伝説|でんせつ]ブロとーと',
+      bossHp: 900, bossColor: '#8ac060', beamColor: '#80ff40',
+      triggerKills: 800,
+      enemyMultiplier: 5.0,
+      spawnBurstBonus: 3,
+      transformUnlock: 8,
+      bossIntroLine: 'カカカ…カカロット…カカロォォット！！[伝説|でんせつ]の[超|ちょう]サイヤ[人|じん]、ここに[在|あ]り！',
+      bgPalette: { top: '#081810', mid: '#183018', bot: '#304820' },
+      preludeLines: [
+        '[伝説|でんせつ]ブロとーと：「カカロォォット―！！」',
+        '「(この[力|ちから]…[制御|せいぎょ][不能|ふのう]の[怒|いか]りだ)」',
+        '「[極意|ごくい]で[対抗|たいこう]する！」',
+      ],
+    },
+    {
+      num: 12, name: '[惑星|わくせい]シリアル',
+      bossType: 'granola', bossName: '[宇宙最強|うちゅうさいきょう]グラノとーと',
+      bossHp: 1100, bossColor: '#80e0e8', beamColor: '#c0fff0',
+      triggerKills: 900,
+      enemyMultiplier: 5.5,
+      spawnBurstBonus: 4,
+      transformUnlock: 9,  // 身勝手完成
+      bossIntroLine: 'オレの[名|な]はグラノとーと…[惑星|わくせい]シリアルの[最後|さいご]の[生|い]き[残|のこ]り。[復讐|ふくしゅう]を[果|は]たす',
+      bgPalette: { top: '#101828', mid: '#304858', bot: '#506878' },
+      preludeLines: [
+        'グラノとーと：「オレは [宇宙最強|うちゅうさいきょう] を[願|ねが]った…」',
+        '「([狙|ねら]いが[正確|せいかく]すぎる…)」',
+        '「[兆|きざし]を[超|こ]え、[完成|かんせい]された[極意|ごくい]へ！」',
+      ],
+      eventText: '[完全|かんぜん][覚醒|かくせい]…[身勝手|みがって]の[極意|ごくい]！',
+      eventFlavor: '[銀|ぎん]の[髪|かみ]が [無心|むしん]の[境地|きょうち]を[示|しめ]す',
+    },
+    {
+      num: 13, name: '[賞金稼|しょうきんかせ]ぎの[本拠|ほんきょ]',
+      bossType: 'gas', bossName: '[絶対者|ぜったいしゃ]ガスとーと',
+      bossHp: 1300, bossColor: '#80c060', beamColor: '#c0ff60',
+      triggerKills: 1000,
+      enemyMultiplier: 6.0,
+      spawnBurstBonus: 4,
+      transformUnlock: 9,
+      bossIntroLine: 'ボクがガスとーと。[宇宙最強|うちゅうさいきょう]の[称号|しょうごう]、もらった。[君|きみ]たちは[ここ|･･]で[終|お]わりだ',
+      bgPalette: { top: '#202010', mid: '#403818', bot: '#585028' },
+      preludeLines: [
+        'ガスとーと：「[称号|しょうごう]は ボクのものだ」',
+        '「([強|つよ]すぎる…[極意|ごくい]も[通|つう]じない？)」',
+        '「[我儘|わがまま]と[身勝手|みがって] ― [両|りょう][極意|ごくい]完[成|せい]！」',
+      ],
+    },
+    {
+      num: 14, name: 'レッドリボン[軍|ぐん][基地|きち]',
+      bossType: 'gamma', bossName: 'ガンとーと1[号|ごう]&2[号|ごう]',
+      bossHp: 1500, bossColor: '#ffdc40', beamColor: '#ffee80',
+      triggerKills: 1100,
+      enemyMultiplier: 6.0,
+      spawnBurstBonus: 4,
+      transformUnlock: 9,
+      bossIntroLine: '[我|われ]ら、[正義|せいぎ]のスーパーヒーロー！レッドリボン[軍|ぐん][最新|さいしん]の[人造人間|じんぞうにんげん]、ガンとーとだ！',
+      bgPalette: { top: '#400808', mid: '#702020', bot: '#a04040' },
+      preludeLines: [
+        'ガンとーと1[号|ごう]：「[正義|せいぎ]の[ため|ため]、[排除|はいじょ]する！」',
+        'ガンとーと2[号|ごう]：「[手加減|てかげん]なし。いくよ！」',
+        '「([二|ふた]人[同時|どうじ]…[手強|てごわ]い)」',
+      ],
+    },
+    {
+      num: 15, name: '[最終兵器|さいしゅうへいき][解放|かいほう]',
+      bossType: 'cellmax', bossName: '[最終兵器|さいしゅうへいき]セルマックとーと',
+      bossHp: 2000, bossColor: '#60c040', beamColor: '#a0ff40',
+      triggerKills: 1200,
+      enemyMultiplier: 7.0,
+      spawnBurstBonus: 5,
+      transformUnlock: 10,  // ビースト
+      bossIntroLine: 'グオオオオ…セルマックとーと、[覚醒|かくせい]！！[全|すべ]てを[破壊|はかい]し[尽|つ]くす…！',
+      bgPalette: { top: '#200000', mid: '#500810', bot: '#801830' },
+      preludeLines: [
+        'セルマックとーと：「グオオォォォッ！！」',
+        '「([制御|せいぎょ][不能|ふのう]の[最終兵器|さいしゅうへいき]…)」',
+        '「[潜在|せんざい][能力|のうりょく]、[完全|かんぜん][解放|かいほう]！」',
+      ],
+      eventText: '[覚醒|かくせい]…[悟飯|ごはん]ビースト！',
+      eventFlavor: '[白|しろ]き[獣|けもの]の[気|き]が [すべて|すべて]を[呑|の]み[込|こ]む',
     },
   ];
   let currentStageIdx = 0;
@@ -1080,7 +1185,10 @@
     let shots;
     if (player.transform <= 2) shots = 1;
     else if (player.transform === 6) shots = 3;
-    else if (player.transform === 7) shots = 5;  // ブルー：5発直進
+    else if (player.transform === 7) shots = 5;  // ブルー
+    else if (player.transform === 8) shots = 5;  // 身勝手兆（斜め追加）
+    else if (player.transform === 9) shots = 5;  // 身勝手（斜め4追加）
+    else if (player.transform === 10) shots = 7; // ビースト（斜め4追加）
     else shots = player.transform - 1;
     const spacing = isSaku ? 28 : 16;
     // 直進の弾
@@ -1095,7 +1203,7 @@
         transform: player.transform,
       });
     }
-    // ゴッドは斜め2発追加（左上・右上）
+    // ゴッド：斜め2発追加
     if (player.transform === 6) {
       const diagAng = 0.35;
       for (const s of [-1, 1]) {
@@ -1108,6 +1216,52 @@
           life: 90, dmg, r,
           transform: player.transform,
         });
+      }
+    }
+    // 身勝手兆：斜め2発追加（合計7発）
+    if (player.transform === 8) {
+      for (const s of [-1, 1]) {
+        const ang = -Math.PI / 2 + s * 0.4;
+        projectiles.push({
+          x: player.x + s * spacing * 1.6,
+          y: player.y - player.r,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          life: 90, dmg, r,
+          transform: player.transform,
+        });
+      }
+    }
+    // 身勝手：斜め4発追加（合計9発・内外2段階）
+    if (player.transform === 9) {
+      for (const s of [-1, 1]) {
+        for (const [ang, mult] of [[0.3, 1.4], [0.55, 2.0]]) {
+          const a = -Math.PI / 2 + s * ang;
+          projectiles.push({
+            x: player.x + s * spacing * mult,
+            y: player.y - player.r,
+            vx: Math.cos(a) * sp,
+            vy: Math.sin(a) * sp,
+            life: 90, dmg, r,
+            transform: player.transform,
+          });
+        }
+      }
+    }
+    // ビースト：斜め4発追加（合計11発）
+    if (player.transform === 10) {
+      for (const s of [-1, 1]) {
+        for (const [ang, mult] of [[0.28, 1.5], [0.55, 2.3]]) {
+          const a = -Math.PI / 2 + s * ang;
+          projectiles.push({
+            x: player.x + s * spacing * mult,
+            y: player.y - player.r,
+            vx: Math.cos(a) * sp,
+            vy: Math.sin(a) * sp,
+            life: 90, dmg, r,
+            transform: player.transform,
+          });
+        }
       }
     }
   }
@@ -1182,7 +1336,10 @@
       case 4: return '#ffdc20';
       case 5: return '#ff6010';
       case 6: return '#ff3030';
-      case 7: return '#4080ff';  // 青（ブルー）
+      case 7: return '#4080ff';
+      case 8: return '#c0d0ff';  // 薄青白（身勝手兆）
+      case 9: return '#e0e0f0';  // 白銀（身勝手）
+      case 10: return '#fff0d0'; // 眩しい白金（ビースト）
       default: return '#ffffff';
     }
   }
@@ -2798,14 +2955,17 @@
     if (t >= 1) {
       const auraR = 28 + Math.sin(player.anim * 0.5) * 4 + t * 3;
       const auraColors = [
-        null,  // 0
-        ['rgba(255,60,60,0.45)', 'rgba(200,30,30,0.25)'],  // 1 界王拳
-        ['rgba(255,230,80,0.45)', 'rgba(255,150,40,0.25)'],  // 2 SSJ
-        ['rgba(255,240,120,0.5)', 'rgba(180,220,255,0.25)'],  // 3 SSJ2
-        ['rgba(255,230,60,0.55)', 'rgba(255,160,30,0.3)'],  // 4 SSJ3
-        ['rgba(255,100,40,0.55)', 'rgba(200,30,20,0.3)'],  // 5 SSJ4
-        ['rgba(255,60,80,0.6)', 'rgba(255,180,80,0.4)'],   // 6 ゴッド
-        ['rgba(80,140,255,0.6)', 'rgba(200,230,255,0.35)'],  // 7 ブルー
+        null,
+        ['rgba(255,60,60,0.45)', 'rgba(200,30,30,0.25)'],
+        ['rgba(255,230,80,0.45)', 'rgba(255,150,40,0.25)'],
+        ['rgba(255,240,120,0.5)', 'rgba(180,220,255,0.25)'],
+        ['rgba(255,230,60,0.55)', 'rgba(255,160,30,0.3)'],
+        ['rgba(255,100,40,0.55)', 'rgba(200,30,20,0.3)'],
+        ['rgba(255,60,80,0.6)', 'rgba(255,180,80,0.4)'],
+        ['rgba(80,140,255,0.6)', 'rgba(200,230,255,0.35)'],
+        ['rgba(200,220,255,0.55)', 'rgba(240,245,255,0.35)'],  // 8 身勝手兆
+        ['rgba(240,240,255,0.65)', 'rgba(200,220,255,0.4)'],   // 9 身勝手
+        ['rgba(255,240,200,0.75)', 'rgba(255,255,220,0.5)'],   // 10 ビースト
       ];
       const col = auraColors[t];
       ctx.fillStyle = col[1];
@@ -3097,6 +3257,9 @@
     else if (transformLvl === 5) hairCol = '#c02010';  // 暗赤（SSJ4）
     else if (transformLvl === 6) hairCol = '#ff2828';  // 鮮やかな赤（ゴッド）
     else if (transformLvl === 7) hairCol = '#3078ff';  // 青（ブルー）
+    else if (transformLvl === 8) hairCol = '#c8c8d8';  // 薄銀（身勝手兆）
+    else if (transformLvl === 9) hairCol = '#e8e8f0';  // 銀白（身勝手）
+    else if (transformLvl === 10) hairCol = '#ffffff'; // 純白（ビースト）
     else hairCol = c.hairCol;
     ctx.fillStyle = hairCol;
 
@@ -3257,12 +3420,15 @@
       ctx.moveTo(-4, -18); ctx.lineTo(-7, -20); ctx.lineTo(-7, -16); ctx.closePath();
       ctx.fill();
     }
-    // 目の色：SSJ系は青、SSJ4は赤、ゴッドも赤、ブルーは明るい青
+    // 目の色：各段階ごとに変化
     let eyeCol = '#000';
     if (transformLvl >= 2 && transformLvl <= 4) eyeCol = '#40c8ff';
     else if (transformLvl === 5) eyeCol = '#ff4040';
     else if (transformLvl === 6) eyeCol = '#ff2050';
-    else if (transformLvl === 7) eyeCol = '#80e0ff';  // ブルー：明るい青
+    else if (transformLvl === 7) eyeCol = '#80e0ff';
+    else if (transformLvl === 8) eyeCol = '#80a0ff';  // 身勝手兆：薄青
+    else if (transformLvl === 9) eyeCol = '#c0d0ff';  // 身勝手：銀青
+    else if (transformLvl === 10) eyeCol = '#fff080'; // ビースト：金
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.ellipse(-2.5, -11, 1.3, 1.6, 0, 0, Math.PI*2);
@@ -3880,6 +4046,295 @@
       ctx.moveTo(x + 6, y - 10); ctx.lineTo(x + 10, y);
       ctx.moveTo(x + 8, y - 6); ctx.lineTo(x + 12, y + 4);
       ctx.stroke();
+    },
+    // 最強ジレとーと（ジレン）
+    jiren(x, y, b) {
+      // 胴（灰色の道着）
+      ctx.fillStyle = '#3a3a48';
+      ctx.fillRect(x - 15, y - 4, 30, 18);
+      // 赤＆黒の模様（プライドトルーパーズ）
+      ctx.fillStyle = '#a01820';
+      ctx.fillRect(x - 15, y + 8, 30, 6);
+      // 銀のベルト
+      ctx.fillStyle = '#8a8a9a';
+      ctx.fillRect(x - 15, y + 6, 30, 2);
+      // 頭（灰白色）
+      ctx.fillStyle = '#d0c8d0';
+      ctx.beginPath();
+      ctx.arc(x, y - 14, 13, 0, Math.PI*2);
+      ctx.fill();
+      // ハゲ頭部分（紫影）
+      ctx.fillStyle = '#9888a0';
+      ctx.beginPath();
+      ctx.arc(x, y - 20, 8, Math.PI, 0);
+      ctx.fill();
+      // 大きな目（黒）
+      ctx.fillStyle = '#201820';
+      ctx.beginPath();
+      ctx.ellipse(x - 5, y - 14, 3.5, 2.5, 0, 0, Math.PI*2);
+      ctx.ellipse(x + 5, y - 14, 3.5, 2.5, 0, 0, Math.PI*2);
+      ctx.fill();
+      // 眉毛（細く怒ってる）
+      ctx.strokeStyle = '#201820';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(x - 9, y - 17); ctx.lineTo(x - 2, y - 18);
+      ctx.moveTo(x + 2, y - 18); ctx.lineTo(x + 9, y - 17);
+      ctx.stroke();
+      // 口（真一文字）
+      ctx.strokeStyle = '#4a3848';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y - 7); ctx.lineTo(x + 4, y - 7);
+      ctx.stroke();
+    },
+    // 伝説ブロとーと（ブロリー）
+    broly(x, y, b) {
+      // 筋肉質の胴（肌色）
+      ctx.fillStyle = '#e8b888';
+      ctx.beginPath();
+      ctx.arc(x, y, b.r + 2, 0, Math.PI*2);
+      ctx.fill();
+      // 赤茶の腰布
+      ctx.fillStyle = '#c02020';
+      ctx.fillRect(x - 14, y + 4, 28, 12);
+      // 金の帯
+      ctx.fillStyle = '#ffcc40';
+      ctx.fillRect(x - 14, y + 4, 28, 2);
+      // 肩のリング装飾
+      ctx.fillStyle = '#ffcc40';
+      ctx.beginPath();
+      ctx.arc(x - 15, y - 4, 3, 0, Math.PI*2);
+      ctx.arc(x + 15, y - 4, 3, 0, Math.PI*2);
+      ctx.fill();
+      // 金のチョーカー
+      ctx.fillStyle = '#ffcc40';
+      ctx.fillRect(x - 7, y - 6, 14, 2);
+      // 頭
+      ctx.fillStyle = '#e8b888';
+      ctx.beginPath(); ctx.arc(x, y - 14, 12, 0, Math.PI*2); ctx.fill();
+      // 逆立ち緑髪（伝説の超サイヤ人）
+      ctx.fillStyle = '#88c060';
+      ctx.beginPath();
+      ctx.moveTo(x - 12, y - 18);
+      ctx.lineTo(x - 16, y - 34);
+      ctx.lineTo(x - 8, y - 24);
+      ctx.lineTo(x - 4, y - 36);
+      ctx.lineTo(x, y - 26);
+      ctx.lineTo(x + 4, y - 36);
+      ctx.lineTo(x + 8, y - 24);
+      ctx.lineTo(x + 16, y - 34);
+      ctx.lineTo(x + 12, y - 18);
+      ctx.closePath();
+      ctx.fill();
+      // 白目（伝説時の虚ろな目）
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x - 5, y - 14, 2.5, 0, Math.PI*2);
+      ctx.arc(x + 5, y - 14, 2.5, 0, Math.PI*2);
+      ctx.fill();
+      // 口（絶叫）
+      ctx.fillStyle = '#4a1a0a';
+      ctx.beginPath();
+      ctx.ellipse(x, y - 7, 3, 2, 0, 0, Math.PI*2);
+      ctx.fill();
+    },
+    // 宇宙最強グラノとーと
+    granola(x, y, b) {
+      // 灰緑色の胴
+      ctx.fillStyle = '#88a878';
+      ctx.fillRect(x - 14, y - 4, 28, 16);
+      // 茶色のベスト
+      ctx.fillStyle = '#9a7048';
+      ctx.fillRect(x - 14, y - 4, 28, 8);
+      // マフラー（薄灰）
+      ctx.fillStyle = '#d0d8d0';
+      ctx.fillRect(x - 16, y - 6, 32, 4);
+      ctx.fillRect(x - 20, y - 2, 4, 10);
+      // 頭（肌色）
+      ctx.fillStyle = '#e8b0a0';
+      ctx.beginPath(); ctx.arc(x, y - 14, 12, 0, Math.PI*2); ctx.fill();
+      // 緑髪（逆立ち・グラノラの特徴）
+      ctx.fillStyle = '#8ad0a8';
+      ctx.beginPath();
+      ctx.moveTo(x - 12, y - 18);
+      ctx.lineTo(x - 10, y - 28);
+      ctx.lineTo(x - 4, y - 22);
+      ctx.lineTo(x, y - 30);
+      ctx.lineTo(x + 4, y - 22);
+      ctx.lineTo(x + 10, y - 28);
+      ctx.lineTo(x + 12, y - 18);
+      ctx.closePath();
+      ctx.fill();
+      // スカウター（片目の機械）
+      ctx.fillStyle = '#404040';
+      ctx.fillRect(x + 2, y - 16, 10, 3);
+      ctx.fillStyle = '#40e0e8';
+      ctx.fillRect(x + 4, y - 15.5, 6, 2);
+      // 目
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.arc(x - 5, y - 14, 1.5, 0, Math.PI*2);
+      ctx.fill();
+      // 口（鋭い）
+      ctx.strokeStyle = '#6a3030';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y - 6); ctx.lineTo(x + 4, y - 6);
+      ctx.stroke();
+    },
+    // 絶対者ガスとーと
+    gas(x, y, b) {
+      // ターコイズの肌
+      ctx.fillStyle = '#6090a0';
+      ctx.beginPath(); ctx.arc(x, y, b.r, 0, Math.PI*2); ctx.fill();
+      // 白い道衣（ネック）
+      ctx.fillStyle = '#f0f0f0';
+      ctx.fillRect(x - 14, y - 4, 28, 4);
+      // 赤いベスト
+      ctx.fillStyle = '#a02020';
+      ctx.fillRect(x - 14, y, 28, 14);
+      // 金のベルト
+      ctx.fillStyle = '#ffcc40';
+      ctx.fillRect(x - 14, y + 10, 28, 2);
+      // 頭（ターコイズ）
+      ctx.fillStyle = '#6090a0';
+      ctx.beginPath(); ctx.arc(x, y - 14, 12, 0, Math.PI*2); ctx.fill();
+      // 紫色の長い髪（後ろになびく）
+      ctx.fillStyle = '#402050';
+      ctx.beginPath();
+      ctx.moveTo(x - 11, y - 18);
+      ctx.lineTo(x - 18, y - 4);
+      ctx.lineTo(x - 16, y + 2);
+      ctx.lineTo(x - 8, y - 10);
+      ctx.closePath();
+      ctx.moveTo(x + 11, y - 18);
+      ctx.lineTo(x + 18, y - 4);
+      ctx.lineTo(x + 16, y + 2);
+      ctx.lineTo(x + 8, y - 10);
+      ctx.closePath();
+      ctx.fill();
+      // 長い尖った耳
+      ctx.fillStyle = '#6090a0';
+      ctx.beginPath();
+      ctx.moveTo(x - 11, y - 14); ctx.lineTo(x - 16, y - 10); ctx.lineTo(x - 9, y - 8); ctx.closePath();
+      ctx.moveTo(x + 11, y - 14); ctx.lineTo(x + 16, y - 10); ctx.lineTo(x + 9, y - 8); ctx.closePath();
+      ctx.fill();
+      // 目（赤）
+      ctx.fillStyle = '#ff4040';
+      ctx.beginPath();
+      ctx.arc(x - 5, y - 14, 1.5, 0, Math.PI*2);
+      ctx.arc(x + 5, y - 14, 1.5, 0, Math.PI*2);
+      ctx.fill();
+      // 口
+      ctx.strokeStyle = '#301820';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x - 3, y - 7); ctx.lineTo(x + 3, y - 7);
+      ctx.stroke();
+    },
+    // ガンとーと（1号・2号が並んで立つ）
+    gamma(x, y, b) {
+      // 2体で構成：1号（右）と2号（左）を少しずらして描画
+      for (const [dx, numStr] of [[-b.r * 0.5, '2'], [b.r * 0.5, '1']]) {
+        const gx = x + dx, gy = y;
+        // 黄色のスーツ
+        ctx.fillStyle = '#ffd848';
+        ctx.beginPath();
+        ctx.arc(gx, gy, b.r * 0.65, 0, Math.PI*2);
+        ctx.fill();
+        // 銀色のボタン
+        ctx.fillStyle = '#d0d0d0';
+        ctx.fillRect(gx - 1, gy - 2, 2, 2);
+        ctx.fillRect(gx - 1, gy + 2, 2, 2);
+        // マント（1号は赤、2号は青）
+        ctx.fillStyle = numStr === '1' ? '#c02020' : '#2060c0';
+        ctx.beginPath();
+        ctx.moveTo(gx + b.r * 0.5, gy - 4);
+        ctx.lineTo(gx + b.r * 0.8 + 6, gy + 10);
+        ctx.lineTo(gx + b.r * 0.5, gy + 10);
+        ctx.closePath();
+        ctx.fill();
+        // ヘルメット
+        ctx.fillStyle = '#c0c0c8';
+        ctx.beginPath();
+        ctx.arc(gx, gy - 11, 7, 0, Math.PI*2);
+        ctx.fill();
+        // アンテナ（頭頂）
+        ctx.strokeStyle = '#808080';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(gx, gy - 18); ctx.lineTo(gx, gy - 22);
+        ctx.stroke();
+        ctx.fillStyle = '#ff4040';
+        ctx.beginPath(); ctx.arc(gx, gy - 22, 1.2, 0, Math.PI*2); ctx.fill();
+        // 番号
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 8px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(numStr, gx, gy + 4);
+        // 目（黄色の目）
+        ctx.fillStyle = '#ffdc20';
+        ctx.beginPath();
+        ctx.ellipse(gx, gy - 11, 3, 2, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+    },
+    // 最終兵器セルマックとーと
+    cellmax(x, y, b) {
+      // 巨大な緑の胴（ベースはセルより大きく）
+      ctx.fillStyle = '#78b058';
+      ctx.beginPath();
+      ctx.ellipse(x, y + 2, b.r + 4, b.r + 2, 0, 0, Math.PI*2);
+      ctx.fill();
+      // 赤い模様（制御不能の暴走化）
+      ctx.fillStyle = '#c03020';
+      ctx.beginPath();
+      ctx.ellipse(x, y, 12, 7, 0, 0, Math.PI*2);
+      ctx.fill();
+      // 紫の斑点
+      ctx.fillStyle = '#6030a0';
+      for (const [dx, dy] of [[-10, -3], [12, 0], [-8, 6], [8, 7]]) {
+        ctx.beginPath();
+        ctx.arc(x + dx, y + dy, 2, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // 頭（緑・怒りの形相）
+      ctx.fillStyle = '#78b058';
+      ctx.beginPath(); ctx.arc(x, y - 14, 14, 0, Math.PI*2); ctx.fill();
+      // 黒い装甲（前面）
+      ctx.fillStyle = '#2a2820';
+      ctx.fillRect(x - 10, y - 13, 20, 5);
+      // 2本のツノ（上向き）
+      ctx.fillStyle = '#ffcc40';
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y - 24);
+      ctx.lineTo(x - 14, y - 36);
+      ctx.lineTo(x - 6, y - 26);
+      ctx.closePath();
+      ctx.moveTo(x + 10, y - 24);
+      ctx.lineTo(x + 14, y - 36);
+      ctx.lineTo(x + 6, y - 26);
+      ctx.closePath();
+      ctx.fill();
+      // 赤い邪悪な目
+      ctx.fillStyle = '#ff2020';
+      ctx.beginPath();
+      ctx.ellipse(x - 5, y - 11, 2.5, 2, 0, 0, Math.PI*2);
+      ctx.ellipse(x + 5, y - 11, 2.5, 2, 0, 0, Math.PI*2);
+      ctx.fill();
+      // 大きな口（牙）
+      ctx.fillStyle = '#1a0818';
+      ctx.fillRect(x - 5, y - 6, 10, 4);
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x - 5 + i * 2.5, y - 2);
+        ctx.lineTo(x - 4 + i * 2.5, y);
+        ctx.lineTo(x - 3.5 + i * 2.5, y - 2);
+        ctx.closePath();
+        ctx.fill();
+      }
     },
     // ビルス様（破壊神・紫の猫型ヒューマノイド）
     bills(x, y, b) {
