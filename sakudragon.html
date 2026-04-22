@@ -422,14 +422,22 @@
       id: 'saku', name: 'さく',
       hp: 10, speed: 3.4, atkDmg: 1, atkRate: 10,
       hairCol: '#1a1008', skinCol: '#ffddbb',
-      shirtCol: '#ff6030', pantsCol: '#204080',
+      shirtCol: '#ff7020',  // オレンジ道着
+      pantsCol: '#ff7020',  // オレンジ（上下同色）
+      innerCol: '#2060c0',  // 青インナー
+      beltCol: '#1a4098',   // 青帯
+      bootCol: '#1a3070',   // 紺ブーツ
       desc: 'バランス型・火力UP',
     },
     {
       id: 'kurumi', name: 'くるみ',
       hp: 8, speed: 4.2, atkDmg: 1, atkRate: 7,
       hairCol: '#9a5a2a', skinCol: '#ffddbb',
-      shirtCol: '#ffffff', pantsCol: '#ff80b0',
+      shirtCol: '#ff7020',
+      pantsCol: '#ff7020',
+      innerCol: '#2060c0',
+      beltCol: '#1a4098',
+      bootCol: '#1a3070',
       desc: 'スピード型・連射UP',
     },
   ];
@@ -913,17 +921,14 @@
   function spawnKiBlast() {
     // 縦スクロール：真上に直進（全弾まっすぐ）
     const sp = 10;
-    // さくは大きくて火力高い、くるみは小さくて速い
+    // さくは超特大の気弾で高火力、くるみは中サイズで速連射
     const isSaku = player.charId === 'saku';
-    const r = isSaku ? 11 : 5;
+    const r = isSaku ? 17 : 11;
     const dmg = player.atkDmg + Math.floor(player.transform * 0.6) + (isSaku ? 1 : 0);
-    // 弾数：ノーマル〜SSJ は 1発、SSJ2 で 2発、SSJ3 で 3発、SSJ4 で 4発
-    // transform: 0=ノーマル, 1=Kaioken, 2=SSJ, 3=SSJ2, 4=SSJ3, 5=SSJ4
     let shots;
     if (player.transform <= 2) shots = 1;
     else shots = player.transform - 1;
-    // さくは弾が大きいので間隔も広げる
-    const spacing = isSaku ? 20 : 11;
+    const spacing = isSaku ? 28 : 16;
     for (let i = 0; i < shots; i++) {
       const offset = (i - (shots - 1) / 2) * spacing;
       projectiles.push({
@@ -939,6 +944,7 @@
 
   function damagePlayer(dmg) {
     if (player.invuln > 0) return;
+    if (player.ultActive) return;  // かめはめ波発動中は無敵
     player.hp -= dmg;
     player.invuln = 90;  // 無敵時間（60→90）
     addShake(10);
@@ -1013,9 +1019,10 @@
   // ====== 必殺技：かめはめ波 ======
   function fireKamehameha() {
     player.kiGauge = 0;
-    player.ultActive = { timer: 70, phase: 'charge', enemiesHit: new Set() };
-    banner = { text: 'かめはめ波ーっ！', color: '#80d0ff', life: 80, maxLife: 80 };
-    addShake(18);
+    // カットイン演出：発動前の 50F 間キャラアップ＋「かめはめ波！」文字
+    player.ultActive = { timer: 120, phase: 'cutin', enemiesHit: new Set(), cutinTimer: 50 };
+    banner = null;  // cutin が独自に描画する
+    addShake(22);
     ensureAudio();
     if (audioCtx) {
       const now = audioCtx.currentTime;
@@ -1047,9 +1054,45 @@
   function updateKamehameha() {
     const u = player.ultActive;
     u.timer--;
-    // phase: 0-30F → charge, 30-70F → fire
-    if (u.timer > 40) { u.phase = 'charge'; }
+    // phase: cutin(120-70F) → charge(70-40F) → fire(40-0F)
+    const prevPhase = u.phase;
+    if (u.timer > 70) { u.phase = 'cutin'; }
+    else if (u.timer > 40) { u.phase = 'charge'; }
     else { u.phase = 'fire'; }
+    // フェーズ切替時の音
+    if (u.phase === 'charge' && prevPhase === 'cutin') {
+      ensureAudio();
+      if (audioCtx) {
+        const now = audioCtx.currentTime;
+        const o1 = audioCtx.createOscillator();
+        const g1 = audioCtx.createGain();
+        o1.type = 'sine';
+        o1.frequency.setValueAtTime(220, now);
+        o1.frequency.exponentialRampToValueAtTime(880, now + 0.5);
+        g1.gain.setValueAtTime(0.001, now);
+        g1.gain.exponentialRampToValueAtTime(0.25, now + 0.4);
+        g1.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        o1.connect(g1).connect(audioCtx.destination);
+        o1.start(now); o1.stop(now + 0.6);
+      }
+    }
+    if (u.phase === 'fire' && prevPhase === 'charge') {
+      ensureAudio();
+      if (audioCtx) {
+        const now = audioCtx.currentTime;
+        const o2 = audioCtx.createOscillator();
+        const g2 = audioCtx.createGain();
+        o2.type = 'sawtooth';
+        o2.frequency.setValueAtTime(1200, now);
+        o2.frequency.exponentialRampToValueAtTime(300, now + 1.1);
+        g2.gain.setValueAtTime(0.001, now);
+        g2.gain.exponentialRampToValueAtTime(0.3, now + 0.05);
+        g2.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+        o2.connect(g2).connect(audioCtx.destination);
+        o2.start(now); o2.stop(now + 1.3);
+      }
+      addShake(18);
+    }
     if (u.phase === 'fire') {
       // 当たり判定：プレイヤーの x を中心とした縦の帯
       const bw = 60;  // ビーム幅
@@ -1795,29 +1838,48 @@
     // 影
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath(); ctx.ellipse(0, 30, 12, 3, 0, 0, Math.PI*2); ctx.fill();
-    // 脚
+    // 脚（オレンジ道着）
     ctx.fillStyle = c.pantsCol;
-    ctx.fillRect(-6, 14, 5, 16);
-    ctx.fillRect(1, 14, 5, 16);
-    // 靴
-    ctx.fillStyle = '#2a2a2a';
-    ctx.fillRect(-7, 28, 7, 4);
-    ctx.fillRect(1, 28, 7, 4);
-    // 胴（道着風）
+    ctx.fillRect(-6, 14, 5, 14);
+    ctx.fillRect(1, 14, 5, 14);
+    // 足首の青いバンド
+    ctx.fillStyle = c.bootCol || '#1a3070';
+    ctx.fillRect(-7, 26, 7, 3);
+    ctx.fillRect(1, 26, 7, 3);
+    // ブーツ（紺）
+    ctx.fillStyle = c.bootCol || '#1a3070';
+    ctx.fillRect(-7, 29, 7, 3);
+    ctx.fillRect(1, 29, 7, 3);
+    // 胴（オレンジ道着）
     ctx.fillStyle = c.shirtCol;
-    ctx.fillRect(-9, -2, 18, 18);
-    // 帯
-    ctx.fillStyle = '#ffee60';
-    ctx.fillRect(-9, 10, 18, 3);
-    // 腕
+    ctx.fillRect(-9, -2, 18, 16);
+    // 青いインナー（Vネック部・襟元）
+    ctx.fillStyle = c.innerCol || '#2060c0';
+    ctx.beginPath();
+    ctx.moveTo(-4, -2);
+    ctx.lineTo(4, -2);
+    ctx.lineTo(0, 4);
+    ctx.closePath();
+    ctx.fill();
+    // 青い帯
+    ctx.fillStyle = c.beltCol || '#1a4098';
+    ctx.fillRect(-9, 10, 18, 4);
+    // 帯の結び目（やや暗い青）
+    ctx.fillStyle = '#102860';
+    ctx.fillRect(-2, 10, 4, 4);
+    // 腕（オレンジ）
     ctx.fillStyle = c.shirtCol;
-    ctx.fillRect(-12, 0, 4, 12);
-    ctx.fillRect(8, 0, 4, 12);
+    ctx.fillRect(-12, 0, 4, 10);
+    ctx.fillRect(8, 0, 4, 10);
+    // 手首の青いリストバンド
+    ctx.fillStyle = c.innerCol || '#2060c0';
+    ctx.fillRect(-12, 10, 4, 2.5);
+    ctx.fillRect(8, 10, 4, 2.5);
     // 手
     ctx.fillStyle = c.skinCol;
     ctx.beginPath();
-    ctx.arc(-10, 13, 2, 0, Math.PI*2);
-    ctx.arc(10, 13, 2, 0, Math.PI*2);
+    ctx.arc(-10, 14, 2, 0, Math.PI*2);
+    ctx.arc(10, 14, 2, 0, Math.PI*2);
     ctx.fill();
     // 首
     ctx.fillStyle = c.skinCol;
@@ -2135,6 +2197,8 @@
     drawPopups();
     drawHUD();
     if (banner) drawBanner();
+    // かめはめ波カットイン（HUDの上に重ねて描画）
+    drawKamehameHaCutin();
 
     if (state === STATE.STAGE_CLEAR) {
       ctx.fillStyle = 'rgba(0,0,0,0.65)';
@@ -2279,6 +2343,101 @@
     }
   }
 
+  // かめはめ波カットイン（発動前の演出）
+  function drawKamehameHaCutin() {
+    const u = player.ultActive;
+    if (!u || u.phase !== 'cutin') return;
+    const elapsed = 120 - u.timer;  // 0〜50
+    const progress = Math.min(1, elapsed / 50);
+
+    // 画面全体を暗くする
+    ctx.save();
+    ctx.fillStyle = `rgba(0,0,0,${0.55 * progress})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // 斜めスピードライン
+    ctx.strokeStyle = `rgba(255,255,255,${0.3 * progress})`;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 16; i++) {
+      const y = (i * 47 + elapsed * 8) % H;
+      const len = 80 + (i * 13) % 80;
+      ctx.beginPath();
+      ctx.moveTo(W - 10 - len, y);
+      ctx.lineTo(W - 10, y + 10);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 12; i++) {
+      const y = (i * 53 + elapsed * 10) % H;
+      const len = 60 + (i * 17) % 60;
+      ctx.beginPath();
+      ctx.moveTo(10, y);
+      ctx.lineTo(10 + len, y + 8);
+      ctx.stroke();
+    }
+
+    // 斜めの赤いフラッシュ帯（背景）
+    const flashW = W * 0.8 * progress;
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(-0.15);
+    const gg = ctx.createLinearGradient(-flashW/2, 0, flashW/2, 0);
+    gg.addColorStop(0, 'rgba(255,140,40,0)');
+    gg.addColorStop(0.5, 'rgba(255,180,60,0.7)');
+    gg.addColorStop(1, 'rgba(255,80,20,0)');
+    ctx.fillStyle = gg;
+    ctx.fillRect(-flashW/2, -120, flashW, 240);
+    ctx.restore();
+
+    // キャラのアップ絵（左側からスライドイン）
+    const slideX = -200 + progress * 220;  // -200 → 20
+    const cy = H / 2;
+    ctx.save();
+    ctx.translate(slideX + 200, cy);
+    // 背面の白円（アップを目立たせる）
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 120, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    // キャラポートレート（スケール大きめ）
+    const char = CHARACTERS.find(ch => ch.id === player.charId) || CHARACTERS[0];
+    drawCharPortrait(char, 0, 40, 6);
+    ctx.restore();
+
+    // 「かめはめ波ーーッ！！」文字（右側からスライドイン）
+    const textX = W + 200 - progress * 400;  // W+200 → W-200
+    ctx.save();
+    ctx.translate(textX, cy - 20);
+    ctx.rotate(-0.12);
+    ctx.font = 'bold 64px serif';
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#000';
+    ctx.strokeText('かめはめ波', 0, 0);
+    const tg = ctx.createLinearGradient(0, -30, 0, 30);
+    tg.addColorStop(0, '#80d0ff');
+    tg.addColorStop(0.5, '#ffffff');
+    tg.addColorStop(1, '#4080d0');
+    ctx.fillStyle = tg;
+    ctx.fillText('かめはめ波', 0, 0);
+    ctx.font = 'bold 56px serif';
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = '#000';
+    ctx.strokeText('――ッ！！', 0, 62);
+    ctx.fillStyle = '#ffee40';
+    ctx.fillText('――ッ！！', 0, 62);
+    ctx.restore();
+
+    // ラスト数Fは白フラッシュで次フェーズへ
+    if (u.timer <= 72 && u.timer >= 70) {
+      ctx.fillStyle = `rgba(255,255,255,${0.9})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+
   function drawKamehameha() {
     const u = player.ultActive;
     if (!u) return;
@@ -2365,14 +2524,23 @@
       ctx.fillRect(-10, -5, 3, 3);
       ctx.fillRect(7, -5, 3, 3);
     }
-    // 帯
-    ctx.fillStyle = '#ffee60';
-    ctx.fillRect(-7, 2, 14, 2);
-    // 腕
+    // 襟元の青いVインナー
+    ctx.fillStyle = c.innerCol || '#2060c0';
+    ctx.beginPath();
+    ctx.moveTo(-3, -6); ctx.lineTo(3, -6); ctx.lineTo(0, -2); ctx.closePath();
+    ctx.fill();
+    // 青い帯
+    ctx.fillStyle = c.beltCol || '#1a4098';
+    ctx.fillRect(-7, 2, 14, 3);
+    // 腕（オレンジ）
     const armSwing = c.moving ? Math.sin(c.anim * 2) * 3 : 0;
     ctx.fillStyle = c.shirtCol;
-    ctx.fillRect(-10, -5 + armSwing, 3, 10);
-    ctx.fillRect(7, -5 - armSwing, 3, 10);
+    ctx.fillRect(-10, -5 + armSwing, 3, 9);
+    ctx.fillRect(7, -5 - armSwing, 3, 9);
+    // 手首の青いリストバンド
+    ctx.fillStyle = c.innerCol || '#2060c0';
+    ctx.fillRect(-10, 4 + armSwing, 3, 1.5);
+    ctx.fillRect(7, 4 - armSwing, 3, 1.5);
     // 手
     ctx.fillStyle = c.skinCol;
     ctx.beginPath();
@@ -2485,94 +2653,68 @@
         ctx.fill();
       }
     } else {
-      // くるみ
+      // くるみ：サイド毛束＋頭頂＋前髪の分離構造（顔を覆わない）
+      ctx.fillStyle = hairCol;
       if (transformLvl === 4) {
-        // SSJ3：後ろに長く流れる金髪（左右）
-        ctx.fillStyle = hairCol;
+        // SSJ3：長い金髪（膝下まで）
+        // 左長い毛束
         ctx.beginPath();
-        ctx.moveTo(-9, -13);
-        ctx.bezierCurveTo(-14, -5, -13, 5, -10, 14);
-        ctx.lineTo(-5, 14);
-        ctx.bezierCurveTo(-4, 5, -5, -5, -7, -13);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(-9, -16);
+        ctx.bezierCurveTo(-13, -5, -12, 5, -10, 14);
+        ctx.lineTo(-6, 14);
+        ctx.bezierCurveTo(-5, 5, -6, -5, -7, -16);
+        ctx.closePath(); ctx.fill();
+        // 右長い毛束
         ctx.beginPath();
-        ctx.moveTo(9, -13);
-        ctx.bezierCurveTo(14, -5, 13, 5, 10, 14);
-        ctx.lineTo(5, 14);
-        ctx.bezierCurveTo(4, 5, 5, -5, 7, -13);
-        ctx.closePath();
-        ctx.fill();
-        // 頭頂
+        ctx.moveTo(9, -16);
+        ctx.bezierCurveTo(13, -5, 12, 5, 10, 14);
+        ctx.lineTo(6, 14);
+        ctx.bezierCurveTo(5, 5, 6, -5, 7, -16);
+        ctx.closePath(); ctx.fill();
+      } else {
+        // ノーマル/界王拳/SSJ/SSJ2/SSJ4：ミディアム
+        // 左サイド毛束（肩まで）
         ctx.beginPath();
-        ctx.arc(0, -13, 8, Math.PI, 0);
-        ctx.lineTo(8, -13);
-        ctx.lineTo(-8, -13);
-        ctx.closePath();
-        ctx.fill();
-      } else if (transformLvl === 5) {
-        // SSJ4：赤ミディアム
-        ctx.fillStyle = hairCol;
+        ctx.moveTo(-9, -16);
+        ctx.quadraticCurveTo(-11, -6, -9, 3);
+        ctx.lineTo(-6, 3);
+        ctx.quadraticCurveTo(-7, -6, -7, -16);
+        ctx.closePath(); ctx.fill();
+        // 右サイド毛束
         ctx.beginPath();
-        ctx.arc(0, -13, 8, Math.PI, 0);
-        ctx.bezierCurveTo(10, -8, 10, -4, 8, -2);
-        ctx.lineTo(-8, -2);
-        ctx.bezierCurveTo(-10, -4, -10, -8, -10, -12);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-8, -15);
-        ctx.quadraticCurveTo(-3, -13, 0, -14);
-        ctx.quadraticCurveTo(4, -14.5, 8, -15);
-        ctx.lineTo(7, -13);
-        ctx.lineTo(-7, -13);
-        ctx.closePath();
-        ctx.fill();
-      } else if (transformLvl >= 2) {
-        // SSJ/SSJ2：金ミディアム（少し逆立ち）
-        ctx.fillStyle = hairCol;
-        ctx.beginPath();
-        ctx.arc(0, -13, 8, Math.PI, 0);
-        ctx.bezierCurveTo(10, -8, 10, -4, 8, -2);
-        ctx.lineTo(-8, -2);
-        ctx.bezierCurveTo(-10, -4, -10, -8, -10, -12);
-        ctx.closePath();
-        ctx.fill();
-        // 頭頂の逆立ち
-        ctx.fillStyle = hairCol;
+        ctx.moveTo(9, -16);
+        ctx.quadraticCurveTo(11, -6, 9, 3);
+        ctx.lineTo(6, 3);
+        ctx.quadraticCurveTo(7, -6, 7, -16);
+        ctx.closePath(); ctx.fill();
+      }
+      // 頭頂（y=-13以上だけ、face circle 上半分を覆う）
+      ctx.beginPath();
+      ctx.arc(0, -13, 8, Math.PI, 0);
+      ctx.lineTo(8, -13);
+      ctx.lineTo(-8, -13);
+      ctx.closePath(); ctx.fill();
+      // 頭頂の逆立ち（SSJ/SSJ2/SSJ4 のみ）
+      if (transformLvl >= 2 && transformLvl !== 4) {
         ctx.beginPath();
         ctx.moveTo(-8, -14); ctx.lineTo(-5, -20); ctx.lineTo(-1, -15);
         ctx.lineTo(2, -21); ctx.lineTo(5, -15); ctx.lineTo(8, -20);
         ctx.lineTo(8, -14);
-        ctx.closePath();
-        ctx.fill();
-      } else {
-        // ノーマル/界王拳：ミディアム（ふんわり・肩まで）
-        ctx.fillStyle = hairCol;
-        ctx.beginPath();
-        ctx.arc(0, -13, 8, Math.PI, 0);
-        ctx.bezierCurveTo(10, -8, 10, -2, 8, 0);
-        ctx.lineTo(6, 2);
-        ctx.bezierCurveTo(3, -2, -3, -2, -6, 2);
-        ctx.lineTo(-8, 0);
-        ctx.bezierCurveTo(-10, -2, -10, -8, -10, -12);
-        ctx.closePath();
-        ctx.fill();
-        // 前髪（ふわっと・額のみ）
-        ctx.beginPath();
-        ctx.moveTo(-8, -16);
-        ctx.quadraticCurveTo(-3, -13, 0, -14);
-        ctx.quadraticCurveTo(4, -14.5, 8, -15);
-        ctx.lineTo(7, -13);
-        ctx.lineTo(-7, -13);
-        ctx.closePath();
-        ctx.fill();
+        ctx.closePath(); ctx.fill();
       }
+      // 前髪（額のみ・y=-14〜-18、目 y=-11 には絶対かけない）
+      ctx.beginPath();
+      ctx.moveTo(-8, -17);
+      ctx.quadraticCurveTo(-3, -14, 1, -14);
+      ctx.quadraticCurveTo(5, -15, 8, -15);
+      ctx.lineTo(7, -17);
+      ctx.bezierCurveTo(3, -19, -3, -19, -8, -17);
+      ctx.closePath(); ctx.fill();
       // ピンクリボン（サイドにちょこん）
       ctx.fillStyle = '#ff80b0';
       ctx.beginPath();
-      ctx.moveTo(-10, -17); ctx.lineTo(-7, -19); ctx.lineTo(-7, -15); ctx.closePath();
-      ctx.moveTo(-4, -17); ctx.lineTo(-7, -19); ctx.lineTo(-7, -15); ctx.closePath();
+      ctx.moveTo(-10, -18); ctx.lineTo(-7, -20); ctx.lineTo(-7, -16); ctx.closePath();
+      ctx.moveTo(-4, -18); ctx.lineTo(-7, -20); ctx.lineTo(-7, -16); ctx.closePath();
       ctx.fill();
     }
     // 目の色：SSJ以降は青、SSJ4は赤、界王拳は変わらず
