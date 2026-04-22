@@ -497,7 +497,8 @@
 
   function addShake(v) { cameraShake = Math.max(cameraShake, v); }
 
-  const MAX_PARTICLES = 250;
+  const MAX_PARTICLES = 120;
+  const MAX_ENEMY_PROJECTILES = 50;
   function spawnParticle(x, y, opts) {
     // 上限を超えたら古いものを削除（パフォーマンス維持）
     if (particles.length >= MAX_PARTICLES) particles.splice(0, 10);
@@ -982,8 +983,28 @@
       // ボス：範囲内なら1F毎にダメージ
       if (boss && !boss.dead) {
         if (boss.x + boss.r > bx1 && boss.x - boss.r < bx2) {
-          boss.hp -= 0.6;  // 40Fで24ダメージ
-          boss.hurtTimer = 5;
+          boss.hp -= 0.8;  // 40Fで32ダメージ
+          boss.hurtTimer = 8;
+          // 派手な衝撃演出：毎フレームスパーク＋リズミカルに揺れ＋衝撃音
+          if (u.timer % 2 === 0) {
+            for (let i = 0; i < 4; i++) {
+              const a = Math.random() * Math.PI * 2;
+              const sp = 3 + Math.random() * 5;
+              spawnParticle(boss.x + (Math.random()-0.5)*24, boss.y, {
+                vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                life: 14 + Math.random() * 8,
+                color: ['#ffffff','#80d0ff','#ffee80'][Math.floor(Math.random()*3)],
+                size: 2 + Math.random() * 2,
+              });
+            }
+          }
+          if (u.timer % 5 === 0) {
+            addShake(6);
+            beep(400 + Math.random() * 200, 0.04, 'square', 0.08);
+          }
+          // ボスが衝撃で微振動
+          boss.x += (Math.random() - 0.5) * 2.5;
+          boss.y += (Math.random() - 0.5) * 1.5;
           if (boss.hp <= 0) {
             boss.dead = true;
             screenFlash = 1.0;  // 白フラッシュ
@@ -1045,7 +1066,7 @@
           const dx = player.x - e.x;
           const dy = player.y - e.y;
           const d = Math.hypot(dx, dy) || 1;
-          enemyProjectiles.push({
+          pushEnemyProjectile({
             x: e.x, y: e.y, vx: (dx / d) * 5, vy: (dy / d) * 5,
             r: 6, life: 180, dmg: e.dmg, color: '#ff80ff',
           });
@@ -1146,6 +1167,12 @@
     projectiles = projectiles.filter(p => p.life > 0);
   }
 
+  function pushEnemyProjectile(p) {
+    if (enemyProjectiles.length >= MAX_ENEMY_PROJECTILES) {
+      enemyProjectiles.shift();  // 上限超で古いのから削除
+    }
+    enemyProjectiles.push(p);
+  }
   // ====== 敵弾更新 ======
   function updateEnemyProjectiles() {
     for (const p of enemyProjectiles) {
@@ -1339,7 +1366,7 @@
     for (let i = 0; i < count; i++) {
       const baseAng = Math.atan2(player.y - boss.y, player.x - boss.x);
       const ang = baseAng + (i - (count - 1) / 2) * spread;
-      enemyProjectiles.push({
+      pushEnemyProjectile({
         x: boss.x, y: boss.y,
         vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
         r: 8, life: 160, dmg: boss.dmg, color: boss.beamColor || '#a0f080',
@@ -1354,7 +1381,7 @@
       setTimeout(() => {
         if (!boss || boss.dead) return;
         const ang = Math.atan2(player.y - boss.y, player.x - boss.x) + (Math.random() - 0.5) * 0.15;
-        enemyProjectiles.push({
+        pushEnemyProjectile({
           x: boss.x, y: boss.y,
           vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
           r: 6, life: 140, dmg: boss.dmg, color: boss.beamColor || '#ffb080',
@@ -1367,7 +1394,7 @@
   function deathBall(enraged) {
     const ang = Math.atan2(player.y - boss.y, player.x - boss.x);
     const sp = enraged ? 3.2 : 2.4;
-    enemyProjectiles.push({
+    pushEnemyProjectile({
       x: boss.x, y: boss.y + 20,
       vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
       r: 18, life: 300, dmg: boss.dmg + 1, color: boss.beamColor || '#ff80ff',
@@ -1409,7 +1436,7 @@
         r: 7, life: 180, dmg: boss.dmg, color: boss.beamColor || '#ff80ff',
         homing: true,
       };
-      enemyProjectiles.push(proj);
+      pushEnemyProjectile(proj);
       boss.homingShots.push(proj);
     }
     beep(320, 0.12, 'triangle', 0.12);
@@ -1461,41 +1488,46 @@
     ctx.restore();
   }
 
-  // スクロール背景用の星データ（3レイヤー）
+  // スクロール背景用の星データ（2レイヤーに削減）
   const starLayers = [];
-  for (let layer = 0; layer < 3; layer++) {
-    const speed = 0.6 + layer * 1.2;
-    const count = 30 + layer * 20;
-    const size = 0.5 + layer * 0.8;
-    const brightness = 0.25 + layer * 0.25;
+  for (let layer = 0; layer < 2; layer++) {
+    const speed = 0.8 + layer * 1.4;
+    const count = 20 + layer * 15;
+    const size = 0.8 + layer * 0.8;
+    const brightness = 0.3 + layer * 0.3;
     const stars = [];
     for (let i = 0; i < count; i++) {
-      stars.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        size, speed, brightness,
-      });
+      stars.push({ x: Math.random() * W, y: Math.random() * H, size, speed, brightness });
     }
     starLayers.push(stars);
   }
+  // 背景グラデをキャッシュ（パレット変更時のみ再生成）
+  let cachedBgPal = null, cachedBgGrad = null;
   function drawBackground() {
-    // 空の深さ（ステージごとに色変わる）
     const pal = currentBgPalette || { top: '#040012', mid: '#100828', bot: '#20104a' };
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, pal.top);
-    g.addColorStop(0.5, pal.mid);
-    g.addColorStop(1, pal.bot);
-    ctx.fillStyle = g;
+    if (cachedBgPal !== pal) {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, pal.top);
+      g.addColorStop(0.5, pal.mid);
+      g.addColorStop(1, pal.bot);
+      cachedBgGrad = g;
+      cachedBgPal = pal;
+    }
+    ctx.fillStyle = cachedBgGrad;
     ctx.fillRect(0, 0, W, H);
-    // スクロール星3レイヤー（遠近感）
+    // 星（最小コストで）
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
     for (const stars of starLayers) {
       for (const s of stars) {
         s.y += s.speed;
         if (s.y > H) { s.y = -2; s.x = Math.random() * W; }
-        ctx.fillStyle = `rgba(255,255,255,${s.brightness})`;
-        ctx.fillRect(s.x, s.y, s.size, s.size * 2);  // 縦に引き伸ばしてスピード感
       }
     }
+    // 星を一括描画（fillStyle 1 回）
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (const s of starLayers[0]) ctx.fillRect(s.x, s.y, s.size, s.size * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    for (const s of starLayers[1]) ctx.fillRect(s.x, s.y, s.size, s.size * 2);
   }
 
   // ====== タイトル画面 ======
@@ -1959,38 +1991,22 @@
     ctx.save();
     if (flash) ctx.globalAlpha = 0.5;
 
-    // オーラ（変身段階ごとに色と形が変わる）
+    // オーラ（軽量化：ソリッドな半透明円を2枚重ね）
     if (t >= 1) {
       const auraR = 28 + Math.sin(player.anim * 0.5) * 4 + t * 3;
-      const ag = ctx.createRadialGradient(x, y, 5, x, y, auraR);
-      if (t === 1) {
-        // 界王拳：赤いオーラ
-        ag.addColorStop(0, 'rgba(255,80,80,0.55)');
-        ag.addColorStop(0.5, 'rgba(200,30,30,0.3)');
-        ag.addColorStop(1, 'rgba(80,0,0,0)');
-      } else if (t === 2) {
-        // SSJ：金オーラ
-        ag.addColorStop(0, 'rgba(255,238,100,0.55)');
-        ag.addColorStop(0.5, 'rgba(255,170,40,0.3)');
-        ag.addColorStop(1, 'rgba(255,100,20,0)');
-      } else if (t === 3) {
-        // SSJ2：金＋青白い稲妻
-        ag.addColorStop(0, 'rgba(255,255,150,0.6)');
-        ag.addColorStop(0.5, 'rgba(255,200,60,0.3)');
-        ag.addColorStop(1, 'rgba(180,220,255,0)');
-      } else if (t === 4) {
-        // SSJ3：より激しい金オーラ
-        ag.addColorStop(0, 'rgba(255,240,80,0.65)');
-        ag.addColorStop(0.5, 'rgba(255,180,30,0.4)');
-        ag.addColorStop(1, 'rgba(255,80,0,0)');
-      } else if (t === 5) {
-        // SSJ4：赤＋金
-        ag.addColorStop(0, 'rgba(255,120,40,0.65)');
-        ag.addColorStop(0.5, 'rgba(200,30,20,0.4)');
-        ag.addColorStop(1, 'rgba(60,0,0,0)');
-      }
-      ctx.fillStyle = ag;
+      const auraColors = [
+        null,  // 0
+        ['rgba(255,60,60,0.45)', 'rgba(200,30,30,0.25)'],  // 1 界王拳
+        ['rgba(255,230,80,0.45)', 'rgba(255,150,40,0.25)'],  // 2 SSJ
+        ['rgba(255,240,120,0.5)', 'rgba(180,220,255,0.25)'],  // 3 SSJ2
+        ['rgba(255,230,60,0.55)', 'rgba(255,160,30,0.3)'],  // 4 SSJ3
+        ['rgba(255,100,40,0.55)', 'rgba(200,30,20,0.3)'],  // 5 SSJ4
+      ];
+      const col = auraColors[t];
+      ctx.fillStyle = col[1];
       ctx.beginPath(); ctx.arc(x, y, auraR, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col[0];
+      ctx.beginPath(); ctx.arc(x, y, auraR * 0.6, 0, Math.PI * 2); ctx.fill();
       // 上方向のオーラ炎
       const flameCount = 6 + t;
       for (let i = 0; i < flameCount; i++) {
@@ -2562,12 +2578,10 @@
     // 激昂オーラ（HP40%以下で赤くなる）
     if (boss.hp / boss.maxHp < 0.4) {
       const auraR = boss.r + 22 + Math.sin(boss.anim * 0.5) * 6;
-      const ag = ctx.createRadialGradient(x, y, boss.r, x, y, auraR);
-      ag.addColorStop(0, 'rgba(200,80,80,0)');
-      ag.addColorStop(0.5, 'rgba(200,80,80,0.4)');
-      ag.addColorStop(1, 'rgba(200,0,40,0)');
-      ctx.fillStyle = ag;
+      ctx.fillStyle = 'rgba(200,80,80,0.3)';
       ctx.beginPath(); ctx.arc(x, y, auraR, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,100,80,0.2)';
+      ctx.beginPath(); ctx.arc(x, y, auraR * 0.7, 0, Math.PI*2); ctx.fill();
     }
     ctx.restore();
   }
