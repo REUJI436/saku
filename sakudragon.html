@@ -1414,58 +1414,133 @@
     }
   }
 
-  // ====== ボス撃破演出（ロックマン風） ======
+  // ====== ボス撃破演出（ド派手版） ======
+  let bossShockwaves = [];  // 拡大するリング
   function killBoss() {
     boss.dead = true;
     boss.defeatTimer = 0;
     boss.vanished = false;
-    banner = { text: (boss.name || 'とーと') + ' [撃破|げきは]！', color: '#80ff80', life: 220, maxLife: 220 };
-    addShake(20);
-    // 最初の小爆発
+    bossShockwaves = [];
+    banner = { text: (boss.name || 'とーと') + ' [撃破|げきは]！', color: '#80ff80', life: 260, maxLife: 260 };
+    addShake(28);
+    screenFlash = 0.7;
+    // 初回の衝撃爆発
+    spawnExplosion(boss.x, boss.y, '#ffffff', 18);
     spawnExplosion(boss.x, boss.y, '#ffcc40', 14);
     sfxExplode();
+    addBossShockwave(boss.x, boss.y, 150, '#ffee80');
+    // 地響き
+    lowImpactSound();
     // 敵弾は全消滅
     enemyProjectiles = [];
+    // 残敵も巻き込み爆発
+    for (const e of enemies) {
+      if (!e.dead) {
+        e.dead = true;
+        spawnExplosion(e.x, e.y, e.color, 6);
+      }
+    }
+  }
+
+  function addBossShockwave(x, y, maxR, color) {
+    bossShockwaves.push({ x, y, r: 0, maxR, life: 45, maxLife: 45, color });
+  }
+
+  function lowImpactSound() {
+    ensureAudio();
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(70, now);
+    o.frequency.exponentialRampToValueAtTime(28, now + 1.2);
+    g.gain.setValueAtTime(0.5, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(now); o.stop(now + 1.4);
   }
 
   function updateBossDefeat() {
     boss.defeatTimer++;
     const t = boss.defeatTimer;
-    // 0〜80F：ボス周囲でランダムな小爆発が連鎖
-    if (t < 80 && t % 8 === 0) {
-      const ox = (Math.random() - 0.5) * boss.r * 2.8;
-      const oy = (Math.random() - 0.5) * boss.r * 2.2;
-      const cols = ['#ffcc40','#ff8020','#ffee80','#ffffff'];
-      spawnExplosion(boss.x + ox, boss.y + oy, cols[Math.floor(Math.random() * cols.length)], 10);
-      addShake(5);
-      beep(120 + Math.random() * 200, 0.08, 'sawtooth', 0.1);
+    // 0〜140F：ボス周囲で連鎖爆発（徐々に頻度UP）
+    if (t < 140) {
+      const interval = t < 40 ? 10 : t < 90 ? 6 : 4;
+      if (t % interval === 0) {
+        const ox = (Math.random() - 0.5) * boss.r * 3.2;
+        const oy = (Math.random() - 0.5) * boss.r * 2.6;
+        const cols = ['#ffcc40','#ff8020','#ffee80','#ffffff','#ff5020'];
+        spawnExplosion(boss.x + ox, boss.y + oy, cols[Math.floor(Math.random() * cols.length)], 10);
+        addShake(3 + Math.floor(t / 30));
+        beep(100 + Math.random() * 250, 0.07, 'sawtooth', 0.09);
+      }
+      // 中間フェーズの衝撃波＆フラッシュ
+      if (t === 40) {
+        addBossShockwave(boss.x, boss.y, 220, '#ffcc40');
+        screenFlash = 0.5;
+        addShake(14);
+        sfxExplode();
+      }
+      if (t === 90) {
+        addBossShockwave(boss.x, boss.y, 280, '#ff8020');
+        screenFlash = 0.6;
+        addShake(18);
+        sfxExplode();
+        lowImpactSound();
+      }
     }
-    // 80F：大爆発＆ボス消失
-    if (t === 80) {
-      spawnExplosion(boss.x, boss.y, '#ffffff', 25);
-      spawnExplosion(boss.x, boss.y, '#ffcc40', 20);
-      spawnExplosion(boss.x, boss.y, boss.color || '#80ff80', 20);
-      addShake(30);
+    // 140F：巨大爆発＆ボス消滅
+    if (t === 140) {
+      spawnExplosion(boss.x, boss.y, '#ffffff', 50);
+      spawnExplosion(boss.x, boss.y, '#ffcc40', 35);
+      spawnExplosion(boss.x, boss.y, boss.color || '#80ff80', 35);
+      // ボスのパーツが四方に飛散
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        const sp = 5 + Math.random() * 5;
+        particles.push({
+          x: boss.x, y: boss.y,
+          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 3,
+          life: 90, maxLife: 90,
+          color: boss.color || '#80ff80',
+          size: 5 + Math.random() * 3,
+          gravity: 0.25,
+        });
+      }
+      // 3重の超ド級ショックウェーブ
+      addBossShockwave(boss.x, boss.y, 450, '#ffffff');
+      addBossShockwave(boss.x, boss.y, 380, '#ffee80');
+      addBossShockwave(boss.x, boss.y, 520, '#ffcc40');
+      addShake(40);
       screenFlash = 1.0;
       sfxExplode();
-      // 低音のブーム
+      lowImpactSound();
+      // 最後の1発・超低音
       ensureAudio();
       if (audioCtx) {
         const now = audioCtx.currentTime;
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         o.type = 'sine';
-        o.frequency.setValueAtTime(80, now);
-        o.frequency.exponentialRampToValueAtTime(30, now + 0.8);
-        g.gain.setValueAtTime(0.4, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+        o.frequency.setValueAtTime(90, now);
+        o.frequency.exponentialRampToValueAtTime(25, now + 1.5);
+        g.gain.setValueAtTime(0.6, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
         o.connect(g).connect(audioCtx.destination);
-        o.start(now); o.stop(now + 1);
+        o.start(now); o.stop(now + 1.7);
       }
       boss.vanished = true;
     }
-    // 100F：次ステージへ遷移開始（プレイヤーの飛び立ち演出）
-    if (t === 100) {
+    // ショックウェーブ更新
+    for (const sw of bossShockwaves) {
+      sw.life--;
+      const pr = 1 - sw.life / sw.maxLife;
+      sw.r = sw.maxR * pr;
+    }
+    bossShockwaves = bossShockwaves.filter(sw => sw.life > 0);
+    // 180F：余韻フェーズ終了 → STAGE_CLEAR へ
+    if (t === 180) {
       const isLast = (currentStageIdx >= STAGES_CONFIG.length - 1);
       if (isLast) {
         state = STATE.CLEARED;
@@ -1475,8 +1550,27 @@
         stateTimer = 0;
         setTimeout(() => {
           if (state === STATE.STAGE_CLEAR) nextStage();
-        }, 1800);
+        }, 2800);  // STAGE_CLEAR 2.8秒（余韻を長く）
       }
+    }
+  }
+  // ショックウェーブの描画（drawGame 内で呼ぶ）
+  function drawBossShockwaves() {
+    for (const sw of bossShockwaves) {
+      const alpha = Math.max(0, sw.life / sw.maxLife);
+      ctx.save();
+      ctx.strokeStyle = sw.color;
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.beginPath();
+      ctx.arc(sw.x, sw.y, sw.r * 0.8, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -2108,6 +2202,38 @@
     ctx.restore();
   }
 
+  // ====== ステージ切替フェード ======
+  // STAGE_CLEAR 後半で暗転、新ステージ開始直後に明転
+  let stageFadeTimer = 0;  // 次ステージへのフェードカウント
+  function drawStageTransitionFade() {
+    let alpha = 0;
+    let showNext = false;
+    if (state === STATE.STAGE_CLEAR && stateTimer > 100) {
+      // 100F〜160F で 0→1 に暗転
+      alpha = Math.min(1, (stateTimer - 100) / 60);
+      showNext = stateTimer > 130;
+    } else if (state === STATE.PLAYING && stateTimer < 50 && currentStageIdx > 0 && !boss) {
+      // 新ステージ開始直後：黒から明転
+      alpha = Math.max(0, 1 - stateTimer / 50);
+    }
+    if (alpha <= 0) return;
+    ctx.save();
+    ctx.fillStyle = `rgba(0,0,0,${alpha * 0.92})`;
+    ctx.fillRect(0, 0, W, H);
+    // 暗転中に次ステージ名を浮かび上がらせる
+    if (showNext) {
+      const nextStg = STAGES_CONFIG[currentStageIdx + 1];
+      if (nextStg) {
+        const t = Math.min(1, (stateTimer - 130) / 30);
+        ctx.globalAlpha = t;
+        drawRubyText(`[次|つぎ]のステージ`, W/2, H/2 - 40, { size: 22, fill: '#cccccc', strokeW: 4 });
+        drawRubyText(nextStg.name, W/2, H/2 + 10, { size: 44, fill: '#ffee60', strokeW: 6, family: 'serif' });
+        drawRubyText(nextStg.bossName + ' [登場|とうじょう]', W/2, H/2 + 60, { size: 20, fill: '#ffaa60', strokeW: 4 });
+      }
+    }
+    ctx.restore();
+  }
+
   // ====== エンディング画面 ======
   function drawEndingScene() {
     const t = stateTimer;
@@ -2253,10 +2379,14 @@
     drawProjectiles();
     drawParticles();
     drawPopups();
+    // ボス爆散ショックウェーブ（HUD下に重ね描画）
+    drawBossShockwaves();
     drawHUD();
     if (banner) drawBanner();
     // かめはめ波カットイン（HUDの上に重ねて描画）
     drawKamehameHaCutin();
+    // ステージ切替フェード（STAGE_CLEAR 後半と新ステージ開始直後）
+    drawStageTransitionFade();
 
     if (state === STATE.STAGE_CLEAR) {
       // 画面は暗転せず、キャラの飛び立ちが見えるようにする
