@@ -81,7 +81,7 @@
   // hudStats 削除（HUDはCanvas内で描画）
 
   // ====== ゲーム状態 ======
-  const STATE = { TITLE: 'title', CHAR_SELECT: 'charSelect', BOSS_INTRO: 'bossIntro', PLAYING: 'playing', DEAD: 'dead', STAGE_CLEAR: 'stageClear', CLEARED: 'cleared', GAMEOVER: 'gameover' };
+  const STATE = { TITLE: 'title', CHAR_SELECT: 'charSelect', STAGE_SELECT: 'stageSelect', BOSS_INTRO: 'bossIntro', PLAYING: 'playing', DEAD: 'dead', STAGE_CLEAR: 'stageClear', CLEARED: 'cleared', GAMEOVER: 'gameover' };
   let state = STATE.TITLE;
   let stateTimer = 0;
 
@@ -112,6 +112,24 @@
   function clearSave() {
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
   }
+  // ====== クリア済みステージ記録 ======
+  const CLEARED_KEY = 'sakudragon_cleared_v1';
+  function getClearedStages() {
+    try {
+      const s = localStorage.getItem(CLEARED_KEY);
+      return s ? new Set(JSON.parse(s)) : new Set();
+    } catch (e) { return new Set(); }
+  }
+  function markStageCleared(idx) {
+    try {
+      const set = getClearedStages();
+      set.add(idx);
+      localStorage.setItem(CLEARED_KEY, JSON.stringify([...set]));
+    } catch (e) {}
+  }
+  function hasAnyCleared() {
+    return getClearedStages().size > 0;
+  }
 
   // ====== 入力 ======
   const keys = {};
@@ -122,7 +140,10 @@
     else if (state === STATE.CHAR_SELECT) {
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') { selectIdx = (selectIdx + CHARACTERS.length - 1) % CHARACTERS.length; charSelectTapped = selectIdx; }
       else if (e.code === 'ArrowRight' || e.code === 'KeyD') { selectIdx = (selectIdx + 1) % CHARACTERS.length; charSelectTapped = selectIdx; }
-      else if (e.code === 'Space' || e.code === 'Enter') startGame();
+      else if (e.code === 'Space' || e.code === 'Enter') {
+        if (pendingStageSelectIdx !== null) { const idx = pendingStageSelectIdx; pendingStageSelectIdx = null; startStageFromSelect(idx); }
+        else startGame();
+      }
     } else if (state === STATE.GAMEOVER) {
       if (e.code === 'Space' || e.code === 'Enter') state = STATE.TITLE;
     } else if (state === STATE.BOSS_INTRO) {
@@ -259,22 +280,38 @@
     ensureAudio();
     if (state === STATE.TITLE) {
       const pos = getCanvasPos(e);
-      if (titleContinueBtn && pos.x > titleContinueBtn.x && pos.x < titleContinueBtn.x + titleContinueBtn.w && pos.y > titleContinueBtn.y && pos.y < titleContinueBtn.y + titleContinueBtn.h) {
-        continueGame();
-        return;
-      }
-      if (titleNewBtn && pos.x > titleNewBtn.x && pos.x < titleNewBtn.x + titleNewBtn.w && pos.y > titleNewBtn.y && pos.y < titleNewBtn.y + titleNewBtn.h) {
-        clearSave();
-        gotoCharSelect();
-        return;
-      }
-      // 枠外タップも はじめから扱い
+      const inBtn = (b) => b && pos.x > b.x && pos.x < b.x + b.w && pos.y > b.y && pos.y < b.y + b.h;
+      if (inBtn(titleContinueBtn)) { continueGame(); return; }
+      if (inBtn(titleStageSelectBtn)) { gotoStageSelect(); return; }
+      if (inBtn(titleNewBtn)) { clearSave(); gotoCharSelect(); return; }
       gotoCharSelect();
+      return;
+    }
+    if (state === STATE.STAGE_SELECT) {
+      const pos = getCanvasPos(e);
+      // 戻るボタン
+      if (stageSelectBackBtn && pos.x > stageSelectBackBtn.x && pos.x < stageSelectBackBtn.x + stageSelectBackBtn.w && pos.y > stageSelectBackBtn.y && pos.y < stageSelectBackBtn.y + stageSelectBackBtn.h) {
+        state = STATE.TITLE;
+        return;
+      }
+      // ステージカード
+      for (const btn of stageSelectButtons) {
+        if (pos.x > btn.x && pos.x < btn.x + btn.w && pos.y > btn.y && pos.y < btn.y + btn.h) {
+          if (btn.unlocked) {
+            beep(880, 0.08, 'square', 0.12);
+            // キャラ選択経由で開始
+            charSelectTapped = null;
+            pendingStageSelectIdx = btn.idx;
+            state = STATE.CHAR_SELECT;
+            stateTimer = 0;
+          }
+          return;
+        }
+      }
       return;
     }
     if (state === STATE.CHAR_SELECT) {
       const pos = getCanvasPos(e);
-      // キャラカードの当たり判定：1タップで即スタート
       const cardW = 260, cardH = 320, gap = 60;
       const totalW = cardW * CHARACTERS.length + gap * (CHARACTERS.length - 1);
       const startX = (W - totalW) / 2;
@@ -284,7 +321,13 @@
         if (pos.x >= cx && pos.x <= cx + cardW && pos.y >= cy && pos.y <= cy + cardH) {
           selectIdx = i;
           charSelectTapped = i;
-          startGame();
+          if (pendingStageSelectIdx !== null) {
+            const idx = pendingStageSelectIdx;
+            pendingStageSelectIdx = null;
+            startStageFromSelect(idx);
+          } else {
+            startGame();
+          }
           return;
         }
       }
@@ -709,6 +752,13 @@
     charSelectTapped = null;
     beep(880, 0.1, 'triangle', 0.14);
   }
+  function gotoStageSelect() {
+    ensureAudio();
+    state = STATE.STAGE_SELECT;
+    stateTimer = 0;
+    beep(660, 0.1, 'triangle', 0.14);
+  }
+  let pendingStageSelectIdx = null;
 
   function continueGame() {
     ensureAudio();
@@ -1487,6 +1537,8 @@
     boss.defeatTimer = 0;
     boss.vanished = false;
     bossShockwaves = [];
+    // ステージクリア記録
+    markStageCleared(currentStageIdx);
     banner = { text: (boss.name || 'とーと') + ' [撃破|げきは]！', color: '#80ff80', life: 260, maxLife: 260 };
     addShake(28);
     screenFlash = 0.7;
@@ -1823,6 +1875,7 @@
 
     if (state === STATE.TITLE) drawTitle();
     else if (state === STATE.CHAR_SELECT) drawCharSelect();
+    else if (state === STATE.STAGE_SELECT) drawStageSelect();
     else if (state === STATE.BOSS_INTRO) drawBossIntro();
     else drawGame();
 
@@ -1934,50 +1987,55 @@
     ctx.fillText('さく', tcx, tcy + 94);
     ctx.restore();
 
-    // メニュー：はじめから / つづきから
+    // メニュー：はじめから / つづきから / ステージ選択
     const sv = loadSave();
-    const menuY = H - 120;
-    const btnW = 240, btnH = 44;
+    const hasCleared = hasAnyCleared();
+    const btnW = 240, btnH = 42;
+    const gap = 8;
+    const count = 1 + (sv ? 1 : 0) + (hasCleared ? 1 : 0);
+    const totalH = count * btnH + (count - 1) * gap;
+    const startY = H - 40 - totalH;
+    let curY = startY + btnH / 2;
+    const nx = W/2;
     ctx.save();
     ctx.textAlign = 'center';
     ctx.font = 'bold 20px sans-serif';
 
     // はじめから
-    const nx = W/2, ny = menuY;
-    ctx.fillStyle = 'rgba(80,40,10,0.85)';
-    ctx.fillRect(nx - btnW/2, ny - btnH/2, btnW, btnH);
-    ctx.strokeStyle = '#ffa040';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(nx - btnW/2, ny - btnH/2, btnW, btnH);
-    ctx.fillStyle = '#ffee80';
-    ctx.lineWidth = 4; ctx.strokeStyle = '#000';
-    ctx.strokeText('はじめから', nx, ny + 7);
-    ctx.fillText('はじめから', nx, ny + 7);
-    titleNewBtn = { x: nx - btnW/2, y: ny - btnH/2, w: btnW, h: btnH };
+    drawMenuBtn(nx, curY, btnW, btnH, 'はじめから', 'rgba(80,40,10,0.85)', '#ffa040', '#ffee80');
+    titleNewBtn = { x: nx - btnW/2, y: curY - btnH/2, w: btnW, h: btnH };
+    curY += btnH + gap;
 
-    // つづきから（セーブがある場合のみ）
+    // つづきから
     if (sv) {
-      const cy = ny + 58;
-      ctx.fillStyle = 'rgba(10,40,80,0.85)';
-      ctx.fillRect(nx - btnW/2, cy - btnH/2, btnW, btnH);
-      ctx.strokeStyle = '#60a0ff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(nx - btnW/2, cy - btnH/2, btnW, btnH);
-      ctx.fillStyle = '#80c0ff';
-      ctx.lineWidth = 4; ctx.strokeStyle = '#000';
-      ctx.strokeText('つづきから', nx, cy + 7);
-      ctx.fillText('つづきから', nx, cy + 7);
-      // セーブ内容
-      ctx.font = '12px sans-serif';
-      ctx.fillStyle = '#ccc';
-      ctx.fillText(`ステージ ${sv.stageIdx + 1}（${CHARACTERS[sv.charIdx]?.name || ''}）`, nx, cy + 30);
-      titleContinueBtn = { x: nx - btnW/2, y: cy - btnH/2, w: btnW, h: btnH };
+      drawMenuBtn(nx, curY, btnW, btnH, 'つづきから', 'rgba(10,40,80,0.85)', '#60a0ff', '#80c0ff');
+      titleContinueBtn = { x: nx - btnW/2, y: curY - btnH/2, w: btnW, h: btnH };
+      curY += btnH + gap;
     } else {
       titleContinueBtn = null;
     }
+
+    // ステージ選択
+    if (hasCleared) {
+      drawMenuBtn(nx, curY, btnW, btnH, 'ステージ[選択|せんたく]', 'rgba(20,60,30,0.85)', '#60c080', '#a0ffa0');
+      titleStageSelectBtn = { x: nx - btnW/2, y: curY - btnH/2, w: btnW, h: btnH };
+      curY += btnH + gap;
+    } else {
+      titleStageSelectBtn = null;
+    }
+
     ctx.restore();
   }
-  let titleNewBtn = null, titleContinueBtn = null;
+  let titleNewBtn = null, titleContinueBtn = null, titleStageSelectBtn = null;
+
+  function drawMenuBtn(cx, cy, w, h, label, bg, border, textCol) {
+    ctx.fillStyle = bg;
+    ctx.fillRect(cx - w/2, cy - h/2, w, h);
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - w/2, cy - h/2, w, h);
+    drawRubyText(label, cx, cy + 7, { size: 20, fill: textCol, strokeW: 4 });
+  }
 
   // ====== キャラ選択画面 ======
   function drawCharSelect() {
@@ -2267,6 +2325,105 @@
       ctx.fill();
     }
     ctx.restore();
+  }
+
+  // ====== ステージ選択画面 ======
+  let stageSelectButtons = [];
+  function drawStageSelect() {
+    // 背景
+    ctx.fillStyle = '#080020';
+    ctx.fillRect(0, 0, W, H);
+    // 星
+    for (let i = 0; i < 80; i++) {
+      const x = (i * 137) % W;
+      const y = (i * 97 + 13) % H;
+      ctx.fillStyle = `rgba(255,255,255,${0.2 + (i % 3) * 0.2})`;
+      ctx.fillRect(x, y, i % 4 === 0 ? 2 : 1, i % 4 === 0 ? 2 : 1);
+    }
+    // タイトル
+    drawRubyText('ステージ [選択|せんたく]', W/2, 50, { size: 34, fill: '#ffee60', strokeW: 6, family: 'serif' });
+
+    // 戻るボタン
+    const backX = 70, backY = 50;
+    ctx.fillStyle = 'rgba(80,40,40,0.9)';
+    ctx.fillRect(backX - 45, backY - 18, 90, 36);
+    ctx.strokeStyle = '#c08080';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(backX - 45, backY - 18, 90, 36);
+    drawRubyText('[戻|もど]る', backX, backY + 6, { size: 16, fill: '#ffccaa', strokeW: 3 });
+    stageSelectBackBtn = { x: backX - 45, y: backY - 18, w: 90, h: 36 };
+
+    // ステージ一覧（2列 × 3行）
+    const cleared = getClearedStages();
+    const cols = 3, rows = Math.ceil(STAGES_CONFIG.length / cols);
+    const cardW = 260, cardH = 120;
+    const gapX = 20, gapY = 16;
+    const totalW = cardW * cols + gapX * (cols - 1);
+    const startX = (W - totalW) / 2;
+    const startCardY = 110;
+    stageSelectButtons = [];
+    for (let i = 0; i < STAGES_CONFIG.length; i++) {
+      const stg = STAGES_CONFIG[i];
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const cx = startX + col * (cardW + gapX);
+      const cy = startCardY + row * (cardH + gapY);
+      const unlocked = cleared.has(i) || i === 0 || cleared.has(i - 1);  // 前ステージクリアで開放、常に1面は開放
+      stageSelectButtons.push({ x: cx, y: cy, w: cardW, h: cardH, idx: i, unlocked });
+      // カード背景
+      if (unlocked) {
+        const pal = stg.bgPalette;
+        const g = ctx.createLinearGradient(cx, cy, cx, cy + cardH);
+        g.addColorStop(0, pal.top);
+        g.addColorStop(1, pal.bot);
+        ctx.fillStyle = g;
+      } else {
+        ctx.fillStyle = '#20202a';
+      }
+      ctx.fillRect(cx, cy, cardW, cardH);
+      ctx.strokeStyle = unlocked ? '#ffee60' : '#4a4a58';
+      ctx.lineWidth = unlocked ? 3 : 2;
+      ctx.strokeRect(cx, cy, cardW, cardH);
+      // クリア済みマーク
+      if (cleared.has(i)) {
+        ctx.fillStyle = '#20a040';
+        ctx.beginPath(); ctx.arc(cx + cardW - 20, cy + 20, 14, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('✓', cx + cardW - 20, cy + 26);
+      }
+      // ロックアイコン
+      if (!unlocked) {
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(cx, cy, cardW, cardH);
+        ctx.font = 'bold 48px sans-serif';
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔒', cx + cardW/2, cy + cardH/2 + 16);
+        continue;
+      }
+      // ステージ情報
+      drawRubyText(`STAGE ${stg.num}`, cx + cardW/2, cy + 28, { size: 20, fill: '#ffee80', strokeW: 4, family: 'serif' });
+      drawRubyText(stg.name, cx + cardW/2, cy + 60, { size: 22, fill: '#ffffff', strokeW: 5, family: 'serif' });
+      drawRubyText(stg.bossName, cx + cardW/2, cy + 95, { size: 15, fill: '#ffaa80', strokeW: 3 });
+    }
+
+    // 操作説明
+    drawRubyText('[前|まえ]のステージクリアで[開放|かいほう]', W/2, H - 12, { size: 13, fill: '#aaaaaa', strokeW: 2 });
+  }
+  let stageSelectBackBtn = null;
+
+  function startStageFromSelect(idx) {
+    ensureAudio();
+    currentStageIdx = idx;
+    resetPlayer(CHARACTERS[selectIdx]);
+    const stg = STAGES_CONFIG[idx];
+    player.transform = stg.transformUnlock || 0;
+    player.kiGauge = player.kiGaugeMax;
+    totalScore = 0;
+    comboMax = 0;
+    startStage();
   }
 
   // ====== ボス入場カットイン ======
