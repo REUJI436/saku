@@ -68,7 +68,6 @@
   <canvas id="cv" width="960" height="540"></canvas>
   <div id="hud">
     <a id="portalBtn" href="./">🏠</a>
-    <div class="box" id="hudStats"></div>
   </div>
   <div id="touchUI">
     <button id="chargeBtn">必殺技<small>かめはめ波</small></button>
@@ -79,7 +78,7 @@
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
   const W = cv.width, H = cv.height;
-  const hudStats = document.getElementById('hudStats');
+  // hudStats 削除（HUDはCanvas内で描画）
 
   // ====== ゲーム状態 ======
   const STATE = { TITLE: 'title', CHAR_SELECT: 'charSelect', PLAYING: 'playing', DEAD: 'dead', STAGE_CLEAR: 'stageClear', CLEARED: 'cleared', GAMEOVER: 'gameover' };
@@ -344,14 +343,14 @@
   const CHARACTERS = [
     {
       id: 'saku', name: 'さく',
-      hp: 10, speed: 3.4, atkDmg: 1, atkRate: 14,
+      hp: 10, speed: 3.4, atkDmg: 1, atkRate: 10,
       hairCol: '#1a1008', skinCol: '#ffddbb',
       shirtCol: '#ff6030', pantsCol: '#204080',
       desc: 'バランス型・火力UP',
     },
     {
       id: 'kurumi', name: 'くるみ',
-      hp: 8, speed: 4.2, atkDmg: 1, atkRate: 10,
+      hp: 8, speed: 4.2, atkDmg: 1, atkRate: 7,
       hairCol: '#9a5a2a', skinCol: '#ffddbb',
       shirtCol: '#ffffff', pantsCol: '#ff80b0',
       desc: 'スピード型・連射UP',
@@ -533,13 +532,13 @@
   // ====== 敵 ======
   const ENEMY_TYPES = {
     saibai: {  // サイバイマン風・緑の小型兵
-      hp: 1, speed: 1.4, r: 13, dmg: 1, color: '#4ca040', coreCol: '#2a6020', score: 100,
+      hp: 1, speed: 1.4, r: 13, dmg: 0.5, color: '#4ca040', coreCol: '#2a6020', score: 100,
     },
     namek: {  // 兵士風・大型
-      hp: 1, speed: 1.0, r: 16, dmg: 1, color: '#8ad090', coreCol: '#406028', score: 250,
+      hp: 1, speed: 1.0, r: 16, dmg: 0.5, color: '#8ad090', coreCol: '#406028', score: 250,
     },
     freezer: {  // 兵長・赤い
-      hp: 1, speed: 1.6, r: 14, dmg: 2, color: '#e04040', coreCol: '#702020', score: 400, shooter: true,
+      hp: 1, speed: 1.6, r: 14, dmg: 1, color: '#e04040', coreCol: '#702020', score: 400, shooter: true,
     },
   };
 
@@ -854,7 +853,7 @@
   function damagePlayer(dmg) {
     if (player.invuln > 0) return;
     player.hp -= dmg;
-    player.invuln = 60;
+    player.invuln = 90;  // 無敵時間（60→90）
     addShake(10);
     sfxHit();
     if (player.hp <= 0) {
@@ -2901,9 +2900,9 @@
   }
 
   function drawHUD() {
-    // プレイヤー HP バー（左上）
+    // プレイヤー HP バー（左上・ポータルボタンの下）
     const hpW = 220, hpH = 14;
-    const hpX = 12, hpY = 32;
+    const hpX = 12, hpY = 52;
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(hpX, hpY, hpW, hpH);
@@ -3083,14 +3082,6 @@
     if (state === STATE.PLAYING) {
       if (comboTimer > 0) comboTimer--;
       else comboCount = 0;
-    }
-    // HUDテキスト更新
-    if (state === STATE.PLAYING) {
-      hudStats.textContent = `HP ${player.hp}/${player.maxHp}　Kills ${player.kills}`;
-    } else if (state === STATE.TITLE) {
-      hudStats.textContent = '';
-    } else {
-      hudStats.textContent = '';
     }
   }
 
