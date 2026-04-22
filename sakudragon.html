@@ -454,10 +454,10 @@
     '[超|ちょう]サイヤ[人|じん]2',
     '[超|ちょう]サイヤ[人|じん]3',
     '[超|ちょう]サイヤ[人|じん]4',
+    '[超|ちょう]サイヤ[人|じん]ゴッド',
   ];
-  const TRANSFORM_MAX = 5;
-  // 各ティアに必要な power（累積ではなく各ティアごとリセット）
-  const TRANSFORM_COST = [25, 35, 50, 65, 80];
+  const TRANSFORM_MAX = 6;
+  const TRANSFORM_COST = [25, 35, 50, 65, 80, 120];
 
   // ====== ステージ構成 ======
   const STAGES_CONFIG = [
@@ -530,9 +530,9 @@
       num: 5, name: '[界王神界|かいおうしんかい]',
       bossType: 'buu', bossName: '[魔神|まじん]とーと',
       bossHp: 360, bossColor: '#ff80b0', beamColor: '#ffb0d8',
-      triggerKills: 500,           // ラスト：圧倒的ボリューム
-      enemyMultiplier: 4.0,        // ラスト：敵の数 4倍
-      spawnBurstBonus: 2,          // 同時スポーン数 +2
+      triggerKills: 500,
+      enemyMultiplier: 4.0,
+      spawnBurstBonus: 2,
       transformUnlock: 4,
       bossIntroLine: 'ブーブブゥー！ボクは[魔神|まじん]とーと！[地球|ちきゅう]も[宇宙|うちゅう]もぜーんぶ、[僕|ぼく]のお[菓子|かし]にしちゃうよ！',
       // 界王神界：ピンク空と黄金の雲、神秘的な紫
@@ -545,6 +545,26 @@
       ],
       eventText: '[限界突破|げんかいとっぱ]…[超|ちょう]サイヤ[人|じん]3！',
       eventFlavor: '[宇宙|うちゅう]を[揺|ゆ]るがす [究極|きゅうきょく]の[気|き]',
+    },
+    {
+      num: 6, name: '[宇宙|うちゅう]',
+      bossType: 'bills', bossName: 'ビルス[様|さま]',
+      bossHp: 450, bossColor: '#a060d0', beamColor: '#e080ff',
+      triggerKills: 600,
+      enemyMultiplier: 5.0,
+      spawnBurstBonus: 3,
+      transformUnlock: 6,  // ゴッド
+      bossIntroLine: '[我|わ]が[名|な]はビルス。この[宇宙|うちゅう]の[破壊神|はかいしん]。[私|わたし]を[楽|たの]しませてくれるのだろうな？',
+      // 宇宙：漆黒の宇宙＋遠くの星雲
+      bgPalette: { top: '#00000a', mid: '#100030', bot: '#2a0855' },
+      bgStyle: 'space',
+      preludeLines: [
+        'ビルス[様|さま]：「[力|ちから]不足だ…やはり、これでは[私|わたし]を[倒|たお]せぬ」',
+        '「[純粋|じゅんすい]なる5人のサイヤ[人|じん]が [力|ちから]を[託|たく]す…」',
+        '「これが [神|かみ]の[領域|りょういき]の[力|ちから] ― [儀式|ぎしき]、[成立|せいりつ]！」',
+      ],
+      eventText: '[神|かみ]の[力|ちから]…[超|ちょう]サイヤ[人|じん]ゴッド！',
+      eventFlavor: '[赤|あか]き[炎|ほのお]の[気|き]が [神|かみ]の[領域|りょういき]を[切|き]り[拓|ひら]く',
     },
   ];
   let currentStageIdx = 0;
@@ -950,16 +970,16 @@
   }
 
   function spawnKiBlast() {
-    // 縦スクロール：真上に直進（全弾まっすぐ）
     const sp = 10;
-    // さくは超特大の気弾で高火力、くるみは中サイズで速連射
     const isSaku = player.charId === 'saku';
     const r = isSaku ? 17 : 11;
     const dmg = player.atkDmg + Math.floor(player.transform * 0.6) + (isSaku ? 1 : 0);
     let shots;
     if (player.transform <= 2) shots = 1;
+    else if (player.transform === 6) shots = 3;  // ゴッド：3発直進
     else shots = player.transform - 1;
     const spacing = isSaku ? 28 : 16;
+    // 直進の弾
     for (let i = 0; i < shots; i++) {
       const offset = (i - (shots - 1) / 2) * spacing;
       projectiles.push({
@@ -970,6 +990,21 @@
         life: 90, dmg, r,
         transform: player.transform,
       });
+    }
+    // ゴッドは斜め2発追加（左上・右上）
+    if (player.transform === 6) {
+      const diagAng = 0.35;
+      for (const s of [-1, 1]) {
+        const ang = -Math.PI / 2 + s * diagAng;
+        projectiles.push({
+          x: player.x + s * spacing * 1.4,
+          y: player.y - player.r,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          life: 90, dmg, r,
+          transform: player.transform,
+        });
+      }
     }
   }
 
@@ -1036,13 +1071,14 @@
   }
 
   function auraColorFor(t) {
-    // 0:ノーマル, 1:界王拳(赤), 2:SSJ(金), 3:SSJ2(金+青電), 4:SSJ3(金), 5:SSJ4(赤)
+    // 0:ノーマル, 1:界王拳(赤), 2:SSJ(金), 3:SSJ2(金+青電), 4:SSJ3(金), 5:SSJ4(赤), 6:ゴッド(赤)
     switch (t) {
       case 1: return '#ff4040';  // 赤（界王拳）
       case 2: return '#ffee40';  // 金（SSJ）
-      case 3: return '#ffff80';  // 金＋青白い稲妻のベース
+      case 3: return '#ffff80';  // 金＋青白い稲妻
       case 4: return '#ffdc20';  // 金（SSJ3）
-      case 5: return '#ff6010';  // 赤（SSJ4）
+      case 5: return '#ff6010';  // 暗赤（SSJ4）
+      case 6: return '#ff3030';  // 鮮やかな赤（ゴッド）
       default: return '#ffffff';
     }
   }
@@ -2278,7 +2314,7 @@
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.beginPath(); ctx.ellipse(0, 31, 24, 5, 0, 0, Math.PI*2); ctx.fill();
     drawer(0, 0, mockBoss);
-    drawTotoGlasses(0, -13);
+    if (stg.bossType !== 'bills') drawTotoGlasses(0, -13);
     ctx.restore();
 
     // ボス名タブ
@@ -2557,6 +2593,7 @@
         ['rgba(255,240,120,0.5)', 'rgba(180,220,255,0.25)'],  // 3 SSJ2
         ['rgba(255,230,60,0.55)', 'rgba(255,160,30,0.3)'],  // 4 SSJ3
         ['rgba(255,100,40,0.55)', 'rgba(200,30,20,0.3)'],  // 5 SSJ4
+        ['rgba(255,60,80,0.6)', 'rgba(255,180,80,0.4)'],   // 6 ゴッド
       ];
       const col = auraColors[t];
       ctx.fillStyle = col[1];
@@ -2845,7 +2882,8 @@
     // transform: 0=ノーマル, 1=Kaioken(元の色), 2-4=SSJ系(金), 5=SSJ4(赤）
     let hairCol;
     if (transformLvl >= 2 && transformLvl <= 4) hairCol = '#ffdc20';  // 金
-    else if (transformLvl === 5) hairCol = '#c02010';  // 赤
+    else if (transformLvl === 5) hairCol = '#c02010';  // 暗赤（SSJ4）
+    else if (transformLvl === 6) hairCol = '#ff2828';  // 鮮やかな赤（ゴッド）
     else hairCol = c.hairCol;
     ctx.fillStyle = hairCol;
 
@@ -3006,10 +3044,11 @@
       ctx.moveTo(-4, -18); ctx.lineTo(-7, -20); ctx.lineTo(-7, -16); ctx.closePath();
       ctx.fill();
     }
-    // 目の色：SSJ以降は青、SSJ4は赤、界王拳は変わらず
+    // 目の色：SSJ系は青、SSJ4は赤、ゴッドも赤、界王拳は変わらず
     let eyeCol = '#000';
     if (transformLvl >= 2 && transformLvl <= 4) eyeCol = '#40c8ff';
     else if (transformLvl === 5) eyeCol = '#ff4040';
+    else if (transformLvl === 6) eyeCol = '#ff2050';  // ゴッド：鮮やかな赤
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.ellipse(-2.5, -11, 1.3, 1.6, 0, 0, Math.PI*2);
@@ -3212,8 +3251,8 @@
     const drawer = BOSS_DRAWERS[boss.type] || BOSS_DRAWERS.piccolo;
     drawer(x, y, boss);
 
-    // とーとメガネ（全ボス共通）
-    drawTotoGlasses(x, y - 13);
+    // とーとメガネ（ビルス様以外の全ボス）
+    if (boss.type !== 'bills') drawTotoGlasses(x, y - 13);
 
     // 激昂オーラ（HP40%以下で赤くなる）
     if (boss.hp / boss.maxHp < 0.4) {
@@ -3463,6 +3502,84 @@
       ctx.fillStyle = '#601030';
       ctx.beginPath();
       ctx.ellipse(x, y - 6, 5, 2.5, 0, 0, Math.PI*2);
+      ctx.fill();
+    },
+    // ビルス様（破壊神・紫の猫型ヒューマノイド）
+    bills(x, y, b) {
+      // 紫の肌の胴
+      ctx.fillStyle = '#9862c4';
+      ctx.beginPath(); ctx.arc(x, y, b.r, 0, Math.PI*2); ctx.fill();
+      // エジプト風の胴衣（青と赤のチュニック）
+      ctx.fillStyle = '#4a5090';
+      ctx.fillRect(x - 14, y - 2, 28, 16);
+      // 首回りのゴールドアクセサリー
+      ctx.fillStyle = '#ffdc40';
+      ctx.fillRect(x - 12, y - 6, 24, 4);
+      ctx.strokeStyle = '#a06020';
+      ctx.lineWidth = 0.7;
+      ctx.strokeRect(x - 12, y - 6, 24, 4);
+      // 赤いベルト
+      ctx.fillStyle = '#c03020';
+      ctx.fillRect(x - 14, y + 10, 28, 4);
+      // 金のベルトバックル
+      ctx.fillStyle = '#ffdc40';
+      ctx.fillRect(x - 3, y + 9, 6, 6);
+      // 頭（紫・長い顔）
+      ctx.fillStyle = '#9862c4';
+      ctx.beginPath();
+      ctx.ellipse(x, y - 14, 11, 13, 0, 0, Math.PI*2);
+      ctx.fill();
+      // 長く尖った耳（猫っぽい）
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y - 20);
+      ctx.lineTo(x - 15, y - 34);
+      ctx.lineTo(x - 4, y - 22);
+      ctx.closePath();
+      ctx.moveTo(x + 10, y - 20);
+      ctx.lineTo(x + 15, y - 34);
+      ctx.lineTo(x + 4, y - 22);
+      ctx.closePath();
+      ctx.fill();
+      // 耳の内側（ピンク）
+      ctx.fillStyle = '#d88ee0';
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y - 22);
+      ctx.lineTo(x - 13, y - 30);
+      ctx.lineTo(x - 7, y - 23);
+      ctx.closePath();
+      ctx.moveTo(x + 10, y - 22);
+      ctx.lineTo(x + 13, y - 30);
+      ctx.lineTo(x + 7, y - 23);
+      ctx.closePath();
+      ctx.fill();
+      // 目（黄金・鋭い）
+      ctx.fillStyle = '#ffdc20';
+      ctx.beginPath();
+      ctx.ellipse(x - 5, y - 15, 3, 2.2, 0, 0, Math.PI*2);
+      ctx.ellipse(x + 5, y - 15, 3, 2.2, 0, 0, Math.PI*2);
+      ctx.fill();
+      // 黒い縦長の瞳（猫目）
+      ctx.fillStyle = '#1a0018';
+      ctx.fillRect(x - 5.5, y - 16.5, 1, 3);
+      ctx.fillRect(x + 4.5, y - 16.5, 1, 3);
+      // 鼻（小さな黒い点）
+      ctx.fillStyle = '#1a0018';
+      ctx.beginPath();
+      ctx.arc(x, y - 10, 0.8, 0, Math.PI*2);
+      ctx.fill();
+      // 口
+      ctx.strokeStyle = '#3a0a2a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x - 3, y - 7);
+      ctx.quadraticCurveTo(x, y - 6, x + 3, y - 7);
+      ctx.stroke();
+      // 頭頂の装飾（破壊神の羽毛的な飾り）
+      ctx.fillStyle = '#4060a0';
+      ctx.fillRect(x - 3, y - 28, 6, 5);
+      ctx.fillStyle = '#ffdc40';
+      ctx.beginPath();
+      ctx.arc(x, y - 26, 1.5, 0, Math.PI*2);
       ctx.fill();
     },
   };
