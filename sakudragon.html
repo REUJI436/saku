@@ -123,8 +123,14 @@
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') { selectIdx = (selectIdx + CHARACTERS.length - 1) % CHARACTERS.length; charSelectTapped = selectIdx; }
       else if (e.code === 'ArrowRight' || e.code === 'KeyD') { selectIdx = (selectIdx + 1) % CHARACTERS.length; charSelectTapped = selectIdx; }
       else if (e.code === 'Space' || e.code === 'Enter') startGame();
-    } else if (state === STATE.GAMEOVER || state === STATE.CLEARED) {
+    } else if (state === STATE.GAMEOVER) {
       if (e.code === 'Space' || e.code === 'Enter') state = STATE.TITLE;
+    } else if (state === STATE.CLEARED) {
+      if ((e.code === 'Space' || e.code === 'Enter') && stateTimer > 120) {
+        clearSave();
+        endingPetals = null;
+        state = STATE.TITLE;
+      }
     }
     // デバッグ：プレイ中に数字キー0-5で変身段階強制切替
     if (state === STATE.PLAYING) {
@@ -282,7 +288,16 @@
       }
       return;
     }
-    if (state === STATE.GAMEOVER || state === STATE.CLEARED) { state = STATE.TITLE; return; }
+    if (state === STATE.GAMEOVER) { state = STATE.TITLE; return; }
+    if (state === STATE.CLEARED) {
+      // エンディング：序盤は読ませる（最低2秒待ち）
+      if (stateTimer > 120) {
+        clearSave();
+        endingPetals = null;
+        state = STATE.TITLE;
+      }
+      return;
+    }
   }
   let charSelectTapped = null;  // タップ選択状態
   cv.addEventListener('click', handleCanvasTap);
@@ -1901,6 +1916,144 @@
     ctx.restore();
   }
 
+  // ====== エンディング画面 ======
+  function drawEndingScene() {
+    const t = stateTimer;
+
+    // 背景：夕焼け空
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#ffa060');
+    g.addColorStop(0.4, '#ff80a0');
+    g.addColorStop(0.7, '#8060a0');
+    g.addColorStop(1, '#302048');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // 夕日
+    const sunY = H - 130;
+    ctx.fillStyle = 'rgba(255, 230, 140, 0.9)';
+    ctx.beginPath();
+    ctx.arc(W/2, sunY, 70, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 180, 0.5)';
+    ctx.beginPath();
+    ctx.arc(W/2, sunY, 100, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 地平線（シルエット）
+    ctx.fillStyle = '#1a1028';
+    ctx.fillRect(0, H - 100, W, 100);
+    // 山のシルエット
+    ctx.fillStyle = '#2a1840';
+    ctx.beginPath();
+    ctx.moveTo(0, H - 100);
+    ctx.lineTo(120, H - 150);
+    ctx.lineTo(240, H - 110);
+    ctx.lineTo(380, H - 170);
+    ctx.lineTo(500, H - 130);
+    ctx.lineTo(620, H - 180);
+    ctx.lineTo(760, H - 120);
+    ctx.lineTo(880, H - 160);
+    ctx.lineTo(W, H - 120);
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fill();
+
+    // 桜吹雪（ゆっくり降る）
+    if (!endingPetals) {
+      endingPetals = [];
+      for (let i = 0; i < 30; i++) {
+        endingPetals.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          vx: 0.5 + Math.random() * 0.5,
+          vy: 0.4 + Math.random() * 0.4,
+          rot: Math.random() * Math.PI * 2,
+          rotSp: (Math.random() - 0.5) * 0.05,
+          size: 3 + Math.random() * 2,
+        });
+      }
+    }
+    for (const p of endingPetals) {
+      p.x += p.vx; p.y += p.vy; p.rot += p.rotSp;
+      if (p.y > H) { p.y = -5; p.x = Math.random() * W; }
+      if (p.x > W) p.x = 0;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = '#ffc0d8';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.size, p.size * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // さく & くるみ 並んで立つ（夕日を見つめる）
+    drawCharPortrait(CHARACTERS[0], W/2 - 80, H - 80, 3.5);
+    drawCharPortrait(CHARACTERS[1], W/2 + 80, H - 80, 3.5);
+
+    // セリフ 順番に表示
+    const lines = [
+      { start: 40,  text: 'さくとくるみの活躍によって、',  color: '#ffffff' },
+      { start: 180, text: '世界に平和が訪れた…',         color: '#ffffff' },
+      { start: 340, text: '――しかし、戦いは続く。',      color: '#ffccaa' },
+      { start: 500, text: 'まだ見ぬ強敵を求めて――',     color: '#ff9060' },
+    ];
+    let textY = 90;
+    for (const l of lines) {
+      if (t < l.start) continue;
+      const age = t - l.start;
+      const alpha = Math.min(1, age / 40);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 24px serif';
+      ctx.lineWidth = 5; ctx.strokeStyle = '#000';
+      ctx.strokeText(l.text, W/2, textY);
+      ctx.fillStyle = l.color;
+      ctx.fillText(l.text, W/2, textY);
+      ctx.restore();
+      textY += 36;
+    }
+
+    // To Be Continued...（最後のセリフの後）
+    if (t > 680) {
+      const alpha = Math.min(1, (t - 680) / 60);
+      const pulse = 0.8 + 0.2 * Math.sin(t * 0.06);
+      ctx.save();
+      ctx.globalAlpha = alpha * pulse;
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 42px serif';
+      ctx.lineWidth = 7; ctx.strokeStyle = '#000';
+      ctx.strokeText('To Be Continued…', W/2, H/2 + 50);
+      const g2 = ctx.createLinearGradient(0, H/2 + 20, 0, H/2 + 60);
+      g2.addColorStop(0, '#ffee40');
+      g2.addColorStop(1, '#ff6020');
+      ctx.fillStyle = g2;
+      ctx.fillText('To Be Continued…', W/2, H/2 + 50);
+      ctx.restore();
+    }
+
+    // スタッツ & 「タイトルへ」（全セリフ後）
+    if (t > 820) {
+      const alpha = Math.min(1, (t - 820) / 60);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillStyle = '#ffee80';
+      ctx.fillText(`SCORE: ${totalScore.toLocaleString()}　MAX COMBO: ${comboMax}`, W/2, H - 26);
+      // 点滅プロンプト
+      if (Math.floor(t / 30) % 2 === 0) {
+        ctx.fillStyle = '#fff';
+        ctx.fillText('タップ or Space キーでタイトルへ', W/2, H - 6);
+      }
+      ctx.restore();
+    }
+  }
+  let endingPetals = null;
+
   // ====== ゲーム画面 ======
   function drawGame() {
     drawBackground();
@@ -1948,23 +2101,7 @@
       if (nextStg) ctx.fillText(`次：${nextStg.name}（${nextStg.bossName}）`, W/2, H/2 + 75);
       ctx.restore();
     } else if (state === STATE.CLEARED) {
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(0, 0, W, H);
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 56px serif';
-      ctx.lineWidth = 8; ctx.strokeStyle = '#000';
-      ctx.strokeText('ALL STAGE CLEAR!', W/2, H/2 - 20);
-      const g = ctx.createLinearGradient(0, H/2 - 50, 0, H/2);
-      g.addColorStop(0, '#ffee60');
-      g.addColorStop(1, '#ff8030');
-      ctx.fillStyle = g;
-      ctx.fillText('ALL STAGE CLEAR!', W/2, H/2 - 20);
-      ctx.font = 'bold 20px sans-serif';
-      ctx.fillStyle = '#fff';
-      ctx.fillText('すべての とーと を 倒した！', W/2, H/2 + 30);
-      ctx.fillText('タップ or Space キーでタイトルへ', W/2, H/2 + 70);
-      ctx.restore();
+      drawEndingScene();
     } else if (state === STATE.GAMEOVER) {
       ctx.fillStyle = 'rgba(80,0,0,0.65)';
       ctx.fillRect(0, 0, W, H);
