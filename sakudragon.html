@@ -1180,7 +1180,11 @@
       // 敵弾を消去
       enemyProjectiles = enemyProjectiles.filter(p => !(p.x > bx1 && p.x < bx2 && p.y < player.y));
     }
-    if (u.timer <= 0) player.ultActive = null;
+    if (u.timer <= 0) {
+      player.ultActive = null;
+      // かめはめ波終了後も 60F（約1秒）無敵を維持
+      player.invuln = Math.max(player.invuln, 60);
+    }
   }
 
   // ====== 敵更新 ======
