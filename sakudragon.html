@@ -554,42 +554,42 @@
       hairCol: '#1a0a04', skinCol: '#ffddbb',
       shirtCol: '#2050b0', pantsCol: '#2050b0',
       innerCol: '#e8e8f0', beltCol: '#d0d0e0', bootCol: '#e8e8f0',
-      bulletCol: '#c0e0ff', atkRate: 18, atkDmg: 2,
+      bulletCol: '#c0e0ff', atkRate: 12, atkDmg: 5, shotCount: 2,
     },
     trunks: {
       id: 'trunks', name: '[未来|みらい]トランクス',
       hairCol: '#a080d0', skinCol: '#ffddbb',
       shirtCol: '#101018', pantsCol: '#2040a0',
       innerCol: '#ffaa30', beltCol: '#703a20', bootCol: '#ffe040',
-      bulletCol: '#e0c0ff', atkRate: 14, atkDmg: 1,
+      bulletCol: '#e0c0ff', atkRate: 8, atkDmg: 4, shotCount: 1, slashStyle: true,
     },
     gohan: {
       id: 'gohan', name: '[悟飯|ごはん]',
       hairCol: '#0a0604', skinCol: '#ffddbb',
       shirtCol: '#7020b0', pantsCol: '#7020b0',
       innerCol: '#ffc030', beltCol: '#403020', bootCol: '#302818',
-      bulletCol: '#ffe080', atkRate: 16, atkDmg: 2,
+      bulletCol: '#ffe080', atkRate: 10, atkDmg: 6, shotCount: 2,
     },
     piccolo: {
       id: 'piccolo', name: 'ピッコロ',
       hairCol: '#60c040', skinCol: '#60c040',
       shirtCol: '#7020b0', pantsCol: '#7020b0',
       innerCol: '#402080', beltCol: '#b02020', bootCol: '#603018',
-      bulletCol: '#c0ffc0', atkRate: 20, atkDmg: 2,
+      bulletCol: '#c0ffc0', atkRate: 14, atkDmg: 6, shotCount: 2,
     },
     piccoloOrange: {
       id: 'piccolo', name: 'オレンジピッコロ',  // idはpiccoloで描画流用
       hairCol: '#ff8020', skinCol: '#ff8020',  // オレンジ肌
       shirtCol: '#c04010', pantsCol: '#c04010',
       innerCol: '#fff080', beltCol: '#a02010', bootCol: '#5a1808',
-      bulletCol: '#ffaa40', atkRate: 14, atkDmg: 3,
+      bulletCol: '#ffaa40', atkRate: 8, atkDmg: 10, shotCount: 3,
     },
     gohanBeast: {
       id: 'gohan', name: '[悟飯|ごはん]ビースト',
       hairCol: '#f0f0f0', skinCol: '#ffddbb',  // 白髪
       shirtCol: '#7020b0', pantsCol: '#7020b0',
       innerCol: '#ffc030', beltCol: '#403020', bootCol: '#302818',
-      bulletCol: '#ffffff', atkRate: 10, atkDmg: 4,
+      bulletCol: '#ffffff', atkRate: 6, atkDmg: 14, shotCount: 3,
     },
   };
   let selectIdx = 0;
@@ -941,6 +941,7 @@
   let comboCount = 0, comboMax = 0, comboTimer = 0;
   let totalScore = 0;  // 通算スコア
   let screenFlash = 0;  // 画面フラッシュ（ボス撃破などの演出）
+  let zamasuFinishAnim = null;  // ザマス戦：トランクス斬撃撃破カットイン
   let currentBgPalette = { top: '#040012', mid: '#100828', bot: '#20104a' };
   let cameraShake = 0;
 
@@ -990,6 +991,14 @@
     freezer: {  // 兵長・赤い
       hp: 1, speed: 1.6, r: 14, dmg: 1, color: '#e04040', coreCol: '#702020', score: 400, shooter: true,
     },
+    elite: {  // 中ボス風・紫の装甲兵（HP高い・攻撃少ない・ステージ6以降で出現）
+      hp: 20, speed: 0.6, r: 24, dmg: 1, color: '#a868e0', coreCol: '#4a1880',
+      score: 1500, elite: true,
+    },
+    golem: {  // 黄金のずんぐり敵（高耐久・ステージ9以降）
+      hp: 35, speed: 0.4, r: 28, dmg: 1.2, color: '#d8a030', coreCol: '#704010',
+      score: 2500, elite: true,
+    },
   };
 
   function spawnEnemy(type) {
@@ -999,12 +1008,21 @@
     const y = -30 - Math.random() * 40;
     // 横方向の揺れパターン：0=直進, 1=正弦波, 2=プレイヤーに寄る
     const pattern = t.shooter ? 2 : Math.floor(Math.random() * 3);
+    // ステージ6以降は雑魚敵のHPを段階的に強化（エリートは素のHP維持）
+    let hpMult = 1;
+    if (!t.elite && currentStageIdx >= 5) {
+      hpMult = 1 + (currentStageIdx - 4) * 0.6;  // ビル+0.6、黄金フリザ+1.2、...
+    } else if (t.elite && currentStageIdx >= 8) {
+      hpMult = 1 + (currentStageIdx - 7) * 0.4;  // 後半はエリートも強化
+    }
+    const finalHp = Math.ceil(t.hp * hpMult);
     enemies.push({
-      type, x, y, r: t.r, hp: t.hp, maxHp: t.hp, speed: t.speed,
+      type, x, y, r: t.r, hp: finalHp, maxHp: finalHp, speed: t.speed,
       dmg: t.dmg, color: t.color, coreCol: t.coreCol, score: t.score,
       shooter: !!t.shooter, shotCD: 60 + Math.random() * 60,
       anim: Math.random() * Math.PI * 2, hurtTimer: 0, dead: false,
       pattern, baseX: x, patternT: 0,
+      elite: !!t.elite,
     });
   }
 
@@ -1092,6 +1110,7 @@
     companions = spawnCompanions(stg.companions);
     // ゴジータ形態はステージ毎にリセット（ブロとーと戦で再発動）
     player.gogetaForm = false;
+    zamasuFinishAnim = null;
     boss = null; banner = null; bannerSub = null;
     comboCount = 0; comboTimer = 0;
     saveGame();
@@ -1300,6 +1319,14 @@
         // 複数体を同時スポーン（一騎当千感）
         const burst = w.spawnBurst || 1;
         for (let b = 0; b < burst && types.length > 0; b++) {
+          // ステージ6以降はエリート、9以降はゴーレム（黄金）を混ぜる
+          if (currentStageIdx >= 8 && Math.random() < 0.07) {
+            spawnEnemy('golem');
+            continue;
+          } else if (currentStageIdx >= 5 && Math.random() < 0.12) {
+            spawnEnemy('elite');
+            continue;
+          }
           const t = types[Math.floor(Math.random() * types.length)];
           spawnEnemy(t);
           w[t]--;
@@ -1635,7 +1662,7 @@
         }
       }
       // ボス：範囲内なら1F毎にダメージ
-      if (boss && !boss.dead) {
+      if (boss && !boss.dead && !boss.invulnCutin) {
         if (boss.x + boss.r > bx1 && boss.x - boss.r < bx2) {
           boss.hp -= 0.8;  // 40Fで32ダメージ
           boss.hurtTimer = 8;
@@ -1660,7 +1687,7 @@
           boss.x += (Math.random() - 0.5) * 2.5;
           boss.y += (Math.random() - 0.5) * 1.5;
           if (boss.hp <= 0) {
-            killBoss();
+            tryKillBoss();
           }
         }
       }
@@ -1731,8 +1758,8 @@
     // 自プロジェクタイルとの衝突（SSJ以降は貫通・最大5体まで）
     for (const p of projectiles) {
       if (!p.hitSet) p.hitSet = new Set();
-      const pierce = (p.transform >= 2);
-      const maxHits = pierce ? 5 : 1;
+      const pierce = (p.transform >= 2) || (p.pierce > 0);
+      const maxHits = p.pierce ? p.pierce : (pierce ? 5 : 1);
       for (const e of enemies) {
         if (e.dead) continue;
         if (p.hitSet.has(e)) continue;
@@ -1765,7 +1792,7 @@
         }
       }
       // ボス衝突
-      if (boss && !boss.dead && p.life > 0) {
+      if (boss && !boss.dead && !boss.invulnCutin && p.life > 0) {
         const d = Math.hypot(p.x - boss.x, p.y - boss.y);
         if (d < p.r + boss.r) {
           boss.hp -= p.dmg;
@@ -1778,7 +1805,7 @@
             });
           }
           if (boss.hp <= 0) {
-            killBoss();
+            tryKillBoss();
           } else {
             addShake(5);
             sfxHit();
@@ -1919,6 +1946,23 @@
 
   // ====== ボス撃破演出（ド派手版） ======
   let bossShockwaves = [];  // 拡大するリング
+  // ボス撃破前フック：ザマス戦はトランクスの斬撃カットインに分岐
+  function tryKillBoss() {
+    if (!boss || boss.dead) return;
+    if (boss.type === 'zamasu' && !zamasuFinishAnim) {
+      // トランクス斬撃カットイン開始（約3秒）
+      boss.hp = 0.01;  // HP残し（カットイン中に他projectileで無効化防止）
+      boss.invulnCutin = true;
+      zamasuFinishAnim = { timer: 210 };
+      player.invuln = 240;  // プレイヤー無敵
+      enemyProjectiles = [];  // 敵弾クリア
+      sfxTransform();
+      addShake(20);
+      return;
+    }
+    killBoss();
+  }
+
   function killBoss() {
     boss.dead = true;
     boss.defeatTimer = 0;
@@ -3286,6 +3330,8 @@
     if (banner) drawBanner();
     // かめはめ波カットイン（HUDの上に重ねて描画）
     drawKamehameHaCutin();
+    // ザマス戦：トランクス斬撃撃破カットイン
+    if (zamasuFinishAnim) drawTrunksSlashCutin();
     // ステージ切替フェード（STAGE_CLEAR 後半と新ステージ開始直後）
     drawStageTransitionFade();
 
@@ -3434,6 +3480,179 @@
   }
 
   // かめはめ波カットイン（発動前の演出）
+  // ====== ザマス戦：トランクス斬撃撃破カットイン ======
+  function drawTrunksSlashCutin() {
+    const total = 210;
+    const t = total - zamasuFinishAnim.timer;  // 経過フレーム 0→210
+    ctx.save();
+    // 上下の黒帯（シネマスコープ）
+    const barH = Math.min(70, t * 2);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, barH);
+    ctx.fillRect(0, H - barH, W, barH);
+
+    // フェーズ1（0-70F）：トランクスがスライドイン
+    if (t < 70) {
+      const prog = t / 70;
+      // 背景を暗く
+      ctx.fillStyle = `rgba(0,0,0,${0.5 * prog})`;
+      ctx.fillRect(0, barH, W, H - barH * 2);
+      // トランクスが左からスライドイン
+      const tx = -200 + prog * 400;  // -200 → 200
+      const ty = H / 2;
+      ctx.save();
+      ctx.translate(tx, ty);
+      // 背景の白い円（スポットライト）
+      ctx.fillStyle = `rgba(200,220,255,${prog * 0.7})`;
+      ctx.beginPath(); ctx.arc(0, 0, 110, 0, Math.PI * 2); ctx.fill();
+      // トランクスのポートレート（剣を持ったポーズ）
+      const trunksChar = { ...COMPANION_DATA.trunks, charId: 'trunks' };
+      drawCharPortrait(trunksChar, 0, 40, 6);
+      // 剣（頭上に振り上げた長い青白い剣）
+      ctx.save();
+      ctx.translate(0, -100);
+      ctx.rotate(-0.3);
+      // 剣身
+      const g = ctx.createLinearGradient(0, 0, 0, -160);
+      g.addColorStop(0, '#80c8ff');
+      g.addColorStop(0.5, '#ffffff');
+      g.addColorStop(1, '#e0f0ff');
+      ctx.fillStyle = g;
+      ctx.fillRect(-6, -160, 12, 160);
+      // 光るエッジ
+      ctx.strokeStyle = `rgba(180,220,255,${0.5 + Math.sin(t * 0.4) * 0.3})`;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(-6, -160, 12, 160);
+      ctx.restore();
+      ctx.restore();
+      // テキスト「トランクス…！」
+      ctx.font = 'bold 58px serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 10; ctx.strokeStyle = '#000';
+      ctx.strokeText('トランクス…！', W / 2 + 180, H / 2 - 20);
+      ctx.fillStyle = `rgba(120,180,255,${prog})`;
+      ctx.fillText('トランクス…！', W / 2 + 180, H / 2 - 20);
+    }
+    // フェーズ2（70-130F）：剣のチャージ
+    else if (t < 130) {
+      const prog = (t - 70) / 60;
+      ctx.fillStyle = `rgba(0,0,0,0.6)`;
+      ctx.fillRect(0, barH, W, H - barH * 2);
+      // トランクス中央
+      ctx.save();
+      ctx.translate(W / 2, H / 2 + 30);
+      ctx.fillStyle = `rgba(200,230,255,${0.4 + prog * 0.5})`;
+      ctx.beginPath(); ctx.arc(0, 0, 140 + prog * 40, 0, Math.PI * 2); ctx.fill();
+      const trunksChar = { ...COMPANION_DATA.trunks, charId: 'trunks' };
+      drawCharPortrait(trunksChar, 0, 30, 6.5);
+      // 振り上げた剣（チャージ中・青白い輝き）
+      ctx.save();
+      ctx.translate(0, -110);
+      ctx.rotate(-0.2);
+      // 外側の光
+      ctx.fillStyle = `rgba(180,220,255,${0.5 + Math.sin(t * 0.8) * 0.3})`;
+      ctx.fillRect(-14 - prog * 6, -180 - prog * 30, 28 + prog * 12, 180 + prog * 30);
+      // 剣身（強く光る）
+      const g2 = ctx.createLinearGradient(0, 0, 0, -200);
+      g2.addColorStop(0, '#ffffff');
+      g2.addColorStop(0.5, '#c0e0ff');
+      g2.addColorStop(1, '#ffffff');
+      ctx.fillStyle = g2;
+      ctx.fillRect(-7, -200, 14, 200);
+      // 稲妻粒子
+      for (let i = 0; i < 6; i++) {
+        const ey = -Math.random() * 200;
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-8 + (Math.random() - 0.5) * 4, ey);
+        ctx.lineTo(8 + (Math.random() - 0.5) * 4, ey + 5);
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.restore();
+      // テキスト
+      const shake = (Math.random() - 0.5) * 4;
+      drawRubyText('[光|ひかり][輝|かがや]く[剣|つるぎ]…！', W / 2 + shake, 120, { size: 56, fill: '#ffffff', strokeW: 10, family: 'serif' });
+    }
+    // フェーズ3（130-165F）：斬撃の瞬間
+    else if (t < 165) {
+      const prog = (t - 130) / 35;
+      // 真っ白フラッシュ
+      if (prog < 0.5) {
+        ctx.fillStyle = `rgba(255,255,255,${1 - prog * 2})`;
+        ctx.fillRect(0, 0, W, H);
+      }
+      // 斜めの斬撃線（左上→右下）
+      ctx.save();
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(Math.PI / 4 - 0.3);
+      const slashW = W * 2 * prog;
+      const slashG = ctx.createLinearGradient(-slashW / 2, 0, slashW / 2, 0);
+      slashG.addColorStop(0, 'rgba(180,220,255,0)');
+      slashG.addColorStop(0.5, 'rgba(255,255,255,1)');
+      slashG.addColorStop(1, 'rgba(180,220,255,0)');
+      ctx.fillStyle = slashG;
+      ctx.fillRect(-slashW / 2, -18, slashW, 36);
+      // 細い鋭利な線
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-slashW / 2, -3, slashW, 6);
+      ctx.restore();
+      // 「一閃！！」
+      ctx.save();
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(-0.08);
+      drawRubyText('[一閃|いっせん]！！', 0, 0, { size: 88, fill: '#ffffff', strokeW: 14, family: 'serif' });
+      ctx.restore();
+    }
+    // フェーズ4（165-210F）：ザマス撃破演出
+    else {
+      const prog = (t - 165) / 45;
+      ctx.fillStyle = `rgba(0,0,0,${0.3 + prog * 0.4})`;
+      ctx.fillRect(0, barH, W, H - barH * 2);
+      // ザマスが真っ二つに裂ける演出（左右に分離）
+      if (boss) {
+        ctx.save();
+        const bx = boss.x;
+        const by = boss.y;
+        // 左半分（左へスライド）
+        ctx.save();
+        ctx.translate(-prog * 120, 0);
+        ctx.globalAlpha = 1 - prog * 0.7;
+        ctx.fillStyle = boss.color;
+        ctx.beginPath();
+        ctx.arc(bx - 15, by, boss.r, Math.PI * 0.5, Math.PI * 1.5);
+        ctx.fill();
+        ctx.restore();
+        // 右半分（右へスライド）
+        ctx.save();
+        ctx.translate(prog * 120, 0);
+        ctx.globalAlpha = 1 - prog * 0.7;
+        ctx.fillStyle = boss.color;
+        ctx.beginPath();
+        ctx.arc(bx + 15, by, boss.r, -Math.PI * 0.5, Math.PI * 0.5);
+        ctx.fill();
+        ctx.restore();
+        // 切断面の白い光
+        ctx.fillStyle = `rgba(255,255,255,${1 - prog})`;
+        ctx.fillRect(bx - prog * 120, by - boss.r, 1 + prog * 240, 2);
+        ctx.restore();
+      }
+      // テキスト「[合体|がったい]ザマとーと…[消滅|しょうめつ]！」
+      ctx.font = 'bold 44px serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 8; ctx.strokeStyle = '#000';
+      ctx.fillStyle = '#fff';
+      ctx.save();
+      ctx.translate(W / 2, H - 80);
+      const txt = '[合体|がったい]ザマとーと…[消滅|しょうめつ]！';
+      // strokeText+fillText では ruby を扱えないので drawRubyText を使う
+      drawRubyText(txt, 0, 0, { size: 36, fill: '#ffccff', strokeW: 7, family: 'serif' });
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
   function drawKamehameHaCutin() {
     const u = player.ultActive;
     if (!u || u.phase !== 'cutin') return;
@@ -3631,22 +3850,32 @@
           const dy = co.y - e.y;
           if (dy > 0 && dy < tgtDy) { tgtDy = dy; tgt = e; }
         }
-        let vx = 0, vy = -9;
+        let baseVx = 0, baseVy = -10;
         if (tgt) {
           const dx = tgt.x - co.x;
           const dy = tgt.y - co.y;
           const d = Math.hypot(dx, dy) || 1;
-          vx = (dx / d) * 9; vy = (dy / d) * 9;
+          baseVx = (dx / d) * 10; baseVy = (dy / d) * 10;
         }
-        projectiles.push({
-          x: co.x, y: co.y - 6,
-          vx, vy,
-          life: 80,
-          dmg: co.atkDmg || 1,
-          r: 6,
-          transform: 0,
-          companionCol: co.bulletCol,
-        });
+        const shotCount = co.shotCount || 1;
+        const bulletR = co.slashStyle ? 10 : 9;
+        // 複数弾：少しずつ角度をずらして発射
+        for (let k = 0; k < shotCount; k++) {
+          const offsetAng = (k - (shotCount - 1) / 2) * 0.14;
+          const cos = Math.cos(offsetAng), sin = Math.sin(offsetAng);
+          const vx = baseVx * cos - baseVy * sin;
+          const vy = baseVx * sin + baseVy * cos;
+          projectiles.push({
+            x: co.x + (k - (shotCount - 1) / 2) * 6, y: co.y - 6,
+            vx, vy,
+            life: 80,
+            dmg: co.atkDmg || 1,
+            r: bulletR,
+            transform: 0,
+            companionCol: co.bulletCol,
+            pierce: co.slashStyle ? 3 : 0,
+          });
+        }
       }
     }
   }
@@ -4101,6 +4330,87 @@
         // 口
         ctx.fillStyle = '#701010';
         ctx.fillRect(x - 3, y + 3, 6, 2);
+      } else if (e.type === 'elite') {
+        // エリート装甲兵（紫・大型・高耐久）
+        const pulse = 0.85 + Math.sin(e.anim * 2) * 0.15;
+        // 外装オーラ
+        ctx.fillStyle = 'rgba(180,120,255,0.3)';
+        ctx.beginPath();
+        ctx.arc(x, y, e.r * 1.2 * pulse, 0, Math.PI*2);
+        ctx.fill();
+        // 本体
+        ctx.fillStyle = e.color;
+        ctx.beginPath();
+        ctx.arc(x, y, e.r, 0, Math.PI*2);
+        ctx.fill();
+        // 装甲プレート
+        ctx.fillStyle = e.coreCol;
+        ctx.fillRect(x - e.r + 3, y - 4, e.r * 2 - 6, 8);
+        // スパイク（上）
+        ctx.fillStyle = '#f0e0ff';
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.moveTo(x + i * 6, y - e.r + 2);
+          ctx.lineTo(x + i * 6 - 3, y - e.r - 6);
+          ctx.lineTo(x + i * 6 + 3, y - e.r - 6);
+          ctx.closePath();
+          ctx.fill();
+        }
+        // 目（光る）
+        ctx.fillStyle = '#ff80ff';
+        ctx.beginPath();
+        ctx.arc(x - 6, y - 2, 2.4, 0, Math.PI*2);
+        ctx.arc(x + 6, y - 2, 2.4, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(x - 6, y - 2.5, 0.8, 0, Math.PI*2);
+        ctx.arc(x + 6, y - 2.5, 0.8, 0, Math.PI*2);
+        ctx.fill();
+        // 口（厳しい一文字）
+        ctx.strokeStyle = '#2a0848';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 6, y + 6); ctx.lineTo(x + 6, y + 6);
+        ctx.stroke();
+      } else if (e.type === 'golem') {
+        // 黄金ゴーレム（超高耐久・ステージ9以降）
+        const pulse = 0.9 + Math.sin(e.anim * 1.5) * 0.1;
+        // 光輪
+        ctx.fillStyle = 'rgba(255,220,80,0.35)';
+        ctx.beginPath();
+        ctx.arc(x, y, e.r * 1.3 * pulse, 0, Math.PI*2);
+        ctx.fill();
+        // 本体
+        const grd = ctx.createRadialGradient(x - e.r * 0.3, y - e.r * 0.3, 2, x, y, e.r);
+        grd.addColorStop(0, '#ffe880');
+        grd.addColorStop(0.6, e.color);
+        grd.addColorStop(1, e.coreCol);
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.arc(x, y, e.r, 0, Math.PI*2);
+        ctx.fill();
+        // ダイヤ模様
+        ctx.strokeStyle = '#ffffa0';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x, y - e.r + 4); ctx.lineTo(x + e.r - 4, y);
+        ctx.lineTo(x, y + e.r - 4); ctx.lineTo(x - e.r + 4, y);
+        ctx.closePath();
+        ctx.stroke();
+        // 目
+        ctx.fillStyle = '#ff4020';
+        ctx.beginPath();
+        ctx.arc(x - 7, y - 3, 2.6, 0, Math.PI*2);
+        ctx.arc(x + 7, y - 3, 2.6, 0, Math.PI*2);
+        ctx.fill();
+        // 口（歯を見せる）
+        ctx.fillStyle = '#2a1004';
+        ctx.fillRect(x - 8, y + 4, 16, 5);
+        ctx.fillStyle = '#fff';
+        for (let i = 0; i < 4; i++) {
+          ctx.fillRect(x - 7 + i * 4, y + 4, 2, 5);
+        }
       }
       // HP バー（最大HP以下のみ）
       if (e.hp < e.maxHp) {
@@ -5205,6 +5515,19 @@
   function update() {
     stateTimer++;
     if (state === STATE.PLAYING) {
+      // ザマス撃破カットイン中は通常更新を最小化
+      if (zamasuFinishAnim) {
+        zamasuFinishAnim.timer--;
+        updateParticles();
+        updateProjectiles();
+        // カットイン終了→ボス撃破
+        if (zamasuFinishAnim.timer <= 0) {
+          zamasuFinishAnim = null;
+          if (boss) boss.invulnCutin = false;
+          killBoss();
+        }
+        return;
+      }
       updatePlayer();
       updateCompanions();
       updateEnemies();
