@@ -992,11 +992,11 @@
       hp: 1, speed: 1.6, r: 14, dmg: 1, color: '#e04040', coreCol: '#702020', score: 400, shooter: true,
     },
     elite: {  // 中ボス風・紫の装甲兵（HP高い・攻撃少ない・ステージ6以降で出現）
-      hp: 20, speed: 0.6, r: 24, dmg: 1, color: '#a868e0', coreCol: '#4a1880',
+      hp: 60, speed: 0.6, r: 24, dmg: 1, color: '#a868e0', coreCol: '#4a1880',
       score: 1500, elite: true,
     },
     golem: {  // 黄金のずんぐり敵（高耐久・ステージ9以降）
-      hp: 35, speed: 0.4, r: 28, dmg: 1.2, color: '#d8a030', coreCol: '#704010',
+      hp: 110, speed: 0.4, r: 28, dmg: 1.2, color: '#d8a030', coreCol: '#704010',
       score: 2500, elite: true,
     },
   };
@@ -1011,9 +1011,9 @@
     // ステージ6以降は雑魚敵のHPを段階的に強化（エリートは素のHP維持）
     let hpMult = 1;
     if (!t.elite && currentStageIdx >= 5) {
-      hpMult = 1 + (currentStageIdx - 4) * 0.6;  // ビル+0.6、黄金フリザ+1.2、...
+      hpMult = 1 + (currentStageIdx - 4) * 1.8;  // ビル+1.8、黄金フリザ+3.6、...（大幅強化）
     } else if (t.elite && currentStageIdx >= 8) {
-      hpMult = 1 + (currentStageIdx - 7) * 0.4;  // 後半はエリートも強化
+      hpMult = 1 + (currentStageIdx - 7) * 1.0;  // エリートも後半大幅強化
     }
     const finalHp = Math.ceil(t.hp * hpMult);
     enemies.push({
