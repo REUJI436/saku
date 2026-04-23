@@ -376,15 +376,10 @@
     }
     if (state === STATE.CHAR_SELECT) {
       const pos = getCanvasPos(e);
-      const cardW = 260, cardH = 320, gap = 60;
-      const totalW = cardW * CHARACTERS.length + gap * (CHARACTERS.length - 1);
-      const startX = (W - totalW) / 2;
-      for (let i = 0; i < CHARACTERS.length; i++) {
-        const cx = startX + i * (cardW + gap);
-        const cy = 120;
-        if (pos.x >= cx && pos.x <= cx + cardW && pos.y >= cy && pos.y <= cy + cardH) {
-          selectIdx = i;
-          charSelectTapped = i;
+      for (const card of charSelectCards) {
+        if (pos.x >= card.x && pos.x <= card.x + card.w && pos.y >= card.y && pos.y <= card.y + card.h) {
+          selectIdx = card.idx;
+          charSelectTapped = card.idx;
           if (pendingStageSelectIdx !== null) {
             const idx = pendingStageSelectIdx;
             pendingStageSelectIdx = null;
@@ -537,7 +532,7 @@
       innerCol: '#2060c0',  // 青インナー
       beltCol: '#1a4098',   // 青帯
       bootCol: '#1a3070',   // 紺ブーツ
-      desc: 'バランス型・火力UP',
+      desc: 'バランス・火力UP',
     },
     {
       id: 'kurumi', name: 'くるみ',
@@ -548,7 +543,51 @@
       innerCol: '#2060c0',
       beltCol: '#1a4098',
       bootCol: '#1a3070',
-      desc: 'スピード型・連射UP',
+      desc: 'スピード・連射UP',
+    },
+    {
+      id: 'vegeta', name: 'ベジータ',
+      hp: 11, speed: 3.2, atkDmg: 2, atkRate: 11,
+      hairCol: '#1a0a04', skinCol: '#ffddbb',
+      shirtCol: '#2050b0',  // 青戦闘スーツ
+      pantsCol: '#2050b0',
+      innerCol: '#e8e8f0',  // 白アーマー
+      beltCol: '#d0d0e0',   // 白帯
+      bootCol: '#e8e8f0',   // 白ブーツ
+      desc: '[防御|ぼうぎょ][型|がた]・HP[高|たか]い',
+    },
+    {
+      id: 'trunks', name: '[未来|みらい]トランクス',
+      hp: 9, speed: 3.8, atkDmg: 1, atkRate: 8,
+      hairCol: '#a080d0', skinCol: '#ffddbb',  // 紫髪
+      shirtCol: '#101018',  // 黒シャツ
+      pantsCol: '#2040a0',  // 青ズボン
+      innerCol: '#ffaa30',  // オレンジカプセル社マーク
+      beltCol: '#703a20',   // 茶ベルト
+      bootCol: '#ffe040',   // 黄ブーツ
+      desc: '[剣術|けんじゅつ][型|がた]・[速|はや]い',
+    },
+    {
+      id: 'gohan', name: '[悟飯|ごはん]',
+      hp: 10, speed: 3.5, atkDmg: 2, atkRate: 9,
+      hairCol: '#0a0604', skinCol: '#ffddbb',
+      shirtCol: '#7020b0',  // 紫道着（ピッコロ伝授）
+      pantsCol: '#7020b0',
+      innerCol: '#ffc030',  // 黄インナー
+      beltCol: '#403020',   // 茶帯
+      bootCol: '#302818',   // 茶ブーツ
+      desc: '[覚醒|かくせい][型|がた]・[火力|かりょく][特化|とっか]',
+    },
+    {
+      id: 'piccolo', name: 'ピッコロ',
+      hp: 12, speed: 2.9, atkDmg: 2, atkRate: 12,
+      hairCol: '#60c040', skinCol: '#60c040',  // 緑肌
+      shirtCol: '#7020b0',  // 紫道着
+      pantsCol: '#7020b0',
+      innerCol: '#402080',
+      beltCol: '#b02020',   // 赤帯
+      bootCol: '#603018',   // 茶ブーツ
+      desc: '[魔族|まぞく]の[師匠|ししょう]・[超|ちょう]タフ',
     },
   ];
   let selectIdx = 0;
@@ -856,6 +895,9 @@
     player.skinCol = char.skinCol;
     player.shirtCol = char.shirtCol;
     player.pantsCol = char.pantsCol;
+    player.innerCol = char.innerCol;
+    player.beltCol = char.beltCol;
+    player.bootCol = char.bootCol;
     player.x = W/2; player.y = H - 100;
     player.vx = 0; player.vy = 0;
     player.facing = 1;
@@ -2392,6 +2434,7 @@
   }
 
   // ====== キャラ選択画面 ======
+  let charSelectCards = [];
   function drawCharSelect() {
     // 背景
     ctx.fillStyle = '#1a1a24';
@@ -2399,23 +2442,31 @@
     // タイトル
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = 'bold 36px serif';
+    ctx.font = 'bold 28px serif';
     ctx.lineWidth = 5; ctx.strokeStyle = '#000';
-    ctx.strokeText('キャラを えらんで', W/2, 70);
+    ctx.strokeText('キャラを えらんで', W/2, 36);
     ctx.fillStyle = '#ffee60';
-    ctx.fillText('キャラを えらんで', W/2, 70);
+    ctx.fillText('キャラを えらんで', W/2, 36);
     ctx.restore();
 
-    // キャラ表示
-    const cardW = 260, cardH = 320;
-    const gap = 60;
-    const totalW = cardW * CHARACTERS.length + gap * (CHARACTERS.length - 1);
+    // キャラ表示（3列×2行）
+    const cols = 3;
+    const rows = Math.ceil(CHARACTERS.length / cols);
+    const cardW = 280, cardH = 210;
+    const gapX = 20, gapY = 12;
+    const totalW = cardW * cols + gapX * (cols - 1);
+    const totalH = cardH * rows + gapY * (rows - 1);
     const startX = (W - totalW) / 2;
+    const startY = 56;
+    charSelectCards = [];
     for (let i = 0; i < CHARACTERS.length; i++) {
       const c = CHARACTERS[i];
-      const cx = startX + i * (cardW + gap);
-      const cy = 120;
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const cx = startX + col * (cardW + gapX);
+      const cy = startY + row * (cardH + gapY);
       const selected = (i === selectIdx);
+      charSelectCards.push({ x: cx, y: cy, w: cardW, h: cardH, idx: i });
       // カード
       ctx.save();
       if (selected) {
@@ -2428,36 +2479,34 @@
       ctx.strokeStyle = selected ? '#ffee60' : '#606070';
       ctx.lineWidth = selected ? 4 : 2;
       ctx.strokeRect(cx, cy, cardW, cardH);
-      // キャラ絵
-      drawCharPortrait(c, cx + cardW/2, cy + 140, selected ? 4 : 3.2);
-      // 名前
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 32px serif';
+      // キャラ絵（左半分）
+      drawCharPortrait(c, cx + 70, cy + cardH/2 + 10, selected ? 3.0 : 2.6);
+      // 名前（右側）
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 22px serif';
       ctx.lineWidth = 4; ctx.strokeStyle = '#000';
-      ctx.strokeText(c.name, cx + cardW/2, cy + 240);
-      ctx.fillStyle = selected ? '#ffee60' : '#fff';
-      ctx.fillText(c.name, cx + cardW/2, cy + 240);
+      drawRubyText(c.name, cx + 145, cy + 40, { size: 22, fill: selected ? '#ffee60' : '#fff', strokeW: 4, family: 'serif', align: 'left' });
       // スタッツ
-      ctx.font = '14px sans-serif';
+      ctx.font = '13px sans-serif';
       ctx.fillStyle = '#ccc';
-      ctx.fillText('HP: ' + c.hp + '  SPEED: ' + c.speed, cx + cardW/2, cy + 270);
-      ctx.fillText(c.desc, cx + cardW/2, cy + 290);
+      ctx.textAlign = 'left';
+      ctx.fillText('HP: ' + c.hp + '  SPD: ' + c.speed, cx + 145, cy + 75);
+      ctx.fillText('連射: ' + (Math.floor(60/c.atkRate)) + '発/秒  攻: ' + c.atkDmg, cx + 145, cy + 95);
+      // 説明（折り返し）
+      drawRubyText(c.desc, cx + 145, cy + 130, { size: 12, fill: '#aaccff', strokeW: 2, align: 'left' });
       ctx.restore();
     }
     // 操作説明
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = 'bold 18px sans-serif';
+    ctx.font = 'bold 16px sans-serif';
     ctx.lineWidth = 4; ctx.strokeStyle = '#000';
     const hintText = 'キャラをタップして スタート！';
-    ctx.strokeText(hintText, W/2, H - 55);
+    ctx.strokeText(hintText, W/2, H - 18);
     // 点滅
     const pulse = Math.floor(stateTimer / 20) % 2 === 0 ? '#ffee40' : '#ffa040';
     ctx.fillStyle = pulse;
-    ctx.fillText(hintText, W/2, H - 55);
-    ctx.font = '12px sans-serif';
-    ctx.fillStyle = '#999';
-    ctx.fillText('PC：← → で選択、Space でスタート', W/2, H - 25);
+    ctx.fillText(hintText, W/2, H - 18);
     ctx.restore();
   }
 
@@ -2521,7 +2570,95 @@
     ctx.fill();
     // 髪（目は y=-12。前髪は y=-14 までで止める）
     ctx.fillStyle = c.hairCol;
-    if (c.id === 'saku') {
+    if (c.id === 'vegeta') {
+      // ベジータ：逆立ち短髪＋額のV字生え際
+      ctx.fillStyle = c.hairCol;
+      ctx.beginPath();
+      ctx.moveTo(-9, -13);
+      ctx.lineTo(-9, -20);
+      ctx.lineTo(-5, -16);
+      ctx.lineTo(-3, -22);
+      ctx.lineTo(0, -14);
+      ctx.lineTo(3, -22);
+      ctx.lineTo(5, -16);
+      ctx.lineTo(9, -20);
+      ctx.lineTo(9, -13);
+      ctx.closePath();
+      ctx.fill();
+      // 側面
+      ctx.fillRect(-9, -13, 2, 3);
+      ctx.fillRect(7, -13, 2, 3);
+    } else if (c.id === 'trunks') {
+      // 未来トランクス：紫ボブ（マッシュルームカット）
+      ctx.fillStyle = c.hairCol;
+      ctx.beginPath();
+      ctx.arc(0, -13, 10, Math.PI, 0);
+      ctx.lineTo(10, -10);
+      ctx.bezierCurveTo(10, -6, 8, -6, 7, -8);
+      ctx.lineTo(6, -14);
+      ctx.lineTo(-6, -14);
+      ctx.lineTo(-7, -8);
+      ctx.bezierCurveTo(-8, -6, -10, -6, -10, -10);
+      ctx.closePath();
+      ctx.fill();
+      // 前髪（額を覆う重め・目の上で止める）
+      ctx.beginPath();
+      ctx.moveTo(-9, -14);
+      ctx.quadraticCurveTo(-4, -13.5, 0, -14);
+      ctx.quadraticCurveTo(4, -13.5, 9, -14);
+      ctx.lineTo(9, -18);
+      ctx.bezierCurveTo(4, -20, -4, -20, -9, -18);
+      ctx.closePath();
+      ctx.fill();
+    } else if (c.id === 'gohan') {
+      // 悟飯：黒髪短め、前髪センターV
+      ctx.fillStyle = c.hairCol;
+      ctx.beginPath();
+      ctx.arc(0, -13, 9, Math.PI, 0);
+      ctx.lineTo(9, -14);
+      ctx.lineTo(-9, -14);
+      ctx.closePath();
+      ctx.fill();
+      // センターの三角前髪
+      ctx.beginPath();
+      ctx.moveTo(-6, -15);
+      ctx.lineTo(0, -12.5);
+      ctx.lineTo(6, -15);
+      ctx.lineTo(6, -18);
+      ctx.lineTo(-6, -18);
+      ctx.closePath();
+      ctx.fill();
+    } else if (c.id === 'piccolo') {
+      // ピッコロ：髪なし（頭は既に緑skinCol）
+      // 白ターバン（頭頂部を覆う）
+      ctx.fillStyle = '#f0f0f0';
+      ctx.beginPath();
+      ctx.arc(0, -15, 10, Math.PI, 0);
+      ctx.lineTo(10, -13);
+      ctx.lineTo(-10, -13);
+      ctx.closePath();
+      ctx.fill();
+      // ターバンの巻き目
+      ctx.strokeStyle = '#b0b0b0';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(-10, -15); ctx.lineTo(10, -15);
+      ctx.moveTo(-10, -18); ctx.lineTo(10, -18);
+      ctx.moveTo(-10, -21); ctx.lineTo(10, -21);
+      ctx.stroke();
+      // アンテナ（左右）
+      ctx.fillStyle = '#60c040';
+      ctx.fillRect(-5.5, -26, 1.5, 6);
+      ctx.fillRect(4, -26, 1.5, 6);
+      // 尖り耳
+      ctx.fillStyle = c.skinCol;
+      ctx.beginPath();
+      ctx.moveTo(-9, -12); ctx.lineTo(-11, -15); ctx.lineTo(-8, -10); ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(9, -12); ctx.lineTo(11, -15); ctx.lineTo(8, -10); ctx.closePath();
+      ctx.fill();
+    } else if (c.id === 'saku') {
       // さくの髪：頭頂部から側面（耳の上）まで、前髪は額のみ
       ctx.beginPath();
       ctx.arc(0, -12, 9, Math.PI, 0);        // 頭頂の丸みだけ
@@ -2618,16 +2755,21 @@
       ctx.fillStyle = '#d06090';
       ctx.fillRect(-8, -21, 2, 3);
     }
-    // 目（イケメンは少し細目、くるみは大きく丸い）
-    const eyeW = c.id === 'saku' ? 1.4 : 1.8;
-    const eyeH = c.id === 'saku' ? 1.7 : 2.3;
+    // 目（男性陣は少し細目、くるみは大きく丸い、ピッコロは鋭い）
+    const isKurumi = c.id === 'kurumi';
+    const isPiccolo = c.id === 'piccolo';
+    const eyeW = isKurumi ? 1.8 : (isPiccolo ? 1.2 : 1.4);
+    const eyeH = isKurumi ? 2.3 : (isPiccolo ? 1.4 : 1.7);
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.ellipse(-3, -12, eyeW, eyeH, 0, 0, Math.PI*2);
     ctx.ellipse(3, -12, eyeW, eyeH, 0, 0, Math.PI*2);
     ctx.fill();
     // 瞳
-    const eyeColor = c.id === 'saku' ? '#2a1a0a' : '#8a4820';  // さく:濃茶, くるみ:明茶
+    let eyeColor = '#2a1a0a';
+    if (isKurumi) eyeColor = '#8a4820';
+    else if (isPiccolo) eyeColor = '#d01010';  // 赤目
+    else if (c.id === 'trunks') eyeColor = '#2060a0';  // 青目
     ctx.fillStyle = eyeColor;
     ctx.beginPath();
     ctx.ellipse(-3, -12, eyeW*0.7, eyeH*0.7, 0, 0, Math.PI*2);
@@ -2639,8 +2781,8 @@
     ctx.arc(-3.3, -12.5, 0.4, 0, Math.PI*2);
     ctx.arc(2.7, -12.5, 0.4, 0, Math.PI*2);
     ctx.fill();
-    // まつげ（くるみは長め）
-    if (c.id === 'kurumi') {
+    // まつげ／眉
+    if (isKurumi) {
       ctx.strokeStyle = '#2a1608';
       ctx.lineWidth = 0.6;
       ctx.beginPath();
@@ -2650,23 +2792,25 @@
       ctx.moveTo(4, -14); ctx.lineTo(4, -15);
       ctx.stroke();
     } else {
-      // さく：涼やかな眉
-      ctx.strokeStyle = '#1a1008';
-      ctx.lineWidth = 0.8;
+      // 男性陣：凜々しい眉。ベジータ・ピッコロは太め
+      const isStrongBrow = (c.id === 'vegeta' || c.id === 'piccolo');
+      ctx.strokeStyle = isPiccolo ? '#2a6018' : '#1a1008';
+      ctx.lineWidth = isStrongBrow ? 1.4 : 0.8;
       ctx.beginPath();
-      ctx.moveTo(-5, -14.5); ctx.lineTo(-1.5, -14.8);
-      ctx.moveTo(1.5, -14.8); ctx.lineTo(5, -14.5);
+      if (isStrongBrow) {
+        // ベジータ/ピッコロ：険しい眉（逆ハの字）
+        ctx.moveTo(-5.5, -15); ctx.lineTo(-1.5, -14);
+        ctx.moveTo(1.5, -14); ctx.lineTo(5.5, -15);
+      } else {
+        ctx.moveTo(-5, -14.5); ctx.lineTo(-1.5, -14.8);
+        ctx.moveTo(1.5, -14.8); ctx.lineTo(5, -14.5);
+      }
       ctx.stroke();
     }
     // 口
-    ctx.strokeStyle = '#a05030';
+    ctx.strokeStyle = isPiccolo ? '#206018' : '#a05030';
     ctx.lineWidth = 0.8;
-    if (c.id === 'saku') {
-      // イケメン：薄く微笑
-      ctx.beginPath();
-      ctx.moveTo(-1.5, -8); ctx.lineTo(1.5, -8);
-      ctx.stroke();
-    } else {
+    if (isKurumi) {
       // くるみ：ニコニコ
       ctx.beginPath();
       ctx.arc(0, -8, 1.5, 0.1*Math.PI, 0.9*Math.PI);
@@ -2677,6 +2821,16 @@
       ctx.arc(-6, -9, 1.8, 0, Math.PI*2);
       ctx.arc(6, -9, 1.8, 0, Math.PI*2);
       ctx.fill();
+    } else if (c.id === 'vegeta' || c.id === 'piccolo') {
+      // 厳しい口元
+      ctx.beginPath();
+      ctx.moveTo(-2, -8); ctx.lineTo(2, -8);
+      ctx.stroke();
+    } else {
+      // さく/トランクス/悟飯：薄く微笑
+      ctx.beginPath();
+      ctx.moveTo(-1.5, -8); ctx.lineTo(1.5, -8);
+      ctx.stroke();
     }
     ctx.restore();
   }
@@ -3438,8 +3592,25 @@
     ctx.fillStyle = hairCol;
 
     // 目の位置：y=-11、頭：y=-11 半径7。前髪は y=-13 以上で止める
-    const isSaku = (c.charId === 'saku' || c.id === 'saku');
-    if (isSaku) {
+    const charIdHere = c.charId || c.id;
+    const isPiccoloBt = charIdHere === 'piccolo';
+    const isMaleLike = charIdHere !== 'kurumi';
+
+    // ピッコロ：髪なし、ターバン＋アンテナ
+    if (isPiccoloBt && transformLvl < 2) {
+      // 白ターバン
+      ctx.fillStyle = '#f0f0f0';
+      ctx.beginPath();
+      ctx.arc(0, -13, 8, Math.PI, 0);
+      ctx.lineTo(8, -12);
+      ctx.lineTo(-8, -12);
+      ctx.closePath();
+      ctx.fill();
+      // アンテナ
+      ctx.fillStyle = '#60c040';
+      ctx.fillRect(-4.5, -23, 1.2, 5);
+      ctx.fillRect(3.3, -23, 1.2, 5);
+    } else if (isMaleLike) {
       if (transformLvl === 4) {
         // SSJ3：後ろに流れる長い金髪＋頭頂の逆立ち
         // 後ろ髪（キャラ本体の後ろを流れる・体は隠さない）
