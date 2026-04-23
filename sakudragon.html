@@ -260,6 +260,64 @@
   window.addEventListener('mousemove', e => { if (dragTouchId === 'mouse') dragMoveHandler(e); });
   window.addEventListener('mouseup', () => { if (dragTouchId === 'mouse') dragEndHandler(); });
 
+  // ステージ選択画面のスクロール（タッチ/マウス/ホイール）
+  cv.addEventListener('touchstart', e => {
+    if (state !== STATE.STAGE_SELECT) return;
+    const t = e.changedTouches[0];
+    const pos = canvasPosFromClient(t.clientX, t.clientY);
+    stageSelectDragY = pos.y;
+    stageSelectDragStartScroll = stageSelectScrollY;
+    stageSelectDragDist = 0;
+    stageSelectDragId = t.identifier;
+  }, { passive: true });
+  cv.addEventListener('touchmove', e => {
+    if (state !== STATE.STAGE_SELECT || stageSelectDragId === null) return;
+    for (let i = 0; i < e.touches.length; i++) {
+      if (e.touches[i].identifier === stageSelectDragId) {
+        const pos = canvasPosFromClient(e.touches[i].clientX, e.touches[i].clientY);
+        const dy = pos.y - stageSelectDragY;
+        stageSelectScrollY = Math.max(0, Math.min(stageSelectMaxScroll, stageSelectDragStartScroll - dy));
+        stageSelectDragDist = Math.max(stageSelectDragDist, Math.abs(dy));
+        e.preventDefault();
+        return;
+      }
+    }
+  }, { passive: false });
+  cv.addEventListener('touchend', e => {
+    if (state !== STATE.STAGE_SELECT) return;
+    if (stageSelectDragId !== null && typeof stageSelectDragId === 'number') {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === stageSelectDragId) {
+          stageSelectDragId = null;
+          return;
+        }
+      }
+    }
+  });
+  cv.addEventListener('wheel', e => {
+    if (state !== STATE.STAGE_SELECT) return;
+    stageSelectScrollY = Math.max(0, Math.min(stageSelectMaxScroll, stageSelectScrollY + e.deltaY));
+    e.preventDefault();
+  }, { passive: false });
+  cv.addEventListener('mousedown', e => {
+    if (state !== STATE.STAGE_SELECT) return;
+    const pos = canvasPosFromClient(e.clientX, e.clientY);
+    stageSelectDragY = pos.y;
+    stageSelectDragStartScroll = stageSelectScrollY;
+    stageSelectDragDist = 0;
+    stageSelectDragId = 'ss_mouse';
+  });
+  window.addEventListener('mousemove', e => {
+    if (state !== STATE.STAGE_SELECT || stageSelectDragId !== 'ss_mouse') return;
+    const pos = canvasPosFromClient(e.clientX, e.clientY);
+    const dy = pos.y - stageSelectDragY;
+    stageSelectScrollY = Math.max(0, Math.min(stageSelectMaxScroll, stageSelectDragStartScroll - dy));
+    stageSelectDragDist = Math.max(stageSelectDragDist, Math.abs(dy));
+  });
+  window.addEventListener('mouseup', () => {
+    if (stageSelectDragId === 'ss_mouse') stageSelectDragId = null;
+  });
+
   // ため撃ちボタン
   chargeBtn.addEventListener('touchstart', e => { chargeHeld = true; e.preventDefault(); }, { passive: false });
   chargeBtn.addEventListener('touchend', e => { chargeHeld = false; e.preventDefault(); }, { passive: false });
@@ -288,6 +346,12 @@
       return;
     }
     if (state === STATE.STAGE_SELECT) {
+      // スクロールのためのドラッグだった場合はタップ扱いしない
+      if (stageSelectDragDist > 8) {
+        stageSelectDragDist = 0;
+        return;
+      }
+      stageSelectDragDist = 0;
       const pos = getCanvasPos(e);
       // 戻るボタン
       if (stageSelectBackBtn && pos.x > stageSelectBackBtn.x && pos.x < stageSelectBackBtn.x + stageSelectBackBtn.w && pos.y > stageSelectBackBtn.y && pos.y < stageSelectBackBtn.y + stageSelectBackBtn.h) {
@@ -914,6 +978,7 @@
     ensureAudio();
     state = STATE.STAGE_SELECT;
     stateTimer = 0;
+    stageSelectScrollY = 0;
     beep(660, 0.1, 'triangle', 0.14);
   }
   let pendingStageSelectIdx = null;
@@ -2618,6 +2683,12 @@
 
   // ====== ステージ選択画面 ======
   let stageSelectButtons = [];
+  let stageSelectScrollY = 0;
+  let stageSelectMaxScroll = 0;
+  let stageSelectDragY = null;
+  let stageSelectDragStartScroll = 0;
+  let stageSelectDragDist = 0;
+  let stageSelectDragId = null;
   function drawStageSelect() {
     // 背景
     ctx.fillStyle = '#080020';
@@ -2642,23 +2713,35 @@
     drawRubyText('[戻|もど]る', backX, backY + 6, { size: 16, fill: '#ffccaa', strokeW: 3 });
     stageSelectBackBtn = { x: backX - 45, y: backY - 18, w: 90, h: 36 };
 
-    // ステージ一覧（2列 × 3行）
+    // ステージ一覧（3列 × N行・スクロール対応）
     const cleared = getClearedStages();
     const cols = 3, rows = Math.ceil(STAGES_CONFIG.length / cols);
     const cardW = 260, cardH = 120;
     const gapX = 20, gapY = 16;
     const totalW = cardW * cols + gapX * (cols - 1);
     const startX = (W - totalW) / 2;
-    const startCardY = 110;
+    const startCardY = 95;
+    const viewTop = 85;
+    const viewBot = H - 26;
+    const viewH = viewBot - viewTop;
+    const contentH = rows * cardH + (rows - 1) * gapY;
+    stageSelectMaxScroll = Math.max(0, (startCardY + contentH) - viewBot + 8);
+    stageSelectScrollY = Math.max(0, Math.min(stageSelectMaxScroll, stageSelectScrollY));
+
     stageSelectButtons = [];
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, viewTop, W, viewH);
+    ctx.clip();
     for (let i = 0; i < STAGES_CONFIG.length; i++) {
       const stg = STAGES_CONFIG[i];
       const col = i % cols;
       const row = Math.floor(i / cols);
       const cx = startX + col * (cardW + gapX);
-      const cy = startCardY + row * (cardH + gapY);
-      const unlocked = cleared.has(i) || i === 0 || cleared.has(i - 1);  // 前ステージクリアで開放、常に1面は開放
+      const cy = startCardY + row * (cardH + gapY) - stageSelectScrollY;
+      const unlocked = cleared.has(i) || i === 0 || cleared.has(i - 1);
       stageSelectButtons.push({ x: cx, y: cy, w: cardW, h: cardH, idx: i, unlocked });
+      if (cy + cardH < viewTop || cy > viewBot) continue;  // 画面外は描画スキップ
       // カード背景
       if (unlocked) {
         const pal = stg.bgPalette;
@@ -2697,9 +2780,23 @@
       drawRubyText(stg.name, cx + cardW/2, cy + 60, { size: 22, fill: '#ffffff', strokeW: 5, family: 'serif' });
       drawRubyText(stg.bossName, cx + cardW/2, cy + 95, { size: 15, fill: '#ffaa80', strokeW: 3 });
     }
+    ctx.restore();
+
+    // スクロールバー
+    if (stageSelectMaxScroll > 0) {
+      const barW = 6;
+      const barTrackH = viewH - 8;
+      const barH = Math.max(40, barTrackH * (viewH / (contentH + 8)));
+      const barY = viewTop + 4 + (barTrackH - barH) * (stageSelectScrollY / stageSelectMaxScroll);
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillRect(W - 14, viewTop + 4, barW, barTrackH);
+      ctx.fillStyle = 'rgba(255,238,96,0.75)';
+      ctx.fillRect(W - 14, barY, barW, barH);
+    }
 
     // 操作説明
-    drawRubyText('[前|まえ]のステージクリアで[開放|かいほう]', W/2, H - 12, { size: 13, fill: '#aaaaaa', strokeW: 2 });
+    const hint = stageSelectMaxScroll > 0 ? '[前|まえ]のステージクリアで[開放|かいほう]・スワイプでスクロール' : '[前|まえ]のステージクリアで[開放|かいほう]';
+    drawRubyText(hint, W/2, H - 12, { size: 13, fill: '#aaaaaa', strokeW: 2 });
   }
   let stageSelectBackBtn = null;
 
