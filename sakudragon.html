@@ -545,51 +545,53 @@
       bootCol: '#1a3070',
       desc: 'スピード・連射UP',
     },
-    {
-      id: 'vegeta', name: 'ベジータ',
-      hp: 11, speed: 3.2, atkDmg: 2, atkRate: 11,
-      hairCol: '#1a0a04', skinCol: '#ffddbb',
-      shirtCol: '#2050b0',  // 青戦闘スーツ
-      pantsCol: '#2050b0',
-      innerCol: '#e8e8f0',  // 白アーマー
-      beltCol: '#d0d0e0',   // 白帯
-      bootCol: '#e8e8f0',   // 白ブーツ
-      desc: '[防御|ぼうぎょ][型|がた]・HP[高|たか]い',
-    },
-    {
-      id: 'trunks', name: '[未来|みらい]トランクス',
-      hp: 9, speed: 3.8, atkDmg: 1, atkRate: 8,
-      hairCol: '#a080d0', skinCol: '#ffddbb',  // 紫髪
-      shirtCol: '#101018',  // 黒シャツ
-      pantsCol: '#2040a0',  // 青ズボン
-      innerCol: '#ffaa30',  // オレンジカプセル社マーク
-      beltCol: '#703a20',   // 茶ベルト
-      bootCol: '#ffe040',   // 黄ブーツ
-      desc: '[剣術|けんじゅつ][型|がた]・[速|はや]い',
-    },
-    {
-      id: 'gohan', name: '[悟飯|ごはん]',
-      hp: 10, speed: 3.5, atkDmg: 2, atkRate: 9,
-      hairCol: '#0a0604', skinCol: '#ffddbb',
-      shirtCol: '#7020b0',  // 紫道着（ピッコロ伝授）
-      pantsCol: '#7020b0',
-      innerCol: '#ffc030',  // 黄インナー
-      beltCol: '#403020',   // 茶帯
-      bootCol: '#302818',   // 茶ブーツ
-      desc: '[覚醒|かくせい][型|がた]・[火力|かりょく][特化|とっか]',
-    },
-    {
-      id: 'piccolo', name: 'ピッコロ',
-      hp: 12, speed: 2.9, atkDmg: 2, atkRate: 12,
-      hairCol: '#60c040', skinCol: '#60c040',  // 緑肌
-      shirtCol: '#7020b0',  // 紫道着
-      pantsCol: '#7020b0',
-      innerCol: '#402080',
-      beltCol: '#b02020',   // 赤帯
-      bootCol: '#603018',   // 茶ブーツ
-      desc: '[魔族|まぞく]の[師匠|ししょう]・[超|ちょう]タフ',
-    },
   ];
+
+  // ====== 仲間キャラ定義（ステージごとにAIで援護） ======
+  const COMPANION_DATA = {
+    vegeta: {
+      id: 'vegeta', name: 'ベジータ',
+      hairCol: '#1a0a04', skinCol: '#ffddbb',
+      shirtCol: '#2050b0', pantsCol: '#2050b0',
+      innerCol: '#e8e8f0', beltCol: '#d0d0e0', bootCol: '#e8e8f0',
+      bulletCol: '#c0e0ff', atkRate: 18, atkDmg: 2,
+    },
+    trunks: {
+      id: 'trunks', name: '[未来|みらい]トランクス',
+      hairCol: '#a080d0', skinCol: '#ffddbb',
+      shirtCol: '#101018', pantsCol: '#2040a0',
+      innerCol: '#ffaa30', beltCol: '#703a20', bootCol: '#ffe040',
+      bulletCol: '#e0c0ff', atkRate: 14, atkDmg: 1,
+    },
+    gohan: {
+      id: 'gohan', name: '[悟飯|ごはん]',
+      hairCol: '#0a0604', skinCol: '#ffddbb',
+      shirtCol: '#7020b0', pantsCol: '#7020b0',
+      innerCol: '#ffc030', beltCol: '#403020', bootCol: '#302818',
+      bulletCol: '#ffe080', atkRate: 16, atkDmg: 2,
+    },
+    piccolo: {
+      id: 'piccolo', name: 'ピッコロ',
+      hairCol: '#60c040', skinCol: '#60c040',
+      shirtCol: '#7020b0', pantsCol: '#7020b0',
+      innerCol: '#402080', beltCol: '#b02020', bootCol: '#603018',
+      bulletCol: '#c0ffc0', atkRate: 20, atkDmg: 2,
+    },
+    piccoloOrange: {
+      id: 'piccolo', name: 'オレンジピッコロ',  // idはpiccoloで描画流用
+      hairCol: '#ff8020', skinCol: '#ff8020',  // オレンジ肌
+      shirtCol: '#c04010', pantsCol: '#c04010',
+      innerCol: '#fff080', beltCol: '#a02010', bootCol: '#5a1808',
+      bulletCol: '#ffaa40', atkRate: 14, atkDmg: 3,
+    },
+    gohanBeast: {
+      id: 'gohan', name: '[悟飯|ごはん]ビースト',
+      hairCol: '#f0f0f0', skinCol: '#ffddbb',  // 白髪
+      shirtCol: '#7020b0', pantsCol: '#7020b0',
+      innerCol: '#ffc030', beltCol: '#403020', bootCol: '#302818',
+      bulletCol: '#ffffff', atkRate: 10, atkDmg: 4,
+    },
+  };
   let selectIdx = 0;
 
   // ====== プレイヤー ======
@@ -619,6 +621,7 @@
       enemyMultiplier: 0.7,
       transformUnlock: 0,
       bossIntroLine: 'フッ…[吾輩|わがはい]こそピッコロとーと。この[星|ほし]を[支配|しはい]するのは[我|われ]だ！',
+      companions: [],
       // 地球：青空と緑の地平線
       bgPalette: { top: '#88c8f0', mid: '#50a8e0', bot: '#3a7a40' },
       bgStyle: 'earth',
@@ -632,6 +635,7 @@
       enemyMultiplier: 0.85,
       transformUnlock: 1,
       bossIntroLine: 'フハハハ！[我|われ]こそ[誇|ほこ]り[高|たか]きサイヤ[人|じん]の[王子|おうじ]、ベジとーと。この[星|ほし]…[滅|ほろ]ぼさせてもらうぞ！',
+      companions: ['piccolo'],
       // 荒野：茜空と砂塵
       bgPalette: { top: '#e8a050', mid: '#c87030', bot: '#8a5028' },
       bgStyle: 'wasteland',
@@ -649,6 +653,7 @@
       triggerKills: 75,
       transformUnlock: 2,
       bossIntroLine: 'ウフフ…[私|わたくし]はフリーザとーと。[宇宙|うちゅう]の[帝王|ていおう]。このナメック[星|せい]のドラゴンボールで[永遠|えいえん]の[命|いのち]を[頂戴|ちょうだい]しましょう',
+      companions: [],
       // ナメック星：緑の空と青い水
       bgPalette: { top: '#a0e060', mid: '#70c060', bot: '#3088a8' },
       bgStyle: 'namek',
@@ -667,6 +672,7 @@
       triggerKills: 95,
       transformUnlock: 3,
       bossIntroLine: 'フフフ…[私|わたくし]こそ[完全体|かんぜんたい]セルとーと。[最強|さいきょう]の[存在|そんざい]だ。[君|きみ]たちを[倒|たお]して[歴史|れきし]に[名|な]を[刻|きざ]もう',
+      companions: ['gohan'],
       // 地球（夕焼け）：オレンジ→紫
       bgPalette: { top: '#ff9060', mid: '#d04080', bot: '#3a2850' },
       bgStyle: 'earth-sunset',
@@ -687,6 +693,7 @@
       spawnBurstBonus: 1,
       transformUnlock: 4,
       bossIntroLine: 'ブーブブゥー！ボクは[魔神|まじん]とーと！[地球|ちきゅう]も[宇宙|うちゅう]もぜーんぶ、[僕|ぼく]のお[菓子|かし]にしちゃうよ！',
+      companions: ['vegeta'],
       // 界王神界：ピンク空と黄金の雲、神秘的な紫
       bgPalette: { top: '#ffccea', mid: '#ffd890', bot: '#c890d8' },
       bgStyle: 'kaio',
@@ -707,6 +714,7 @@
       spawnBurstBonus: 1,
       transformUnlock: 6,
       bossIntroLine: '[我|わ]が[名|な]はビルとーと。この[宇宙|うちゅう]の[破壊神|はかいしん]。[私|わたし]を[楽|たの]しませてくれるのだろうな？',
+      companions: ['vegeta'],
       bgPalette: { top: '#00000a', mid: '#100030', bot: '#2a0855' },
       bgStyle: 'space',
       preludeLines: [
@@ -726,6 +734,7 @@
       spawnBurstBonus: 1,
       transformUnlock: 7,
       bossIntroLine: 'フフフ…[地獄|じごく]から[甦|よみがえ]ったぞ。[究極|きゅうきょく]の[進化|しんか]―[黄金|おうごん]の[姿|すがた]、[拝|おが]むがいい',
+      companions: ['trunks'],
       bgPalette: { top: '#181020', mid: '#402030', bot: '#601818' },
       preludeLines: [
         '[黄金|おうごん]フリザとーと：「[愚|おろ]か者め…この[私|わたくし]の[輝|かがや]きを[前|まえ]に」',
@@ -744,6 +753,7 @@
       spawnBurstBonus: 1,
       transformUnlock: 7,
       bossIntroLine: '[我|わ]が[名|な]はヒッとーと…[第|だい]6[宇宙|うちゅう]の[暗殺者|あんさつしゃ]。[時|とき]を[止|と]め、[貴様|きさま]を[葬|ほうむ]ろう',
+      companions: ['vegeta'],
       bgPalette: { top: '#080030', mid: '#180858', bot: '#301078' },
       preludeLines: [
         'ヒッとーと：「[君|きみ]の[動|うご]き、[全|すべ]て[読|よ]めている」',
@@ -760,6 +770,7 @@
       spawnBurstBonus: 2,
       transformUnlock: 7,
       bossIntroLine: '[我|われ]こそ[神|かみ]。[人間|にんげん]よ、[滅|ほろ]びよ―[我|われ]が[聖|せい]なる[裁|さば]きを[受|う]けるがいい',
+      companions: ['trunks'],
       bgPalette: { top: '#200818', mid: '#401040', bot: '#801048' },
       preludeLines: [
         '[合体|がったい]ザマとーと：「[神|かみ]の[前|まえ]に[膝|ひざ]をつけ」',
@@ -776,6 +787,7 @@
       spawnBurstBonus: 2,
       transformUnlock: 8,  // 身勝手兆
       bossIntroLine: '[我|わ]が[名|な]はジレとーと。[第|だい]11[宇宙|うちゅう][最強|さいきょう]の[戦士|せんし]。[正義|せいぎ]の[前|まえ]に[敗北|はいぼく]はない',
+      companions: ['vegeta', 'trunks'],
       bgPalette: { top: '#080020', mid: '#200830', bot: '#401848' },
       preludeLines: [
         'ジレとーと：「[私|わたし]を[倒|たお]すには、[未知|みち]の[領域|りょういき]が[必要|ひつよう]だ」',
@@ -794,6 +806,7 @@
       spawnBurstBonus: 2,
       transformUnlock: 8,
       bossIntroLine: 'カカカ…カカロット…カカロォォット！！[伝説|でんせつ]の[超|ちょう]サイヤ[人|じん]、ここに[在|あ]り！',
+      companions: ['vegeta', 'piccolo'],
       bgPalette: { top: '#081810', mid: '#183018', bot: '#304820' },
       preludeLines: [
         '[伝説|でんせつ]ブロとーと：「カカロォォット―！！」',
@@ -810,6 +823,7 @@
       spawnBurstBonus: 2,
       transformUnlock: 9,  // 身勝手完成
       bossIntroLine: 'オレの[名|な]はグラノとーと…[惑星|わくせい]シリアルの[最後|さいご]の[生|い]き[残|のこ]り。[復讐|ふくしゅう]を[果|は]たす',
+      companions: ['gohan', 'vegeta'],
       bgPalette: { top: '#101828', mid: '#304858', bot: '#506878' },
       preludeLines: [
         'グラノとーと：「オレは [宇宙最強|うちゅうさいきょう] を[願|ねが]った…」',
@@ -828,6 +842,7 @@
       spawnBurstBonus: 3,
       transformUnlock: 9,
       bossIntroLine: 'ボクがガスとーと。[宇宙最強|うちゅうさいきょう]の[称号|しょうごう]、もらった。[君|きみ]たちは[ここ|･･]で[終|お]わりだ',
+      companions: ['piccolo', 'trunks'],
       bgPalette: { top: '#202010', mid: '#403818', bot: '#585028' },
       preludeLines: [
         'ガスとーと：「[称号|しょうごう]は ボクのものだ」',
@@ -844,6 +859,7 @@
       spawnBurstBonus: 3,
       transformUnlock: 9,
       bossIntroLine: '[我|われ]ら、[正義|せいぎ]のスーパーヒーロー！レッドリボン[軍|ぐん][最新|さいしん]の[人造人間|じんぞうにんげん]、ガンとーとだ！',
+      companions: ['piccoloOrange'],
       bgPalette: { top: '#400808', mid: '#702020', bot: '#a04040' },
       preludeLines: [
         'ガンとーと1[号|ごう]：「[正義|せいぎ]の[ため|ため]、[排除|はいじょ]する！」',
@@ -860,6 +876,7 @@
       spawnBurstBonus: 3,
       transformUnlock: 10,  // ビースト
       bossIntroLine: 'グオオオオ…セルマックとーと、[覚醒|かくせい]！！[全|すべ]てを[破壊|はかい]し[尽|つ]くす…！',
+      companions: ['gohanBeast'],
       bgPalette: { top: '#200000', mid: '#500810', bot: '#801830' },
       preludeLines: [
         'セルマックとーと：「グオオォォォッ！！」',
@@ -912,6 +929,7 @@
   let projectiles = [];
   let enemyProjectiles = [];
   let particles = [];
+  let companions = [];
   let boss = null;
   let popups = [];
   let banner = null;
@@ -1067,6 +1085,7 @@
   function startStage() {
     const stg = STAGES_CONFIG[currentStageIdx];
     enemies = []; projectiles = []; enemyProjectiles = []; particles = []; popups = [];
+    companions = spawnCompanions(stg.companions);
     boss = null; banner = null; bannerSub = null;
     comboCount = 0; comboTimer = 0;
     saveGame();
@@ -2442,29 +2461,23 @@
     // タイトル
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = 'bold 28px serif';
+    ctx.font = 'bold 36px serif';
     ctx.lineWidth = 5; ctx.strokeStyle = '#000';
-    ctx.strokeText('キャラを えらんで', W/2, 36);
+    ctx.strokeText('キャラを えらんで', W/2, 70);
     ctx.fillStyle = '#ffee60';
-    ctx.fillText('キャラを えらんで', W/2, 36);
+    ctx.fillText('キャラを えらんで', W/2, 70);
     ctx.restore();
 
-    // キャラ表示（3列×2行）
-    const cols = 3;
-    const rows = Math.ceil(CHARACTERS.length / cols);
-    const cardW = 280, cardH = 210;
-    const gapX = 20, gapY = 12;
-    const totalW = cardW * cols + gapX * (cols - 1);
-    const totalH = cardH * rows + gapY * (rows - 1);
+    // キャラ表示（2人横並び）
+    const cardW = 260, cardH = 320;
+    const gap = 60;
+    const totalW = cardW * CHARACTERS.length + gap * (CHARACTERS.length - 1);
     const startX = (W - totalW) / 2;
-    const startY = 56;
     charSelectCards = [];
     for (let i = 0; i < CHARACTERS.length; i++) {
       const c = CHARACTERS[i];
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const cx = startX + col * (cardW + gapX);
-      const cy = startY + row * (cardH + gapY);
+      const cx = startX + i * (cardW + gap);
+      const cy = 120;
       const selected = (i === selectIdx);
       charSelectCards.push({ x: cx, y: cy, w: cardW, h: cardH, idx: i });
       // カード
@@ -2479,34 +2492,36 @@
       ctx.strokeStyle = selected ? '#ffee60' : '#606070';
       ctx.lineWidth = selected ? 4 : 2;
       ctx.strokeRect(cx, cy, cardW, cardH);
-      // キャラ絵（左半分）
-      drawCharPortrait(c, cx + 70, cy + cardH/2 + 10, selected ? 3.0 : 2.6);
-      // 名前（右側）
-      ctx.textAlign = 'left';
-      ctx.font = 'bold 22px serif';
+      // キャラ絵
+      drawCharPortrait(c, cx + cardW/2, cy + 140, selected ? 4 : 3.2);
+      // 名前
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 32px serif';
       ctx.lineWidth = 4; ctx.strokeStyle = '#000';
-      drawRubyText(c.name, cx + 145, cy + 40, { size: 22, fill: selected ? '#ffee60' : '#fff', strokeW: 4, family: 'serif', align: 'left' });
+      ctx.strokeText(c.name, cx + cardW/2, cy + 240);
+      ctx.fillStyle = selected ? '#ffee60' : '#fff';
+      ctx.fillText(c.name, cx + cardW/2, cy + 240);
       // スタッツ
-      ctx.font = '13px sans-serif';
+      ctx.font = '14px sans-serif';
       ctx.fillStyle = '#ccc';
-      ctx.textAlign = 'left';
-      ctx.fillText('HP: ' + c.hp + '  SPD: ' + c.speed, cx + 145, cy + 75);
-      ctx.fillText('連射: ' + (Math.floor(60/c.atkRate)) + '発/秒  攻: ' + c.atkDmg, cx + 145, cy + 95);
-      // 説明（折り返し）
-      drawRubyText(c.desc, cx + 145, cy + 130, { size: 12, fill: '#aaccff', strokeW: 2, align: 'left' });
+      ctx.fillText('HP: ' + c.hp + '  SPEED: ' + c.speed, cx + cardW/2, cy + 270);
+      ctx.fillText(c.desc, cx + cardW/2, cy + 290);
       ctx.restore();
     }
     // 操作説明
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = 'bold 16px sans-serif';
+    ctx.font = 'bold 18px sans-serif';
     ctx.lineWidth = 4; ctx.strokeStyle = '#000';
     const hintText = 'キャラをタップして スタート！';
-    ctx.strokeText(hintText, W/2, H - 18);
+    ctx.strokeText(hintText, W/2, H - 55);
     // 点滅
     const pulse = Math.floor(stateTimer / 20) % 2 === 0 ? '#ffee40' : '#ffa040';
     ctx.fillStyle = pulse;
-    ctx.fillText(hintText, W/2, H - 18);
+    ctx.fillText(hintText, W/2, H - 55);
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#999';
+    ctx.fillText('PC：← → で選択、Space でスタート', W/2, H - 25);
     ctx.restore();
   }
 
@@ -3213,6 +3228,7 @@
     drawEnemyProjectiles();
     drawEnemies();
     if (boss) drawBoss();
+    drawCompanions();
     drawPlayer();
     drawProjectiles();
     drawParticles();
@@ -3506,6 +3522,101 @@
       ctx.moveTo(x - 4 + (Math.random() - 0.5) * 6, sy);
       ctx.lineTo(x + 4 + (Math.random() - 0.5) * 6, sy + 8);
       ctx.stroke();
+    }
+  }
+
+  // ====== 仲間キャラ（AI援護） ======
+  const COMPANION_POSITIONS = [
+    { dx: -60, dy: 20 },
+    { dx: 60, dy: 20 },
+    { dx: -100, dy: 50 },
+    { dx: 100, dy: 50 },
+  ];
+  function spawnCompanions(ids) {
+    if (!ids || !ids.length) return [];
+    const arr = [];
+    for (let i = 0; i < ids.length; i++) {
+      const data = COMPANION_DATA[ids[i]];
+      if (!data) continue;
+      const pos = COMPANION_POSITIONS[i] || COMPANION_POSITIONS[0];
+      arr.push({
+        ...data,
+        charId: data.id,
+        x: player.x + pos.dx,
+        y: player.y + pos.dy,
+        targetDx: pos.dx, targetDy: pos.dy,
+        anim: 0, shotCD: 30 + i * 6,
+        moving: false,
+        facing: 1,
+        entryT: 40,  // スライドインアニメ
+        entryFrom: pos.dx < 0 ? -W * 0.3 : W * 0.3,
+      });
+    }
+    return arr;
+  }
+  function updateCompanions() {
+    for (const co of companions) {
+      co.anim++;
+      // 位置追従（プレイヤーの相対位置へスムーズに）
+      const tx = player.x + co.targetDx;
+      const ty = player.y + co.targetDy;
+      let ex = tx;
+      if (co.entryT > 0) {
+        // スライドイン：画面外から入ってくる
+        const t = co.entryT / 40;
+        ex = tx + co.entryFrom * t;
+        co.entryT--;
+      }
+      const lerp = 0.08;
+      co.x += (ex - co.x) * lerp;
+      co.y += (ty - co.y) * lerp;
+      co.moving = Math.abs(ex - co.x) > 0.5;
+      // 弾を発射（ボス優先）
+      co.shotCD--;
+      if (co.shotCD <= 0 && co.entryT < 10) {
+        co.shotCD = co.atkRate || 18;
+        // 最寄りの敵 or ボス狙い
+        let tgt = null, tgtDy = Infinity;
+        if (boss && boss.alive !== false) tgt = boss;
+        for (const e of enemies) {
+          if (e.dead) continue;
+          const dy = co.y - e.y;
+          if (dy > 0 && dy < tgtDy) { tgtDy = dy; tgt = e; }
+        }
+        let vx = 0, vy = -9;
+        if (tgt) {
+          const dx = tgt.x - co.x;
+          const dy = tgt.y - co.y;
+          const d = Math.hypot(dx, dy) || 1;
+          vx = (dx / d) * 9; vy = (dy / d) * 9;
+        }
+        projectiles.push({
+          x: co.x, y: co.y - 6,
+          vx, vy,
+          life: 80,
+          dmg: co.atkDmg || 1,
+          r: 6,
+          transform: 0,
+          companionCol: co.bulletCol,
+        });
+      }
+    }
+  }
+  function drawCompanions() {
+    for (const co of companions) {
+      const a = co.entryT > 0 ? (1 - co.entryT / 40) : 1;
+      ctx.save();
+      ctx.globalAlpha = a;
+      // 仲間用の弱めオーラ
+      ctx.fillStyle = 'rgba(255,240,160,0.15)';
+      ctx.beginPath();
+      ctx.arc(co.x, co.y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      drawCharInBattle(co, co.x, co.y, 0);
+      // 頭上の名前（小さく）
+      ctx.globalAlpha = 0.85 * a;
+      drawRubyText(co.name, co.x, co.y - 24, { size: 10, fill: '#ffee80', strokeW: 2, family: 'sans-serif' });
+      ctx.restore();
     }
   }
 
@@ -4764,9 +4875,12 @@
   function drawProjectiles() {
     for (const p of projectiles) {
       ctx.save();
-      // 変身段階ごとの色
+      // 変身段階ごとの色（仲間の弾は専用色）
       let bodyCol, glowCol;
-      if (p.transform === 1) {
+      if (p.companionCol) {
+        bodyCol = p.companionCol;
+        glowCol = p.companionCol.replace('#', 'rgba(').length > 0 ? 'rgba(255,255,200,0.4)' : p.companionCol;
+      } else if (p.transform === 1) {
         bodyCol = '#ff5050'; glowCol = 'rgba(255,60,60,0.5)';  // 界王拳赤
       } else if (p.transform >= 2 && p.transform <= 4) {
         bodyCol = '#ffee40'; glowCol = 'rgba(255,255,100,0.5)';  // SSJ金
@@ -4979,6 +5093,7 @@
     stateTimer++;
     if (state === STATE.PLAYING) {
       updatePlayer();
+      updateCompanions();
       updateEnemies();
       updateProjectiles();
       updateEnemyProjectiles();
