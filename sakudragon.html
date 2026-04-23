@@ -607,10 +607,9 @@
     '[超|ちょう]サイヤ[人|じん]ブルー[界王拳|かいおうけん]',
     '[身勝手|みがって]の[極意|ごくい]「[兆|きざし]」',
     '[身勝手|みがって]の[極意|ごくい]',
-    '[悟飯|ごはん]ビースト',
   ];
-  const TRANSFORM_MAX = 11;
-  const TRANSFORM_COST = [25, 35, 50, 65, 80, 120, 160, 200, 240, 290, 340];
+  const TRANSFORM_MAX = 10;
+  const TRANSFORM_COST = [25, 35, 50, 65, 80, 120, 160, 200, 240, 290];
 
   // ====== ステージ構成 ======
   const STAGES_CONFIG = [
@@ -877,17 +876,15 @@
       triggerKills: 500,
       enemyMultiplier: 4.5,
       spawnBurstBonus: 3,
-      transformUnlock: 11,  // ビースト
+      transformUnlock: 10,  // 身勝手の極意（最終形態）
       bossIntroLine: 'グオオオオ…セルマックとーと、[覚醒|かくせい]！！[全|すべ]てを[破壊|はかい]し[尽|つ]くす…！',
       companions: ['gohanBeast'],
       bgPalette: { top: '#200000', mid: '#500810', bot: '#801830' },
       preludeLines: [
         'セルマックとーと：「グオオォォォッ！！」',
-        '「([制御|せいぎょ][不能|ふのう]の[最終兵器|さいしゅうへいき]…)」',
-        '「[潜在|せんざい][能力|のうりょく]、[完全|かんぜん][解放|かいほう]！」',
+        '[悟飯|ごはん]ビースト：「ここは[僕|ぼく]に[任|まか]せろ…！」',
+        '「[身勝手|みがって]の[極意|ごくい]の[力|ちから]、すべてを[解|ひら]き[放|はな]つ―！」',
       ],
-      eventText: '[覚醒|かくせい]…[悟飯|ごはん]ビースト！',
-      eventFlavor: '[白|しろ]き[獣|けもの]の[気|き]が [すべて|すべて]を[呑|の]み[込|こ]む',
     },
   ];
   let currentStageIdx = 0;
@@ -1319,8 +1316,7 @@
     else if (player.transform === 7) shots = 5;  // ブルー
     else if (player.transform === 8) shots = 6;  // ブルー界王拳（強化）
     else if (player.transform === 9) shots = 5;  // 身勝手兆（斜め追加）
-    else if (player.transform === 10) shots = 5; // 身勝手（斜め4追加）
-    else if (player.transform === 11) shots = 7; // ビースト（斜め4追加）
+    else if (player.transform === 10) shots = 7; // 身勝手（斜め4追加・最強）
     else shots = player.transform - 1;
     const spacing = isSaku ? 22 : 12;
     // 直進の弾
@@ -1365,24 +1361,8 @@
         });
       }
     }
-    // 身勝手：斜め4発追加（合計9発・内外2段階）
+    // 身勝手（完全版・最強）：斜め4発追加（合計11発・内外2段階）
     if (player.transform === 10) {
-      for (const s of [-1, 1]) {
-        for (const [ang, mult] of [[0.3, 1.4], [0.55, 2.0]]) {
-          const a = -Math.PI / 2 + s * ang;
-          projectiles.push({
-            x: player.x + s * spacing * mult,
-            y: player.y - player.r,
-            vx: Math.cos(a) * sp,
-            vy: Math.sin(a) * sp,
-            life: 90, dmg, r,
-            transform: player.transform,
-          });
-        }
-      }
-    }
-    // ビースト：斜め4発追加（合計11発）
-    if (player.transform === 11) {
       for (const s of [-1, 1]) {
         for (const [ang, mult] of [[0.28, 1.5], [0.55, 2.3]]) {
           const a = -Math.PI / 2 + s * ang;
@@ -1473,7 +1453,6 @@
       case 8: return '#ff4060';  // ブルー界王拳：紅蓮の神の気
       case 9: return '#c0d0ff';  // 薄青白（身勝手兆）
       case 10: return '#e0e0f0'; // 白銀（身勝手）
-      case 11: return '#fff0d0'; // 眩しい白金（ビースト）
       default: return '#ffffff';
     }
   }
@@ -3316,7 +3295,6 @@
         ['rgba(255,60,80,0.7)', 'rgba(100,180,255,0.4)'],      // 8 ブルー界王拳（赤+青）
         ['rgba(200,220,255,0.55)', 'rgba(240,245,255,0.35)'],  // 9 身勝手兆
         ['rgba(240,240,255,0.65)', 'rgba(200,220,255,0.4)'],   // 10 身勝手
-        ['rgba(255,240,200,0.75)', 'rgba(255,255,220,0.5)'],   // 11 ビースト
       ];
       const col = auraColors[t];
       ctx.fillStyle = col[1];
@@ -3706,7 +3684,6 @@
     else if (transformLvl === 8) hairCol = '#3078ff';  // 青（ブルー界王拳・赤オーラで差別化）
     else if (transformLvl === 9) hairCol = '#c8c8d8';  // 薄銀（身勝手兆）
     else if (transformLvl === 10) hairCol = '#e8e8f0'; // 銀白（身勝手）
-    else if (transformLvl === 11) hairCol = '#ffffff'; // 純白（ビースト）
     else hairCol = c.hairCol;
     ctx.fillStyle = hairCol;
 
@@ -3893,7 +3870,6 @@
     else if (transformLvl === 8) eyeCol = '#ff6060';  // ブルー界王拳：赤目
     else if (transformLvl === 9) eyeCol = '#80a0ff';  // 身勝手兆：薄青
     else if (transformLvl === 10) eyeCol = '#c0d0ff'; // 身勝手：銀青
-    else if (transformLvl === 11) eyeCol = '#fff080'; // ビースト：金
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.ellipse(-2.5, -11, 1.3, 1.6, 0, 0, Math.PI*2);
