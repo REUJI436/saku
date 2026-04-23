@@ -808,13 +808,16 @@
       spawnBurstBonus: 2,
       transformUnlock: 9,
       bossIntroLine: 'カカカ…カカロット…カカロォォット！！[伝説|でんせつ]の[超|ちょう]サイヤ[人|じん]、ここに[在|あ]り！',
-      companions: ['vegeta', 'piccolo'],
+      companions: ['piccolo', 'vegeta'],
+      useGogetaForm: true,  // ブロリ戦限定：ベジータとフュージョン
       bgPalette: { top: '#081810', mid: '#183018', bot: '#304820' },
       preludeLines: [
         '[伝説|でんせつ]ブロとーと：「カカロォォット―！！」',
-        '「(この[力|ちから]…[制御|せいぎょ][不能|ふのう]の[怒|いか]りだ)」',
-        '「[極意|ごくい]で[対抗|たいこう]する！」',
+        'ベジータ：「[咲玖|さく]！こいつは[一人|ひとり]じゃ[無理|むり]だ…[合体|がったい]するぞ！」',
+        'さく＆ベジータ：「フュー…ジョン…ハッ！！」',
       ],
+      eventText: '[融合|ゆうごう][覚醒|かくせい]…ゴジータ（ブルー）！',
+      eventFlavor: '[二人|ふたり]の[心|こころ]が[一|ひと]つに ― [最強|さいきょう]の[戦士|せんし][降臨|こうりん]！',
     },
     {
       num: 12, name: '[惑星|わくせい]シリアル',
@@ -922,6 +925,7 @@
     player.transform = 0; player.power = 0; player.kills = 0;
     player.kiGauge = 0; player.ultActive = null;
     player.anim = 0;
+    player.gogetaForm = false;
   }
 
   // ====== エンティティ管理 ======
@@ -1086,6 +1090,8 @@
     const stg = STAGES_CONFIG[currentStageIdx];
     enemies = []; projectiles = []; enemyProjectiles = []; particles = []; popups = [];
     companions = spawnCompanions(stg.companions);
+    // ゴジータ形態はステージ毎にリセット（ブロとーと戦で再発動）
+    player.gogetaForm = false;
     boss = null; banner = null; bannerSub = null;
     comboCount = 0; comboTimer = 0;
     saveGame();
@@ -1140,6 +1146,62 @@
           }
         }, t + 500);
       }
+      // フュージョン演出（ブロとーと戦のみ）
+      if (stg.useGogetaForm) {
+        setTimeout(() => {
+          if (state === STATE.PLAYING) triggerFusion(stg.eventText, stg.eventFlavor);
+        }, t + 500);
+      }
+    }
+  }
+
+  function triggerFusion(eventText, flavor) {
+    // ベジータ仲間を光らせてプレイヤーに吸収
+    const vegetaIdx = companions.findIndex(c => c.charId === 'vegeta' || c.id === 'vegeta');
+    if (vegetaIdx >= 0) {
+      const v = companions[vegetaIdx];
+      // 光の粒子が飛んでいく演出
+      for (let i = 0; i < 40; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 2 + Math.random() * 3;
+        spawnParticle(v.x, v.y, {
+          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          life: 40, color: '#80c8ff', size: 3,
+        });
+      }
+      companions.splice(vegetaIdx, 1);
+    }
+    // ゴジータに変身（青髪・最高火力）
+    player.gogetaForm = true;
+    if (player.transform < 7) player.transform = 7;  // 最低ブルー以上
+    player.power = 0;
+    player.invuln = 90;
+    player.hp = player.maxHp;  // HP全回復（合体ボーナス）
+    banner = { text: eventText || '[融合|ゆうごう][覚醒|かくせい]…ゴジータ（ブルー）！', color: '#4080ff', life: 210, maxLife: 210 };
+    if (flavor) {
+      setTimeout(() => {
+        bannerSub = { text: flavor, color: '#fff', life: 150, maxLife: 150 };
+      }, 400);
+    }
+    sfxTransform();
+    addShake(36);
+    // 青い爆発粒子
+    for (let i = 0; i < 80; i++) {
+      const a = (i / 80) * Math.PI * 2;
+      const sp = 4 + Math.random() * 5;
+      spawnParticle(player.x, player.y, {
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 100, color: '#80c8ff', size: 4,
+      });
+    }
+    // 黄色いスパーク
+    for (let i = 0; i < 30; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 3 + Math.random() * 4;
+      spawnParticle(player.x, player.y, {
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 60, color: '#ffee40', size: 3,
+      });
     }
   }
   let bossIntroAnim = 0;
@@ -3281,8 +3343,9 @@
     if (flash) ctx.globalAlpha = 0.5;
 
     // オーラ（軽量化：ソリッドな半透明円を2枚重ね）
-    if (t >= 1) {
-      const auraR = 28 + Math.sin(player.anim * 0.5) * 4 + t * 3;
+    if (t >= 1 || player.gogetaForm) {
+      const effT = player.gogetaForm ? 7 : t;  // ゴジータは青オーラで固定
+      const auraR = 32 + Math.sin(player.anim * 0.5) * 4 + effT * 3;
       const auraColors = [
         null,
         ['rgba(255,60,60,0.45)', 'rgba(200,30,30,0.25)'],
@@ -3296,7 +3359,7 @@
         ['rgba(200,220,255,0.55)', 'rgba(240,245,255,0.35)'],  // 9 身勝手兆
         ['rgba(240,240,255,0.65)', 'rgba(200,220,255,0.4)'],   // 10 身勝手
       ];
-      const col = auraColors[t];
+      const col = auraColors[effT];
       ctx.fillStyle = col[1];
       ctx.beginPath(); ctx.arc(x, y, auraR, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = col[0];
@@ -3611,17 +3674,38 @@
     ctx.translate(x, y);
     const facing = c.facing || 1;
     if (facing < 0) ctx.scale(-1, 1);
+    // ゴジータ形態：道着カラー上書き（黒ベスト＋黄オレンジ＋白ブーツ）
+    const isGogeta = !!c.gogetaForm;
+    const pantsCol = isGogeta ? '#181818' : c.pantsCol;
+    const shirtCol = isGogeta ? '#ffaa30' : c.shirtCol;  // オレンジ下着
+    const vestCol = '#1a1a1a';
+    const innerCol = isGogeta ? '#ffd040' : (c.innerCol || '#2060c0');
+    const beltCol = isGogeta ? '#ffcc30' : (c.beltCol || '#1a4098');
+    const bootCol = isGogeta ? '#f0f0f0' : (c.bootCol || '#1a3070');
     // 影
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath(); ctx.ellipse(0, 14, 10, 3, 0, 0, Math.PI*2); ctx.fill();
     // 脚
     const legBob = c.moving ? Math.sin(c.anim * 2) * 2 : 0;
-    ctx.fillStyle = c.pantsCol;
+    ctx.fillStyle = pantsCol;
     ctx.fillRect(-5, 3 + legBob, 4, 10);
     ctx.fillRect(1, 3 - legBob, 4, 10);
-    // 胴（道着）
-    ctx.fillStyle = c.shirtCol;
+    // ゴジータ：白ブーツを脚下部に被せ
+    if (isGogeta) {
+      ctx.fillStyle = bootCol;
+      ctx.fillRect(-5, 9 + legBob, 4, 4);
+      ctx.fillRect(1, 9 - legBob, 4, 4);
+    }
+    // 胴（道着／ゴジータはオレンジ下着→黒ベスト）
+    ctx.fillStyle = shirtCol;
     ctx.fillRect(-7, -6, 14, 12);
+    if (isGogeta) {
+      // 黒ベスト（胴の外周）
+      ctx.fillStyle = vestCol;
+      ctx.fillRect(-7, -6, 3, 12);
+      ctx.fillRect(4, -6, 3, 12);
+      ctx.fillRect(-7, -6, 14, 2);
+    }
     // SSJ4：上半身の赤い毛
     if (transformLvl === 5) {
       ctx.fillStyle = '#c03020';
@@ -3646,21 +3730,21 @@
       ctx.fillRect(-10, -5, 3, 3);
       ctx.fillRect(7, -5, 3, 3);
     }
-    // 襟元の青いVインナー
-    ctx.fillStyle = c.innerCol || '#2060c0';
+    // 襟元のVインナー
+    ctx.fillStyle = innerCol;
     ctx.beginPath();
     ctx.moveTo(-3, -6); ctx.lineTo(3, -6); ctx.lineTo(0, -2); ctx.closePath();
     ctx.fill();
-    // 青い帯
-    ctx.fillStyle = c.beltCol || '#1a4098';
+    // 帯
+    ctx.fillStyle = beltCol;
     ctx.fillRect(-7, 2, 14, 3);
-    // 腕（オレンジ）
+    // 腕
     const armSwing = c.moving ? Math.sin(c.anim * 2) * 3 : 0;
-    ctx.fillStyle = c.shirtCol;
+    ctx.fillStyle = isGogeta ? vestCol : shirtCol;  // ゴジータは黒ベスト袖（なし）
     ctx.fillRect(-10, -5 + armSwing, 3, 9);
     ctx.fillRect(7, -5 - armSwing, 3, 9);
-    // 手首の青いリストバンド
-    ctx.fillStyle = c.innerCol || '#2060c0';
+    // 手首のリストバンド
+    ctx.fillStyle = innerCol;
     ctx.fillRect(-10, 4 + armSwing, 3, 1.5);
     ctx.fillRect(7, 4 - armSwing, 3, 1.5);
     // 手
@@ -3677,7 +3761,8 @@
     // 髪の色：SSJ(2+)は金髪、SSJ4は赤
     // transform: 0=ノーマル, 1=Kaioken(元の色), 2-4=SSJ系(金), 5=SSJ4(赤）
     let hairCol;
-    if (transformLvl >= 2 && transformLvl <= 4) hairCol = '#ffdc20';  // 金
+    if (isGogeta) hairCol = '#3078ff';  // ゴジータ・ブルー
+    else if (transformLvl >= 2 && transformLvl <= 4) hairCol = '#ffdc20';  // 金
     else if (transformLvl === 5) hairCol = '#c02010';  // 暗赤（SSJ4）
     else if (transformLvl === 6) hairCol = '#ff2828';  // 鮮やかな赤（ゴッド）
     else if (transformLvl === 7) hairCol = '#3078ff';  // 青（ブルー）
@@ -3692,8 +3777,51 @@
     const isPiccoloBt = charIdHere === 'piccolo';
     const isMaleLike = charIdHere !== 'kurumi';
 
+    // ゴジータ：特徴的な逆立ちヘアー＋額の黒い生え際V字
+    if (isGogeta) {
+      ctx.fillStyle = hairCol;
+      // 中央の高い逆立ちスパイク
+      ctx.beginPath();
+      ctx.moveTo(-8, -13);
+      ctx.lineTo(-7, -24);
+      ctx.lineTo(-3, -18);
+      ctx.lineTo(-1, -28);  // 中央の高いスパイク
+      ctx.lineTo(2, -28);
+      ctx.lineTo(3, -18);
+      ctx.lineTo(7, -24);
+      ctx.lineTo(8, -13);
+      ctx.closePath();
+      ctx.fill();
+      // 両サイドの短いスパイク
+      ctx.beginPath();
+      ctx.moveTo(-9, -13);
+      ctx.lineTo(-11, -18);
+      ctx.lineTo(-8, -14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(9, -13);
+      ctx.lineTo(11, -18);
+      ctx.lineTo(8, -14);
+      ctx.closePath();
+      ctx.fill();
+      // 額の黒い生え際（V字・ゴジータ特徴）
+      ctx.fillStyle = '#101830';
+      ctx.beginPath();
+      ctx.moveTo(-6, -14);
+      ctx.lineTo(0, -11.5);
+      ctx.lineTo(6, -14);
+      ctx.lineTo(5, -13);
+      ctx.lineTo(0, -12.5);
+      ctx.lineTo(-5, -13);
+      ctx.closePath();
+      ctx.fill();
+      // ハイライト
+      ctx.fillStyle = '#a0d0ff';
+      ctx.fillRect(-1, -25, 1, 5);
+    }
     // ピッコロ：髪なし、ターバン＋アンテナ
-    if (isPiccoloBt && transformLvl < 2) {
+    else if (isPiccoloBt && transformLvl < 2) {
       // 白ターバン
       ctx.fillStyle = '#f0f0f0';
       ctx.beginPath();
