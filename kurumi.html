@@ -1299,9 +1299,29 @@ function hasSave() {
 
 // ====================== VOICE ======================
 let voiceEnabled = true;
+let preferredVoice = null;
+
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  const voices = speechSynthesis.getVoices();
+  if (voices && voices.length > 0) {
+    // 日本語voiceを探す（Android Chrome で日本語話者が選ばれず無音になる対策）
+    preferredVoice = voices.find(v => v.lang === 'ja-JP')
+      || voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ja'))
+      || voices.find(v => /japan/i.test(v.name || ''))
+      || null;
+  }
+}
+if ('speechSynthesis' in window) {
+  loadVoices();
+  // 非同期にvoiceがロードされる端末向け
+  try { speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch(e) {}
+}
+
 function speak(text) {
   if (!voiceEnabled) return;
   if (!('speechSynthesis' in window)) return;
+  if (!preferredVoice) loadVoices();
   speechSynthesis.cancel();
   // strip HTML, convert ruby to just reading
   const clean = text
@@ -1313,7 +1333,8 @@ function speak(text) {
   const u = new SpeechSynthesisUtterance(clean);
   u.lang = 'ja-JP';
   u.rate = 1.0;
-  u.pitch = 1.2;
+  u.pitch = 1.0;  // 1.2 はAndroidで無視される報告あり、1.0に
+  if (preferredVoice) u.voice = preferredVoice;
   speechSynthesis.speak(u);
 }
 
@@ -2082,18 +2103,21 @@ document.getElementById('btn-continue').addEventListener('click', () => {
 });
 
 // Prime voice + audio on first user interaction (required by browsers)
-document.body.addEventListener('click', () => {
+function primeAudio() {
   ensureAudioCtx();
-  if (voiceEnabled) {
+  if (voiceEnabled && 'speechSynthesis' in window) {
     try {
-      const u = new SpeechSynthesisUtterance('');
+      // Androidではgesture直後の無音utteranceでTTSエンジン起動
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      u.lang = 'ja-JP';
       speechSynthesis.speak(u);
     } catch(e) {}
+    loadVoices();  // gesture後にvoicelist再取得（Android対策）
   }
-}, { once: true });
-document.body.addEventListener('touchstart', () => {
-  ensureAudioCtx();
-}, { once: true });
+}
+document.body.addEventListener('click', primeAudio, { once: true });
+document.body.addEventListener('touchstart', primeAudio, { once: true });
 
 </script>
 </body>
