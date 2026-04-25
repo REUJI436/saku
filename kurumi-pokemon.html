@@ -565,6 +565,132 @@
     #tap-button { height: 70px; font-size: 16px; }
   }
 
+  /* ===== 横持ち（landscape / 横長画面）専用 戦闘UI ===== */
+  /* スマホ横向き、PCブラウザなど width > height の端末向け */
+  @media (orientation: landscape) {
+    /* 戦闘シーン全体を横並びに：左=ステージ、右=コマンド */
+    #battle-scene { flex-direction: row; }
+
+    /* 左側：ターン表示・戦闘ステージ・メッセージ（画面の60%） */
+    #battle-top {
+      flex: 0 0 60%;
+      width: 60%;
+      padding: 40px 6px 6px;
+      gap: 4px;
+      min-width: 0;
+    }
+    #turn-label {
+      font-size: 12px; padding: 3px 10px;
+      min-width: 0; max-width: 90%;
+    }
+
+    /* キャラは縦の画面高さに合わせて小さめ */
+    .combatant { padding: 4px 6px 5px; }
+    .combatant.foe .mob-art {
+      width: clamp(50px, 14vh, 90px); height: clamp(50px, 14vh, 90px);
+    }
+    .combatant.mine .mob-art {
+      width: clamp(60px, 18vh, 110px); height: clamp(60px, 18vh, 110px);
+    }
+    .combatant.foe { transform: scale(0.78); width: 50%; }
+    .combatant.mine { transform: scale(1.0); width: 56%; }
+    /* 横持ち時のshakeはscaleを揃えて再宣言 */
+    .combatant.foe.shake { animation: shakeFoeLandscape 0.45s; }
+    .combatant.mine.shake { animation: shakeMineLandscape 0.45s; }
+    @keyframes shakeFoeLandscape {
+      0%, 100% { transform: scale(0.78) translateX(0); }
+      20% { transform: scale(0.78) translateX(-8px); }
+      40% { transform: scale(0.78) translateX(8px); }
+      60% { transform: scale(0.78) translateX(-6px); }
+      80% { transform: scale(0.78) translateX(6px); }
+    }
+    @keyframes shakeMineLandscape {
+      0%, 100% { transform: scale(1.0) translateX(0); }
+      20% { transform: scale(1.0) translateX(-8px); }
+      40% { transform: scale(1.0) translateX(8px); }
+      60% { transform: scale(1.0) translateX(-6px); }
+      80% { transform: scale(1.0) translateX(6px); }
+    }
+    .combatant.foe .name { font-size: 11px; }
+    .combatant.mine .name { font-size: 12px; }
+    .combatant .hpbar { height: 7px; margin-top: 2px; }
+    .combatant.foe .hpbar { height: 6px; }
+    .combatant .mpbar { height: 5px; margin-top: 2px; }
+    .combatant .hptext { font-size: 10px; margin-top: 1px; }
+
+    #battle-message {
+      font-size: 12px; padding: 6px 10px;
+      min-height: 30px; margin: 2px 0;
+    }
+
+    /* 右側：コマンドと連打ボタン（画面の40%） */
+    #battle-bottom {
+      flex: 0 0 40%;
+      width: 40%;
+      border-top: none;
+      border-left: 3px solid #ff8fc0;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* コマンドは2列×3行のグリッドのままで右パネル内に詰める */
+    #cmd-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+    }
+    #cmd-grid .btn { font-size: 13px; padding: 9px 6px; }
+
+    /* 連打ボタンは右パネル内に大きめに */
+    #tap-arena { gap: 6px; width: 100%; }
+    #tap-button {
+      width: 100%; max-width: none;
+      height: clamp(70px, 22vh, 130px);
+      font-size: clamp(16px, 3.5vh, 24px);
+    }
+    #tap-info { font-size: 12px; gap: 8px; }
+    #tap-info .pill { padding: 3px 8px; }
+
+    /* サブパネル（とくぎ・アイテム・交代）も横画面で見やすく */
+    .sub-panel {
+      padding: 50px 14px 12px;
+      flex-direction: column;
+    }
+    .sub-panel h2 { font-size: 16px; margin-bottom: 6px; }
+    .sub-list { gap: 6px; }
+    .sub-row { padding: 6px 10px; }
+    .sub-row .mob-art-small { width: 40px; height: 40px; }
+    .sub-buttons .btn { font-size: 13px; padding: 8px; }
+
+    /* ===== その他のシーンも横持ち対応 ===== */
+    /* スターター選択：4列にして縦スクロールを軽減 */
+    #starter-scene {
+      padding: 50px 12px 10px;
+    }
+    #starter-scene h2 { font-size: clamp(14px, 3.5vh, 20px); margin: 4px 0 8px; }
+    #starter-grid {
+      grid-template-columns: repeat(4, 1fr);
+      max-width: 720px;
+      gap: 8px;
+    }
+    .starter-card { padding: 6px; }
+    .starter-card .art {
+      width: clamp(56px, 12vh, 90px); height: clamp(56px, 12vh, 90px);
+      margin-bottom: 4px;
+    }
+    .starter-card .name { font-size: 12px; }
+    .starter-card .stats { font-size: 9px; }
+
+    /* ステージ選択・ショップ・パーティのヘッダ・フッタを少し詰める */
+    #field-header { padding: 6px 12px 6px 56px; }
+    #field-bottom { padding: 6px 8px; gap: 6px; }
+    #field-bottom .btn { font-size: 12px; padding: 8px 10px; }
+  }
+
   /* Sub menu / list */
   .sub-panel {
     position: absolute; inset: 0;
