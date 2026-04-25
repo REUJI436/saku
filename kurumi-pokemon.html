@@ -1422,15 +1422,27 @@
 function attachTap(el, fn) {
   if (!el) return;
   let touched = false;
+  // touchendの直後に synthetic click が来ても、二重発火しないようにデバウンス
+  // （Android Chromeでは touchend.preventDefault() が click を抑止しないことがある）
+  let lastFire = 0;
+  const fire = (e) => {
+    const now = Date.now();
+    if (now - lastFire < 350) return;
+    lastFire = now;
+    fn.call(el, e);
+  };
   el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
   el.addEventListener('touchend', (e) => {
     if (!touched || el.disabled) { touched = false; return; }
     touched = false;
     e.preventDefault();
-    fn.call(el, e);
+    fire(e);
   }, { passive: false });
   el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
-  el.addEventListener('click', (e) => fn.call(el, e));
+  el.addEventListener('click', (e) => {
+    if (el.disabled) return;
+    fire(e);
+  });
 }
 
 function $(id) { return document.getElementById(id); }
@@ -2786,13 +2798,13 @@ function initTitle() {
   updateTitleLastSave();
   // セーブがある場合は誤タップ防止のため「はじめから」ボタンを非表示にする
   // （代わりに右下の小さい「ぜんぶ けして〜」リンクから2段確認でリセット可能）
-  const hasSv = hasSave();
+  // デモモード(?demo=1)の時は本番セーブを汚さないので常に「はじめから」を許可
+  const hasSv = !_isDemoMode && hasSave();
   const btnNew = $('btn-new');
   const btnReset = $('btn-reset-danger');
   if (btnNew) btnNew.style.display = hasSv ? 'none' : '';
   if (btnReset) btnReset.style.display = hasSv ? '' : 'none';
   attachTap(btnNew, () => {
-    // セーブが無いときだけここに到達
     startNewGame();
   });
   attachTap(btnReset, (e) => {
