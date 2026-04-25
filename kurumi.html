@@ -6,6 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<!-- Build: 2026-04-23T00:00:00Z (android-debug-v3) -->
 <title>♡めいたんてい くるみ♡</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; font-family: "Hiragino Maru Gothic ProN", "Comic Sans MS", sans-serif; }
@@ -574,9 +575,58 @@
 
   /* Coin HUD */
   .hud-coin { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; }
+
+  /* ===== DEBUG OVERLAY ===== */
+  #debug-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: rgba(0, 0, 0, 0.85);
+    color: #0f0;
+    font: 11px/1.3 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    padding: 4px 6px;
+    z-index: 99999;
+    max-height: 50vh;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    pointer-events: none;
+    display: none;
+    word-break: break-all;
+  }
+  #debug-overlay.show { display: block; }
+  #debug-overlay .err { color: #f88; }
+  #debug-overlay .ok  { color: #8f8; }
+  #debug-overlay .ev  { color: #8ff; }
 </style>
+<script>
+// ===== EARLIEST ERROR CAPTURE (before main script) =====
+// このスクリプトはheadにあるので、何より先にエラーをキャッチできる。
+window.__earlyErrors = [];
+window.addEventListener('error', function(ev) {
+  try {
+    window.__earlyErrors.push({
+      msg: (ev && ev.message) || 'unknown',
+      src: (ev && ev.filename) || '',
+      line: (ev && ev.lineno) || 0,
+      col: (ev && ev.colno) || 0,
+      stack: (ev && ev.error && ev.error.stack) || '',
+    });
+  } catch(e) {}
+});
+window.addEventListener('unhandledrejection', function(ev) {
+  try {
+    window.__earlyErrors.push({
+      msg: 'unhandled promise: ' + ((ev && ev.reason && ev.reason.message) || ev.reason || 'unknown'),
+      src: '', line: 0, col: 0,
+      stack: (ev && ev.reason && ev.reason.stack) || '',
+    });
+  } catch(e) {}
+});
+</script>
 </head>
 <body>
+
+  <!-- Debug overlay (shown when ?debug=1 OR if early errors caught) -->
+  <div id="debug-overlay">起動中...</div>
 
   <!-- ===== TITLE ===== -->
   <div class="scene active" id="title-scene">
@@ -591,8 +641,12 @@
       <span class="title-deco-right">✨</span>
     </div>
     <div class="title-subtitle">～ ピンクの プリキュア ～</div>
-    <button class="big-btn" id="btn-new-game">はじめから</button>
-    <button class="big-btn" id="btn-continue">つづきから</button>
+    <button class="big-btn" id="btn-new-game"
+            ontouchstart="window.__kurumiTap&&window.__kurumiTap('btn-new-game',event)"
+            onclick="window.__kurumiClick&&window.__kurumiClick('btn-new-game',event)">はじめから</button>
+    <button class="big-btn" id="btn-continue"
+            ontouchstart="window.__kurumiTap&&window.__kurumiTap('btn-continue',event)"
+            onclick="window.__kurumiClick&&window.__kurumiClick('btn-continue',event)">つづきから</button>
   </div>
 
   <!-- ===== STORY ===== -->
@@ -601,7 +655,9 @@
     <div id="character-layer">
       <div id="char-portrait" class="char-portrait"></div>
     </div>
-    <div id="dialogue-box">
+    <div id="dialogue-box"
+         ontouchstart="window.__kurumiTap&&window.__kurumiTap('dialogue-box',event)"
+         onclick="window.__kurumiClick&&window.__kurumiClick('dialogue-box',event)">
       <div class="speaker-name" id="speaker-name"></div>
       <div class="dialogue-text" id="dialogue-text"></div>
       <div class="next-hint">▼ タップで つぎへ</div>
@@ -626,7 +682,9 @@
       <div>⏱ <span id="action-time">30</span></div>
     </div>
     <div id="action-tap-hint">タップ で ジャンプ！<br>コイン を あつめよう</div>
-    <button id="action-skip">スキップ ▶</button>
+    <button id="action-skip"
+            ontouchstart="window.__kurumiTap&&window.__kurumiTap('action-skip',event)"
+            onclick="window.__kurumiClick&&window.__kurumiClick('action-skip',event)">スキップ ▶</button>
   </div>
 
   <!-- ===== DEDUCTION ===== -->
@@ -641,31 +699,160 @@
   <div class="scene" id="result-scene">
     <h1 id="result-title">じけん かいけつ！</h1>
     <div class="result-text" id="result-text"></div>
-    <button class="big-btn" id="result-next-btn" style="display:none;">つぎ の じけん へ ▶</button>
-    <button class="big-btn" id="result-btn">タイトル へ もどる</button>
+    <button class="big-btn" id="result-next-btn" style="display:none;"
+            ontouchstart="window.__kurumiTap&&window.__kurumiTap('result-next-btn',event)"
+            onclick="window.__kurumiClick&&window.__kurumiClick('result-next-btn',event)">つぎ の じけん へ ▶</button>
+    <button class="big-btn" id="result-btn"
+            ontouchstart="window.__kurumiTap&&window.__kurumiTap('result-btn',event)"
+            onclick="window.__kurumiClick&&window.__kurumiClick('result-btn',event)">タイトル へ もどる</button>
   </div>
 
   <canvas id="sparkle-canvas"></canvas>
   <a href="./" class="portal-back">🏠 ゲームせんたく</a>
 
 <script>
-// ====================== TAP HELPER ======================
-// Android/iOSのタッチでもボタンが確実に反応するよう、
-// click と touchend の両方を処理する共通ヘルパー。
-// 既存の addEventListener('click', fn) を attachTap(el, fn) に置き換える。
+// ====================== DEBUG OVERLAY ======================
+// Androidスマホでは DevTools が開けないので、画面上にログを出す。
+// ?debug=1 で常時表示、それ以外でもエラーが出れば自動表示。
+(function setupDebug(){
+  try {
+    const params = new URLSearchParams(location.search);
+    window.__debugMode = params.get('debug') === '1';
+  } catch(e) { window.__debugMode = false; }
+})();
+const __dbgEl = document.getElementById('debug-overlay');
+const __dbgLines = [];
+const __dbgMax = 80;
+function dbg(msg, cls) {
+  try {
+    const t = new Date();
+    const ts = ('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2)+'.'+('00'+t.getMilliseconds()).slice(-3);
+    const tag = cls === 'err' ? '[ERR] ' : (cls === 'ok' ? '[OK]  ' : (cls === 'ev' ? '[EV]  ' : '[--]  '));
+    const line = ts + ' ' + tag + String(msg);
+    __dbgLines.push(line);
+    if (__dbgLines.length > __dbgMax) __dbgLines.shift();
+    if (__dbgEl) {
+      __dbgEl.textContent = __dbgLines.join('\n');
+      // エラーがあれば強制表示
+      if (cls === 'err' || window.__debugMode) {
+        __dbgEl.classList.add('show');
+      }
+    }
+  } catch(e) {}
+}
+window.__dbg = dbg;
+
+// 既にheadで捕まえた早期エラーを反映
+if (Array.isArray(window.__earlyErrors) && window.__earlyErrors.length) {
+  window.__earlyErrors.forEach(e => {
+    dbg('early error: ' + e.msg + ' @ ' + (e.src||'?') + ':' + e.line, 'err');
+    if (e.stack) dbg('stack: ' + e.stack.substring(0, 200), 'err');
+  });
+}
+
+// 以降のエラーも捕捉してオーバーレイに表示
+window.addEventListener('error', function(ev) {
+  try {
+    dbg('error: ' + (ev.message||'unknown') + ' @ ' + (ev.filename||'?') + ':' + (ev.lineno||'?'), 'err');
+    if (ev.error && ev.error.stack) dbg('stack: ' + String(ev.error.stack).substring(0, 200), 'err');
+  } catch(e) {}
+});
+window.addEventListener('unhandledrejection', function(ev) {
+  try {
+    const reason = (ev.reason && ev.reason.message) || ev.reason || 'unknown';
+    dbg('unhandled promise: ' + reason, 'err');
+  } catch(e) {}
+});
+
+if (window.__debugMode && __dbgEl) __dbgEl.classList.add('show');
+dbg('script start', 'ok');
+dbg('UA: ' + (navigator.userAgent||'').substring(0, 80));
+dbg('viewport: ' + window.innerWidth + 'x' + window.innerHeight + ' dpr=' + (window.devicePixelRatio||1));
+
+// ====================== GLOBAL TAP DISPATCHER ======================
+// HTMLのontouchstart/onclick属性から呼ばれる「最終手段」フォールバック。
+// __tapHandlers に登録されたコールバックを id で引いて発火する。
+const __tapHandlers = {};
+const __lastTapAt = {}; // id -> timestamp（二重発火防止用）
+function __dispatchTap(id, source, evt) {
+  try {
+    const now = Date.now();
+    const last = __lastTapAt[id] || 0;
+    // 同一idへの300ms以内の連続呼び出しは1回扱い（touchstart→clickの二重発火対策）
+    if (now - last < 350) {
+      dbg(source + ' on ' + id + ' [DEDUPED]', 'ev');
+      return;
+    }
+    __lastTapAt[id] = now;
+    dbg(source + ' on ' + id, 'ev');
+    const handler = __tapHandlers[id];
+    if (typeof handler === 'function') {
+      handler(evt);
+    } else {
+      dbg('no handler for ' + id, 'err');
+    }
+  } catch(e) {
+    dbg('dispatch err: ' + (e && e.message || e), 'err');
+  }
+}
+window.__kurumiTap = function(id, evt) {
+  // touchstartから呼ばれる
+  try { if (evt && evt.cancelable) evt.preventDefault(); } catch(e) {}
+  __dispatchTap(id, 'touchstart', evt);
+};
+window.__kurumiClick = function(id, evt) {
+  // clickから呼ばれる
+  __dispatchTap(id, 'click', evt);
+};
+
+// ====================== TAP HELPER (multi-layer) ======================
+// Android/iOS/PC、どの環境でも反応するよう、複数の入力イベントを並行処理。
+// 全イベントを __dispatchTap 経由にして、350ms内の重複は自動除去。
+// 1. pointerdown (モダン統一)
+// 2. touchend (旧Android/iOS)
+// 3. click (フォールバック / マウス)
+// 4. HTML側 ontouchstart/onclick 属性 (最終手段)
+// すべて __tapHandlers[id] を呼ぶ → 同じ dedupe 機構を共有。
 function attachTap(el, fn) {
-  if (!el) return;
+  if (!el) { dbg('attachTap: el is null', 'err'); return; }
+  if (!el.id) {
+    // ID無し要素にも仮IDを付与（quiz/deductionの動的生成用）
+    el.id = '__tap_' + Math.random().toString(36).slice(2, 8);
+  }
+  const id = el.id;
+
+  // 中央集約ハンドラ
+  __tapHandlers[id] = (e) => {
+    if (el.disabled || el.classList.contains('disabled')) {
+      dbg('tap ignored (disabled) on ' + id, 'ev');
+      return;
+    }
+    try { fn.call(el, e); }
+    catch(err) { dbg('handler err on ' + id + ': ' + (err && err.message || err), 'err'); }
+  };
+
+  // 1. pointerdown
+  if (window.PointerEvent) {
+    el.addEventListener('pointerdown', (e) => {
+      __dispatchTap(id, 'pointerdown', e);
+    });
+  }
+
+  // 2. touchend (touchstartはpassiveで監視のみ、touchendで実発火)
   let touched = false;
   el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
   el.addEventListener('touchend', (e) => {
-    if (!touched || el.disabled) { touched = false; return; }
+    if (!touched) return;
     touched = false;
-    e.preventDefault();  // click合成を抑止（二重発火防止）
-    fn.call(el, e);
+    try { if (e.cancelable) e.preventDefault(); } catch(_) {}
+    __dispatchTap(id, 'touchend', e);
   }, { passive: false });
   el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
-  // マウス／PCはclickのみ（タッチ後はpreventDefault済みで来ない）
-  el.addEventListener('click', (e) => fn.call(el, e));
+
+  // 3. click (PC / フォールバック)
+  el.addEventListener('click', (e) => {
+    __dispatchTap(id, 'click', e);
+  });
 }
 
 // ====================== CHARACTER SVG ======================
@@ -1321,9 +1508,12 @@ if ('speechSynthesis' in window) {
 
 function speak(text) {
   if (!voiceEnabled) return;
-  if (!('speechSynthesis' in window)) return;
+  if (!('speechSynthesis' in window)) {
+    if (window.__dbg) window.__dbg('speak: no speechSynthesis', 'err');
+    return;
+  }
   if (!preferredVoice) loadVoices();
-  speechSynthesis.cancel();
+  try { speechSynthesis.cancel(); } catch(e) {}
   // strip HTML, convert ruby to just reading
   const clean = text
     .replace(/<ruby>([^<]+)<rt>([^<]+)<\/rt><\/ruby>/g, '$2')
@@ -1331,12 +1521,18 @@ function speak(text) {
     .replace(/\s+/g, ' ')
     .trim();
   if (!clean) return;
-  const u = new SpeechSynthesisUtterance(clean);
-  u.lang = 'ja-JP';
-  u.rate = 1.0;
-  u.pitch = 1.0;  // 1.2 はAndroidで無視される報告あり、1.0に
-  if (preferredVoice) u.voice = preferredVoice;
-  speechSynthesis.speak(u);
+  try {
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = 'ja-JP';
+    u.rate = 1.0;
+    u.pitch = 1.0;
+    if (preferredVoice) u.voice = preferredVoice;
+    u.onerror = (e) => { if (window.__dbg) window.__dbg('tts onerror: ' + (e.error||'?'), 'err'); };
+    speechSynthesis.speak(u);
+    if (window.__dbg) window.__dbg('speak: "' + clean.substring(0,20) + '..." voice=' + (preferredVoice && preferredVoice.name || 'default'), 'ev');
+  } catch(e) {
+    if (window.__dbg) window.__dbg('speak err: ' + e.message, 'err');
+  }
 }
 
 // ====================== BGM ======================
@@ -1701,13 +1897,16 @@ function startActionGame(onComplete) {
 
   const skipBtn = document.getElementById('action-skip');
   const skipHandler = (e) => {
-    e.stopPropagation();
-    if (e.cancelable) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (e && e.cancelable) e.preventDefault();
+    if (window.__dbg) window.__dbg('action-skip activated', 'ev');
     endActionGame();
   };
   actionState.skipHandler = skipHandler;
   skipBtn.addEventListener('click', skipHandler);
   skipBtn.addEventListener('touchstart', skipHandler, { passive: false });
+  // HTML属性 ontouchstart/onclick 経由でも動くように __tapHandlers に登録
+  __tapHandlers['action-skip'] = skipHandler;
 
   window.addEventListener('resize', onActionResize);
   window.addEventListener('orientationchange', onActionResize);
@@ -1735,6 +1934,7 @@ function endActionGame() {
   const skipBtn = document.getElementById('action-skip');
   skipBtn.removeEventListener('click', actionState.skipHandler);
   skipBtn.removeEventListener('touchstart', actionState.skipHandler);
+  delete __tapHandlers['action-skip'];
   window.removeEventListener('resize', onActionResize);
   window.removeEventListener('orientationchange', onActionResize);
   if (actionCallback) actionCallback();
@@ -2087,38 +2287,129 @@ function updateContinueBtn() {
 }
 updateContinueBtn();
 
-attachTap(document.getElementById('btn-new-game'), () => {
+window.startNewGame = function() {
+  if (window.__dbg) window.__dbg('startNewGame called', 'ok');
   state = { caseIdx: 0, scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
   transientQueue = [];
   currentStep = null;
   save();
   runScript();
-});
-
-attachTap(document.getElementById('btn-continue'), () => {
+};
+window.continueGame = function() {
+  if (window.__dbg) window.__dbg('continueGame called', 'ok');
   if (!hasSave()) return;
   load();
   transientQueue = [];
   currentStep = null;
   runScript();
-});
+};
+attachTap(document.getElementById('btn-new-game'), window.startNewGame);
+attachTap(document.getElementById('btn-continue'), window.continueGame);
 
 // Prime voice + audio on first user interaction (required by browsers)
+let __audioPrimed = false;
 function primeAudio() {
-  ensureAudioCtx();
+  if (__audioPrimed) return;
+  __audioPrimed = true;
+  try {
+    ensureAudioCtx();
+    if (audioCtx) {
+      dbg('AudioCtx: state=' + audioCtx.state + ' sr=' + audioCtx.sampleRate, 'ok');
+    } else {
+      dbg('AudioCtx: failed to create', 'err');
+    }
+  } catch(e) { dbg('audio init err: ' + e.message, 'err'); }
   if (voiceEnabled && 'speechSynthesis' in window) {
     try {
-      // Androidではgesture直後の無音utteranceでTTSエンジン起動
       const u = new SpeechSynthesisUtterance(' ');
       u.volume = 0;
       u.lang = 'ja-JP';
       speechSynthesis.speak(u);
-    } catch(e) {}
-    loadVoices();  // gesture後にvoicelist再取得（Android対策）
+      dbg('TTS prime spoken', 'ok');
+    } catch(e) { dbg('tts prime err: ' + e.message, 'err'); }
+    try { loadVoices(); } catch(e) {}
+    const vc = speechSynthesis.getVoices ? speechSynthesis.getVoices().length : 0;
+    dbg('voices: ' + vc + ' preferred=' + (preferredVoice && preferredVoice.name || 'none'));
+  } else {
+    dbg('speechSynthesis not available', 'err');
   }
 }
-document.body.addEventListener('click', primeAudio, { once: true });
-document.body.addEventListener('touchstart', primeAudio, { once: true });
+document.body.addEventListener('click', primeAudio, { once: true, capture: true });
+document.body.addEventListener('touchstart', primeAudio, { once: true, capture: true });
+document.body.addEventListener('pointerdown', primeAudio, { once: true, capture: true });
+
+// ====================== DOCUMENT-LEVEL FALLBACK ======================
+// 万一 attachTap が機能しない場合の最終キャッチ。
+// 主要ボタンへのタップを document レベルで拾って、closest() で対象を特定。
+const __watchedIds = ['btn-new-game', 'btn-continue', 'dialogue-box', 'result-btn', 'result-next-btn', 'action-skip'];
+function __findWatchedTarget(target) {
+  if (!target || !target.closest) return null;
+  for (const id of __watchedIds) {
+    const hit = target.closest('#' + id);
+    if (hit) return hit;
+  }
+  return null;
+}
+document.addEventListener('pointerup', (e) => {
+  const hit = __findWatchedTarget(e.target);
+  if (!hit) return;
+  if (hit.disabled || hit.classList.contains('disabled')) return;
+  // ハンドラーが未だに登録済みなら attachTap 経由で呼ばれてるはずなので、
+  // 二重発火防止に __lastTapAt の dedupe を信頼する
+  __dispatchTap(hit.id, 'doc-pointerup', e);
+}, { passive: true });
+
+// ====================== STARTUP DIAGNOSTICS ======================
+// DOM要素の存在チェック＆disabled/CSS干渉チェック
+function runDiagnostics() {
+  dbg('=== diagnostics ===', 'ok');
+  __watchedIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) {
+      dbg('elem ' + id + ': MISSING', 'err');
+      return;
+    }
+    const cs = getComputedStyle(el);
+    const issues = [];
+    if (el.disabled) issues.push('disabled');
+    if (cs.pointerEvents === 'none') issues.push('pointer-events:none');
+    if (cs.display === 'none') issues.push('display:none');
+    if (cs.visibility === 'hidden') issues.push('visibility:hidden');
+    // 祖先のpointer-eventsチェック
+    let p = el.parentElement;
+    let depth = 0;
+    while (p && depth < 10) {
+      const ps = getComputedStyle(p);
+      if (ps.pointerEvents === 'none') {
+        issues.push('ancestor#'+ (p.id||p.tagName) +' pe:none');
+        break;
+      }
+      p = p.parentElement;
+      depth++;
+    }
+    dbg('elem ' + id + ': ' + (issues.length ? issues.join(',') : 'ok'), issues.length ? 'err' : 'ok');
+  });
+  // ID重複チェック
+  const seen = {};
+  document.querySelectorAll('[id]').forEach(el => {
+    seen[el.id] = (seen[el.id]||0) + 1;
+  });
+  Object.keys(seen).forEach(id => {
+    if (seen[id] > 1) dbg('DUPLICATE id: ' + id + ' (x' + seen[id] + ')', 'err');
+  });
+  dbg('handlers registered: ' + Object.keys(__tapHandlers).join(','), 'ok');
+}
+// DOMが安定してからチェック
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    dbg('DOMContentLoaded', 'ok');
+    runDiagnostics();
+  });
+} else {
+  dbg('DOM already ready', 'ok');
+  setTimeout(runDiagnostics, 50);
+}
+dbg('script init complete', 'ok');
 
 </script>
 </body>
