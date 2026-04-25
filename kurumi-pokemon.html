@@ -1066,121 +1066,304 @@
   #map-canvas-wrap {
     position: relative;
     width: 2600px; height: 800px;
-    background:
-      radial-gradient(circle at 10% 30%, rgba(255, 200, 230, 0.5), transparent 25%),
-      radial-gradient(circle at 30% 60%, rgba(255, 230, 150, 0.4), transparent 25%),
-      radial-gradient(circle at 50% 30%, rgba(180, 220, 255, 0.5), transparent 25%),
-      radial-gradient(circle at 70% 60%, rgba(180, 240, 180, 0.5), transparent 25%),
-      radial-gradient(circle at 90% 30%, rgba(255, 200, 240, 0.5), transparent 25%),
-      linear-gradient(180deg,#fff5e0 0%,#e0f5ff 50%,#e0ffe0 100%);
+    background: linear-gradient(180deg,#fff5e0 0%,#e0f5ff 50%,#e0ffe0 100%);
+    overflow: hidden;
   }
+  /* ===== ワールドごとの地形ベース ===== */
+  #map-decor .world-region {
+    position: absolute;
+    top: 0; height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  /* ピンクの森 */
+  .region-w1 {
+    background:
+      radial-gradient(ellipse at 50% 90%, rgba(255,180,210,0.45), transparent 60%),
+      linear-gradient(180deg, #ffe0ec 0%, #ffd0e8 60%, #f8c0d8 100%);
+  }
+  /* きいろの平原 */
+  .region-w2 {
+    background:
+      radial-gradient(circle at 70% 25%, rgba(255,230,90,0.55), transparent 35%),
+      linear-gradient(180deg, #fff4c0 0%, #ffe890 60%, #ffd870 100%);
+  }
+  /* あおぞら */
+  .region-w3 {
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), transparent 30%),
+      radial-gradient(circle at 70% 60%, rgba(255,255,255,0.5), transparent 30%),
+      linear-gradient(180deg, #b8e0ff 0%, #dcc8ff 60%, #ffd8ee 100%);
+  }
+  /* みどりの森 */
+  .region-w4 {
+    background:
+      radial-gradient(ellipse at 30% 80%, rgba(80,160,80,0.45), transparent 55%),
+      linear-gradient(180deg, #c0e8c0 0%, #98d098 60%, #78b878 100%);
+  }
+  /* 虹のお城 */
+  .region-w5 {
+    background:
+      linear-gradient(180deg,
+        rgba(255,180,200,0.35) 0%,
+        rgba(255,220,140,0.35) 25%,
+        rgba(180,240,180,0.35) 50%,
+        rgba(180,220,255,0.35) 75%,
+        rgba(220,180,255,0.45) 100%),
+      linear-gradient(180deg, #ffe8f5, #fff0d8 50%, #d8e8ff 100%);
+  }
+
   #map-paths {
     position: absolute; inset: 0; width: 100%; height: 100%;
     pointer-events: none;
+    z-index: 2;
   }
-  #map-decor { position: absolute; inset: 0; pointer-events: none; }
+  #map-decor { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
   #map-decor .world-banner {
     position: absolute;
-    top: 20px;
+    top: 12px;
     transform: translateX(-50%);
-    background: linear-gradient(180deg, #fff, #ffe0f0);
-    border: 3px solid #ff8fc0;
-    border-radius: 14px;
-    padding: 6px 14px;
+    background: linear-gradient(180deg, #fff 0%, #ffe0f0 100%);
+    border: 4px solid #ff4090;
+    border-radius: 18px;
+    padding: 6px 16px 6px 16px;
+    color: #c0327a;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.22), inset 0 -3px 0 rgba(255,180,210,0.6);
+    white-space: nowrap;
+    z-index: 4;
+  }
+  #map-decor .world-banner::before,
+  #map-decor .world-banner::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 18px; height: 18px;
+    background: #ff4090;
+    transform: translateY(-50%) rotate(45deg);
+    z-index: -1;
+  }
+  #map-decor .world-banner::before { left: -10px; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  #map-decor .world-banner::after  { right: -10px; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  #map-decor .world-banner .b-icon {
+    margin-right: 4px;
+    font-size: 18px;
+    vertical-align: middle;
+  }
+
+  #map-decor .world-fence {
+    position: absolute;
+    top: 60px; bottom: 0;
+    width: 8px;
+    background: repeating-linear-gradient(180deg,
+      rgba(120,80,40,0.7) 0 18px,
+      rgba(255,255,255,0.0) 18px 32px);
+    opacity: 0.85;
+    z-index: 3;
+  }
+  #map-decor .world-fence::before {
+    content: '';
+    position: absolute;
+    top: 30%;
+    left: -10px; right: -10px;
+    height: 6px;
+    background: rgba(120,80,40,0.6);
+  }
+  #map-decor .world-fence::after {
+    content: '🚧';
+    position: absolute;
+    top: 14px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 22px;
+  }
+
+  /* デコレーション要素（雲・花・木など） */
+  #map-decor .deco {
+    position: absolute;
+    pointer-events: none;
+    line-height: 1;
+    user-select: none;
+  }
+  #map-decor .deco.bob { animation: decoBob 3.4s ease-in-out infinite; }
+  #map-decor .deco.bob2 { animation: decoBob 4.2s ease-in-out infinite 0.6s; }
+  #map-decor .deco.cloud { animation: decoCloud 22s linear infinite; }
+  #map-decor .deco.cloud2 { animation: decoCloud 30s linear infinite -8s; }
+  #map-decor .deco.spin { animation: decoSpin 8s linear infinite; }
+  #map-decor .deco.shine { animation: decoShine 1.6s ease-in-out infinite; }
+  @keyframes decoBob {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-6px); }
+  }
+  @keyframes decoCloud {
+    0%   { transform: translateX(0); }
+    50%  { transform: translateX(40px); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes decoSpin {
+    0%   { transform: rotate(-8deg); }
+    50%  { transform: rotate(8deg); }
+    100% { transform: rotate(-8deg); }
+  }
+  @keyframes decoShine {
+    0%,100% { opacity: 0.6; transform: scale(1); }
+    50%     { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* ゴール（5-5）大旗 */
+  #map-decor .goal-flag {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    font-size: 56px;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    animation: decoBob 2.8s ease-in-out infinite;
+    z-index: 3;
+  }
+  #map-decor .goal-flag .ribbon {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    color: #c0327a;
+    font-weight: bold;
+    background: linear-gradient(180deg,#fff,#ffe0f0);
+    border: 2px solid #ff4090;
+    border-radius: 10px;
+    padding: 2px 8px;
+    margin-top: -8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    white-space: nowrap;
+  }
+
+  #map-nodes { position: absolute; inset: 0; z-index: 5; }
+  .map-node {
+    position: absolute;
+    width: 68px; height: 68px;
+    margin: -34px 0 0 -34px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #ffeaf5 60%, #ffd0e8 100%);
+    border: 4px solid #ffb0d8;
     color: #d63384;
     font-weight: bold;
     font-size: 14px;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.18);
-    white-space: nowrap;
-  }
-  #map-decor .world-fence {
-    position: absolute;
-    top: 0; bottom: 0;
-    width: 4px;
-    background: repeating-linear-gradient(180deg, #ff8fc0 0 12px, transparent 12px 22px);
-    opacity: 0.55;
-  }
-  #map-nodes { position: absolute; inset: 0; }
-  .map-node {
-    position: absolute;
-    width: 64px; height: 64px;
-    margin: -32px 0 0 -32px;
-    border-radius: 50%;
-    background: linear-gradient(180deg,#fff,#ffeaf5);
-    border: 3px solid #ffb0d8;
-    color: #d63384;
-    font-weight: bold;
-    font-size: 13px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.18);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.22), inset 0 -4px 0 rgba(255,180,210,0.5);
     user-select: none;
     transition: transform 0.12s;
   }
   .map-node:active { transform: scale(0.93); }
   .map-node .node-label { font-size: 13px; line-height: 1; }
-  .map-node .node-emoji { font-size: 18px; line-height: 1; margin-top: 2px; }
+  .map-node .node-emoji { font-size: 22px; line-height: 1; margin-top: 1px; }
   .map-node.cleared {
-    background: linear-gradient(180deg,#fff8d8,#ffd54a);
-    border-color: #ffb000;
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #fff4a0 60%, #ffd54a 100%);
+    border-color: #ffa000;
     color: #c44d00;
   }
+  .map-node.cleared .node-label { display: none; }
+  .map-node.cleared .node-emoji { font-size: 30px; margin-top: 0; animation: decoShine 1.8s ease-in-out infinite; }
   .map-node.cleared::before {
-    content: '⭐';
+    content: '✨';
     position: absolute;
-    top: -14px; right: -10px;
-    font-size: 22px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    top: -10px; right: -8px;
+    font-size: 18px;
+    animation: decoShine 1.4s ease-in-out infinite;
   }
   .map-node.current {
-    background: linear-gradient(180deg,#fff,#ffd0e8);
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #ffe0a0 60%, #ffd0e8 100%);
     border-color: #ff4090;
     animation: nodePulse 1.1s infinite;
-    z-index: 5;
+    z-index: 8;
   }
   .map-node.current::after {
-    content: 'ココ';
+    content: '↓ ココ';
     position: absolute;
-    top: -22px; left: 50%;
+    top: -34px; left: 50%;
     transform: translateX(-50%);
-    background: #ff4090;
+    background: linear-gradient(180deg,#ff80b8,#ff4090);
     color: #fff;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 3px 10px;
+    border-radius: 12px;
     white-space: nowrap;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    animation: currentArrow 0.9s ease-in-out infinite;
+  }
+  @keyframes currentArrow {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50%     { transform: translateX(-50%) translateY(-4px); }
   }
   @keyframes nodePulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(255, 64, 144, 0.6), 0 4px 8px rgba(0,0,0,0.18); }
-    50%     { box-shadow: 0 0 0 12px rgba(255, 64, 144, 0), 0 4px 8px rgba(0,0,0,0.18); }
+    0%,100% { box-shadow: 0 0 0 0 rgba(255, 64, 144, 0.6), 0 5px 10px rgba(0,0,0,0.22); }
+    50%     { box-shadow: 0 0 0 14px rgba(255, 64, 144, 0), 0 5px 10px rgba(0,0,0,0.22); }
   }
   .map-node.locked {
-    background: linear-gradient(180deg,#ddd,#aaa);
+    background: radial-gradient(circle at 35% 30%, #eee, #aaa);
     border-color: #888;
     color: #555;
     cursor: not-allowed;
     opacity: 0.6;
     box-shadow: 0 2px 4px rgba(0,0,0,0.12);
   }
-  .map-node.locked .node-emoji { font-size: 22px; }
-  .map-node.boss { border-width: 4px; }
+  .map-node.locked .node-emoji { font-size: 24px; }
+  .map-node.locked .node-label { display: none; }
+  .map-node.boss {
+    width: 86px; height: 86px;
+    margin: -43px 0 0 -43px;
+    border-width: 5px;
+    border-color: #ff4090;
+    border-radius: 14px;
+    background: radial-gradient(circle at 35% 25%, #fff 0%, #ffe0a0 60%, #ff8060 100%);
+  }
+  .map-node.boss .node-emoji { font-size: 34px; }
   .map-node.boss.cleared { border-color: #ff8a00; }
+  .map-node.midboss {
+    width: 76px; height: 76px;
+    margin: -38px 0 0 -38px;
+    border-radius: 16px;
+    border-color: #c060ff;
+    background: radial-gradient(circle at 35% 25%, #fff 0%, #f0d0ff 60%, #c8a0ff 100%);
+  }
+  .map-node.midboss .node-emoji { font-size: 28px; }
 
   #map-avatar {
     position: absolute;
-    width: 56px; height: 56px;
-    margin: -50px 0 0 -28px;  /* 上に乗せる */
+    width: 60px; height: 60px;
+    margin: -54px 0 0 -30px;  /* 上に乗せる */
     pointer-events: none;
-    transition: left 0.5s ease, top 0.5s ease;
-    z-index: 10;
-    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.3));
+    transition: left 0.5s ease-in-out, top 0.5s ease-in-out;
+    z-index: 20;
+    filter: drop-shadow(0 4px 5px rgba(0,0,0,0.35));
+    animation: avatarBob 1.4s ease-in-out infinite;
   }
   #map-avatar svg { width: 100%; height: 100%; }
+  #map-avatar.hopping { animation: avatarHop 0.5s ease-in-out; }
+  @keyframes avatarBob {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-4px); }
+  }
+  @keyframes avatarHop {
+    0%   { transform: translateY(0); }
+    30%  { transform: translateY(-30px); }
+    60%  { transform: translateY(-22px); }
+    100% { transform: translateY(0); }
+  }
+
+  /* マップヘッダー強化 */
+  #stage-scene #field-header .stage-name::before {
+    content: '🗺️ ';
+    margin-right: 4px;
+  }
 
   @media (max-width: 480px) {
     .map-node { width: 56px; height: 56px; margin: -28px 0 0 -28px; font-size: 12px; }
-    .map-node .node-emoji { font-size: 16px; }
-    #map-avatar { width: 44px; height: 44px; margin: -42px 0 0 -22px; }
+    .map-node .node-emoji { font-size: 18px; }
+    .map-node.boss { width: 70px; height: 70px; margin: -35px 0 0 -35px; }
+    .map-node.boss .node-emoji { font-size: 28px; }
+    .map-node.midboss { width: 62px; height: 62px; margin: -31px 0 0 -31px; }
+    .map-node.midboss .node-emoji { font-size: 22px; }
+    #map-avatar { width: 46px; height: 46px; margin: -44px 0 0 -23px; }
+    #map-decor .world-banner { font-size: 13px; padding: 4px 10px; }
   }
 
   .center-row { display: flex; justify-content: center; }
@@ -1379,7 +1562,7 @@
 <!-- ====== WORLD MAP (旧 STAGE SELECT) ====== -->
 <div id="stage-scene" class="scene">
   <div id="field-header">
-    <span class="stage-name">せかいの ちず</span>
+    <span class="stage-name">ぼうけんの ちず</span>
     <span class="coins">💰<span id="stage-coins">0</span></span>
   </div>
   <div id="map-area">
@@ -3279,6 +3462,100 @@ function goWorldMap() {
   }
 }
 
+// 各ワールドのテーマアイコン（バナー用）
+const WORLD_THEME_ICONS = ['🌸', '🌻', '☁️', '🌳', '🏰'];
+
+// 各ワールドのデコレーション定義
+// dx は 0..1（ワールド内相対）, dy は px絶対, font はサイズpx, anim は 'bob'|'bob2'|'cloud'|'cloud2'|'spin'|'shine'|''
+const WORLD_DECOS = [
+  // ワールド1: ピンクのもり
+  [
+    {e:'☁️', dx:0.05, dy:80,  size:46, anim:'cloud'},
+    {e:'☁️', dx:0.45, dy:100, size:54, anim:'cloud2'},
+    {e:'☁️', dx:0.85, dy:70,  size:42, anim:'cloud'},
+    {e:'🌸', dx:0.15, dy:680, size:32, anim:'bob'},
+    {e:'🌸', dx:0.30, dy:720, size:28, anim:'bob2'},
+    {e:'🌸', dx:0.65, dy:700, size:34, anim:'bob'},
+    {e:'🌸', dx:0.92, dy:730, size:30, anim:'bob2'},
+    {e:'🌷', dx:0.08, dy:740, size:32, anim:'bob'},
+    {e:'🌷', dx:0.55, dy:760, size:30, anim:'bob2'},
+    {e:'🌳', dx:0.20, dy:240, size:60, anim:'spin'},
+    {e:'🌳', dx:0.75, dy:230, size:64, anim:'spin'},
+    {e:'🐝', dx:0.40, dy:300, size:28, anim:'cloud'},
+    {e:'🦋', dx:0.60, dy:340, size:30, anim:'cloud2'},
+    {e:'🍓', dx:0.50, dy:780, size:24, anim:'bob'},
+  ],
+  // ワールド2: きいろの平原
+  [
+    {e:'☀️', dx:0.85, dy:90,  size:64, anim:'shine'},
+    {e:'☁️', dx:0.10, dy:80,  size:48, anim:'cloud'},
+    {e:'☁️', dx:0.40, dy:120, size:40, anim:'cloud2'},
+    {e:'🌻', dx:0.10, dy:680, size:46, anim:'bob'},
+    {e:'🌻', dx:0.25, dy:720, size:42, anim:'bob2'},
+    {e:'🌻', dx:0.50, dy:700, size:48, anim:'bob'},
+    {e:'🌻', dx:0.78, dy:730, size:44, anim:'bob2'},
+    {e:'🌾', dx:0.18, dy:760, size:32, anim:'bob2'},
+    {e:'🌾', dx:0.62, dy:760, size:30, anim:'bob'},
+    {e:'⛰️', dx:0.30, dy:230, size:80, anim:''},
+    {e:'⛰️', dx:0.68, dy:240, size:90, anim:''},
+    {e:'🐦', dx:0.50, dy:180, size:28, anim:'cloud2'},
+    {e:'🦋', dx:0.20, dy:380, size:28, anim:'cloud'},
+  ],
+  // ワールド3: あおぞら
+  [
+    {e:'☁️', dx:0.10, dy:120, size:60, anim:'cloud'},
+    {e:'☁️', dx:0.30, dy:90,  size:54, anim:'cloud2'},
+    {e:'☁️', dx:0.55, dy:140, size:66, anim:'cloud'},
+    {e:'☁️', dx:0.80, dy:100, size:58, anim:'cloud2'},
+    {e:'🌈', dx:0.45, dy:200, size:84, anim:''},
+    {e:'⭐', dx:0.20, dy:260, size:30, anim:'shine'},
+    {e:'⭐', dx:0.70, dy:250, size:28, anim:'shine'},
+    {e:'⭐', dx:0.40, dy:330, size:26, anim:'shine'},
+    {e:'🪁', dx:0.85, dy:300, size:38, anim:'spin'},
+    {e:'🏝️', dx:0.15, dy:560, size:80, anim:'bob'},
+    {e:'🏝️', dx:0.55, dy:580, size:90, anim:'bob2'},
+    {e:'🏝️', dx:0.85, dy:560, size:76, anim:'bob'},
+    {e:'🐦', dx:0.35, dy:420, size:30, anim:'cloud'},
+    {e:'🐦', dx:0.65, dy:400, size:28, anim:'cloud2'},
+  ],
+  // ワールド4: みどりの森
+  [
+    {e:'☁️', dx:0.20, dy:80,  size:42, anim:'cloud'},
+    {e:'☁️', dx:0.70, dy:100, size:48, anim:'cloud2'},
+    {e:'🌳', dx:0.08, dy:280, size:78, anim:'spin'},
+    {e:'🌳', dx:0.28, dy:230, size:90, anim:'spin'},
+    {e:'🌳', dx:0.55, dy:260, size:82, anim:'spin'},
+    {e:'🌳', dx:0.78, dy:240, size:88, anim:'spin'},
+    {e:'🌲', dx:0.40, dy:300, size:74, anim:''},
+    {e:'🌲', dx:0.92, dy:290, size:70, anim:''},
+    {e:'🍄', dx:0.15, dy:720, size:36, anim:'bob'},
+    {e:'🍄', dx:0.45, dy:740, size:32, anim:'bob2'},
+    {e:'🍄', dx:0.72, dy:710, size:38, anim:'bob'},
+    {e:'🍃', dx:0.30, dy:420, size:28, anim:'cloud'},
+    {e:'🍃', dx:0.62, dy:460, size:30, anim:'cloud2'},
+    {e:'🐛', dx:0.50, dy:760, size:24, anim:'bob'},
+    {e:'🦔', dx:0.20, dy:760, size:30, anim:''},
+  ],
+  // ワールド5: 虹のお城
+  [
+    {e:'🌈', dx:0.20, dy:140, size:72, anim:''},
+    {e:'🌈', dx:0.75, dy:160, size:68, anim:''},
+    {e:'☁️', dx:0.10, dy:90,  size:48, anim:'cloud'},
+    {e:'☁️', dx:0.55, dy:80,  size:54, anim:'cloud2'},
+    {e:'🏰', dx:0.30, dy:300, size:90, anim:''},
+    {e:'🏯', dx:0.62, dy:310, size:84, anim:''},
+    {e:'⭐', dx:0.08, dy:260, size:34, anim:'shine'},
+    {e:'⭐', dx:0.48, dy:220, size:32, anim:'shine'},
+    {e:'⭐', dx:0.90, dy:280, size:36, anim:'shine'},
+    {e:'✨', dx:0.20, dy:350, size:30, anim:'shine'},
+    {e:'✨', dx:0.40, dy:380, size:28, anim:'shine'},
+    {e:'✨', dx:0.70, dy:360, size:32, anim:'shine'},
+    {e:'💎', dx:0.55, dy:720, size:34, anim:'bob'},
+    {e:'💎', dx:0.25, dy:740, size:30, anim:'bob2'},
+    {e:'👑', dx:0.85, dy:720, size:36, anim:'bob'},
+  ],
+];
+
 function renderWorldMap() {
   const decor = $('map-decor');
   const nodesEl = $('map-nodes');
@@ -3291,13 +3568,38 @@ function renderWorldMap() {
   svg.innerHTML = '';
 
   const worldW = MAP_W / WORLD_DEFS.length;
+
+  // ワールドごとの地形ベース＋装飾
   WORLD_DEFS.forEach((w, wi) => {
+    // 地形ベース
+    const region = document.createElement('div');
+    region.className = 'world-region region-w' + w.id;
+    region.style.left = (wi * worldW) + 'px';
+    region.style.width = worldW + 'px';
+    decor.appendChild(region);
+
+    // ワールド内のデコレーション
+    const decos = WORLD_DECOS[wi] || [];
+    decos.forEach(d => {
+      const el = document.createElement('span');
+      el.className = 'deco' + (d.anim ? (' ' + d.anim) : '');
+      el.style.left = Math.round(wi * worldW + d.dx * worldW) + 'px';
+      el.style.top  = d.dy + 'px';
+      el.style.fontSize = d.size + 'px';
+      el.textContent = d.e;
+      decor.appendChild(el);
+    });
+
+    // バナー
     const cx = Math.round(wi * worldW + worldW / 2);
     const banner = document.createElement('div');
     banner.className = 'world-banner';
     banner.style.left = cx + 'px';
-    banner.innerHTML = 'ワールド ' + w.id + ' ' + w.name;
+    banner.innerHTML = '<span class="b-icon">' + (WORLD_THEME_ICONS[wi] || '🗺️') + '</span>'
+      + 'ワールド ' + w.id + ' ' + w.name;
     decor.appendChild(banner);
+
+    // ワールド境界（門）
     if (wi > 0) {
       const fence = document.createElement('div');
       fence.className = 'world-fence';
@@ -3306,27 +3608,53 @@ function renderWorldMap() {
     }
   });
 
+  // ゴール旗（5-5）
+  const goal = STAGES.find(s => s.id === '5-5');
+  if (goal) {
+    const flag = document.createElement('div');
+    flag.className = 'goal-flag';
+    flag.style.left = goal.mapPos.x + 'px';
+    flag.style.top  = (goal.mapPos.y - 60) + 'px';
+    flag.innerHTML = '🏁<span class="ribbon">ゴール！</span>';
+    decor.appendChild(flag);
+  }
+
   const target = getCurrentTargetStageId();
 
-  // パスを先に描く（ノードの下）
+  // パスを先に描く（ノードの下）— ワールド別カラー（虹色道）
+  const PATH_COLORS = ['#ff8fc0', '#ffc040', '#80c8ff', '#80c880', '#c890ff'];
   for (let i = 0; i < STAGES.length - 1; i++) {
     const a = STAGES[i], b = STAGES[i+1];
     const cleared = state.cleared.includes(a.id);
     const nextUnlocked = isStageUnlocked(b.id);
-    let stroke, dash;
-    if (cleared && state.cleared.includes(b.id)) { stroke = '#ffb000'; dash = '0'; }
-    else if (cleared || nextUnlocked) { stroke = '#ff8fc0'; dash = '6 6'; }
-    else { stroke = '#bbb'; dash = '4 8'; }
+    const baseColor = PATH_COLORS[(a.worldId - 1) % PATH_COLORS.length] || '#ff8fc0';
+    let stroke, dash, width;
+    if (cleared && state.cleared.includes(b.id)) {
+      stroke = '#ffb000'; dash = '0'; width = 8;
+    } else if (cleared || nextUnlocked) {
+      stroke = baseColor; dash = '8 8'; width = 7;
+    } else {
+      stroke = '#bbb'; dash = '4 10'; width = 5;
+    }
     const x1 = a.mapPos.x, y1 = a.mapPos.y;
     const x2 = b.mapPos.x, y2 = b.mapPos.y;
     const mx = (x1 + x2) / 2;
     const cy1 = y1 + (y2 - y1) * 0.2 + (i % 2 === 0 ? -40 : 40);
     const cy2 = y2 - (y2 - y1) * 0.2 + (i % 2 === 0 ? -40 : 40);
+    // 影 (ベース)
+    const shadow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    shadow.setAttribute('d', `M ${x1} ${y1+3} C ${mx} ${cy1+3}, ${mx} ${cy2+3}, ${x2} ${y2+3}`);
+    shadow.setAttribute('fill', 'none');
+    shadow.setAttribute('stroke', 'rgba(0,0,0,0.18)');
+    shadow.setAttribute('stroke-width', String(width + 2));
+    shadow.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(shadow);
+    // 本体
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', `M ${x1} ${y1} C ${mx} ${cy1}, ${mx} ${cy2}, ${x2} ${y2}`);
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke', stroke);
-    path.setAttribute('stroke-width', '6');
+    path.setAttribute('stroke-width', String(width));
     path.setAttribute('stroke-linecap', 'round');
     if (dash !== '0') path.setAttribute('stroke-dasharray', dash);
     svg.appendChild(path);
@@ -3344,12 +3672,14 @@ function renderWorldMap() {
     if (isCurrent) div.classList.add('current');
     if (!unlocked) div.classList.add('locked');
     if (s.boss) div.classList.add('boss');
+    else if (s.midBoss) div.classList.add('midboss');
     div.style.left = s.mapPos.x + 'px';
     div.style.top  = s.mapPos.y + 'px';
     let emoji = '';
     if (!unlocked) emoji = '🔒';
-    else if (s.boss) emoji = '👑';
-    else if (s.midBoss) emoji = '💪';
+    else if (cleared) emoji = '🌟';
+    else if (s.boss) emoji = '🏰';
+    else if (s.midBoss) emoji = '⛩️';
     div.innerHTML = `<span class="node-label">${s.id}</span>` + (emoji ? `<span class="node-emoji">${emoji}</span>` : '');
     if (unlocked) attachTap(div, () => {
       // アバターを移動演出してから入場
@@ -3377,10 +3707,18 @@ function renderWorldMap() {
 function moveAvatarTo(stage, done) {
   const avatar = $('map-avatar');
   if (!avatar) { if (done) done(); return; }
+  // ぴょんっとジャンプアニメ
+  avatar.classList.remove('hopping');
+  // reflowでアニメ再起動
+  void avatar.offsetWidth;
+  avatar.classList.add('hopping');
   avatar.style.left = stage.mapPos.x + 'px';
   avatar.style.top  = stage.mapPos.y + 'px';
   // CSS transition は 0.5s。短めに 320ms で入場へ
-  setTimeout(() => { if (done) done(); }, 320);
+  setTimeout(() => {
+    avatar.classList.remove('hopping');
+    if (done) done();
+  }, 360);
 }
 
 // ===================== FIELD (walk + encounter) =====================
@@ -3415,6 +3753,11 @@ let fieldRunning = false;
 let fieldAutoSaveTimer = null;
 
 function enterStage(stage) {
+  if (!stage || !stage.id) {
+    console.error('[enterStage] invalid stage:', stage);
+    return;
+  }
+  console.log('[enterStage] entering', stage.id, stage.name);
   state.curStage = stage.id;
   $('field-stage-name').innerHTML = stage.name;
   $('field-coins').textContent = state.coins;
@@ -3825,11 +4168,19 @@ function openFieldChest(c) {
 
 // === Canvas drawing ===
 function drawField() {
+  try {
   const cv = $('field-canvas');
   const f = state.field;
-  if (!cv || !f) return;
+  if (!cv || !f) {
+    if (!f) console.warn('[drawField] state.field is null — skip frame');
+    return;
+  }
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const cw = cv.clientWidth, ch = cv.clientHeight;
+  // Guard: canvas not laid out yet (scene just switched). Skip this frame; rAF will retry.
+  if (cw === 0 || ch === 0) {
+    return;
+  }
   if (cv.width !== cw * dpr || cv.height !== ch * dpr) {
     cv.width = cw * dpr; cv.height = ch * dpr;
   }
@@ -4012,6 +4363,9 @@ function drawField() {
 
   // Minimap overlay
   if (state.minimapVisible) drawMinimap();
+  } catch (err) {
+    console.error('[drawField] threw:', err);
+  }
 }
 
 function updateField() {
@@ -4190,13 +4544,17 @@ function startFieldLoop() {
   // Force one paint to ensure scene is laid out before reading sizes
   const tick = () => {
     if (!fieldRunning) return;
-    updateField();
+    try { updateField(); } catch (e) { console.error('[updateField] threw:', e); }
     drawField();
     fieldLoop = requestAnimationFrame(tick);
   };
-  // Defer start by a frame to give layout a chance
+  // 2 rAF defers + force layout via offsetHeight to ensure canvas has size
   requestAnimationFrame(() => {
-    if (fieldRunning) fieldLoop = requestAnimationFrame(tick);
+    const cv = document.getElementById('field-canvas');
+    if (cv) void cv.offsetHeight; // force layout
+    requestAnimationFrame(() => {
+      if (fieldRunning) fieldLoop = requestAnimationFrame(tick);
+    });
   });
   // Auto-save every 5 seconds while exploring the field
   if (fieldAutoSaveTimer) clearInterval(fieldAutoSaveTimer);
