@@ -1049,8 +1049,16 @@ const TYPES = {
   sky:    { name: 'みずいろ', color: '#80c8f5', dark: '#2a6da6' },
   yellow: { name: 'きいろ',     color: '#ffd700', dark: '#c08820' },
   green:  { name: 'みどり',     color: '#90d870', dark: '#4a8030' },
-  purple: { name: 'むらさき', color: '#c8a0f0', dark: '#6030a0' }
+  purple: { name: 'むらさき', color: '#c8a0f0', dark: '#6030a0' },
+  human:  { name: 'ヒト',       color: '#888888', dark: '#4a4a4a' }
 };
+
+// タイプ相性表（与ダメージ倍率）。未指定は1.0倍。
+// ヒトタイプは攻撃側・受け側ともに常に1.0倍（中立）。
+const TYPE_CHART = {
+  // attacker: { defender: multiplier }
+};
+function typeMul(/* atkType, defType */) { return 1.0; }
 
 const SKILLS = {
   // name, mp, power, type, msg, fx
@@ -1071,7 +1079,12 @@ const SKILLS = {
   dragon:  { name: 'ドラゴンブレス', mp: 12, power: 2.2, type: 'purple', msg: 'ドラゴンブレス！！',   fx: '🔥' },
   lullaby: { name: 'こもりうた',   mp: 3,  power: 0.7, type: 'pink',   msg: 'こもりうたで ねむらせた！', fx: '🎵' },
   watergun:{ name: 'みずでっぽう', mp: 3,  power: 1.3, type: 'sky',    msg: 'みずでっぽう！',       fx: '💦' },
-  peck:    { name: 'つつく',       mp: 0,  power: 1.0, type: 'pink',   msg: 'くちばしで つついた！', fx: '✨' }
+  peck:    { name: 'つつく',       mp: 0,  power: 1.0, type: 'pink',   msg: 'くちばしで つついた！', fx: '✨' },
+  // ===== とーとん 専用わざ =====
+  jimu:    { name: '<ruby>事務<rt>じむ</rt></ruby><ruby>作業<rt>さぎょう</rt></ruby>', mp: 0, power: 0.6, type: 'human', msg: 'たんたんと しごとを こなした！', fx: '📋', mpRecover: 3 },
+  coffee:  { name: 'コーヒーブレイク', mp: 3, power: 0.0, type: 'human', msg: 'コーヒーで ひといき ついた！', fx: '☕', heal: true, healAmt: 0.15 },
+  eigyou:  { name: '<ruby>営業<rt>えいぎょう</rt></ruby>トーク', mp: 4, power: 1.0, type: 'human', msg: 'うまい トークで まるめこんだ！', fx: '💬', confuseChance: 0.3 },
+  riman:   { name: 'リーマン<ruby>突進<rt>とっしん</rt></ruby>', mp: 5, power: 1.6, type: 'human', msg: '「やってられっか〜！」と とっしん！', fx: '💼', recoil: 0.1 }
 };
 
 const MONSTERS = [
@@ -1132,7 +1145,10 @@ const MONSTERS = [
   // sky starter line ポチャミン → ポチャミー → ポチャマスター
   { id:31, name:'ポチャミン',     type:'sky', color:'#4a9fd9', shape:'penguin',  face:'', hp:18, atk:12, def:10, spd:8,  learn:{1:'watergun',2:'peck'}, evo:{lvl:16,to:32}, dex:'ちっちゃい あおいペンギン。みずが すき。', starter:true, evoStage:0 },
   { id:32, name:'ポチャミー',     type:'sky', color:'#3a85c0', shape:'penguin',  face:'', hp:36, atk:20, def:18, spd:14, learn:{16:'splash',22:'bubble'}, evo:{lvl:32,to:33}, dex:'すこし そだった ペンギン。はねが ふくらむ。', evoStage:1 },
-  { id:33, name:'ポチャマスター', type:'sky', color:'#1a55a0', shape:'penguin',  face:'', hp:78, atk:34, def:30, spd:22, learn:{32:'hyper',38:'bubble'}, evo:null, dex:'おおきなトサカが かんむりみたい。みずの 王者。', evoStage:2 }
+  { id:33, name:'ポチャマスター', type:'sky', color:'#1a55a0', shape:'penguin',  face:'', hp:78, atk:34, def:30, spd:22, learn:{32:'hyper',38:'bubble'}, evo:null, dex:'おおきなトサカが かんむりみたい。みずの 王者。', evoStage:2 },
+
+  // ===== 隠しキャラクター: とーとん（人間） =====
+  { id:99, name:'とーとん', type:'human', color:'#9a9a9a', shape:'human', face:'', hp:20, atk:8, def:7, spd:35, learn:{1:'jimu',2:'coffee',3:'eigyou',4:'riman'}, evo:null, dex:'モンスターだらけの せかいに まぎれこんだ ヒト。やせた おとなの おとこのひと。', stage:0, hidden:true }
 ];
 
 function getMonsterDef(id) { return MONSTERS.find(m => m.id === id); }
@@ -1438,6 +1454,60 @@ function svgShape(shape, color, dark, face) {
     }
     // Penguin uses no emoji face overlay
     return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  } else if (shape === 'human') {
+    // とーとん: 痩せた30代男性、メガネ、白シャツ、グレースラックス
+    body = `
+      <!-- グレースラックス（脚） -->
+      <rect x="50" y="92" width="8" height="22" fill="#6a6a6a" stroke="#333" stroke-width="1.2"/>
+      <rect x="62" y="92" width="8" height="22" fill="#6a6a6a" stroke="#333" stroke-width="1.2"/>
+      <!-- 黒い革靴 -->
+      <ellipse cx="54" cy="116" rx="6" ry="2.5" fill="#1a1a1a"/>
+      <ellipse cx="66" cy="116" rx="6" ry="2.5" fill="#1a1a1a"/>
+      <!-- 白いYシャツ（胴体） -->
+      <path d="M44 56 L44 92 L76 92 L76 56 Q60 60 44 56 Z" fill="#f5f5f5" stroke="#aaa" stroke-width="1.5"/>
+      <!-- グレーの襟 -->
+      <polygon points="56,56 60,64 64,56 60,60" fill="#666"/>
+      <line x1="56" y1="56" x2="60" y2="64" stroke="#666" stroke-width="1"/>
+      <line x1="64" y1="56" x2="60" y2="64" stroke="#666" stroke-width="1"/>
+      <!-- ボタン3つ -->
+      <circle cx="60" cy="70" r="0.9" fill="#888"/>
+      <circle cx="60" cy="78" r="0.9" fill="#888"/>
+      <circle cx="60" cy="86" r="0.9" fill="#888"/>
+      <!-- ベルト -->
+      <rect x="44" y="90" width="32" height="3" fill="#1a1a1a"/>
+      <rect x="58" y="90.5" width="4" height="2" fill="#888"/>
+      <!-- 腕（だらん） -->
+      <rect x="38" y="58" width="6" height="30" fill="#f5f5f5" stroke="#aaa" stroke-width="1"/>
+      <rect x="76" y="58" width="6" height="30" fill="#f5f5f5" stroke="#aaa" stroke-width="1"/>
+      <!-- 手（肌色） -->
+      <circle cx="41" cy="90" r="3" fill="#fcd9b6" stroke="#c9a682" stroke-width="0.8"/>
+      <circle cx="79" cy="90" r="3" fill="#fcd9b6" stroke="#c9a682" stroke-width="0.8"/>
+      <!-- 右手にコーヒーカップ -->
+      <rect x="76" y="86" width="7" height="6" fill="#fff" stroke="#888" stroke-width="0.8"/>
+      <path d="M83 87 Q86 89 83 91" stroke="#888" stroke-width="0.8" fill="none"/>
+      <ellipse cx="79.5" cy="86" rx="3.5" ry="1" fill="#5a3a1a"/>
+      <!-- 首 -->
+      <rect x="56" y="48" width="8" height="10" fill="#fcd9b6" stroke="#c9a682" stroke-width="1"/>
+      <!-- 頭（肌色の楕円） -->
+      <ellipse cx="60" cy="32" rx="16" ry="20" fill="#fcd9b6" stroke="#c9a682" stroke-width="1.5"/>
+      <!-- 茶髪（ボサボサ） -->
+      <path d="M44 28 Q46 14 60 12 Q74 14 76 28 L74 22 Q70 16 60 16 Q50 16 46 22 Z" fill="#7a4a2a" stroke="#5a3520" stroke-width="1"/>
+      <path d="M48 18 Q50 14 54 16" stroke="#7a4a2a" stroke-width="2" fill="none"/>
+      <path d="M66 16 Q70 14 72 18" stroke="#7a4a2a" stroke-width="2" fill="none"/>
+      <path d="M58 14 Q60 10 62 14" stroke="#7a4a2a" stroke-width="2" fill="none"/>
+      <!-- 八の字眉（疲労感） -->
+      <line x1="49" y1="28" x2="55" y2="30" stroke="#3a2010" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="71" y1="28" x2="65" y2="30" stroke="#3a2010" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- メガネ（黒フレーム円形） -->
+      <circle cx="52" cy="34" r="5" fill="rgba(255,255,255,0.4)" stroke="#1a1a1a" stroke-width="1.4"/>
+      <circle cx="68" cy="34" r="5" fill="rgba(255,255,255,0.4)" stroke="#1a1a1a" stroke-width="1.4"/>
+      <line x1="57" y1="34" x2="63" y2="34" stroke="#1a1a1a" stroke-width="1.2"/>
+      <!-- 目（メガネ越し、疲れた感じ） -->
+      <circle cx="52" cy="34" r="1.2" fill="#1a1a1a"/>
+      <circle cx="68" cy="34" r="1.2" fill="#1a1a1a"/>
+      <!-- 口（真一文字、無表情） -->
+      <line x1="55" y1="42" x2="65" y2="42" stroke="#5a3520" stroke-width="1.3" stroke-linecap="round"/>`;
+    return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
   } else {
     body = `<circle cx="60" cy="60" r="40" fill="${color}" stroke="${dark}" stroke-width="3"/>`;
   }
@@ -1602,6 +1672,25 @@ function generateFieldMobs(stage) {
     dx: 0, dy: 0,
     wanderTimer: 0
   });
+
+  // ===== 隠しキャラ「とーとん」スポーン処理 =====
+  // ステージ5（虹のお城）でのみ、1〜2%の確率で1体出現。
+  // 通常モブに加えて配置される（最大1体）。
+  if (stage.id === 5 && Math.random() < 0.015) {
+    const tx = 100 + Math.random() * (WORLD_W - 200);
+    const ty = 320 + Math.random() * (WORLD_H - 500);
+    state.fieldMobs.push({
+      id: 99,
+      lvl: rand(stage.lvl[0], stage.lvl[1]),
+      x: tx, y: ty,
+      defeated: false,
+      isBoss: false,
+      isToton: true,   // 特殊フラグ
+      dx: (Math.random() - 0.5) * 0.6,
+      dy: (Math.random() - 0.5) * 0.6,
+      wanderTimer: rand(40, 120)
+    });
+  }
 }
 
 // === Canvas drawing ===
@@ -1808,6 +1897,11 @@ function triggerEncounter(fieldMob, idx) {
     state.field.lastSafePx = clamp(fieldMob.x + (dx / len) * 80, 24, WORLD_W - 24);
     state.field.lastSafePy = clamp(fieldMob.y + (dy / len) * 80, 24, WORLD_H - 24);
   }
+  // ===== とーとん 専用エンカウント演出（暗転＋!?＋テキスト） =====
+  if (fieldMob.isToton) {
+    triggerTotonEncounter(fieldMob, idx);
+    return;
+  }
   // visuals
   const fieldArea = document.querySelector('#field-scene #field-area');
   $('encounter-mark').classList.add('show');
@@ -1819,6 +1913,50 @@ function triggerEncounter(fieldMob, idx) {
     stopFieldLoop();
     startBattle(fieldMob, idx);
   }, 700);
+}
+
+function showTotonCatchBanner() {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);pointer-events:none;animation:fadeIn 0.3s;';
+  banner.innerHTML = `
+    <div style="background:linear-gradient(180deg,#fff,#eee);border:5px solid #444;border-radius:18px;padding:24px 32px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,0.5);transform:scale(0.6);animation:totonPop 0.5s forwards cubic-bezier(0.34,1.56,0.64,1);">
+      <div style="font-size:36px;font-weight:900;color:#444;text-shadow:2px 2px 0 #aaa;">!</div>
+      <div style="margin-top:6px;font-size:24px;font-weight:bold;color:#333;letter-spacing:2px;">とーとん が</div>
+      <div style="font-size:24px;font-weight:bold;color:#333;letter-spacing:2px;">なかまに なった…！？</div>
+      <div style="margin-top:10px;font-size:13px;color:#888;">（てもちに ヒトが いる… いいんだろうか）</div>
+    </div>`;
+  // inject keyframes once
+  if (!document.getElementById('totonStyle')) {
+    const st = document.createElement('style');
+    st.id = 'totonStyle';
+    st.textContent = '@keyframes totonPop{0%{transform:scale(0.4);opacity:0}60%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}';
+    document.head.appendChild(st);
+  }
+  document.body.appendChild(banner);
+  setTimeout(() => { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 2400);
+}
+
+function triggerTotonEncounter(fieldMob, idx) {
+  // 暗転オーバーレイを生成
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9000;opacity:0;transition:opacity 0.25s;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;text-align:center;';
+  overlay.innerHTML = `
+    <div style="font-size:96px;font-weight:900;color:#fff;text-shadow:3px 3px 0 #888,5px 5px 12px rgba(255,255,255,0.4);letter-spacing:6px;">!?</div>
+    <div style="margin-top:20px;font-size:22px;font-weight:bold;color:#fff;text-shadow:2px 2px 0 #444;">あれ…？<ruby>人間<rt>にんげん</rt></ruby>…？</div>
+  `;
+  document.body.appendChild(overlay);
+  // フェードイン
+  requestAnimationFrame(() => { overlay.style.opacity = '0.92'; });
+  sfxCrit();
+  // 1秒間表示してからバトルへ
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      stopFieldLoop();
+      startBattle(fieldMob, idx);
+    }, 280);
+  }, 1100);
 }
 
 function startFieldLoop() {
@@ -1871,12 +2009,18 @@ function startBattle(fieldMob, idx) {
     me: { mon: activeMon() },
     fieldIdx: idx,
     isBoss: fieldMob.isBoss,
+    isToton: !!fieldMob.isToton || foe.id === 99,
     turn: 'me',
-    ended: false
+    ended: false,
+    confused: false  // 自分の次ターン技外し用
   };
   battle.foe.mon.hp = foeStats.hp;
   refreshBattleUI();
-  setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が あらわれた！');
+  if (battle.isToton) {
+    setBattleMessage('まさかの <ruby>人間<rt>にんげん</rt></ruby> 「とーとん」 が あらわれた！');
+  } else {
+    setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が あらわれた！');
+  }
   switchScene('battle-scene');
   setTurnUI('me');
   showCommands();
@@ -2002,6 +2146,19 @@ function endTapPhase() {
 
 function doMyAttack(tapCount, skillKey) {
   if (battle.ended) return;
+  // 混乱状態：技を外す
+  if (battle.confused) {
+    battle.confused = false;
+    const meDefC = getMonsterDef(battle.me.mon.id);
+    setBattleMessage(meDefC.name + 'は こんらんして わざを はずした！');
+    sfxHit();
+    refreshBattleUI();
+    setTimeout(() => {
+      if (battle.foe.mon.hp <= 0) { winBattle(); return; }
+      foeTurn();
+    }, 1100);
+    return;
+  }
   const skill = skillKey ? SKILLS[skillKey] : SKILLS.tail;
   const meStats = monStats(battle.me.mon);
   const foeStats = battle.foe.stats;
@@ -2044,6 +2201,16 @@ function doMyAttack(tapCount, skillKey) {
   }, 1100);
 }
 
+// とーとんの ぼそぼそ独り言
+const TOTON_MUTTERS = [
+  'えーっと…つぎの さぎょうは…',
+  'あー、もう つかれた',
+  'おなか すいた',
+  'あしたの あさ なに たべよう',
+  'はやく かえりたい…',
+  'コーヒー おかわり ほしい'
+];
+
 function foeTurn() {
   battle.turn = 'foe';
   if (battle.ended) return;
@@ -2062,10 +2229,15 @@ function foeTurn() {
   const foeStats = battle.foe.stats;
   const meStats = monStats(battle.me.mon);
   const foeDef = battle.foe.def;
+  // とーとんの場合は独り言を先にちらっと表示
+  let preMsg = '';
+  if (battle.isToton) {
+    preMsg = '<span style="color:#888;font-size:13px;">「' + pick(TOTON_MUTTERS) + '」</span><br>';
+  }
   if (skill.heal && battle.foe.mon.hp < battle.foe.hpMax * 0.5) {
-    const heal = Math.floor(battle.foe.hpMax * skill.healAmt);
+    const heal = Math.floor(battle.foe.hpMax * (skill.healAmt || 0.15));
     battle.foe.mon.hp = Math.min(battle.foe.hpMax, battle.foe.mon.hp + heal);
-    setBattleMessage(foeDef.name + 'は ' + skill.msg);
+    setBattleMessage(preMsg + foeDef.name + 'は ' + skill.msg);
     spawnDmg('foe-row', heal, 'heal');
     sfxHeal();
   } else {
@@ -2078,11 +2250,30 @@ function foeTurn() {
     shakeRow('my-row');
     hitFlashRow('my-row');
     sfxHit();
-    setBattleMessage(foeDef.name + 'の ' + skill.msg + ' ' + dmg + 'ダメージ！');
+    let extraMsg = '';
+    // 営業トーク：30%で混乱
+    if (skill.confuseChance && Math.random() < skill.confuseChance) {
+      battle.confused = true;
+      extraMsg = '<br>あいては こんらんした！';
+    }
+    // リーマン突進：反動ダメージ
+    if (skill.recoil) {
+      const recoil = Math.max(1, Math.floor(battle.foe.hpMax * skill.recoil));
+      battle.foe.mon.hp = Math.max(0, battle.foe.mon.hp - recoil);
+      spawnDmg('foe-row', recoil, '');
+      extraMsg += '<br>はんどうで ' + recoil + ' ダメージ！';
+    }
+    setBattleMessage(preMsg + foeDef.name + 'の ' + skill.msg + ' ' + dmg + 'ダメージ！' + extraMsg);
+  }
+  // 事務作業：自分のMP+3回復
+  if (skill.mpRecover) {
+    battle.foe.mon.mp = Math.min((monStats(battle.foe.mon).mp || 30), battle.foe.mon.mp + skill.mpRecover);
   }
   if (skill.mp) battle.foe.mon.mp = Math.max(0, battle.foe.mon.mp - skill.mp);
   refreshBattleUI();
   setTimeout(() => {
+    // 反動で とーとん自身が倒れた場合
+    if (battle.foe.mon.hp <= 0) { winBattle(); return; }
     if (battle.me.mon.hp <= 0) {
       onMyFaint();
       return;
@@ -2116,11 +2307,20 @@ function winBattle() {
   sfxWin();
   // exp + coins
   const foe = battle.foe;
-  const expGain = Math.floor(8 + foe.mon.lvl * 4 + (battle.isBoss ? foe.mon.lvl * 5 : 0));
-  const coinGain = Math.floor(10 + foe.mon.lvl * (battle.isBoss ? 6 : 2));
+  // とーとんは経験値少なめ、コイン報酬は+500ボーナス
+  let expGain = Math.floor(8 + foe.mon.lvl * 4 + (battle.isBoss ? foe.mon.lvl * 5 : 0));
+  let coinGain = Math.floor(10 + foe.mon.lvl * (battle.isBoss ? 6 : 2));
+  if (battle.isToton) {
+    expGain = Math.max(4, Math.floor(expGain * 0.4)); // 経験値は少なめ
+    coinGain += 500;                                   // ボーナス +500
+  }
   state.coins += coinGain;
 
-  setBattleMessage('🎉 かった！<br>' + foe.def.name + 'を たおして、けいけんち ' + expGain + '・コイン ' + coinGain + ' を てに いれた！');
+  if (battle.isToton) {
+    setBattleMessage('🎉 とーとん を たおした！？<br>けいけんち ' + expGain + '・コイン ' + coinGain + ' （ボーナス+500！）を てに いれた！');
+  } else {
+    setBattleMessage('🎉 かった！<br>' + foe.def.name + 'を たおして、けいけんち ' + expGain + '・コイン ' + coinGain + ' を てに いれた！');
+  }
 
   // give exp to all alive party
   setTimeout(() => {
@@ -2369,6 +2569,8 @@ function tryCatch(ballKey) {
   // success rate: low HP -> high
   let chance = (1 - ratio) * 0.7 * ballRate + 0.05;
   chance = clamp(chance, 0.05, 0.95);
+  // とーとんは捕獲率5%固定（HP残量・ボール種類に関係なく超レア）
+  if (battle.isToton) chance = 0.05;
   setBattleMessage('えい！ ' + ITEMS[ballKey].name + ' を なげた！');
   sfxCatch();
   setTimeout(() => {
@@ -2378,7 +2580,12 @@ function tryCatch(ballKey) {
       captured.hp = f.mon.hp;
       if (state.party.length < 3) state.party.push(captured);
       else state.box.push(captured);
-      setBattleMessage('🎉 ' + f.def.name + ' を つかまえた！');
+      if (battle.isToton) {
+        showTotonCatchBanner();
+        setBattleMessage('！ とーとん が なかまに なった…！？');
+      } else {
+        setBattleMessage('🎉 ' + f.def.name + ' を つかまえた！');
+      }
       sfxWin();
       battle.ended = true;
       // mark defeated on field
