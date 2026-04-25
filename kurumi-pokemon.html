@@ -149,35 +149,23 @@
     60% { transform: translate(-4px,5px); }
     80% { transform: translate(6px,-3px); }
   }
-  /* Virtual D-Pad */
-  #dpad {
-    position: absolute; left: 12px; bottom: 12px;
-    width: 168px; height: 168px;
+  /* Drag hint (sakudragon方式: 画面どこでもドラッグでプレイヤー移動) */
+  #drag-hint {
+    position: absolute; left: 50%; bottom: 12px;
+    transform: translateX(-50%);
     z-index: 70;
-    pointer-events: none;
-  }
-  .dpad-btn {
-    position: absolute;
-    width: 56px; height: 56px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,200,230,0.85));
-    border: 3px solid #fff;
+    background: rgba(255,255,255,0.78);
+    color: #c0327a;
+    border: 2px solid #ff8fc0;
     border-radius: 14px;
-    box-shadow: 0 4px 0 #c44d85, 0 5px 10px rgba(0,0,0,0.25);
-    color: #d63384; font-size: 22px; font-weight: bold;
-    pointer-events: auto;
-    touch-action: none;
-    user-select: none; -webkit-user-select: none;
-    display: flex; align-items: center; justify-content: center;
+    padding: 4px 12px;
+    font-size: 12px; font-weight: bold;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(255,111,168,0.3);
+    opacity: 0.9;
+    transition: opacity 0.4s;
   }
-  .dpad-btn.active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 #c44d85, 0 3px 6px rgba(0,0,0,0.25);
-    background: linear-gradient(180deg, #ffd0e8, #ffb0d8);
-  }
-  .dpad-up    { top: 0;    left: 56px; }
-  .dpad-left  { top: 56px; left: 0; }
-  .dpad-down  { top: 112px;left: 56px; }
-  .dpad-right { top: 56px; left: 112px; }
+  #drag-hint.fade { opacity: 0; }
   .field-mob {
     position: absolute;
     width: 64px; height: 64px;
@@ -244,10 +232,11 @@
   }
   #battle-top {
     flex: 1; display: flex; flex-direction: column;
-    padding: 56px 10px 8px;
-    gap: 6px;
+    padding: 44px 8px 4px;
+    gap: 4px;
     overflow: hidden;
     position: relative;
+    min-height: 0;
   }
   /* turn label */
   #turn-label {
@@ -280,7 +269,7 @@
   .combatant {
     position: absolute;
     border-radius: 16px;
-    padding: 6px 10px 8px;
+    padding: 5px 8px 6px;
     display: flex; flex-direction: column; align-items: center;
     box-shadow: 0 3px 6px rgba(0,0,0,0.18);
     transition: transform 0.25s, box-shadow 0.25s;
@@ -369,12 +358,12 @@
     margin-bottom: 4px;
   }
   .combatant.foe .mob-art {
-    width: clamp(70px, 22vw, 110px); height: clamp(70px, 22vw, 110px);
+    width: clamp(60px, 20vw, 100px); height: clamp(60px, 20vw, 100px);
     border: 3px solid #4a1080;
     box-shadow: 0 2px 6px rgba(74,16,128,0.4);
   }
   .combatant.mine .mob-art {
-    width: clamp(96px, 30vw, 150px); height: clamp(96px, 30vw, 150px);
+    width: clamp(80px, 26vw, 130px); height: clamp(80px, 26vw, 130px);
     border: 3px solid #ff6fa8;
     box-shadow: 0 3px 8px rgba(255,111,168,0.4);
   }
@@ -522,6 +511,58 @@
     background: linear-gradient(90deg, #ff8fc0, #ffd700);
     width: 100%;
     transition: width 0.05s linear;
+  }
+
+  /* ===== 縦持ちスマホ（短い画面）向け 戦闘UI 縮小 ===== */
+  @media (max-height: 760px) {
+    #battle-top { padding: 38px 6px 4px; gap: 3px; }
+    #turn-label { font-size: 12px; padding: 3px 10px; min-width: 50%; }
+    .combatant { padding: 4px 6px 5px; }
+    .combatant.foe .mob-art {
+      width: clamp(54px, 18vw, 88px); height: clamp(54px, 18vw, 88px);
+    }
+    .combatant.mine .mob-art {
+      width: clamp(72px, 23vw, 116px); height: clamp(72px, 23vw, 116px);
+    }
+    .combatant.foe { transform: scale(0.78); }
+    .combatant.mine { transform: scale(1.02); }
+    .combatant.foe.shake { animation: shakeFoeSmall 0.45s; }
+    .combatant.mine.shake { animation: shakeMineSmall 0.45s; }
+    @keyframes shakeFoeSmall {
+      0%, 100% { transform: scale(0.78) translateX(0); }
+      20% { transform: scale(0.78) translateX(-8px); }
+      40% { transform: scale(0.78) translateX(8px); }
+      60% { transform: scale(0.78) translateX(-6px); }
+      80% { transform: scale(0.78) translateX(6px); }
+    }
+    @keyframes shakeMineSmall {
+      0%, 100% { transform: scale(1.02) translateX(0); }
+      20% { transform: scale(1.02) translateX(-8px); }
+      40% { transform: scale(1.02) translateX(8px); }
+      60% { transform: scale(1.02) translateX(-6px); }
+      80% { transform: scale(1.02) translateX(6px); }
+    }
+    .combatant.foe .name { font-size: 12px; }
+    .combatant.mine .name { font-size: 13px; }
+    .combatant .hpbar { height: 8px; margin-top: 2px; }
+    .combatant.foe .hpbar { height: 7px; }
+    .combatant .mpbar { height: 5px; margin-top: 2px; }
+    .combatant .hptext { font-size: 10px; margin-top: 1px; }
+    #tap-button { height: 84px; font-size: 18px; }
+    #battle-message { font-size: 12px; padding: 6px 10px; min-height: 32px; margin: 2px 0; }
+    #battle-bottom { padding: 6px; }
+    #cmd-grid { gap: 6px; }
+    #cmd-grid .btn { font-size: 12px; padding: 8px 6px; }
+  }
+  @media (max-height: 640px) {
+    #battle-top { padding: 32px 4px 2px; }
+    .combatant.foe .mob-art {
+      width: clamp(48px, 16vw, 76px); height: clamp(48px, 16vw, 76px);
+    }
+    .combatant.mine .mob-art {
+      width: clamp(60px, 20vw, 100px); height: clamp(60px, 20vw, 100px);
+    }
+    #tap-button { height: 70px; font-size: 16px; }
   }
 
   /* Sub menu / list */
@@ -1012,13 +1053,8 @@
   <div id="field-area">
     <canvas id="field-canvas"></canvas>
     <div id="encounter-mark">！</div>
-    <!-- Virtual D-Pad (mobile) -->
-    <div id="dpad">
-      <button class="dpad-btn dpad-up"   data-dir="up">▲</button>
-      <button class="dpad-btn dpad-left" data-dir="left">◀</button>
-      <button class="dpad-btn dpad-down" data-dir="down">▼</button>
-      <button class="dpad-btn dpad-right" data-dir="right">▶</button>
-    </div>
+    <!-- ドラッグでうごこう！ -->
+    <div id="drag-hint">👆 がめんを ドラッグして うごこう！</div>
   </div>
   <div id="field-bottom">
     <button class="btn yellow" id="btn-field-party"><ruby>手持<rt>ても</rt></ruby>ち</button>
@@ -2667,8 +2703,13 @@ function updateField() {
     if (Math.abs(vx) > Math.abs(vy)) f.dir = vx < 0 ? 'left' : 'right';
     else f.dir = vy < 0 ? 'up' : 'down';
     f.walkPhase = (f.walkPhase + 1) % 6000;
+    f.walking = true;
+  } else if (!f._dragWalking) {
+    // キーボードもドラッグも動いてないとき（ドラッグ側はwindowスコープのフラグで通知）
+    f.walking = false;
   }
-  f.walking = moving;
+  // ドラッグ側のwalkingフラグはこのフレームの最後にリセット（次フレームのドラッグmoveで再セット）
+  f._dragWalking = false;
 
   // mob wandering + encounter check
   const pBox = { x: f.px - PLAYER_SIZE * 0.35, y: f.py - PLAYER_SIZE * 0.35, w: PLAYER_SIZE * 0.7, h: PLAYER_SIZE * 0.7 };
@@ -2800,7 +2841,7 @@ function stopFieldLoop() {
   if (fieldAutoSaveTimer) { clearInterval(fieldAutoSaveTimer); fieldAutoSaveTimer = null; }
   // release any held keys
   fieldKeys.up = fieldKeys.down = fieldKeys.left = fieldKeys.right = false;
-  document.querySelectorAll('.dpad-btn').forEach(b => b.classList.remove('active'));
+  // ドラッグ操作は fieldRunning フラグで自動停止される（dragMoveHandler内でチェック）
 }
 
 // ===================== BATTLE =====================
@@ -3013,7 +3054,17 @@ function doMyAttack(tapCount, skillKey) {
       const sHeal = Math.floor(meStats.hp * skill.healAmt);
       if (sHeal > 0) {
         battle.me.mon.hp = Math.min(meStats.hp, battle.me.mon.hp + sHeal);
-        setTimeout(() => { spawnDmg('my-row', sHeal, 'heal'); sfxHeal(); refreshBattleUI(); }, 400);
+        setTimeout(() => {
+          // 緑のキラキラパーティクル＋「+◯HP」のグリーンテキスト
+          spawnParticles('my-row', '✨');
+          spawnParticles('my-row', '💚');
+          spawnDmg('my-row', sHeal, 'heal');
+          sfxHeal();
+          refreshBattleUI();
+          // メッセージにも回復を追記
+          const cur = $('battle-message');
+          if (cur) cur.innerHTML += '<br>あいの ちからで +' + sHeal + ' HP かいふく！';
+        }, 400);
       }
     }
   }
@@ -3748,7 +3799,7 @@ function setupUI() {
 
   // tap button
   attachTap($('tap-button'), tapHit);
-  // ----- Field controls (PC keyboard + Mobile D-pad) -----
+  // ----- Field controls (PC keyboard + ドラッグ操作 sakudragon方式) -----
   const keyMap = {
     'ArrowUp':'up','ArrowDown':'down','ArrowLeft':'left','ArrowRight':'right',
     'KeyW':'up','KeyS':'down','KeyA':'left','KeyD':'right',
@@ -3775,32 +3826,114 @@ function setupUI() {
       e.preventDefault();
     }
   });
-  // D-pad — touch & mouse with hold
-  document.querySelectorAll('.dpad-btn').forEach(btn => {
-    const dir = btn.dataset.dir;
-    const press = (e) => {
-      e.preventDefault();
-      fieldKeys[dir] = true;
-      btn.classList.add('active');
-    };
-    const release = (e) => {
-      if (e) e.preventDefault();
-      fieldKeys[dir] = false;
-      btn.classList.remove('active');
-    };
-    btn.addEventListener('touchstart', press, { passive: false });
-    btn.addEventListener('touchend', release, { passive: false });
-    btn.addEventListener('touchcancel', release, { passive: false });
-    btn.addEventListener('mousedown', press);
-    btn.addEventListener('mouseup', release);
-    btn.addEventListener('mouseleave', release);
-    // Prevent context menu / selection
-    btn.addEventListener('contextmenu', e => e.preventDefault());
-  });
-  // Stop movement when window loses focus
+  // ===== sakudragon式 ドラッグ操作（フィールドCanvas全域・相対ドラッグ・360度自由移動） =====
+  // タッチ／マウス開始時にドラッグ開始位置とプレイヤー初期位置を記録、
+  // 移動時に差分を加算する相対方式。
+  const fieldCanvas = $('field-canvas');
+  let dragActive = false;
+  let dragTouchId = null;          // 'mouse' or touch identifier
+  let dragStart = { x: 0, y: 0 };  // ドラッグ開始のクライアント座標
+  let dragStartPlayer = { x: 0, y: 0 };
+  let dragHintShown = true;
+
+  function fieldClientToWorldDelta(dx, dy) {
+    // canvas表示サイズ→ワールド座標スケール（cssサイズで動かしたぶんを世界座標に変換）
+    if (!fieldCanvas) return { dx: 0, dy: 0 };
+    const rect = fieldCanvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return { dx: 0, dy: 0 };
+    // canvas内部座標とCSS表示の比率はキャンバスサイズに対応するが、ワールド座標はピクセル単位なので
+    // CSS pxをそのままワールドpxに使う（dpr補正は drawField 側でctx.setTransformで処理済み）
+    return { dx, dy };
+  }
+  function dragHintHide() {
+    if (!dragHintShown) return;
+    dragHintShown = false;
+    const hint = $('drag-hint');
+    if (hint) {
+      hint.classList.add('fade');
+      setTimeout(() => { if (hint && hint.parentNode) hint.style.display = 'none'; }, 500);
+    }
+  }
+  function fieldDragStart(e, touch) {
+    if (!fieldRunning) return;
+    if (dragActive) return;
+    let cx, cy, id;
+    if (touch) { cx = touch.clientX; cy = touch.clientY; id = touch.identifier; }
+    else { cx = e.clientX; cy = e.clientY; id = 'mouse'; }
+    dragActive = true;
+    dragTouchId = id;
+    dragStart.x = cx; dragStart.y = cy;
+    if (state.field) {
+      dragStartPlayer.x = state.field.px;
+      dragStartPlayer.y = state.field.py;
+    }
+    dragHintHide();
+  }
+  function fieldDragMove(e, touch) {
+    if (!dragActive) return;
+    if (!fieldRunning || !state.field) { dragActive = false; dragTouchId = null; return; }
+    let cx, cy;
+    if (touch) { cx = touch.clientX; cy = touch.clientY; }
+    else { cx = e.clientX; cy = e.clientY; }
+    const ddx = cx - dragStart.x;
+    const ddy = cy - dragStart.y;
+    const w = fieldClientToWorldDelta(ddx, ddy);
+    const f = state.field;
+    const oldX = f.px, oldY = f.py;
+    f.px = clamp(dragStartPlayer.x + w.dx, 24, WORLD_W - 24);
+    f.py = clamp(dragStartPlayer.y + w.dy, 24, WORLD_H - 24);
+    // 向きを移動方向で更新（4方向）
+    const mvX = f.px - oldX, mvY = f.py - oldY;
+    if (Math.abs(mvX) > 0.2 || Math.abs(mvY) > 0.2) {
+      if (Math.abs(mvX) > Math.abs(mvY)) f.dir = mvX < 0 ? 'left' : 'right';
+      else f.dir = mvY < 0 ? 'up' : 'down';
+      f.walking = true;
+      f._dragWalking = true; // updateFieldにドラッグ中walkingを通知
+      f.walkPhase = (f.walkPhase + 1) % 6000;
+    }
+  }
+  function fieldDragEnd() {
+    dragActive = false;
+    dragTouchId = null;
+    if (state.field) state.field.walking = false;
+  }
+
+  if (fieldCanvas) {
+    fieldCanvas.addEventListener('touchstart', e => {
+      if (dragTouchId !== null) return;
+      const t = e.changedTouches[0];
+      fieldDragStart(e, t);
+    }, { passive: true });
+    fieldCanvas.addEventListener('touchmove', e => {
+      if (dragTouchId === null || dragTouchId === 'mouse') return;
+      for (let i = 0; i < e.touches.length; i++) {
+        if (e.touches[i].identifier === dragTouchId) {
+          fieldDragMove(e, e.touches[i]);
+          e.preventDefault();
+          return;
+        }
+      }
+    }, { passive: false });
+    fieldCanvas.addEventListener('touchend', e => {
+      if (dragTouchId === null || dragTouchId === 'mouse') return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === dragTouchId) {
+          fieldDragEnd();
+          return;
+        }
+      }
+    });
+    fieldCanvas.addEventListener('touchcancel', () => fieldDragEnd());
+    fieldCanvas.addEventListener('mousedown', e => { fieldDragStart(e); });
+    window.addEventListener('mousemove', e => { if (dragTouchId === 'mouse') fieldDragMove(e); });
+    window.addEventListener('mouseup', () => { if (dragTouchId === 'mouse') fieldDragEnd(); });
+    fieldCanvas.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
+  // Stop movement / drag when window loses focus
   window.addEventListener('blur', () => {
     fieldKeys.up = fieldKeys.down = fieldKeys.left = fieldKeys.right = false;
-    document.querySelectorAll('.dpad-btn').forEach(b => b.classList.remove('active'));
+    fieldDragEnd();
   });
 
   // evo next is handled inline in doEvolution (rebound dynamically)
