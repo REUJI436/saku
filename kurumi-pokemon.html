@@ -591,6 +591,49 @@
   }
   #toast.show { opacity: 1; }
 
+  /* Save toast (auto-save indicator: top-right) */
+  #save-toast {
+    position: fixed; top: 12px; right: 12px;
+    background: rgba(255, 138, 191, 0.92);
+    color: #fff;
+    font-weight: bold;
+    padding: 7px 14px;
+    border-radius: 16px;
+    border: 2px solid #fff;
+    box-shadow: 0 3px 10px rgba(214, 51, 132, 0.45);
+    z-index: 999;
+    pointer-events: none;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  #save-toast.show {
+    animation: saveToastFade 1s ease-out forwards;
+  }
+  #save-toast.warn {
+    background: rgba(220, 80, 60, 0.92);
+    border-color: #ffe;
+  }
+  @keyframes saveToastFade {
+    0%   { opacity: 0; transform: translateY(-6px); }
+    15%  { opacity: 1; transform: translateY(0); }
+    70%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-2px); }
+  }
+
+  /* Title last-save text */
+  #title-last-save {
+    position: fixed;
+    right: 10px; bottom: 8px;
+    font-size: 11px;
+    color: #c44d85;
+    background: rgba(255,255,255,0.6);
+    padding: 4px 10px;
+    border-radius: 12px;
+    pointer-events: none;
+    text-shadow: 0 1px 0 #fff;
+  }
+
   /* Modal */
   .modal-bg {
     position: fixed; inset: 0;
@@ -738,6 +781,7 @@
     <button id="btn-new" class="btn">はじめから</button>
     <button id="btn-continue" class="btn blue">つづきから</button>
   </div>
+  <div id="title-last-save" style="display:none;"></div>
 </div>
 
 <!-- ====== STAGE SELECT ====== -->
@@ -895,6 +939,7 @@
 
 <!-- ===== Floating UI ===== -->
 <div id="toast"></div>
+<div id="save-toast"></div>
 
 <div id="modal-bg" class="modal-bg">
   <div class="modal">
@@ -1161,11 +1206,39 @@ function expForNext(lvl) { return Math.floor(8 + lvl * lvl * 1.2); }
 
 // ===================== SAVE / LOAD =====================
 const SAVE_KEY = 'kurumi_pokemon_v1';
+const SAVE_VERSION = 2;
+let lastSaveToastAt = 0;
+
+function showSaveToast(isError) {
+  const now = Date.now();
+  // Spam protection: skip if displayed within the last 1 sec (errors always show)
+  if (!isError && now - lastSaveToastAt < 1000) return;
+  lastSaveToastAt = now;
+  const el = $('save-toast');
+  if (!el) return;
+  el.classList.toggle('warn', !!isError);
+  el.innerHTML = isError ? '⚠️ セーブできませんでした' : '💾 セーブしました';
+  // Restart animation
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
 function saveGame(silent) {
+  // Don't overwrite a real save with the empty default state
+  // (when user is still on the title screen and hasn't started/loaded yet)
+  if (!state || !state.party || state.party.length === 0) return;
   try {
+    state.version = SAVE_VERSION;
+    state.lastSavedAt = Date.now();
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    showSaveToast(false);
     if (!silent) showToast('💾 ほぞんしました！');
-  } catch(e) { showToast('ほぞんに しっぱい'); }
+  } catch(e) {
+    console.warn('saveGame failed:', e);
+    showSaveToast(true);
+    if (!silent) showToast('ほぞんに しっぱい');
+  }
 }
 function loadGame() {
   try {
@@ -1175,10 +1248,42 @@ function loadGame() {
     if (!obj || !obj.party) return false;
     state = obj;
     return true;
-  } catch(e) { return false; }
+  } catch(e) {
+    console.warn('loadGame failed:', e);
+    return false;
+  }
 }
 function hasSave() {
   try { return !!localStorage.getItem(SAVE_KEY); } catch(e) { return false; }
+}
+function getSavedMeta() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj) return null;
+    return { lastSavedAt: obj.lastSavedAt || null, version: obj.version || 1 };
+  } catch(e) { return null; }
+}
+function formatSavedTime(ms) {
+  if (!ms) return '';
+  const d = new Date(ms);
+  const M = d.getMonth() + 1;
+  const D = d.getDate();
+  const h = d.getHours();
+  const m = ('0' + d.getMinutes()).slice(-2);
+  return `最終セーブ：${M}月${D}日 ${h}時${m}分`;
+}
+function updateTitleLastSave() {
+  const el = $('title-last-save');
+  if (!el) return;
+  const meta = getSavedMeta();
+  if (meta && meta.lastSavedAt) {
+    el.textContent = formatSavedTime(meta.lastSavedAt);
+    el.style.display = '';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 // ===================== SVG MONSTER ART =====================
@@ -1354,8 +1459,13 @@ function svgKurumi() {
 }
 
 // ===================== TITLE =====================
+function goTitle() {
+  switchScene('title-scene');
+  updateTitleLastSave();
+}
 function initTitle() {
   $('title-art-svg').innerHTML = svgKurumi();
+  updateTitleLastSave();
   attachTap($('btn-new'), () => {
     if (hasSave()) {
       showModal('かくにん', 'いまの ほぞんデータを<br>けして、はじめから<br>あそびますか？', [
@@ -1437,6 +1547,7 @@ function getKurumiImg() {
 let fieldLoop = null;
 let fieldKeys = { up:false, down:false, left:false, right:false };
 let fieldRunning = false;
+let fieldAutoSaveTimer = null;
 
 function enterStage(stage) {
   state.curStage = stage.id;
@@ -1454,6 +1565,7 @@ function enterStage(stage) {
     bgKey: stage.bg
   };
   switchScene('field-scene');
+  saveGame(true);
   startFieldLoop();
 }
 
@@ -1723,12 +1835,18 @@ function startFieldLoop() {
   requestAnimationFrame(() => {
     if (fieldRunning) fieldLoop = requestAnimationFrame(tick);
   });
+  // Auto-save every 5 seconds while exploring the field
+  if (fieldAutoSaveTimer) clearInterval(fieldAutoSaveTimer);
+  fieldAutoSaveTimer = setInterval(() => {
+    if (fieldRunning) saveGame(true);
+  }, 5000);
 }
 
 function stopFieldLoop() {
   fieldRunning = false;
   if (fieldLoop) cancelAnimationFrame(fieldLoop);
   fieldLoop = null;
+  if (fieldAutoSaveTimer) { clearInterval(fieldAutoSaveTimer); fieldAutoSaveTimer = null; }
   // release any held keys
   fieldKeys.up = fieldKeys.down = fieldKeys.left = fieldKeys.right = false;
   document.querySelectorAll('.dpad-btn').forEach(b => b.classList.remove('active'));
@@ -2039,6 +2157,7 @@ function returnToFieldOrStage() {
   } else {
     enterStageRefresh();
   }
+  saveGame(true);
 }
 
 function enterStageRefresh() {
@@ -2102,6 +2221,8 @@ function showLevelup(ups, after) {
   const banner = $('levelup-banner');
   banner.classList.add('show');
   sfxLevel();
+  // Save after each individual level-up
+  saveGame(true);
   setTimeout(() => {
     banner.classList.remove('show');
     setTimeout(() => showLevelup(ups, after), 200);
@@ -2349,6 +2470,7 @@ function cmdRun() {
     setBattleMessage('うまく にげられた！');
     sfxTap();
     battle.ended = true;
+    saveGame(true);
     setTimeout(() => returnToFieldOrStage(), 1000);
   } else {
     setBattleMessage('にげられない！');
@@ -2556,6 +2678,7 @@ function setupUI() {
     state.field = null;
     state.curStage = null;
     goStageSelect();
+    saveGame(true);
   });
 
   // party
