@@ -32,6 +32,18 @@
   }
   #portalBtn:active { transform: scale(0.92); opacity: 0.85; }
 
+  #muteBtn {
+    position: fixed; top: 8px; right: 8px; z-index: 9999;
+    background: linear-gradient(to bottom, #80c8f5, #2a6da6);
+    color: #fff; border: 2px solid #fff;
+    padding: 6px 10px; border-radius: 50%;
+    font-size: 18px; font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    touch-action: manipulation; cursor: pointer;
+    line-height: 1;
+  }
+  #muteBtn:active { transform: scale(0.92); opacity: 0.85; }
+
   /* Scene container */
   .scene {
     position: fixed; inset: 0;
@@ -1204,6 +1216,7 @@
 <body>
 
 <a id="portalBtn" href="./">🏠</a>
+<button id="muteBtn" type="button" aria-label="サウンド">🔊</button>
 
 <!-- ====== TITLE ====== -->
 <div id="title-scene" class="scene active">
@@ -1455,6 +1468,14 @@ function switchScene(id) {
   if (id === 'title-scene' && typeof window._refreshDragModeLabel === 'function') {
     window._refreshDragModeLabel();
   }
+  if (typeof playBgm === 'function') {
+    if (id === 'title-scene') playBgm('title');
+    else if (id === 'field-scene') {
+      const sid = (typeof state !== 'undefined' && state && state.curStage) ? state.curStage : 1;
+      playBgm('stage' + sid);
+    }
+    else if (id === 'battle-scene') playBgm('battle');
+  }
 }
 
 // ===================== AUDIO =====================
@@ -1465,7 +1486,11 @@ function ensureAudio() {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch(e) { return null; }
   }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx.state === 'suspended') {
+    const p = audioCtx.resume();
+    if (p && p.then) p.then(() => { if (_bgmStartPending) _bgmStart(); });
+  }
+  if (_bgmStartPending && audioCtx.state === 'running') _bgmStart();
   return audioCtx;
 }
 function sfx(freq, dur, type, vol) {
@@ -1492,6 +1517,206 @@ function sfxWin() { sfxLevel(); setTimeout(()=>sfx(1047, 0.25, 'square', 0.18), 
 function sfxLose() { sfx(330, 0.2, 'sawtooth', 0.18); setTimeout(()=>sfx(220, 0.3, 'sawtooth', 0.18), 200); }
 function sfxCatch() { sfx(660, 0.08, 'sine', 0.12); setTimeout(()=>sfx(440, 0.08, 'sine', 0.12), 100); setTimeout(()=>sfx(880, 0.2, 'sine', 0.16), 200); }
 function sfxEvo() { for (let i=0; i<6; i++) setTimeout(()=>sfx(440 + i*120, 0.08, 'square', 0.12), i*120); }
+
+// ===================== BGM =====================
+let _bgm = null;
+let _bgmTimer = null;
+let _bgmGainNode = null;
+let _bgmStartPending = null;
+let _bgmActiveNodes = [];
+const _BGM_BASE_VOL = 0.10;
+
+function _noteHz(n) {
+  if (n === 0 || n == null) return 0;
+  const map = {C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};
+  const m = String(n).match(/^([A-G][b#]?)(-?\d)$/);
+  if (!m) return 0;
+  const semis = map[m[1]] + (parseInt(m[2],10) - 4) * 12 - 9;
+  return 440 * Math.pow(2, semis / 12);
+}
+
+const BGM_TRACKS = {
+  title: { tempo: 110, leadType:'square', bassType:'triangle',
+    lead: [
+      {n:'G4',d:0.25},{n:'C5',d:0.25},{n:'E5',d:0.25},{n:'G5',d:0.5},{n:'E5',d:0.25},
+      {n:'C5',d:0.25},{n:'D5',d:0.5},{n:0,d:0.25},
+      {n:'F5',d:0.25},{n:'E5',d:0.25},{n:'D5',d:0.5},{n:'C5',d:0.5},
+      {n:'G4',d:0.25},{n:'A4',d:0.25},{n:'B4',d:0.25},{n:'C5',d:0.75},{n:0,d:0.25},
+    ],
+    bass: [
+      {n:'C3',d:0.5},{n:'G3',d:0.5},{n:'C3',d:0.5},{n:'G3',d:0.5},
+      {n:'F3',d:0.5},{n:'C4',d:0.5},{n:'G3',d:0.5},{n:'C3',d:0.5},
+    ] },
+  stage1: { tempo: 120, leadType:'square', bassType:'triangle',
+    lead: [
+      {n:'F5',d:0.25},{n:'A5',d:0.25},{n:'C6',d:0.25},{n:'A5',d:0.25},
+      {n:'G5',d:0.25},{n:'F5',d:0.25},{n:'D5',d:0.5},
+      {n:'C5',d:0.25},{n:'D5',d:0.25},{n:'F5',d:0.25},{n:'A5',d:0.25},
+      {n:'G5',d:0.5},{n:'F5',d:0.5},
+    ],
+    bass: [
+      {n:'F3',d:0.5},{n:'C4',d:0.5},{n:'F3',d:0.5},{n:'A3',d:0.5},
+      {n:'D3',d:0.5},{n:'A3',d:0.5},{n:'C3',d:0.5},{n:'F3',d:0.5},
+    ] },
+  stage2: { tempo: 92, leadType:'square', bassType:'triangle',
+    lead: [
+      {n:'G4',d:0.5},{n:'B4',d:0.25},{n:'D5',d:0.25},{n:'E5',d:0.5},{n:'D5',d:0.5},
+      {n:'B4',d:0.5},{n:'G4',d:0.5},{n:'A4',d:0.5},{n:0,d:0.5},
+      {n:'D5',d:0.5},{n:'E5',d:0.25},{n:'G5',d:0.25},{n:'D5',d:0.5},{n:'B4',d:0.5},
+      {n:'G4',d:1.0},
+    ],
+    bass: [
+      {n:'G3',d:0.75},{n:'D3',d:0.25},{n:'G3',d:0.5},{n:'B3',d:0.5},
+      {n:'C3',d:0.5},{n:'G3',d:0.5},{n:'D3',d:0.5},{n:'G3',d:0.5},
+    ] },
+  stage3: { tempo: 88, leadType:'sine', bassType:'triangle',
+    lead: [
+      {n:'D5',d:0.75},{n:'F#5',d:0.25},{n:'A5',d:1.0},
+      {n:'G5',d:0.5},{n:'F#5',d:0.5},{n:'E5',d:1.0},
+      {n:'A5',d:0.5},{n:'D6',d:0.5},{n:'C#6',d:0.5},{n:'A5',d:0.5},
+      {n:'F#5',d:1.0},{n:'D5',d:1.0},
+    ],
+    bass: [
+      {n:'D3',d:1.0},{n:'A3',d:1.0},
+      {n:'G3',d:1.0},{n:'A3',d:1.0},
+      {n:'D3',d:1.0},{n:'F#3',d:1.0},
+      {n:'A3',d:1.0},{n:'D3',d:1.0},
+    ] },
+  stage4: { tempo: 84, leadType:'square', bassType:'triangle',
+    lead: [
+      {n:'A4',d:0.5},{n:'C5',d:0.5},{n:'D5',d:0.5},{n:'E5',d:0.5},
+      {n:'D5',d:0.5},{n:'C5',d:0.5},{n:'A4',d:1.0},
+      {n:'G4',d:0.5},{n:'A4',d:0.5},{n:'C5',d:0.5},{n:'D5',d:0.5},
+      {n:'E5',d:1.0},{n:'A4',d:1.0},
+    ],
+    bass: [
+      {n:'A2',d:1.0},{n:'E3',d:1.0},
+      {n:'D3',d:1.0},{n:'A2',d:1.0},
+      {n:'F3',d:1.0},{n:'C3',d:1.0},
+      {n:'E3',d:1.0},{n:'A2',d:1.0},
+    ] },
+  stage5: { tempo: 100, leadType:'square', bassType:'triangle',
+    lead: [
+      {n:'C5',d:0.5},{n:'E5',d:0.5},{n:'G5',d:0.5},{n:'C6',d:0.75},{n:'B5',d:0.25},
+      {n:'A5',d:0.5},{n:'G5',d:0.5},{n:'F5',d:0.5},{n:'E5',d:0.5},
+      {n:'F5',d:0.5},{n:'A5',d:0.5},{n:'G5',d:1.0},
+      {n:'C5',d:0.5},{n:'D5',d:0.5},{n:'E5',d:1.0},{n:'C5',d:0.5},
+    ],
+    bass: [
+      {n:'C3',d:0.5},{n:'G3',d:0.5},{n:'C3',d:0.5},{n:'G3',d:0.5},
+      {n:'F3',d:0.5},{n:'C4',d:0.5},{n:'A3',d:0.5},{n:'F3',d:0.5},
+      {n:'D3',d:0.5},{n:'A3',d:0.5},{n:'G3',d:0.5},{n:'D4',d:0.5},
+      {n:'C3',d:0.5},{n:'G3',d:0.5},{n:'C3',d:1.0},
+    ] },
+  battle: { tempo: 144, leadType:'square', bassType:'triangle',
+    lead: [
+      {n:'A4',d:0.25},{n:'C5',d:0.25},{n:'E5',d:0.25},{n:'A5',d:0.25},
+      {n:'G#5',d:0.25},{n:'E5',d:0.25},{n:'C5',d:0.25},{n:'A4',d:0.25},
+      {n:'F5',d:0.25},{n:'E5',d:0.25},{n:'D5',d:0.25},{n:'C5',d:0.25},
+      {n:'B4',d:0.25},{n:'D5',d:0.25},{n:'F5',d:0.25},{n:'A5',d:0.25},
+    ],
+    bass: [
+      {n:'A2',d:0.25},{n:'A2',d:0.25},{n:'A2',d:0.25},{n:'A2',d:0.25},
+      {n:'A2',d:0.25},{n:'A2',d:0.25},{n:'A2',d:0.25},{n:'A2',d:0.25},
+      {n:'F2',d:0.25},{n:'F2',d:0.25},{n:'F2',d:0.25},{n:'F2',d:0.25},
+      {n:'E2',d:0.25},{n:'E2',d:0.25},{n:'E2',d:0.25},{n:'E2',d:0.25},
+    ] },
+};
+
+function _bgmPlayNote(track, note, time, isLead) {
+  if (!note || !note.n) return;
+  const hz = _noteHz(note.n);
+  if (!hz) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = isLead ? track.leadType : track.bassType;
+  osc.frequency.value = hz;
+  const vol = isLead ? 0.18 : 0.22;
+  g.gain.setValueAtTime(0, time);
+  g.gain.linearRampToValueAtTime(vol, time + 0.01);
+  g.gain.setValueAtTime(vol, time + note.d * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.001, time + note.d * 0.95);
+  osc.connect(g); g.connect(_bgmGainNode);
+  osc.start(time);
+  osc.stop(time + note.d + 0.05);
+  _bgmActiveNodes.push(osc);
+}
+
+function _bgmScheduleLoop(trackId) {
+  if (_bgm !== trackId || !audioCtx || !_bgmGainNode) return;
+  const track = BGM_TRACKS[trackId];
+  if (!track) return;
+  const beat = 60 / track.tempo;
+  let t = audioCtx.currentTime + 0.05;
+  const startT = t;
+  let leadDur = 0;
+  for (const n of track.lead) { _bgmPlayNote(track, n, t + leadDur*beat, true); leadDur += n.d; }
+  let bassDur = 0;
+  for (const n of track.bass) { _bgmPlayNote(track, n, t + bassDur*beat, false); bassDur += n.d; }
+  const loopDur = Math.max(leadDur, bassDur) * beat;
+  _bgmActiveNodes = _bgmActiveNodes.slice(-32);
+  _bgmTimer = setTimeout(() => _bgmScheduleLoop(trackId), Math.max(50, (loopDur - 0.05) * 1000));
+}
+
+function _bgmStart() {
+  if (!_bgmStartPending) return;
+  ensureAudio();
+  if (!audioCtx || audioCtx.state === 'suspended') return;
+  const trackId = _bgmStartPending;
+  _bgmStartPending = null;
+  _bgm = trackId;
+  if (!_bgmGainNode) {
+    _bgmGainNode = audioCtx.createGain();
+    _bgmGainNode.connect(audioCtx.destination);
+  }
+  const t = audioCtx.currentTime;
+  try {
+    _bgmGainNode.gain.cancelScheduledValues(t);
+    _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, t);
+  } catch(e) {}
+  _bgmScheduleLoop(trackId);
+}
+
+function stopBgm() {
+  _bgm = null;
+  _bgmStartPending = null;
+  if (_bgmTimer) { clearTimeout(_bgmTimer); _bgmTimer = null; }
+  if (_bgmGainNode && audioCtx) {
+    const t = audioCtx.currentTime;
+    try {
+      _bgmGainNode.gain.cancelScheduledValues(t);
+      _bgmGainNode.gain.setValueAtTime(_bgmGainNode.gain.value, t);
+      _bgmGainNode.gain.linearRampToValueAtTime(0, t + 0.08);
+    } catch(e) {}
+  }
+  for (const o of _bgmActiveNodes) { try { o.stop(audioCtx ? audioCtx.currentTime + 0.1 : 0); } catch(e) {} }
+  _bgmActiveNodes = [];
+  if (_bgmGainNode && audioCtx) {
+    setTimeout(() => {
+      if (!_bgm && _bgmGainNode) {
+        try { _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, audioCtx.currentTime); } catch(e) {}
+      }
+    }, 150);
+  }
+}
+
+function playBgm(trackId) {
+  if (!BGM_TRACKS[trackId]) return;
+  if (_bgm === trackId) return;
+  stopBgm();
+  _bgmStartPending = trackId;
+  if (audioCtx && audioCtx.state === 'running') _bgmStart();
+}
+
+function _bgmApplyMute() {
+  if (!_bgmGainNode || !audioCtx) return;
+  const t = audioCtx.currentTime;
+  try {
+    _bgmGainNode.gain.cancelScheduledValues(t);
+    _bgmGainNode.gain.setValueAtTime(_bgmGainNode.gain.value, t);
+    _bgmGainNode.gain.linearRampToValueAtTime(muted ? 0 : _BGM_BASE_VOL, t + 0.08);
+  } catch(e) {}
+}
 
 // ===================== MONSTER DATABASE =====================
 // 30 monsters. Some evolve, some don't. Types: pink, sky, yellow, green
@@ -3101,7 +3326,25 @@ function drawMinimap() {
   state.fieldMobs.forEach(m => {
     if (m.defeated) return;
     const mx = m.x * sx, my = m.y * sy;
-    if (m.isBoss) {
+    if (m.isToton) {
+      // とーとん系は ★ で表示（モンスター固有色、伝説は大きめ・グロー付き）
+      const def = getMonsterDef(m.id);
+      const isGod = !!m.isGodToton;
+      const isLegend = !!m.isLegendaryToton;
+      const star = isGod ? '✨' : '★';
+      const size = isGod ? 13 : (isLegend ? 11 : 9);
+      ctx.save();
+      if (isGod || isLegend) {
+        ctx.shadowColor = (def && def.color) ? def.color : '#ffd040';
+        ctx.shadowBlur = 6;
+      }
+      ctx.fillStyle = (def && def.color) ? def.color : '#ffd040';
+      ctx.font = 'bold ' + size + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(star, mx, my);
+      ctx.restore();
+    } else if (m.isBoss) {
       ctx.fillStyle = '#ff3030';
       ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI * 2); ctx.fill();
     } else {
@@ -4997,8 +5240,28 @@ function setupUI() {
   // evo next is handled inline in doEvolution (rebound dynamically)
 
   // prime audio after first gesture
-  document.body.addEventListener('click', ensureAudio, { once: true });
-  document.body.addEventListener('touchstart', ensureAudio, { once: true });
+  const _primeAudio = () => {
+    ensureAudio();
+    if (!_bgm && !_bgmStartPending) {
+      const active = document.querySelector('.scene.active');
+      if (active && active.id === 'title-scene') playBgm('title');
+    }
+  };
+  document.body.addEventListener('click', _primeAudio, { once: true });
+  document.body.addEventListener('touchstart', _primeAudio, { once: true });
+
+  const muteBtn = $('muteBtn');
+  if (muteBtn) {
+    const refreshMuteIcon = () => { muteBtn.textContent = muted ? '🔇' : '🔊'; };
+    refreshMuteIcon();
+    muteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      muted = !muted;
+      refreshMuteIcon();
+      ensureAudio();
+      _bgmApplyMute();
+    });
+  }
 }
 
 setupUI();
