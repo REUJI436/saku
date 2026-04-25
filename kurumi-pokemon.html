@@ -4176,10 +4176,21 @@ function drawField() {
     return;
   }
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const cw = cv.clientWidth, ch = cv.clientHeight;
-  // Guard: canvas not laid out yet (scene just switched). Skip this frame; rAF will retry.
+  let cw = cv.clientWidth, ch = cv.clientHeight;
+  // iOS Safari等でCSSフレックスが効かずcanvasのclientサイズが0のまま
+  // 戻ってくることがあるので、親要素のboundingRectから手動でpxを書き込む。
+  // それでも0なら viewport から推定（ヘッダ+フッタ約140pxを引く）。
   if (cw === 0 || ch === 0) {
-    return;
+    const parent = cv.parentElement;
+    const pr = parent ? parent.getBoundingClientRect() : { width: 0, height: 0 };
+    const ww = window.innerWidth || 360;
+    const wh = window.innerHeight || 640;
+    cw = Math.round(pr.width  || (ww - 4));
+    ch = Math.round(pr.height || (wh - 140));
+    if (cw < 50) cw = Math.max(320, ww - 4);
+    if (ch < 50) ch = Math.max(400, wh - 140);
+    cv.style.width  = cw + 'px';
+    cv.style.height = ch + 'px';
   }
   if (cv.width !== cw * dpr || cv.height !== ch * dpr) {
     cv.width = cw * dpr; cv.height = ch * dpr;
