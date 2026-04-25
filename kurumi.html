@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>♡めいたんてい くるみ♡</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; font-family: "Hiragino Maru Gothic ProN", "Comic Sans MS", sans-serif; }
@@ -646,26 +649,24 @@
   <a href="./" class="portal-back">🏠 ゲームせんたく</a>
 
 <script>
-// ====================== ANDROID TOUCH FIX ======================
-// 一部のAndroid Chromeでは <button> の click イベントがタップで発火しない問題に対応。
-// touchend で確実に click を発火させる（タップ＝同じボタンで開始＆終了したとき）
-(function() {
-  let touchStartBtn = null;
-  document.addEventListener('touchstart', function(e) {
-    touchStartBtn = e.target.closest('button');
-  }, { passive: true });
-  document.addEventListener('touchend', function(e) {
-    const endBtn = e.target.closest('button');
-    if (endBtn && endBtn === touchStartBtn && !endBtn.disabled) {
-      e.preventDefault();  // 後続のクリック合成を抑止して二重発火防止
-      endBtn.click();
-    }
-    touchStartBtn = null;
+// ====================== TAP HELPER ======================
+// Android/iOSのタッチでもボタンが確実に反応するよう、
+// click と touchend の両方を処理する共通ヘルパー。
+// 既存の addEventListener('click', fn) を attachTap(el, fn) に置き換える。
+function attachTap(el, fn) {
+  if (!el) return;
+  let touched = false;
+  el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (!touched || el.disabled) { touched = false; return; }
+    touched = false;
+    e.preventDefault();  // click合成を抑止（二重発火防止）
+    fn.call(el, e);
   }, { passive: false });
-  document.addEventListener('touchcancel', function() {
-    touchStartBtn = null;
-  }, { passive: true });
-})();
+  el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
+  // マウス／PCはclickのみ（タッチ後はpreventDefault済みで来ない）
+  el.addEventListener('click', (e) => fn.call(el, e));
+}
 
 // ====================== CHARACTER SVG ======================
 // Kurumi: extra detailed anime-style eyes, cute features
@@ -1558,7 +1559,7 @@ function showDialogue(step) {
   speak(step.text);
 }
 
-document.getElementById('dialogue-box').addEventListener('click', () => {
+attachTap(document.getElementById('dialogue-box'), () => {
   document.getElementById('char-portrait').classList.remove('speaking');
   speechSynthesis.cancel();
   advance();
@@ -1579,7 +1580,7 @@ function showQuiz(step) {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.textContent = c;
-    btn.addEventListener('click', () => handleQuizAnswer(step, i, btn));
+    attachTap(btn, () => handleQuizAnswer(step, i, btn));
     choicesEl.appendChild(btn);
   });
 }
@@ -1928,7 +1929,7 @@ function showDeduction(step) {
     const div = document.createElement('div');
     div.className = 'suspect';
     div.innerHTML = `${CHARS[s.char]?.svg || ''}<div class="suspect-name">${s.name}</div>`;
-    div.addEventListener('click', () => handleDeduction(step, i, div));
+    attachTap(div, () => handleDeduction(step, i, div));
     grid.appendChild(div);
   });
 }
@@ -1969,7 +1970,7 @@ function showResult(step) {
   }
 }
 
-document.getElementById('result-next-btn').addEventListener('click', () => {
+attachTap(document.getElementById('result-next-btn'), () => {
   if (state.caseIdx + 1 >= CASES.length) return;
   state.caseIdx++;
   state.scriptIdx = 0;
@@ -1982,7 +1983,7 @@ document.getElementById('result-next-btn').addEventListener('click', () => {
   runScript();
 });
 
-document.getElementById('result-btn').addEventListener('click', () => {
+attachTap(document.getElementById('result-btn'), () => {
   localStorage.removeItem(SAVE_KEY);
   state = { caseIdx: 0, scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
   transientQueue = [];
@@ -2086,7 +2087,7 @@ function updateContinueBtn() {
 }
 updateContinueBtn();
 
-document.getElementById('btn-new-game').addEventListener('click', () => {
+attachTap(document.getElementById('btn-new-game'), () => {
   state = { caseIdx: 0, scriptIdx: 0, bg: 'kindergarten', char: null, coins: 0, transformed: false };
   transientQueue = [];
   currentStep = null;
@@ -2094,7 +2095,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
   runScript();
 });
 
-document.getElementById('btn-continue').addEventListener('click', () => {
+attachTap(document.getElementById('btn-continue'), () => {
   if (!hasSave()) return;
   load();
   transientQueue = [];
