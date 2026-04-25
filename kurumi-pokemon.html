@@ -590,6 +590,56 @@
     width: 100%;
     transition: width 0.05s linear;
   }
+  /* ===== パワーゲージ（連打チャージ） ===== */
+  #tap-power-bar {
+    position: relative;
+    width: 100%; max-width: 320px; height: 18px;
+    background: #f5e8ee;
+    border: 2px solid #c44d85;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+  }
+  #tap-power-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #80c8f5 0%, #80c8f5 40%, #ffd700 70%, #ff5050 100%);
+    background-size: 250% 100%;
+    background-position: 0% 0%;
+    transition: width 0.08s ease-out, background-position 0.1s ease-out;
+  }
+  #tap-power-bar.charging-high #tap-power-fill {
+    animation: tapPowerShimmer 0.4s linear infinite;
+  }
+  #tap-power-bar.crit-zone {
+    border-color: #fff;
+    box-shadow: 0 0 12px #ffd700, 0 0 24px #ff5050, inset 0 0 8px #fff;
+  }
+  #tap-power-bar.crit-zone #tap-power-fill {
+    background: linear-gradient(90deg, #ff80c0 0%, #ffd700 50%, #ff3030 100%);
+    animation: tapPowerShimmer 0.25s linear infinite;
+  }
+  @keyframes tapPowerShimmer {
+    0%   { filter: brightness(1.0); }
+    50%  { filter: brightness(1.5) saturate(1.4); }
+    100% { filter: brightness(1.0); }
+  }
+  #tap-power-label {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: bold; color: #6b2350;
+    text-shadow: 0 0 3px #fff, 0 0 3px #fff;
+    pointer-events: none;
+    letter-spacing: 1px;
+  }
+  #tap-button.crit-glow {
+    box-shadow: 0 4px 0 #c44d85, 0 0 18px #ffd700, 0 0 32px #ff5050, inset 0 0 24px rgba(255,255,255,0.8) !important;
+    animation: tapBtnPulse 0.3s ease-in-out infinite alternate;
+  }
+  @keyframes tapBtnPulse {
+    from { transform: scale(1.0); }
+    to   { transform: scale(1.04); }
+  }
 
   /* ===== 縦持ちスマホ（短い画面）向け 戦闘UI 縮小 ===== */
   @media (max-height: 760px) {
@@ -1596,6 +1646,10 @@
         <div class="pill"><span class="lbl">タップ</span><span id="tap-count">0</span>かい</div>
       </div>
       <div id="tap-timer-bar"><div id="tap-timer-fill"></div></div>
+      <div id="tap-power-bar" aria-label="パワーゲージ">
+        <div id="tap-power-fill"></div>
+        <div id="tap-power-label">パワー</div>
+      </div>
       <button id="tap-button">れんだ！！</button>
     </div>
   </div>
@@ -1747,24 +1801,28 @@ function switchScene(id) {
     window._refreshDragModeLabel();
   }
   if (typeof playBgm === 'function') {
-    if (id === 'title-scene') playBgm('title');
-    else if (id === 'stage-scene') {
-      // ワールドマップ表示中はタイトル曲を流用
-      playBgm('title');
-    }
-    else if (id === 'field-scene') {
-      // curStage は 'W-K' 形式の文字列。先頭のワールドIDで stageX BGM を選ぶ
-      let worldId = 1;
-      if (typeof state !== 'undefined' && state && state.curStage) {
-        const cs = String(state.curStage);
-        const m = cs.match(/^(\d+)/);
-        if (m) worldId = parseInt(m[1], 10);
+    try {
+      if (id === 'title-scene') playBgm('title');
+      else if (id === 'stage-scene') {
+        // ワールドマップ表示中はタイトル曲を流用
+        playBgm('title');
       }
-      playBgm('stage' + worldId);
-    }
-    else if (id === 'battle-scene') {
-      const isTotonBattle = (typeof battle !== 'undefined' && battle && battle.isToton);
-      playBgm(isTotonBattle ? 'totonBattle' : 'battle');
+      else if (id === 'field-scene') {
+        // curStage は 'W-K' 形式の文字列。先頭のワールドIDで stageX BGM を選ぶ
+        let worldId = 1;
+        if (typeof state !== 'undefined' && state && state.curStage) {
+          const cs = String(state.curStage);
+          const m = cs.match(/^(\d+)/);
+          if (m) worldId = parseInt(m[1], 10);
+        }
+        playBgm('stage' + worldId);
+      }
+      else if (id === 'battle-scene') {
+        const isTotonBattle = (typeof battle !== 'undefined' && battle && battle.isToton);
+        playBgm(isTotonBattle ? 'totonBattle' : 'battle');
+      }
+    } catch (err) {
+      console.error('[switchScene:BGM]', id, err);
     }
   }
 }
@@ -1977,22 +2035,27 @@ function _bgmScheduleLoop(trackId) {
 }
 
 function _bgmStart() {
-  if (!_bgmStartPending) return;
-  ensureAudio();
-  if (!audioCtx || audioCtx.state === 'suspended') return;
-  const trackId = _bgmStartPending;
-  _bgmStartPending = null;
-  _bgm = trackId;
-  if (!_bgmGainNode) {
-    _bgmGainNode = audioCtx.createGain();
-    _bgmGainNode.connect(audioCtx.destination);
-  }
-  const t = audioCtx.currentTime;
   try {
-    _bgmGainNode.gain.cancelScheduledValues(t);
-    _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, t);
-  } catch(e) {}
-  _bgmScheduleLoop(trackId);
+    if (!_bgmStartPending) return;
+    ensureAudio();
+    if (!audioCtx || audioCtx.state === 'suspended') return;
+    const trackId = _bgmStartPending;
+    _bgmStartPending = null;
+    _bgm = trackId;
+    if (!_bgmGainNode) {
+      _bgmGainNode = audioCtx.createGain();
+      _bgmGainNode.connect(audioCtx.destination);
+    }
+    const t = audioCtx.currentTime;
+    try {
+      _bgmGainNode.gain.cancelScheduledValues(t);
+      _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, t);
+    } catch(e) {}
+    console.log('[_bgmStart] start', trackId, 'muted=', muted);
+    _bgmScheduleLoop(trackId);
+  } catch (err) {
+    console.error('[_bgmStart]', err);
+  }
 }
 
 function stopBgm() {
@@ -2041,13 +2104,16 @@ function _bgmApplyMute() {
 // Each: id, name, type, color (hex), shape (svg generator key), face (emoji), baseHP/atk/def/spd, learnset (level: skill), evo (level/to)
 
 const TYPES = {
-  pink:   { name: 'ピンク',     color: '#ff8fc0', dark: '#d63384' },
-  sky:    { name: 'みずいろ', color: '#80c8f5', dark: '#2a6da6' },
-  yellow: { name: 'きいろ',     color: '#ffd700', dark: '#c08820' },
-  green:  { name: 'みどり',     color: '#90d870', dark: '#4a8030' },
-  purple: { name: 'むらさき', color: '#c8a0f0', dark: '#6030a0' },
-  human:  { name: 'ヒト',       color: '#888888', dark: '#4a4a4a' },
-  red:    { name: 'あか',       color: '#ff5050', dark: '#c01818' }
+  pink:        { name: 'ピンク',     color: '#ff8fc0', dark: '#d63384' },
+  sky:         { name: 'みずいろ', color: '#80c8f5', dark: '#2a6da6' },
+  yellow:      { name: 'きいろ',     color: '#ffd700', dark: '#c08820' },
+  green:       { name: 'みどり',     color: '#90d870', dark: '#4a8030' },
+  purple:      { name: 'むらさき', color: '#c8a0f0', dark: '#6030a0' },
+  human:       { name: 'ヒト',       color: '#888888', dark: '#4a4a4a' },
+  red:         { name: 'あか',       color: '#ff5050', dark: '#c01818' },
+  // 伝説／メガEXとーとん（テラスタル）用：未登録だと svgMon→TYPES[...].dark で例外、
+  // 戦闘 refreshBattleUI が落ちて HP が減らず固まる致命バグの原因になっていた。
+  'human-god': { name: 'でんせつ',   color: '#ff80ff', dark: '#a000a0' }
 };
 
 // タイプ相性表（与ダメージ倍率）。未指定は1.0倍。
@@ -2682,7 +2748,9 @@ function svgMon(mon) {
   const def = getMonsterDef(mon.id || mon);
   if (!def) return '';
   const c = def.color;
-  const dark = TYPES[def.type].dark;
+  // 未登録タイプでも落ちないようにフォールバック（過去にこれで戦闘が固まったことあり）
+  const t = TYPES[def.type] || { dark: '#444' };
+  const dark = t.dark || '#444';
   const face = def.face;
   return svgShape(def.shape, c, dark, face, def.evoStage || 0);
 }
@@ -5107,63 +5175,77 @@ function activeMon() {
 }
 
 function startBattle(fieldMob, idx) {
-  if (!activeMon()) {
-    showToast('たたかえる モンスターが いないよ！<br>かいふくしてね');
-    return;
+  // 安全網：エンカウント時の「!」マークから戦闘画面に進めず固まるバグを防止
+  try {
+    if (!activeMon()) {
+      showToast('たたかえる モンスターが いないよ！<br>かいふくしてね');
+      return;
+    }
+    const foe = makeMon(fieldMob.id, fieldMob.lvl);
+    const foeStats = monStats(foe);
+    battle = {
+      foe: { mon: foe, def: getMonsterDef(foe.id), stats: foeStats, hpMax: foeStats.hp },
+      me: { mon: activeMon() },
+      fieldIdx: idx,
+      isBoss: fieldMob.isBoss,
+      isToton: !!fieldMob.isToton || foe.id === 99,
+      turn: 'me',
+      ended: false,
+      confused: false  // 自分の次ターン技外し用
+    };
+    battle.foe.mon.hp = foeStats.hp;
+    refreshBattleUI();
+    if (battle.isToton) {
+      const fid = battle.foe.mon.id;
+      if (fid === 96)      setBattleMessage('⚡ <ruby>雷<rt>かみなり</rt></ruby>とーとん が あらわれた！');
+      else if (fid === 97) setBattleMessage('🔥 <ruby>炎<rt>ほのお</rt></ruby>とーとん が あらわれた！');
+      else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が あらわれた！');
+      else if (fid === 95) setBattleMessage('!? テラスタルとーとんキョダイマックス…！？<br>せかいの あいだから あらわれた！');
+      else                 setBattleMessage('まさかの <ruby>人間<rt>にんげん</rt></ruby> 「とーとん」 が あらわれた！');
+    } else {
+      setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が あらわれた！');
+    }
+    switchScene('battle-scene');
+    setTurnUI('me');
+    showCommands();
+  } catch (err) {
+    console.error('[startBattle]', err);
+    showToast('せんとうの じゅんびに しっぱい… フィールドに もどるね');
+    // フィールドに戻して、ループを再開（フリーズ回避）
+    try { switchScene('field-scene'); } catch(e) {}
+    try { fieldRunning = true; if (typeof startFieldLoop === 'function') startFieldLoop(); } catch(e) {}
   }
-  const foe = makeMon(fieldMob.id, fieldMob.lvl);
-  const foeStats = monStats(foe);
-  battle = {
-    foe: { mon: foe, def: getMonsterDef(foe.id), stats: foeStats, hpMax: foeStats.hp },
-    me: { mon: activeMon() },
-    fieldIdx: idx,
-    isBoss: fieldMob.isBoss,
-    isToton: !!fieldMob.isToton || foe.id === 99,
-    turn: 'me',
-    ended: false,
-    confused: false  // 自分の次ターン技外し用
-  };
-  battle.foe.mon.hp = foeStats.hp;
-  refreshBattleUI();
-  if (battle.isToton) {
-    const fid = battle.foe.mon.id;
-    if (fid === 96)      setBattleMessage('⚡ <ruby>雷<rt>かみなり</rt></ruby>とーとん が あらわれた！');
-    else if (fid === 97) setBattleMessage('🔥 <ruby>炎<rt>ほのお</rt></ruby>とーとん が あらわれた！');
-    else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が あらわれた！');
-    else if (fid === 95) setBattleMessage('!? テラスタルとーとんキョダイマックス…！？<br>せかいの あいだから あらわれた！');
-    else                 setBattleMessage('まさかの <ruby>人間<rt>にんげん</rt></ruby> 「とーとん」 が あらわれた！');
-  } else {
-    setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が あらわれた！');
-  }
-  switchScene('battle-scene');
-  setTurnUI('me');
-  showCommands();
 }
 
 function refreshBattleUI() {
-  // foe (% only, lighter info)
-  const f = battle.foe;
-  $('foe-art').innerHTML = svgMon(f.mon.id);
-  $('foe-name').innerHTML = `👾 ${f.def.name} <small style="font-size:10px">Lv${f.mon.lvl}</small>`;
-  const fpct = (f.mon.hp / f.hpMax) * 100;
-  const fill = $('foe-hpfill');
-  fill.style.width = fpct + '%';
-  fill.classList.toggle('mid', fpct < 50 && fpct >= 25);
-  fill.classList.toggle('low', fpct < 25);
-  $('foe-hptext').textContent = `HP ${Math.ceil(fpct)}%`;
-  // me (full HP/MP detail)
-  const m = battle.me.mon;
-  const mDef = getMonsterDef(m.id);
-  const mStats = monStats(m);
-  $('my-art').innerHTML = svgMon(m.id);
-  $('my-name').innerHTML = `💗 ${mDef.name} <small style="font-size:10px">Lv${m.lvl}</small>`;
-  const mpct = (m.hp / mStats.hp) * 100;
-  const mfill = $('my-hpfill');
-  mfill.style.width = mpct + '%';
-  mfill.classList.toggle('mid', mpct < 50 && mpct >= 25);
-  mfill.classList.toggle('low', mpct < 25);
-  $('my-hptext').textContent = `HP ${m.hp}/${mStats.hp}  MP ${m.mp}/${mStats.mp}`;
-  $('my-mpfill').style.width = clamp(m.mp / mStats.mp * 100, 0, 100) + '%';
+  // 安全網：ここで例外を出すと doMyAttack が止まり戦闘が固まる。
+  try {
+    // foe (% only, lighter info)
+    const f = battle.foe;
+    $('foe-art').innerHTML = svgMon(f.mon.id);
+    $('foe-name').innerHTML = `👾 ${f.def.name} <small style="font-size:10px">Lv${f.mon.lvl}</small>`;
+    const fpct = (f.mon.hp / f.hpMax) * 100;
+    const fill = $('foe-hpfill');
+    fill.style.width = fpct + '%';
+    fill.classList.toggle('mid', fpct < 50 && fpct >= 25);
+    fill.classList.toggle('low', fpct < 25);
+    $('foe-hptext').textContent = `HP ${Math.ceil(fpct)}%`;
+    // me (full HP/MP detail)
+    const m = battle.me.mon;
+    const mDef = getMonsterDef(m.id);
+    const mStats = monStats(m);
+    $('my-art').innerHTML = svgMon(m.id);
+    $('my-name').innerHTML = `💗 ${mDef.name} <small style="font-size:10px">Lv${m.lvl}</small>`;
+    const mpct = (m.hp / mStats.hp) * 100;
+    const mfill = $('my-hpfill');
+    mfill.style.width = mpct + '%';
+    mfill.classList.toggle('mid', mpct < 50 && mpct >= 25);
+    mfill.classList.toggle('low', mpct < 25);
+    $('my-hptext').textContent = `HP ${m.hp}/${mStats.hp}  MP ${m.mp}/${mStats.mp}`;
+    $('my-mpfill').style.width = clamp(m.mp / mStats.mp * 100, 0, 100) + '%';
+  } catch (err) {
+    console.error('[refreshBattleUI]', err);
+  }
 }
 
 function setTurnUI(who) {
@@ -5219,6 +5301,22 @@ function hideCommands() {
 
 // ----- TAP ARENA -----
 let tap = null;
+// パワーゲージ満タンとなる目安タップ数（クリティカルゾーンと連動）
+const TAP_POWER_FULL = 30;
+const TAP_CRIT_ZONE  = 25;
+function _resetTapPowerUI() {
+  const bar  = $('tap-power-bar');
+  const fill = $('tap-power-fill');
+  const lbl  = $('tap-power-label');
+  const tb   = $('tap-button');
+  if (fill) { fill.style.width = '0%'; fill.style.backgroundPosition = '0% 0%'; }
+  if (bar)  { bar.classList.remove('charging-high', 'crit-zone'); }
+  if (lbl)  { lbl.textContent = 'パワー'; }
+  if (tb)   {
+    tb.classList.remove('crit-glow');
+    tb.style.background = '';
+  }
+}
 function startTapPhase(skillKey) {
   hideCommands();
   hideAllSubPanels();
@@ -5228,6 +5326,7 @@ function startTapPhase(skillKey) {
   // タイマーは止めて初期表示（1回目のタップで動き出す）
   $('tap-timer-text').textContent = (tap.duration / 1000).toFixed(1);
   $('tap-timer-fill').style.width = (tap.duration / 30) + '%';
+  _resetTapPowerUI();
   setBattleMessage(skillKey ? SKILLS[skillKey].name + ' を じゅんびちゅう！<br>1かいタップで タイマースタート！' : '1かいタップで タイマースタート！');
 }
 
@@ -5236,7 +5335,7 @@ function tapHit() {
   // 初回タップでタイマー起動
   if (tap.end == null) {
     tap.end = Date.now() + tap.duration;
-    setBattleMessage('れんだ！');
+    setBattleMessage('れんだ！ パワーを ためよう！');
     const tick = () => {
       if (!tap) return;
       const left = tap.end - Date.now();
@@ -5249,11 +5348,70 @@ function tapHit() {
   }
   tap.count++;
   $('tap-count').textContent = tap.count;
-  sfxTap();
-  // small visual punch
+
+  // ===== チャージ感のあるSE：タップ毎に音程が上がる =====
+  // 440Hz → 1340Hz でキャップ。クリティカルゾーン突入で1オクターブ上を重ねる。
+  try {
+    const cap = Math.min(tap.count, TAP_POWER_FULL);
+    const freq = 440 + cap * 30;
+    sfx(freq, 0.05, 'square', 0.10);
+    if (tap.count >= TAP_CRIT_ZONE) {
+      // クリティカルゾーンでキラっと高音
+      sfx(freq * 2, 0.04, 'sine', 0.06);
+    }
+  } catch(e) { /* sfx 失敗時は無視 */ }
+
+  // ===== パワーゲージ更新 =====
+  const ratio = Math.min(1, tap.count / TAP_POWER_FULL);
+  const fill  = $('tap-power-fill');
+  const bar   = $('tap-power-bar');
+  const lbl   = $('tap-power-label');
+  if (fill) {
+    fill.style.width = (ratio * 100).toFixed(1) + '%';
+    // 色グラデーションを連打度に合わせて移動（青→金→赤）
+    fill.style.backgroundPosition = (ratio * 100).toFixed(1) + '% 0%';
+  }
+  if (bar) {
+    bar.classList.toggle('charging-high', ratio >= 0.6 && tap.count < TAP_CRIT_ZONE);
+    bar.classList.toggle('crit-zone',     tap.count >= TAP_CRIT_ZONE);
+  }
+  if (lbl) {
+    lbl.textContent = (tap.count >= TAP_CRIT_ZONE) ? 'CRIT!! ★' :
+                      (ratio >= 0.6) ? 'パワー もっと！' : 'パワー';
+  }
+
+  // ===== ボタン色シフト（HSL補間：cool blue 210 → hot orange/red 10）=====
   const tb = $('tap-button');
-  tb.style.transform = 'scale(0.94)';
-  setTimeout(() => { tb.style.transform = ''; }, 50);
+  if (tb) {
+    const hue = 210 - ratio * 200; // 210 → 10
+    const sat = 70 + ratio * 30;   // 70 → 100
+    const lit = 70 - ratio * 15;   // 70 → 55
+    tb.style.background = `radial-gradient(circle at 30% 30%, #fff8d8, hsl(${hue.toFixed(0)},${sat.toFixed(0)}%,${lit.toFixed(0)}%) 60%, hsl(${(hue-20).toFixed(0)},${sat.toFixed(0)}%,${(lit-10).toFixed(0)}%))`;
+    tb.style.transform = 'scale(0.94)';
+    setTimeout(() => { if (tb) tb.style.transform = ''; }, 50);
+    if (tap.count >= TAP_CRIT_ZONE) tb.classList.add('crit-glow');
+  }
+
+  // ===== 5タップごとに ✨ パーティクル爆発 =====
+  if (tap.count % 5 === 0 && tb) {
+    try {
+      const rect = tb.getBoundingClientRect();
+      const layer = $('battle-particles');
+      const n = (tap.count >= TAP_CRIT_ZONE) ? 10 : 6;
+      const emoji = (tap.count >= TAP_CRIT_ZONE) ? '⚡' : '✨';
+      for (let i = 0; i < n; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.textContent = emoji;
+        p.style.left = (rect.left + rect.width / 2 - 12) + 'px';
+        p.style.top  = (rect.top  + rect.height / 2 - 12) + 'px';
+        p.style.setProperty('--tx', (Math.random() * 200 - 100) + 'px');
+        p.style.setProperty('--ty', (Math.random() * 160 - 80) + 'px');
+        if (layer) layer.appendChild(p);
+        setTimeout(() => p.remove(), 800);
+      }
+    } catch(e) { /* パーティクル失敗時は無視 */ }
+  }
 }
 
 function endTapPhase() {
@@ -5263,10 +5421,14 @@ function endTapPhase() {
   const skillKey = tap.skill;
   tap = null;
   $('tap-arena').classList.remove('active');
+  _resetTapPowerUI();
   doMyAttack(count, skillKey);
 }
 
 function doMyAttack(tapCount, skillKey) {
+  // 安全網：戦闘が固まらないよう全体を try/catch でくるむ。
+  // 例外発生時は console.error に出して、敵ターンへ強制復帰する。
+  try {
   if (battle.ended) return;
   // 混乱状態：技を外す
   if (battle.confused) {
@@ -5348,10 +5510,29 @@ function doMyAttack(tapCount, skillKey) {
   // 必殺技演出があるときは敵ターンを遅らせる
   const turnDelay = (skill.superFlash) ? 1800 : 1100;
   setTimeout(() => {
-    if (battle.foe.mon.hp <= 0) { winBattle(); return; }
-    // foe turn
-    foeTurn();
+    try {
+      if (!battle || battle.ended) return;
+      if (battle.foe.mon.hp <= 0) { winBattle(); return; }
+      // foe turn
+      foeTurn();
+    } catch (err) {
+      console.error('[doMyAttack:setTimeout]', err);
+      // 万一ここで落ちたら、ロックを解いて敵ターンを試みる
+      try { foeTurn(); } catch(e2) { console.error('[doMyAttack:fallback foeTurn]', e2); }
+    }
   }, turnDelay);
+  } catch (err) {
+    console.error('[doMyAttack]', err);
+    // 例外が出ても画面が固まらないように、敵ターンへ強制で進める
+    try { refreshBattleUI(); } catch(e2) {}
+    setTimeout(() => {
+      try {
+        if (!battle || battle.ended) return;
+        if (battle.foe && battle.foe.mon && battle.foe.mon.hp <= 0) { winBattle(); return; }
+        foeTurn();
+      } catch(e3) { console.error('[doMyAttack:catch fallback]', e3); }
+    }, 800);
+  }
 }
 
 // とーとんの ぼそぼそ独り言
@@ -5733,7 +5914,7 @@ function cmdSkill() {
     row.innerHTML = `<div style="font-size:24px">${s.fx}</div>
       <div class="info-block">
         <div class="name">${s.name}</div>
-        <div class="stats">タイプ:${TYPES[s.type].name}・MP ${s.mp}・<ruby>威力<rt>いりょく</rt></ruby>${s.power}${s.heal?' (かいふく)':''}</div>
+        <div class="stats">タイプ:${(TYPES[s.type]&&TYPES[s.type].name)||s.type||'?'}・MP ${s.mp}・<ruby>威力<rt>いりょく</rt></ruby>${s.power}${s.heal?' (かいふく)':''}</div>
       </div>`;
     if (can) attachTap(row, () => {
       $('skill-panel').classList.remove('active');
@@ -6613,11 +6794,33 @@ function setupUI() {
   // evo next is handled inline in doEvolution (rebound dynamically)
 
   // prime audio after first gesture
+  // 修正: 以前は title-scene のときだけ BGM を流していたが、ロード復帰やワールドマップ等
+  // 別シーンから始まる場合に音が鳴らないバグの原因になっていた。
+  // どのシーンでも、現在シーンに対応するトラックを鳴らすよう修正。
   const _primeAudio = () => {
-    ensureAudio();
-    if (!_bgm && !_bgmStartPending) {
+    try {
+      console.log('[_primeAudio] gesture fired');
+      ensureAudio();
+      if (_bgm || _bgmStartPending) return;
       const active = document.querySelector('.scene.active');
-      if (active && active.id === 'title-scene') playBgm('title');
+      const sid = active ? active.id : 'title-scene';
+      if (sid === 'title-scene')      playBgm('title');
+      else if (sid === 'stage-scene') playBgm('title');
+      else if (sid === 'field-scene') {
+        let worldId = 1;
+        if (typeof state !== 'undefined' && state && state.curStage) {
+          const m = String(state.curStage).match(/^(\d+)/);
+          if (m) worldId = parseInt(m[1], 10);
+        }
+        playBgm('stage' + worldId);
+      }
+      else if (sid === 'battle-scene') {
+        const isTotonBattle = (typeof battle !== 'undefined' && battle && battle.isToton);
+        playBgm(isTotonBattle ? 'totonBattle' : 'battle');
+      }
+      else playBgm('title');
+    } catch (err) {
+      console.error('[_primeAudio]', err);
     }
   };
   document.body.addEventListener('click', _primeAudio, { once: true });
