@@ -1217,6 +1217,7 @@
   <div id="title-save-tools">
     <button id="btn-save-export" class="title-tool-btn">セーブを ほぞん</button>
     <button id="btn-save-import" class="title-tool-btn">セーブを よみこみ</button>
+    <button id="btn-drag-mode" class="title-tool-btn">そうさ: ひく</button>
   </div>
   <a id="btn-restore-backup" href="#"><ruby>壊<rt>こわ</rt></ruby>れた？ ひとつ前にもどす</a>
   <a id="btn-reset-danger" href="#" style="display:none;">ぜんぶ けして あたらしく はじめる</a>
@@ -1451,6 +1452,9 @@ function hideModal() { $('modal-bg').classList.remove('active'); }
 function switchScene(id) {
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
+  if (id === 'title-scene' && typeof window._refreshDragModeLabel === 'function') {
+    window._refreshDragModeLabel();
+  }
 }
 
 // ===================== AUDIO =====================
@@ -1704,7 +1708,8 @@ let state = {
   fieldMobs: [],   // { x, y, id, lvl, defeated, isBoss, dx, dy, dir }
   field: null,     // { px, py, dir, walkPhase, w, h }
   fieldChests: {}, // { [stageId]: [{ x, y, opened, item }] }  各ステージの宝箱
-  minimapVisible: true
+  minimapVisible: true,
+  invertDrag: true
 };
 
 function makeMon(id, lvl) {
@@ -1825,6 +1830,7 @@ function migrateSaveData(data) {
     data.fieldChests = {};
   }
   if (typeof data.minimapVisible !== 'boolean') data.minimapVisible = true;
+  if (typeof data.invertDrag !== 'boolean') data.invertDrag = true;
 
   // モンスターのフィールド補完
   data.party = data.party.map(m => ensureMonsterFields(m)).filter(Boolean);
@@ -2557,6 +2563,23 @@ function initTitle() {
     if (e && e.preventDefault) e.preventDefault();
     restoreFromBackup();
   });
+  // ドラッグ方向トグル
+  const dragModeBtn = $('btn-drag-mode');
+  if (dragModeBtn) {
+    const refreshDragModeLabel = () => {
+      const mode = (state && state.invertDrag) ? 'ひく' : 'おす';
+      dragModeBtn.textContent = 'そうさ: ' + mode;
+    };
+    refreshDragModeLabel();
+    attachTap(dragModeBtn, () => {
+      if (!state) state = {};
+      state.invertDrag = !state.invertDrag;
+      refreshDragModeLabel();
+      try { saveGame(true); } catch (e) {}
+    });
+    // タイトル表示時にラベル再描画（state読み込み後の状態を反映）
+    window._refreshDragModeLabel = refreshDragModeLabel;
+  }
 }
 
 function startNewGame() {
@@ -2572,7 +2595,8 @@ function startNewGame() {
     fieldMobs: [],
     field: null,
     fieldChests: {},
-    minimapVisible: true
+    minimapVisible: true,
+    invertDrag: true
   };
   // ※ ここでは saveGame しない（party空のため saveGame ガードで保存されない & タイトル既存セーブを温存）
   goStarterSelect();
@@ -4878,8 +4902,10 @@ function setupUI() {
     let cx, cy;
     if (touch) { cx = touch.clientX; cy = touch.clientY; }
     else { cx = e.clientX; cy = e.clientY; }
-    const ddx = cx - dragStart.x;
-    const ddy = cy - dragStart.y;
+    let ddx = cx - dragStart.x;
+    let ddy = cy - dragStart.y;
+    // 反転モード: ドラッグした向きの逆にキャラが進む（世界を引っ張る感覚）
+    if (state.invertDrag) { ddx = -ddx; ddy = -ddy; }
     const w = fieldClientToWorldDelta(ddx, ddy);
     const f = state.field;
     const oldX = f.px, oldY = f.py;
