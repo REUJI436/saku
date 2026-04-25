@@ -1832,7 +1832,7 @@ const SKILLS = {
   ultimateCoffee:{ name: 'きわみの コーヒーブレイク', mp: 6, power: 0.0, type: 'human', msg: 'きわみの コーヒーで HP・MPが ぜんかい！つぎのターン むてき！', fx: '☕✨', heal: true, healAmt: 1.0, mpRecover: 999, invincibleNext: true }, // TODO: status effect not yet wired
   kyodaiManin: { name: 'キョダイ まんいんでんしゃ', mp: 9, power: 4.0, type: 'human', msg: 'まんいんでんしゃに つめこまれた！', fx: '🚆💢', confuseChance: 1.0, paralyzeChance: 1.0, burnChance: 1.0 }, // TODO: status effect not yet wired
   // ----- メガテラスタルとーとんキョダイマックスEX 専用 -----
-  megaShachoNova:{ name: 'メガ・しゃちょー・スーパーノヴァ', mp: 14, power: 5.5, type: 'human', msg: 'うちゅうの しゃちょーが あらわれて すべてを つつみこんだ！', fx: '👔🌌💥', critBoost: true, confuseChance: 1.0, paralyzeChance: 1.0, burnChance: 1.0 } // TODO: status effect not yet wired
+  peropero:{ name: 'ペロペロアリーナ', mp: 14, power: 6.0, type: 'human', msg: 'いっしゅんで すべてが おわった…！', fx: '👅✨', critBoost: true, confuseChance: 1.0, paralyzeChance: 1.0, burnChance: 1.0, superFlash: true } // TODO: status effect not yet wired
 };
 
 const MONSTERS = [
@@ -1918,7 +1918,7 @@ const MONSTERS = [
   { id:97, name:'<ruby>炎<rt>ほのお</rt></ruby>とーとん', type:'red', color:'#ff5040', shape:'human', face:'🔥', hp:90, atk:40, def:20, spd:30, learn:{}, startSkills:['shimekiriFire','tetsuyaOni','shuraba','moetsukiAtk'], evo:null, dex:'しめきりに おわれて もえあがった おじさん。', stage:0, hidden:true, legendary:true },
   { id:98, name:'<ruby>氷<rt>こおり</rt></ruby>とーとん', type:'sky', color:'#80c8ff', shape:'human', face:'❄️', hp:110, atk:25, def:34, spd:22, learn:{}, startSkills:['coldFeedback','koriSeiron','mugonAtsu','zettaiPresen'], evo:null, dex:'クールビズで れいせいすぎる おじさん。むごん。', stage:0, hidden:true, legendary:true },
   { id:95, name:'テラスタルとーとんキョダイマックス', type:'human-god', color:'#ff00ff', shape:'human', face:'👑', hp:350, atk:80, def:60, spd:60, learn:{}, startSkills:['shachoKourin','taishoku','ultimateCoffee','kyodaiManin'], evo:{lvl:100,to:94}, dex:'すべてを こえた でんせつの おじさん。にじいろに かがやく…', stage:0, hidden:true, legendary:true, godTier:true },
-  { id:94, name:'メガテラスタルとーとんキョダイマックスEX', type:'human-god', color:'#ff80ff', shape:'human', face:'👑', hp:700, atk:200, def:150, spd:150, learn:{100:'megaShachoNova'}, evo:null, dex:'うちゅうを すべる でんせつの メガおじさん。すべてを こえた…', stage:0, hidden:true, legendary:true, godTier:true, megaForm:true }
+  { id:94, name:'メガテラスタルとーとんキョダイマックスEX', type:'human-god', color:'#ff80ff', shape:'human', face:'👑', hp:700, atk:200, def:150, spd:150, learn:{100:'peropero'}, evo:null, dex:'うちゅうを すべる でんせつの メガおじさん。すべてを こえた…', stage:0, hidden:true, legendary:true, godTier:true, megaForm:true }
 ];
 
 function getMonsterDef(id) { return MONSTERS.find(m => m.id === id); }
@@ -4052,12 +4052,17 @@ function doMyAttack(tapCount, skillKey) {
     setBattleMessage(meDef.name + 'は ' + skill.msg + '<br>HPが ' + heal + ' かいふく！');
   } else {
     battle.foe.mon.hp = Math.max(0, battle.foe.mon.hp - dmg);
-    flashScreen();
+    if (skill.superFlash) {
+      // ペロペロアリーナ: 通常フラッシュではなく専用エフェクト
+      playPeroperoEffect();
+    } else {
+      flashScreen();
+    }
     spawnParticles('foe-row', skill.fx);
     spawnDmg('foe-row', dmg, crit ? 'crit' : '');
     shakeRow('foe-row');
     hitFlashRow('foe-row');
-    if (crit) { sfxCrit(); showCritText(); } else sfxHit();
+    if (crit) { sfxCrit(); showCritText(); } else if (!skill.superFlash) sfxHit();
     setBattleMessage(meDef.name + 'の ' + skill.msg + '<br>(' + tapCount + 'タップ)' + (crit?' クリティカル！':'') + ' ' + dmg + ' ダメージ！');
     // Heal side-effect (e.g. ラブラブビーム): damage + self-heal
     if (skill.healSelf && skill.healAmt) {
@@ -4082,11 +4087,13 @@ function doMyAttack(tapCount, skillKey) {
   if (skill.mp) battle.me.mon.mp = Math.max(0, battle.me.mon.mp - skill.mp);
   refreshBattleUI();
 
+  // 必殺技演出があるときは敵ターンを遅らせる
+  const turnDelay = (skill.superFlash) ? 1800 : 1100;
   setTimeout(() => {
     if (battle.foe.mon.hp <= 0) { winBattle(); return; }
     // foe turn
     foeTurn();
-  }, 1100);
+  }, turnDelay);
 }
 
 // とーとんの ぼそぼそ独り言
@@ -4893,6 +4900,49 @@ function flashScreen() {
   const f = $('battle-flash');
   f.style.opacity = '0.7';
   setTimeout(() => f.style.opacity = '0', 100);
+}
+
+// 瞬獄殺ふうの必殺技エフェクト（ペロペロアリーナ）
+function playPeroperoEffect(onDone) {
+  // pointer-events:none が無いとタップ画面が固まるので必須
+  if (!document.getElementById('peroperoStyle')) {
+    const st = document.createElement('style');
+    st.id = 'peroperoStyle';
+    st.textContent = '@keyframes peroperoReveal {' +
+      '0% { transform: translate(-50%,-50%) scale(0.5); opacity: 0; }' +
+      '60% { transform: translate(-50%,-50%) scale(1.1); opacity: 1; }' +
+      '100% { transform: translate(-50%,-50%) scale(1.0); opacity: 1; }' +
+      '} @keyframes peroperoJitter {' +
+      '0%,100% { transform: translate(0,0); }' +
+      '20% { transform: translate(-2px,2px); }' +
+      '40% { transform: translate(2px,-2px); }' +
+      '60% { transform: translate(-2px,-2px); }' +
+      '80% { transform: translate(2px,2px); }' +
+      '}';
+    document.head.appendChild(st);
+  }
+  const ov = document.createElement('div');
+  ov.className = 'peropero-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:99999;pointer-events:none;opacity:1;transition:opacity 0.25s;animation:peroperoJitter 0.12s steps(2) infinite;';
+  document.body.appendChild(ov);
+
+  const txt = document.createElement('div');
+  txt.textContent = 'ぺろぺろありーな';
+  txt.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.5);opacity:0;font-size:min(18vw,120px);font-weight:900;color:#1a0000;text-shadow:0 0 18px rgba(180,0,0,0.45),0 4px 12px rgba(0,0,0,0.35);letter-spacing:0.05em;white-space:nowrap;font-family:"Hiragino Sans","Yu Gothic",sans-serif;';
+  ov.appendChild(txt);
+
+  // 不規則な連打音（瞬獄殺の鬼連打感）
+  const hitTimes = [0, 95, 175, 265, 345, 445, 535, 625, 720, 825, 955, 1085];
+  hitTimes.forEach(t => setTimeout(() => {
+    if (typeof sfx === 'function') {
+      const f = 140 + Math.random() * 220;
+      sfx(f, 0.06, Math.random() < 0.5 ? 'sawtooth' : 'square', 0.18);
+    }
+  }, t));
+
+  setTimeout(() => { txt.style.animation = 'peroperoReveal 0.25s forwards'; }, 1000);
+  setTimeout(() => { ov.style.opacity = '0'; }, 1400);
+  setTimeout(() => { ov.remove(); if (onDone) onDone(); }, 1700);
 }
 function shakeRow(id) {
   const r = $(id);
