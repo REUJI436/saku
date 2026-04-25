@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>キラキラ☆プリキュアおうちづくり</title>
+<!-- precure-style: ファンメイド・非公式・パステル可愛いお部屋デコレーション -->
+<style>
+  :root {
+    --pink: #ff8fc0;
+    --pink-light: #ffd6e8;
+    --pink-deep: #ff6aa8;
+    --lav: #c9a0ff;
+    --lav-light: #e6d4ff;
+    --blue: #aae0ff;
+    --blue-light: #d4f0ff;
+    --yellow: #fff4a0;
+    --gold: #ffd700;
+    --white: #ffffff;
+    --text: #5b3a5e;
+    --text-light: #8a6a8e;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", system-ui, sans-serif; color: var(--text); }
+  body {
+    background: linear-gradient(135deg, #ffd6e8 0%, #e6d4ff 50%, #d4f0ff 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    touch-action: manipulation;
+  }
+  #app {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  /* ====== ホーム戻るボタン ====== */
+  .home-btn {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--pink), var(--lav));
+    border: 3px solid #fff;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+  }
+  .home-btn:active { transform: scale(0.92); }
+
+  /* ====== シーン共通 ====== */
+  .scene {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+  }
+  .scene.active { display: flex; }
+
+  /* ====== タイトル画面 ====== */
+  #scene-title {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+  .title-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .title-bg .bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+  .title-content { position: relative; z-index: 1; }
+  .title-h1 {
+    font-size: clamp(28px, 8vw, 48px);
+    font-weight: 900;
+    margin: 0 0 6px;
+    background: linear-gradient(135deg, var(--pink-deep), var(--lav), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 3px 3px 0 rgba(255,255,255,0.6);
+    line-height: 1.2;
+  }
+  .title-sub {
+    font-size: clamp(16px, 4vw, 22px);
+    margin: 0 0 30px;
+    color: var(--pink-deep);
+    font-weight: 700;
+  }
+  .title-deco {
+    font-size: 36px;
+    margin: 10px 0 20px;
+    animation: sparkle 2s ease-in-out infinite;
+  }
+  @keyframes sparkle {
+    0%,100% { transform: scale(1) rotate(0); opacity: 1; }
+    50% { transform: scale(1.15) rotate(5deg); opacity: 0.8; }
+  }
+  .big-btn {
+    display: block;
+    width: min(280px, 80vw);
+    margin: 12px auto;
+    padding: 18px 24px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    border: 4px solid #fff;
+    border-radius: 40px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--pink), var(--pink-deep));
+    box-shadow: 0 6px 0 #c95f8e, 0 8px 16px rgba(0,0,0,0.2);
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-align: center;
+    text-decoration: none;
+  }
+  .big-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #c95f8e, 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .big-btn.lav {
+    background: linear-gradient(135deg, var(--lav), #9c6cff);
+    box-shadow: 0 6px 0 #6f4cc7, 0 8px 16px rgba(0,0,0,0.2);
+  }
+  .big-btn.lav:active {
+    box-shadow: 0 2px 0 #6f4cc7, 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .big-btn.blue {
+    background: linear-gradient(135deg, var(--blue), #6cc4ff);
+    box-shadow: 0 6px 0 #4f96c8, 0 8px 16px rgba(0,0,0,0.2);
+  }
+  .big-btn.blue:active {
+    box-shadow: 0 2px 0 #4f96c8, 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .big-btn.gold {
+    background: linear-gradient(135deg, var(--gold), #ffae00);
+    box-shadow: 0 6px 0 #c98b00, 0 8px 16px rgba(0,0,0,0.2);
+    color: #5a3a00;
+  }
+  .big-btn.gold:active {
+    box-shadow: 0 2px 0 #c98b00, 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .small-btn {
+    display: inline-block;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 24px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--pink), var(--pink-deep));
+    box-shadow: 0 3px 0 #c95f8e;
+    margin: 4px;
+  }
+  .small-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #c95f8e; }
+  .small-btn.lav { background: linear-gradient(135deg, var(--lav), #9c6cff); box-shadow: 0 3px 0 #6f4cc7; }
+  .small-btn.lav:active { box-shadow: 0 1px 0 #6f4cc7; }
+  .small-btn.blue { background: linear-gradient(135deg, var(--blue), #6cc4ff); box-shadow: 0 3px 0 #4f96c8; }
+  .small-btn.blue:active { box-shadow: 0 1px 0 #4f96c8; }
+  .small-btn.gray { background: linear-gradient(135deg, #ccc, #999); box-shadow: 0 3px 0 #777; color:#333; }
+
+  /* ====== メインシーン ====== */
+  #scene-main { display: none; flex-direction: column; }
+  #scene-main.active { display: flex; }
+
+  .top-bar {
+    flex: 0 0 auto;
+    padding: 8px 12px 8px 70px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(8px);
+    border-bottom: 2px solid var(--pink-light);
+    z-index: 50;
+  }
+  .heart-counter {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--pink-deep);
+    background: #fff;
+    border: 2px solid var(--pink);
+    border-radius: 20px;
+    padding: 4px 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .heart-counter .heart-icon {
+    font-size: 20px;
+    filter: drop-shadow(0 1px 1px rgba(255,100,150,0.5));
+  }
+  .room-tabs {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+    justify-content: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .room-tabs::-webkit-scrollbar { display: none; }
+  .room-tab {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 16px;
+    background: #fff;
+    border: 2px solid var(--lav-light);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .room-tab.active {
+    background: linear-gradient(135deg, var(--pink-light), var(--lav-light));
+    border-color: var(--pink);
+    color: var(--pink-deep);
+    transform: translateY(-2px);
+  }
+  .room-tab.locked {
+    opacity: 0.45;
+    background: #eee;
+    border-color: #ccc;
+  }
+  .top-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fff, #ffe5f0);
+    border: 2px solid var(--pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .icon-btn:active { transform: scale(0.92); }
+
+  /* ====== 部屋表示エリア ====== */
+  .room-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  #roomCanvas {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .room-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+  .floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 35%;
+    background: repeating-linear-gradient(
+      90deg,
+      #d4a87a 0,
+      #d4a87a 40px,
+      #c89968 40px,
+      #c89968 80px
+    );
+    border-top: 4px solid #a87648;
+  }
+  .wall {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 65%;
+    background: linear-gradient(180deg, #ffe6f3 0%, #ffd6e8 100%);
+  }
+  .wall.pattern-stars {
+    background:
+      radial-gradient(circle at 20% 30%, #ffd700 0 4px, transparent 5px),
+      radial-gradient(circle at 70% 50%, #ffd700 0 4px, transparent 5px),
+      radial-gradient(circle at 40% 70%, #ffd700 0 4px, transparent 5px),
+      radial-gradient(circle at 85% 20%, #ffd700 0 4px, transparent 5px),
+      linear-gradient(180deg, #c9a0ff 0%, #b380ff 100%);
+    background-size: 100px 100px, 100px 100px, 100px 100px, 100px 100px, 100% 100%;
+  }
+  .wall.pattern-flowers {
+    background:
+      radial-gradient(circle at 25% 25%, #ff8fc0 0 6px, transparent 7px),
+      radial-gradient(circle at 75% 60%, #ff8fc0 0 6px, transparent 7px),
+      radial-gradient(circle at 50% 85%, #fff4a0 0 5px, transparent 6px),
+      linear-gradient(180deg, #ffe6f3 0%, #ffd6e8 100%);
+    background-size: 120px 120px, 120px 120px, 120px 120px, 100% 100%;
+  }
+  .wall.pattern-blue {
+    background: linear-gradient(180deg, #d4f0ff 0%, #aae0ff 100%);
+  }
+  .wall.pattern-mint {
+    background: linear-gradient(180deg, #d4ffea 0%, #aaf0c8 100%);
+  }
+  .wall.pattern-yellow {
+    background: linear-gradient(180deg, #fff8d4 0%, #fff4a0 100%);
+  }
+  .wall.pattern-rainbow {
+    background:
+      linear-gradient(180deg,
+        #ffd6e8 0%, #ffd6e8 16%,
+        #ffe5b4 16%, #ffe5b4 32%,
+        #fff4a0 32%, #fff4a0 48%,
+        #d4ffea 48%, #d4ffea 64%,
+        #aae0ff 64%, #aae0ff 80%,
+        #c9a0ff 80%, #c9a0ff 100%);
+  }
+  .floor.pattern-pink {
+    background: repeating-linear-gradient(
+      90deg, #ffb6d5 0, #ffb6d5 40px, #ff9ec5 40px, #ff9ec5 80px);
+    border-top-color: #d97aaa;
+  }
+  .floor.pattern-grass {
+    background: repeating-linear-gradient(
+      90deg, #8ed87a 0, #8ed87a 12px, #7cc868 12px, #7cc868 24px);
+    border-top-color: #4f8a3f;
+  }
+  .floor.pattern-tile {
+    background:
+      linear-gradient(45deg, #fff 25%, transparent 25%) 0 0/40px 40px,
+      linear-gradient(-45deg, #fff 25%, transparent 25%) 0 0/40px 40px,
+      linear-gradient(45deg, transparent 75%, #fff 75%) 0 0/40px 40px,
+      linear-gradient(-45deg, transparent 75%, #fff 75%) 0 0/40px 40px,
+      #ffd6e8;
+    border-top-color: #c9a0ff;
+  }
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+  }
+  .grid-cell {
+    border: 1px dashed rgba(255,255,255,0.25);
+    pointer-events: auto;
+  }
+  .room-area.editing .grid-cell {
+    border-color: rgba(255,140,200,0.55);
+    background: rgba(255,255,255,0.08);
+  }
+  .room-area.editing .grid-cell:active {
+    background: rgba(255,255,255,0.4);
+  }
+  .placed-items {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .placed {
+    position: absolute;
+    width: 12.5%;
+    height: 16.667%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: transform 0.18s;
+    animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes pop-in {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .placed svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.2));
+  }
+  .placed.size-2x2 { width: 25%; height: 33.333%; }
+  .placed.size-2x1 { width: 25%; height: 16.667%; }
+  .placed.size-1x2 { width: 12.5%; height: 33.333%; }
+  .placed.deletable {
+    animation: wiggle 0.5s ease-in-out infinite;
+  }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  .placed.deletable::after {
+    content: "✕";
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ff3366;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* ====== 落ちてくるハート ====== */
+  .falling-hearts {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .falling-heart {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    pointer-events: auto;
+    cursor: pointer;
+    animation: fall linear forwards;
+    filter: drop-shadow(0 0 8px rgba(255,140,200,0.8));
+  }
+  @keyframes fall {
+    0% { transform: translateY(-60px) rotate(0deg); }
+    100% { transform: translateY(110vh) rotate(360deg); }
+  }
+  .heart-pop {
+    position: absolute;
+    pointer-events: none;
+    z-index: 100;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--pink-deep);
+    text-shadow: 0 0 6px #fff, 0 0 12px #fff;
+    animation: pop-up 0.9s ease-out forwards;
+  }
+  @keyframes pop-up {
+    0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+    20% { transform: translate(-50%, -20px) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -80px) scale(1); opacity: 0; }
+  }
+
+  /* ====== 下メニュー（アイテム選択） ====== */
+  .bottom-menu {
+    flex: 0 0 auto;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,230,243,0.95));
+    border-top: 3px solid var(--pink);
+    box-shadow: 0 -4px 12px rgba(255,140,200,0.2);
+    padding: 6px 8px 10px;
+    position: relative;
+  }
+  .cat-tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 2px 4px;
+  }
+  .cat-tabs::-webkit-scrollbar { display: none; }
+  .cat-tab {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    border-radius: 16px;
+    background: #fff;
+    border: 2px solid var(--pink-light);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .cat-tab.active {
+    background: linear-gradient(135deg, var(--pink), var(--lav));
+    color: #fff;
+    border-color: #fff;
+  }
+  .item-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px 4px 4px;
+    scrollbar-width: none;
+    min-height: 92px;
+  }
+  .item-row::-webkit-scrollbar { display: none; }
+  .item-card {
+    flex: 0 0 auto;
+    width: 76px;
+    height: 84px;
+    border-radius: 14px;
+    background: #fff;
+    border: 3px solid var(--pink-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 4px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.12s;
+  }
+  .item-card:active { transform: scale(0.92); }
+  .item-card.selected {
+    border-color: var(--pink-deep);
+    background: linear-gradient(135deg, #fff, var(--pink-light));
+    box-shadow: 0 0 0 3px rgba(255,140,200,0.4);
+    transform: translateY(-3px);
+  }
+  .item-card.locked {
+    opacity: 0.45;
+    background: #eee;
+    border-color: #ccc;
+  }
+  .item-card.locked::after {
+    content: "🔒";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .item-card svg {
+    width: 56px;
+    height: 56px;
+    overflow: visible;
+  }
+  .item-card .nm {
+    font-size: 9px;
+    color: var(--text-light);
+    margin-top: 2px;
+    line-height: 1;
+    text-align: center;
+  }
+  .menu-bottom-actions {
+    position: absolute;
+    top: -40px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+  }
+  .action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--pink), var(--pink-deep));
+    border: 3px solid #fff;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 900;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .action-btn:active { transform: scale(0.92); }
+  .action-btn.lav { background: linear-gradient(135deg, var(--lav), #9c6cff); }
+  .action-btn.gold { background: linear-gradient(135deg, var(--gold), #ffae00); color:#5a3a00; }
+  .action-btn.red { background: linear-gradient(135deg, #ff8080, #ff4444); }
+
+  /* ====== モーダル共通 ====== */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(80,40,80,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .overlay.active { display: flex; }
+  .modal {
+    background: linear-gradient(135deg, #fff, var(--pink-light));
+    border: 4px solid var(--pink);
+    border-radius: 24px;
+    padding: 24px 16px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .modal h2 {
+    margin: 0 0 12px;
+    text-align: center;
+    color: var(--pink-deep);
+    font-size: 22px;
+  }
+  .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--pink-deep);
+    border: 3px solid #fff;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .close-btn:active { transform: scale(0.92); }
+
+  /* ====== ショップ ====== */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 8px 0;
+  }
+  .shop-cat-tabs {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    justify-content: center;
+  }
+  .shop-cat-tab {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 14px;
+    background: #fff;
+    border: 2px solid var(--pink-light);
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .shop-cat-tab.active {
+    background: linear-gradient(135deg, var(--pink), var(--lav));
+    color: #fff;
+    border-color: #fff;
+  }
+  .shop-card {
+    background: #fff;
+    border: 3px solid var(--pink-light);
+    border-radius: 14px;
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .shop-card:active { transform: scale(0.95); }
+  .shop-card svg { width: 56px; height: 56px; overflow: visible; }
+  .shop-card .nm { font-size: 10px; margin-top: 2px; color: var(--text); line-height: 1.1; }
+  .shop-card .price {
+    margin-top: 4px;
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--pink-deep);
+    background: var(--yellow);
+    border-radius: 10px;
+    padding: 1px 4px;
+    display: inline-block;
+  }
+  .shop-card.owned {
+    background: linear-gradient(135deg, #fff, var(--blue-light));
+    border-color: var(--blue);
+  }
+  .shop-card.owned::after {
+    content: "✓";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+  }
+  .shop-card.cant {
+    opacity: 0.5;
+  }
+
+  /* ====== 図鑑 ====== */
+  .zukan-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .zukan-card {
+    background: #fff;
+    border: 2px solid var(--pink-light);
+    border-radius: 10px;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .zukan-card svg { width: 80%; height: 80%; overflow: visible; }
+  .zukan-card.locked {
+    background: #eee;
+    border-color: #ccc;
+  }
+  .zukan-card.locked::after {
+    content: "?";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    font-weight: 900;
+    color: #aaa;
+  }
+  .zukan-card.locked svg { display: none; }
+  .zukan-info {
+    text-align: center;
+    margin: 12px 0;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  /* ====== 写真モード ====== */
+  .photo-modal {
+    background: linear-gradient(135deg, var(--lav-light), var(--pink-light));
+    border-color: var(--lav);
+  }
+  #photoCanvas {
+    width: 100%;
+    max-width: 380px;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    display: block;
+    margin: 0 auto;
+  }
+  .photo-hint {
+    margin-top: 10px;
+    font-size: 13px;
+    text-align: center;
+    color: var(--text-light);
+  }
+
+  /* ====== 通知（買えた・解禁など） ====== */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--pink), var(--lav));
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 24px;
+    border: 3px solid #fff;
+    font-weight: 900;
+    font-size: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1500;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(8px);
+  }
+
+  /* ====== キラキラエフェクト ====== */
+  .sparkle {
+    position: absolute;
+    pointer-events: none;
+    font-size: 18px;
+    animation: sparkle-fly 0.9s ease-out forwards;
+    z-index: 200;
+  }
+  @keyframes sparkle-fly {
+    0% { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2); opacity: 0; }
+  }
+
+  /* 「ながおし→ほぞん」用の bgm ボタン */
+  .bgm-btn {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--lav), #9c6cff);
+    border: 3px solid #fff;
+    color: #fff;
+    font-size: 20px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bgm-btn:active { transform: scale(0.92); }
+
+  /* ====== ヘルプ吹き出し ====== */
+  .help-bubble {
+    position: absolute;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #fff, var(--pink-light));
+    border: 3px solid var(--pink);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--pink-deep);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 60;
+    pointer-events: none;
+    animation: bubble-pulse 2s ease-in-out infinite;
+  }
+  @keyframes bubble-pulse {
+    0%,100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.05); }
+  }
+  .help-bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--pink);
+  }
+</style>
+</head>
+<body>
+<a href="./" class="home-btn" id="homeBtn" aria-label="もどる">🏠</a>
+<button class="bgm-btn" id="bgmBtn" aria-label="おんがく">🎵</button>
+
+<div id="app">
+
+  <!-- ====== タイトル画面 ====== -->
+  <div class="scene active" id="scene-title">
+    <div class="title-bg" id="titleBg"></div>
+    <div class="title-content">
+      <div class="title-deco">✨🏰✨</div>
+      <h1 class="title-h1">キラキラ☆<br>プリキュア<br>おうちづくり</h1>
+      <p class="title-sub">かわいい おうちを つくろう♡</p>
+      <button class="big-btn" id="btnStart">▶ はじめる</button>
+      <button class="big-btn lav" id="btnContinue">つづきから</button>
+      <button class="big-btn blue" id="btnZukan">アイテムずかん 📖</button>
+      <p style="margin-top:20px;font-size:11px;color:var(--text-light);">5さいから あそべるよ</p>
+    </div>
+  </div>
+
+  <!-- ====== メインシーン ====== -->
+  <div class="scene" id="scene-main">
+    <div class="top-bar">
+      <div class="heart-counter">
+        <span class="heart-icon">💖</span>
+        <span id="heartCount">0</span>
+      </div>
+      <div class="room-tabs" id="roomTabs"></div>
+      <div class="top-actions">
+        <button class="icon-btn" id="btnShop" aria-label="ショップ">🛒</button>
+        <button class="icon-btn" id="btnPhoto" aria-label="しゃしん">📷</button>
+      </div>
+    </div>
+
+    <div class="room-area" id="roomArea">
+      <div id="roomCanvas">
+        <div class="room-bg" id="roomBg">
+          <div class="wall" id="wallEl"></div>
+          <div class="floor" id="floorEl"></div>
+        </div>
+        <div class="grid-overlay" id="gridOverlay"></div>
+        <div class="placed-items" id="placedItems"></div>
+      </div>
+      <div class="falling-hearts" id="fallingHearts"></div>
+    </div>
+
+    <div class="bottom-menu">
+      <div class="menu-bottom-actions">
+        <button class="action-btn red" id="btnRemoveMode" aria-label="けす">✕</button>
+        <button class="action-btn gold" id="btnClearRoom" aria-label="ぜんぶけす">🧹</button>
+      </div>
+      <div class="cat-tabs" id="catTabs"></div>
+      <div class="item-row" id="itemRow"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ====== ショップモーダル ====== -->
+<div class="overlay" id="shopOverlay">
+  <div class="modal">
+    <button class="close-btn" id="shopCloseBtn">✕</button>
+    <h2>🛒 ショップ</h2>
+    <div style="text-align:center;margin-bottom:8px;">
+      <span class="heart-counter" style="display:inline-flex;">
+        <span class="heart-icon">💖</span>
+        <span id="shopHeartCount">0</span>
+      </span>
+    </div>
+    <div class="shop-cat-tabs" id="shopCatTabs"></div>
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
+</div>
+
+<!-- ====== 図鑑モーダル ====== -->
+<div class="overlay" id="zukanOverlay">
+  <div class="modal">
+    <button class="close-btn" id="zukanCloseBtn">✕</button>
+    <h2>📖 アイテムずかん</h2>
+    <div class="zukan-info">
+      あつめた アイテム <span id="zukanCount">0</span> / <span id="zukanTotal">0</span>
+    </div>
+    <div class="zukan-grid" id="zukanGrid"></div>
+  </div>
+</div>
+
+<!-- ====== 写真モーダル ====== -->
+<div class="overlay" id="photoOverlay">
+  <div class="modal photo-modal">
+    <button class="close-btn" id="photoCloseBtn">✕</button>
+    <h2>📷 わたしの おうちカード</h2>
+    <canvas id="photoCanvas" width="380" height="500"></canvas>
+    <p class="photo-hint">えを ながおしすると ほぞん できるよ♡</p>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="small-btn lav" id="photoRedoBtn">もういっかい とる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 確認モーダル ====== -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:320px;">
+    <h2 id="confirmTitle">かくにん</h2>
+    <p id="confirmMsg" style="text-align:center;font-weight:700;font-size:16px;"></p>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="small-btn gray" id="confirmNo">ううん</button>
+      <button class="small-btn" id="confirmYes">いいよ♡</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===========================================================================
+// attachTap helper
+// ===========================================================================
+function attachTap(el, fn) {
+  if (!el) return;
+  let touched = false;
+  el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (!touched || el.disabled) { touched = false; return; }
+    touched = false;
+    e.preventDefault();
+    fn.call(el, e);
+  }, { passive: false });
+  el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
+  el.addEventListener('click', (e) => fn.call(el, e));
+}
+function $(id) { return document.getElementById(id); }
+
+// ===========================================================================
+// SVG アイテム定義（80種類以上）
+// ===========================================================================
+// SVG はすべて viewBox=0 0 100 100 で描く
+// rarity: 1=コモン, 2=レア, 3=スーパーレア
+// price: ハート単価
+// unlocked: 最初から所持しているか
+// size: "1x1"(default), "2x1", "1x2", "2x2"
+
+const ITEMS = [
+  // ============== かぐ（10） ==============
+  { id:"sofa_pink", cat:"furn", name:"ソファ", price:0, unlocked:true, size:"2x1",
+    svg:`<rect x="8" y="40" width="84" height="40" rx="10" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="6" y="28" width="20" height="40" rx="8" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="74" y="28" width="20" height="40" rx="8" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="20" y="44" width="60" height="20" rx="6" fill="#ffd6e8"/>
+         <circle cx="35" cy="55" r="3" fill="#fff"/><circle cx="65" cy="55" r="3" fill="#fff"/>
+         <rect x="14" y="78" width="6" height="14" fill="#a87648"/>
+         <rect x="80" y="78" width="6" height="14" fill="#a87648"/>` },
+  { id:"sofa_lav", cat:"furn", name:"ラベンダーソファ", price:25, unlocked:false, size:"2x1",
+    svg:`<rect x="8" y="40" width="84" height="40" rx="10" fill="#c9a0ff" stroke="#9c6cff" stroke-width="2"/>
+         <rect x="6" y="28" width="20" height="40" rx="8" fill="#c9a0ff" stroke="#9c6cff" stroke-width="2"/>
+         <rect x="74" y="28" width="20" height="40" rx="8" fill="#c9a0ff" stroke="#9c6cff" stroke-width="2"/>
+         <rect x="20" y="44" width="60" height="20" rx="6" fill="#e6d4ff"/>
+         <text x="50" y="60" font-size="12" text-anchor="middle">⭐</text>
+         <rect x="14" y="78" width="6" height="14" fill="#a87648"/>
+         <rect x="80" y="78" width="6" height="14" fill="#a87648"/>` },
+  { id:"bed_pink", cat:"furn", name:"ベッド", price:0, unlocked:true, size:"2x1",
+    svg:`<rect x="6" y="48" width="88" height="36" rx="6" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <rect x="6" y="58" width="88" height="26" rx="4" fill="#ff8fc0"/>
+         <rect x="14" y="40" width="22" height="20" rx="4" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <rect x="44" y="40" width="22" height="20" rx="4" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <text x="74" y="76" font-size="12">♡</text>
+         <rect x="6" y="84" width="88" height="6" fill="#a87648"/>` },
+  { id:"chair", cat:"furn", name:"いす", price:0, unlocked:true,
+    svg:`<rect x="30" y="50" width="40" height="36" fill="#a87648"/>
+         <rect x="30" y="20" width="40" height="36" rx="4" fill="#c9a0ff" stroke="#9c6cff" stroke-width="2"/>
+         <rect x="32" y="86" width="6" height="10" fill="#a87648"/>
+         <rect x="62" y="86" width="6" height="10" fill="#a87648"/>` },
+  { id:"table", cat:"furn", name:"テーブル", price:0, unlocked:true, size:"2x1",
+    svg:`<rect x="6" y="40" width="88" height="14" rx="4" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <rect x="14" y="54" width="6" height="36" fill="#a87648"/>
+         <rect x="80" y="54" width="6" height="36" fill="#a87648"/>
+         <circle cx="50" cy="46" r="6" fill="#ffd6e8"/>
+         <text x="50" y="50" font-size="10" text-anchor="middle">♡</text>` },
+  { id:"bookshelf", cat:"furn", name:"ほんだな", price:30, unlocked:false,
+    svg:`<rect x="14" y="6" width="72" height="88" rx="4" fill="#a87648" stroke="#5a3a00" stroke-width="2"/>
+         <rect x="20" y="14" width="60" height="20" fill="#fff"/>
+         <rect x="22" y="16" width="6" height="16" fill="#ff8fc0"/>
+         <rect x="30" y="16" width="6" height="16" fill="#c9a0ff"/>
+         <rect x="38" y="16" width="6" height="16" fill="#aae0ff"/>
+         <rect x="46" y="16" width="6" height="16" fill="#fff4a0"/>
+         <rect x="54" y="16" width="6" height="16" fill="#ff8fc0"/>
+         <rect x="20" y="40" width="60" height="20" fill="#fff"/>
+         <text x="50" y="56" font-size="14" text-anchor="middle">📕📘</text>
+         <rect x="20" y="66" width="60" height="20" fill="#fff"/>
+         <rect x="24" y="68" width="8" height="16" fill="#fff4a0"/>
+         <rect x="34" y="68" width="8" height="16" fill="#ff8fc0"/>` },
+  { id:"dresser", cat:"furn", name:"ドレッサー", price:40, unlocked:false,
+    svg:`<rect x="20" y="36" width="60" height="50" rx="4" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <ellipse cx="50" cy="20" rx="22" ry="18" fill="#fff" stroke="#d96aa0" stroke-width="2"/>
+         <ellipse cx="50" cy="20" rx="18" ry="14" fill="#aae0ff"/>
+         <text x="50" y="24" font-size="12" text-anchor="middle">✨</text>
+         <rect x="26" y="46" width="48" height="14" rx="3" fill="#fff"/>
+         <circle cx="50" cy="53" r="2" fill="#d96aa0"/>
+         <rect x="26" y="64" width="48" height="14" rx="3" fill="#fff"/>
+         <circle cx="50" cy="71" r="2" fill="#d96aa0"/>` },
+  { id:"piano", cat:"furn", name:"ピアノ", price:80, unlocked:false, size:"2x2",
+    svg:`<rect x="10" y="20" width="80" height="60" rx="4" fill="#fff" stroke="#333" stroke-width="2"/>
+         <rect x="10" y="20" width="80" height="40" fill="#222"/>
+         <rect x="14" y="60" width="72" height="14" fill="#fff"/>
+         <rect x="20" y="60" width="2" height="14" fill="#333"/>
+         <rect x="28" y="60" width="2" height="14" fill="#333"/>
+         <rect x="36" y="60" width="2" height="14" fill="#333"/>
+         <rect x="44" y="60" width="2" height="14" fill="#333"/>
+         <rect x="52" y="60" width="2" height="14" fill="#333"/>
+         <rect x="60" y="60" width="2" height="14" fill="#333"/>
+         <rect x="68" y="60" width="2" height="14" fill="#333"/>
+         <rect x="76" y="60" width="2" height="14" fill="#333"/>
+         <text x="50" y="40" font-size="14" text-anchor="middle" fill="#ffd700">♪♫</text>` },
+  { id:"tv", cat:"furn", name:"テレビ", price:50, unlocked:false, size:"2x1",
+    svg:`<rect x="10" y="20" width="80" height="56" rx="4" fill="#222" stroke="#000" stroke-width="2"/>
+         <rect x="14" y="24" width="72" height="44" fill="#aae0ff"/>
+         <text x="50" y="50" font-size="20" text-anchor="middle">📺</text>
+         <rect x="40" y="76" width="20" height="6" fill="#444"/>
+         <rect x="32" y="82" width="36" height="6" fill="#444"/>` },
+  { id:"lamp", cat:"furn", name:"ランプ", price:15, unlocked:false,
+    svg:`<polygon points="30,46 70,46 60,78 40,78" fill="#fff4a0" stroke="#d4a000" stroke-width="2"/>
+         <circle cx="50" cy="50" r="14" fill="#fff" opacity="0.7"/>
+         <rect x="46" y="78" width="8" height="14" fill="#a87648"/>
+         <rect x="36" y="90" width="28" height="6" rx="2" fill="#a87648"/>
+         <text x="50" y="56" font-size="12" text-anchor="middle">✨</text>` },
+
+  // ============== おはな（10） ==============
+  { id:"rose", cat:"flower", name:"バラ", price:0, unlocked:true,
+    svg:`<rect x="44" y="50" width="12" height="40" fill="#5a8a3a"/>
+         <ellipse cx="36" cy="62" rx="8" ry="5" fill="#7cc868"/>
+         <circle cx="50" cy="36" r="22" fill="#ff6aa8"/>
+         <circle cx="50" cy="36" r="14" fill="#ff8fc0"/>
+         <circle cx="50" cy="36" r="6" fill="#ffb6d5"/>
+         <circle cx="50" cy="36" r="2" fill="#fff4a0"/>` },
+  { id:"tulip", cat:"flower", name:"チューリップ", price:0, unlocked:true,
+    svg:`<rect x="46" y="50" width="8" height="40" fill="#5a8a3a"/>
+         <path d="M 28 46 Q 30 20 50 18 Q 70 20 72 46 Q 60 36 50 46 Q 40 36 28 46 Z" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <path d="M 50 18 Q 54 30 50 46" stroke="#fff" stroke-width="2" fill="none"/>` },
+  { id:"sunflower", cat:"flower", name:"ヒマワリ", price:0, unlocked:true,
+    svg:`<rect x="46" y="60" width="8" height="32" fill="#5a8a3a"/>
+         <ellipse cx="36" cy="72" rx="8" ry="4" fill="#7cc868"/>
+         <g transform="translate(50 36)">
+           <ellipse cx="0" cy="-22" rx="6" ry="14" fill="#ffd700"/>
+           <ellipse cx="22" cy="0" rx="14" ry="6" fill="#ffd700"/>
+           <ellipse cx="0" cy="22" rx="6" ry="14" fill="#ffd700"/>
+           <ellipse cx="-22" cy="0" rx="14" ry="6" fill="#ffd700"/>
+           <ellipse cx="16" cy="-16" rx="10" ry="6" fill="#ffd700" transform="rotate(-45)"/>
+           <ellipse cx="16" cy="16" rx="10" ry="6" fill="#ffd700" transform="rotate(45)"/>
+           <ellipse cx="-16" cy="16" rx="10" ry="6" fill="#ffd700" transform="rotate(-45)"/>
+           <ellipse cx="-16" cy="-16" rx="10" ry="6" fill="#ffd700" transform="rotate(45)"/>
+           <circle r="14" fill="#a87648"/>
+         </g>` },
+  { id:"vase", cat:"flower", name:"かびん", price:10, unlocked:false,
+    svg:`<path d="M 30 40 Q 24 70 32 90 L 68 90 Q 76 70 70 40 Z" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <ellipse cx="50" cy="40" rx="20" ry="6" fill="#6cc4ff"/>
+         <text x="50" y="68" font-size="12" text-anchor="middle">🌸</text>
+         <text x="50" y="80" font-size="10" text-anchor="middle">♡</text>` },
+  { id:"plant", cat:"flower", name:"うえき", price:12, unlocked:false,
+    svg:`<rect x="32" y="60" width="36" height="30" rx="2" fill="#a87648" stroke="#5a3a00" stroke-width="2"/>
+         <ellipse cx="50" cy="40" rx="22" ry="20" fill="#7cc868"/>
+         <ellipse cx="38" cy="36" rx="6" ry="10" fill="#5a8a3a"/>
+         <ellipse cx="62" cy="36" rx="6" ry="10" fill="#5a8a3a"/>
+         <ellipse cx="50" cy="22" rx="6" ry="10" fill="#5a8a3a"/>
+         <text x="50" y="78" font-size="10" text-anchor="middle">🌱</text>` },
+  { id:"cherry", cat:"flower", name:"さくらの き", price:60, unlocked:false, size:"2x2",
+    svg:`<rect x="44" y="60" width="12" height="36" fill="#7a4a2a"/>
+         <circle cx="50" cy="34" r="30" fill="#ffd6e8"/>
+         <circle cx="34" cy="40" r="14" fill="#ff8fc0"/>
+         <circle cx="66" cy="40" r="14" fill="#ff8fc0"/>
+         <circle cx="50" cy="20" r="14" fill="#ff8fc0"/>
+         <text x="38" y="32" font-size="8">✿</text>
+         <text x="58" y="38" font-size="8">✿</text>
+         <text x="50" y="50" font-size="8" text-anchor="middle">✿</text>` },
+  { id:"daisy", cat:"flower", name:"デイジー", price:8, unlocked:false,
+    svg:`<rect x="46" y="60" width="8" height="32" fill="#5a8a3a"/>
+         <g transform="translate(50 36)">
+           <ellipse cx="0" cy="-16" rx="6" ry="10" fill="#fff"/>
+           <ellipse cx="16" cy="0" rx="10" ry="6" fill="#fff"/>
+           <ellipse cx="0" cy="16" rx="6" ry="10" fill="#fff"/>
+           <ellipse cx="-16" cy="0" rx="10" ry="6" fill="#fff"/>
+           <ellipse cx="11" cy="-11" rx="8" ry="6" fill="#fff" transform="rotate(-45)"/>
+           <ellipse cx="11" cy="11" rx="8" ry="6" fill="#fff" transform="rotate(45)"/>
+           <circle r="8" fill="#fff4a0" stroke="#d4a000" stroke-width="2"/>
+         </g>` },
+  { id:"lavender_plant", cat:"flower", name:"ラベンダー", price:18, unlocked:false,
+    svg:`<rect x="46" y="50" width="8" height="42" fill="#5a8a3a"/>
+         <ellipse cx="50" cy="30" rx="10" ry="20" fill="#c9a0ff"/>
+         <circle cx="44" cy="20" r="3" fill="#9c6cff"/>
+         <circle cx="56" cy="22" r="3" fill="#9c6cff"/>
+         <circle cx="48" cy="32" r="3" fill="#9c6cff"/>
+         <circle cx="54" cy="38" r="3" fill="#9c6cff"/>` },
+  { id:"hibiscus", cat:"flower", name:"ハイビスカス", price:22, unlocked:false,
+    svg:`<rect x="46" y="60" width="8" height="32" fill="#5a8a3a"/>
+         <g transform="translate(50 36)">
+           <path d="M 0 -22 Q 16 -16 16 0 Q 0 -8 -16 0 Q -16 -16 0 -22 Z" fill="#ff6aa8"/>
+           <path d="M 22 0 Q 16 16 0 16 Q 8 0 0 -16 Q 16 -16 22 0 Z" fill="#ff6aa8"/>
+           <path d="M 0 22 Q -16 16 -16 0 Q 0 8 16 0 Q 16 16 0 22 Z" fill="#ff6aa8"/>
+           <path d="M -22 0 Q -16 -16 0 -16 Q -8 0 0 16 Q -16 16 -22 0 Z" fill="#ff6aa8"/>
+           <circle r="6" fill="#fff4a0"/>
+           <line x1="0" y1="0" x2="0" y2="-12" stroke="#fff4a0" stroke-width="2"/>
+         </g>` },
+  { id:"flower_field", cat:"flower", name:"おはなばたけ", price:35, unlocked:false, size:"2x1",
+    svg:`<rect x="0" y="60" width="100" height="40" fill="#7cc868"/>
+         <circle cx="14" cy="56" r="6" fill="#ff8fc0"/><circle cx="14" cy="56" r="2" fill="#fff4a0"/>
+         <circle cx="36" cy="50" r="6" fill="#fff4a0"/><circle cx="36" cy="50" r="2" fill="#ff6aa8"/>
+         <circle cx="58" cy="56" r="6" fill="#c9a0ff"/><circle cx="58" cy="56" r="2" fill="#fff"/>
+         <circle cx="80" cy="50" r="6" fill="#aae0ff"/><circle cx="80" cy="50" r="2" fill="#fff4a0"/>
+         <circle cx="50" cy="64" r="4" fill="#ff8fc0"/>
+         <circle cx="26" cy="68" r="4" fill="#fff"/>
+         <circle cx="72" cy="68" r="4" fill="#c9a0ff"/>` },
+
+  // ============== キラキラ（10） ==============
+  { id:"heart_deco", cat:"sparkle", name:"ハート", price:0, unlocked:true,
+    svg:`<path d="M 50 80 Q 16 56 16 36 Q 16 16 36 16 Q 50 16 50 30 Q 50 16 64 16 Q 84 16 84 36 Q 84 56 50 80 Z" fill="#ff6aa8" stroke="#d94a88" stroke-width="2"/>
+         <ellipse cx="36" cy="32" rx="6" ry="4" fill="#fff" opacity="0.7"/>
+         <text x="50" y="56" font-size="14" text-anchor="middle" fill="#fff">♡</text>` },
+  { id:"star_deco", cat:"sparkle", name:"スター", price:0, unlocked:true,
+    svg:`<polygon points="50,8 60,38 92,38 66,58 76,90 50,70 24,90 34,58 8,38 40,38" fill="#ffd700" stroke="#d4a000" stroke-width="2"/>
+         <ellipse cx="42" cy="32" rx="4" ry="3" fill="#fff" opacity="0.8"/>` },
+  { id:"crystal", cat:"sparkle", name:"クリスタル", price:20, unlocked:false,
+    svg:`<polygon points="50,10 80,40 60,90 40,90 20,40" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <polygon points="50,10 80,40 60,90 50,40" fill="#d4f0ff" opacity="0.8"/>
+         <line x1="50" y1="10" x2="50" y2="90" stroke="#fff" stroke-width="1"/>
+         <line x1="20" y1="40" x2="80" y2="40" stroke="#fff" stroke-width="1"/>` },
+  { id:"jewel_pink", cat:"sparkle", name:"ピンクほうせき", price:25, unlocked:false,
+    svg:`<polygon points="50,12 78,38 60,80 40,80 22,38" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <polygon points="50,12 78,38 50,38" fill="#ffd6e8" opacity="0.9"/>
+         <polygon points="50,12 22,38 50,38" fill="#ffb6d5" opacity="0.7"/>
+         <circle cx="38" cy="28" r="3" fill="#fff" opacity="0.9"/>` },
+  { id:"jewel_blue", cat:"sparkle", name:"あおいほうせき", price:25, unlocked:false,
+    svg:`<polygon points="50,12 78,38 60,80 40,80 22,38" fill="#6cc4ff" stroke="#4f96c8" stroke-width="2"/>
+         <polygon points="50,12 78,38 50,38" fill="#aae0ff" opacity="0.9"/>
+         <polygon points="50,12 22,38 50,38" fill="#d4f0ff" opacity="0.7"/>
+         <circle cx="38" cy="28" r="3" fill="#fff" opacity="0.9"/>` },
+  { id:"rainbow", cat:"sparkle", name:"にじ", price:55, unlocked:false, size:"2x1",
+    svg:`<path d="M 8 90 A 42 42 0 0 1 92 90" fill="none" stroke="#ff6666" stroke-width="6"/>
+         <path d="M 14 90 A 36 36 0 0 1 86 90" fill="none" stroke="#ff9933" stroke-width="6"/>
+         <path d="M 20 90 A 30 30 0 0 1 80 90" fill="none" stroke="#ffd700" stroke-width="6"/>
+         <path d="M 26 90 A 24 24 0 0 1 74 90" fill="none" stroke="#7cc868" stroke-width="6"/>
+         <path d="M 32 90 A 18 18 0 0 1 68 90" fill="none" stroke="#6cc4ff" stroke-width="6"/>
+         <path d="M 38 90 A 12 12 0 0 1 62 90" fill="none" stroke="#c9a0ff" stroke-width="6"/>
+         <text x="20" y="92" font-size="14">☁</text>
+         <text x="72" y="92" font-size="14">☁</text>` },
+  { id:"shooting_star", cat:"sparkle", name:"ながれぼし", price:30, unlocked:false,
+    svg:`<line x1="14" y1="14" x2="50" y2="50" stroke="#fff4a0" stroke-width="3" opacity="0.6"/>
+         <line x1="22" y1="14" x2="56" y2="48" stroke="#fff" stroke-width="2" opacity="0.5"/>
+         <polygon points="60,40 68,60 88,60 72,72 78,90 60,80 42,90 48,72 32,60 52,60" fill="#ffd700" stroke="#d4a000" stroke-width="2"/>` },
+  { id:"sparkle_dust", cat:"sparkle", name:"キラキラ", price:5, unlocked:false,
+    svg:`<text x="20" y="30" font-size="16" fill="#ffd700">✨</text>
+         <text x="60" y="40" font-size="20" fill="#ff8fc0">✨</text>
+         <text x="40" y="60" font-size="22" fill="#c9a0ff">✨</text>
+         <text x="70" y="78" font-size="14" fill="#aae0ff">✨</text>
+         <text x="14" y="80" font-size="12" fill="#fff4a0">✨</text>` },
+  { id:"tiara", cat:"sparkle", name:"ティアラ", price:70, unlocked:false,
+    svg:`<path d="M 14 70 L 22 30 L 38 60 L 50 20 L 62 60 L 78 30 L 86 70 Z" fill="#ffd700" stroke="#d4a000" stroke-width="2"/>
+         <circle cx="50" cy="32" r="4" fill="#ff6aa8"/>
+         <circle cx="30" cy="50" r="3" fill="#aae0ff"/>
+         <circle cx="70" cy="50" r="3" fill="#aae0ff"/>
+         <rect x="12" y="68" width="76" height="6" rx="2" fill="#ffd700" stroke="#d4a000" stroke-width="2"/>
+         <circle cx="50" cy="71" r="2" fill="#fff"/>` },
+  { id:"crown", cat:"sparkle", name:"おうかん", price:90, unlocked:false,
+    svg:`<path d="M 14 60 L 14 30 L 30 50 L 50 20 L 70 50 L 86 30 L 86 60 Z" fill="#ffd700" stroke="#d4a000" stroke-width="2"/>
+         <rect x="12" y="58" width="76" height="14" rx="2" fill="#ffae00" stroke="#d4a000" stroke-width="2"/>
+         <circle cx="50" cy="22" r="3" fill="#ff6aa8"/>
+         <circle cx="14" cy="30" r="3" fill="#aae0ff"/>
+         <circle cx="86" cy="30" r="3" fill="#aae0ff"/>
+         <circle cx="30" cy="65" r="3" fill="#ff8fc0"/>
+         <circle cx="50" cy="65" r="3" fill="#c9a0ff"/>
+         <circle cx="70" cy="65" r="3" fill="#aae0ff"/>` },
+
+  // ============== どうぶつ（12） ==============
+  { id:"rabbit", cat:"animal", name:"うさぎ", price:0, unlocked:true,
+    svg:`<ellipse cx="50" cy="68" rx="28" ry="22" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <ellipse cx="50" cy="44" rx="20" ry="18" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <ellipse cx="38" cy="22" rx="6" ry="14" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <ellipse cx="62" cy="22" rx="6" ry="14" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <ellipse cx="38" cy="22" rx="2" ry="8" fill="#ffd6e8"/>
+         <ellipse cx="62" cy="22" rx="2" ry="8" fill="#ffd6e8"/>
+         <circle cx="42" cy="42" r="2.5" fill="#222"/>
+         <circle cx="58" cy="42" r="2.5" fill="#222"/>
+         <ellipse cx="50" cy="50" rx="2" ry="1.5" fill="#ff8fc0"/>
+         <path d="M 46 52 Q 50 56 54 52" stroke="#222" stroke-width="1.5" fill="none"/>
+         <circle cx="36" cy="62" r="3" fill="#ffd6e8"/>
+         <circle cx="64" cy="62" r="3" fill="#ffd6e8"/>` },
+  { id:"puppy", cat:"animal", name:"こいぬ", price:15, unlocked:false,
+    svg:`<ellipse cx="50" cy="68" rx="30" ry="22" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <circle cx="50" cy="40" r="22" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <ellipse cx="28" cy="32" rx="6" ry="14" fill="#a87648" transform="rotate(-25 28 32)"/>
+         <ellipse cx="72" cy="32" rx="6" ry="14" fill="#a87648" transform="rotate(25 72 32)"/>
+         <circle cx="42" cy="38" r="3" fill="#222"/>
+         <circle cx="58" cy="38" r="3" fill="#222"/>
+         <ellipse cx="50" cy="48" rx="4" ry="3" fill="#222"/>
+         <path d="M 44 54 Q 50 58 56 54" stroke="#222" stroke-width="1.5" fill="none"/>
+         <circle cx="34" cy="42" r="3" fill="#fff" opacity="0.6"/>` },
+  { id:"kitten", cat:"animal", name:"こねこ", price:18, unlocked:false,
+    svg:`<ellipse cx="50" cy="70" rx="28" ry="20" fill="#fff4a0" stroke="#d4a000" stroke-width="2"/>
+         <circle cx="50" cy="42" r="22" fill="#fff4a0" stroke="#d4a000" stroke-width="2"/>
+         <polygon points="32,28 36,8 44,22" fill="#fff4a0" stroke="#d4a000" stroke-width="2"/>
+         <polygon points="68,28 64,8 56,22" fill="#fff4a0" stroke="#d4a000" stroke-width="2"/>
+         <polygon points="34,24 36,14 40,22" fill="#ffd6e8"/>
+         <polygon points="66,24 64,14 60,22" fill="#ffd6e8"/>
+         <ellipse cx="42" cy="40" rx="3" ry="4" fill="#222"/>
+         <ellipse cx="58" cy="40" rx="3" ry="4" fill="#222"/>
+         <polygon points="48,48 52,48 50,52" fill="#ff8fc0"/>
+         <path d="M 50 52 Q 46 56 42 54" stroke="#222" stroke-width="1.5" fill="none"/>
+         <path d="M 50 52 Q 54 56 58 54" stroke="#222" stroke-width="1.5" fill="none"/>` },
+  { id:"bird", cat:"animal", name:"ことり", price:10, unlocked:false,
+    svg:`<ellipse cx="50" cy="56" rx="22" ry="20" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <circle cx="40" cy="44" r="14" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <ellipse cx="60" cy="56" rx="14" ry="10" fill="#6cc4ff"/>
+         <polygon points="26,46 18,46 26,42" fill="#ffae00"/>
+         <circle cx="40" cy="40" r="2" fill="#222"/>
+         <ellipse cx="74" cy="68" rx="4" ry="2" fill="#aae0ff"/>
+         <line x1="56" y1="76" x2="56" y2="84" stroke="#ffae00" stroke-width="2"/>
+         <line x1="48" y1="76" x2="48" y2="84" stroke="#ffae00" stroke-width="2"/>` },
+  { id:"panda", cat:"animal", name:"パンダ", price:30, unlocked:false,
+    svg:`<circle cx="50" cy="50" r="32" fill="#fff" stroke="#222" stroke-width="2"/>
+         <circle cx="28" cy="26" r="10" fill="#222"/>
+         <circle cx="72" cy="26" r="10" fill="#222"/>
+         <ellipse cx="40" cy="48" rx="7" ry="9" fill="#222"/>
+         <ellipse cx="60" cy="48" rx="7" ry="9" fill="#222"/>
+         <circle cx="40" cy="48" r="2" fill="#fff"/>
+         <circle cx="60" cy="48" r="2" fill="#fff"/>
+         <ellipse cx="50" cy="62" rx="4" ry="3" fill="#222"/>
+         <path d="M 44 68 Q 50 72 56 68" stroke="#222" stroke-width="1.5" fill="none"/>` },
+  { id:"unicorn", cat:"animal", name:"ユニコーン", price:60, unlocked:false,
+    svg:`<ellipse cx="55" cy="70" rx="28" ry="20" fill="#fff" stroke="#c9a0ff" stroke-width="2"/>
+         <circle cx="40" cy="44" r="20" fill="#fff" stroke="#c9a0ff" stroke-width="2"/>
+         <polygon points="38,18 42,2 46,18" fill="#ffd700" stroke="#d4a000" stroke-width="1.5"/>
+         <line x1="38" y1="14" x2="46" y2="10" stroke="#d4a000" stroke-width="1"/>
+         <line x1="40" y1="6" x2="44" y2="14" stroke="#d4a000" stroke-width="1"/>
+         <path d="M 28 30 Q 16 26 18 38" fill="#ff8fc0" stroke="#d96aa0" stroke-width="1.5"/>
+         <path d="M 28 36 Q 14 38 22 50" fill="#c9a0ff" stroke="#9c6cff" stroke-width="1.5"/>
+         <circle cx="42" cy="42" r="2.5" fill="#222"/>
+         <ellipse cx="36" cy="50" rx="2" ry="1" fill="#ff8fc0"/>
+         <path d="M 76 60 Q 90 56 86 76 Q 80 70 76 70" fill="#ff8fc0" stroke="#d96aa0" stroke-width="1.5"/>` },
+  { id:"hamster", cat:"animal", name:"ハムスター", price:20, unlocked:false,
+    svg:`<ellipse cx="50" cy="60" rx="30" ry="26" fill="#ffd6a0" stroke="#d4a000" stroke-width="2"/>
+         <ellipse cx="50" cy="68" rx="22" ry="16" fill="#fff"/>
+         <circle cx="32" cy="38" r="6" fill="#ffd6a0" stroke="#d4a000" stroke-width="1.5"/>
+         <circle cx="68" cy="38" r="6" fill="#ffd6a0" stroke="#d4a000" stroke-width="1.5"/>
+         <circle cx="32" cy="38" r="2.5" fill="#ffb6a0"/>
+         <circle cx="68" cy="38" r="2.5" fill="#ffb6a0"/>
+         <circle cx="38" cy="52" r="2.5" fill="#222"/>
+         <circle cx="62" cy="52" r="2.5" fill="#222"/>
+         <ellipse cx="50" cy="62" rx="3" ry="2" fill="#222"/>
+         <path d="M 44 66 Q 50 70 56 66" stroke="#222" stroke-width="1.5" fill="none"/>
+         <ellipse cx="42" cy="68" rx="3" ry="2" fill="#ffaa88"/>
+         <ellipse cx="58" cy="68" rx="3" ry="2" fill="#ffaa88"/>` },
+  { id:"penguin", cat:"animal", name:"ペンギン", price:25, unlocked:false,
+    svg:`<ellipse cx="50" cy="60" rx="26" ry="34" fill="#222"/>
+         <ellipse cx="50" cy="64" rx="18" ry="26" fill="#fff"/>
+         <ellipse cx="42" cy="42" rx="3" ry="4" fill="#222"/>
+         <ellipse cx="58" cy="42" rx="3" ry="4" fill="#222"/>
+         <polygon points="44,52 56,52 50,60" fill="#ffae00"/>
+         <ellipse cx="28" cy="60" rx="6" ry="14" fill="#222" transform="rotate(-15 28 60)"/>
+         <ellipse cx="72" cy="60" rx="6" ry="14" fill="#222" transform="rotate(15 72 60)"/>
+         <ellipse cx="44" cy="92" rx="6" ry="3" fill="#ffae00"/>
+         <ellipse cx="56" cy="92" rx="6" ry="3" fill="#ffae00"/>` },
+  { id:"fish", cat:"animal", name:"おさかな", price:8, unlocked:false,
+    svg:`<ellipse cx="44" cy="50" rx="26" ry="18" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <polygon points="68,50 90,30 90,70" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <circle cx="32" cy="46" r="4" fill="#fff"/>
+         <circle cx="32" cy="46" r="2" fill="#222"/>
+         <path d="M 44 60 Q 50 64 56 60" stroke="#fff" stroke-width="1.5" fill="none"/>
+         <path d="M 26 56 Q 36 64 44 56" stroke="#d96aa0" stroke-width="1" fill="none"/>` },
+  { id:"butterfly", cat:"animal", name:"ちょうちょ", price:14, unlocked:false,
+    svg:`<rect x="48" y="40" width="4" height="36" rx="2" fill="#222"/>
+         <ellipse cx="30" cy="40" rx="18" ry="14" fill="#ff8fc0" stroke="#d96aa0" stroke-width="1.5"/>
+         <ellipse cx="70" cy="40" rx="18" ry="14" fill="#ff8fc0" stroke="#d96aa0" stroke-width="1.5"/>
+         <ellipse cx="32" cy="62" rx="14" ry="10" fill="#c9a0ff" stroke="#9c6cff" stroke-width="1.5"/>
+         <ellipse cx="68" cy="62" rx="14" ry="10" fill="#c9a0ff" stroke="#9c6cff" stroke-width="1.5"/>
+         <circle cx="30" cy="40" r="3" fill="#fff4a0"/>
+         <circle cx="70" cy="40" r="3" fill="#fff4a0"/>
+         <line x1="50" y1="36" x2="44" y2="26" stroke="#222" stroke-width="1.5"/>
+         <line x1="50" y1="36" x2="56" y2="26" stroke="#222" stroke-width="1.5"/>` },
+  { id:"hedgehog", cat:"animal", name:"はりねずみ", price:24, unlocked:false,
+    svg:`<ellipse cx="50" cy="60" rx="34" ry="24" fill="#a87648" stroke="#5a3a00" stroke-width="2"/>
+         <ellipse cx="34" cy="62" rx="14" ry="14" fill="#ffd6a0"/>
+         <line x1="60" y1="40" x2="64" y2="32" stroke="#5a3a00" stroke-width="2"/>
+         <line x1="68" y1="42" x2="72" y2="34" stroke="#5a3a00" stroke-width="2"/>
+         <line x1="76" y1="48" x2="82" y2="42" stroke="#5a3a00" stroke-width="2"/>
+         <line x1="80" y1="58" x2="88" y2="56" stroke="#5a3a00" stroke-width="2"/>
+         <line x1="58" y1="56" x2="62" y2="48" stroke="#5a3a00" stroke-width="2"/>
+         <circle cx="26" cy="58" r="2" fill="#222"/>
+         <ellipse cx="22" cy="64" rx="2" ry="1.5" fill="#222"/>` },
+  { id:"dolphin", cat:"animal", name:"イルカ", price:35, unlocked:false,
+    svg:`<path d="M 14 58 Q 30 30 60 36 Q 86 40 90 60 Q 74 64 60 60 Q 40 74 14 58 Z" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <path d="M 60 36 L 70 22 L 76 38" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <path d="M 86 56 L 96 50 L 92 64" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <ellipse cx="20" cy="56" rx="3" ry="4" fill="#222"/>
+         <ellipse cx="20" cy="55" rx="1" ry="1.5" fill="#fff"/>
+         <path d="M 14 64 Q 18 66 22 64" stroke="#222" stroke-width="1" fill="none"/>` },
+
+  // ============== おかし（10） ==============
+  { id:"cake", cat:"sweets", name:"ケーキ", price:0, unlocked:true,
+    svg:`<rect x="20" y="50" width="60" height="36" rx="2" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="20" y="50" width="60" height="6" fill="#fff"/>
+         <ellipse cx="50" cy="50" rx="30" ry="6" fill="#ff8fc0"/>
+         <ellipse cx="50" cy="48" rx="30" ry="4" fill="#fff"/>
+         <ellipse cx="32" cy="46" rx="3" ry="2" fill="#ff6aa8"/>
+         <ellipse cx="50" cy="44" rx="3" ry="2" fill="#ff6aa8"/>
+         <ellipse cx="68" cy="46" rx="3" ry="2" fill="#ff6aa8"/>
+         <rect x="48" y="22" width="4" height="22" fill="#fff4a0"/>
+         <ellipse cx="50" cy="20" rx="3" ry="6" fill="#ff6666"/>
+         <text x="50" y="78" font-size="10" text-anchor="middle">♡</text>` },
+  { id:"donut", cat:"sweets", name:"ドーナツ", price:0, unlocked:true,
+    svg:`<circle cx="50" cy="50" r="36" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <circle cx="50" cy="50" r="14" fill="#ffd6e8" stroke="#a87648" stroke-width="2"/>
+         <path d="M 14 50 A 36 36 0 0 1 86 50 L 76 50 A 26 26 0 0 0 24 50 Z" fill="#ff8fc0"/>
+         <rect x="22" y="36" width="3" height="6" fill="#fff" transform="rotate(20 23 39)"/>
+         <rect x="40" y="22" width="3" height="6" fill="#fff4a0" transform="rotate(-30 41 25)"/>
+         <rect x="60" y="26" width="3" height="6" fill="#aae0ff" transform="rotate(15 61 29)"/>
+         <rect x="74" y="40" width="3" height="6" fill="#fff" transform="rotate(-25 75 43)"/>
+         <rect x="32" y="58" width="3" height="6" fill="#fff4a0" transform="rotate(40 33 61)"/>
+         <rect x="64" y="58" width="3" height="6" fill="#c9a0ff" transform="rotate(-15 65 61)"/>` },
+  { id:"parfait", cat:"sweets", name:"パフェ", price:18, unlocked:false,
+    svg:`<path d="M 26 36 L 30 90 L 70 90 L 74 36 Z" fill="none" stroke="#aae0ff" stroke-width="2"/>
+         <path d="M 28 50 L 30 90 L 70 90 L 72 50 Q 50 58 28 50 Z" fill="#fff" opacity="0.5"/>
+         <ellipse cx="50" cy="38" rx="22" ry="10" fill="#ff8fc0"/>
+         <circle cx="40" cy="30" r="6" fill="#ffd6e8"/>
+         <circle cx="56" cy="26" r="8" fill="#fff"/>
+         <circle cx="64" cy="32" r="5" fill="#ff6aa8"/>
+         <text x="48" y="22" font-size="10">🍓</text>
+         <line x1="42" y1="14" x2="42" y2="30" stroke="#ffae00" stroke-width="2"/>` },
+  { id:"candy", cat:"sweets", name:"キャンディ", price:5, unlocked:false,
+    svg:`<circle cx="50" cy="50" r="22" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <path d="M 36 38 Q 50 50 36 62" stroke="#fff" stroke-width="3" fill="none"/>
+         <path d="M 64 38 Q 50 50 64 62" stroke="#fff" stroke-width="3" fill="none"/>
+         <polygon points="22,46 8,40 12,54" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <polygon points="78,46 92,40 88,54" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <line x1="22" y1="50" x2="78" y2="50" stroke="#d96aa0" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>` },
+  { id:"macaron", cat:"sweets", name:"マカロン", price:12, unlocked:false,
+    svg:`<ellipse cx="50" cy="36" rx="32" ry="14" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="18" y="44" width="64" height="14" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+         <ellipse cx="50" cy="62" rx="32" ry="14" fill="#c9a0ff" stroke="#9c6cff" stroke-width="2"/>
+         <ellipse cx="34" cy="32" rx="4" ry="2" fill="#fff" opacity="0.6"/>
+         <ellipse cx="34" cy="66" rx="4" ry="2" fill="#fff" opacity="0.6"/>` },
+  { id:"icecream", cat:"sweets", name:"アイス", price:10, unlocked:false,
+    svg:`<polygon points="34,46 66,46 50,90" fill="#fff4a0" stroke="#d4a000" stroke-width="2"/>
+         <line x1="40" y1="50" x2="38" y2="60" stroke="#d4a000" stroke-width="1"/>
+         <line x1="50" y1="50" x2="46" y2="64" stroke="#d4a000" stroke-width="1"/>
+         <line x1="60" y1="50" x2="62" y2="60" stroke="#d4a000" stroke-width="1"/>
+         <circle cx="34" cy="34" r="14" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <circle cx="66" cy="34" r="14" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <circle cx="50" cy="20" r="14" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <ellipse cx="46" cy="14" rx="3" ry="2" fill="#fff" opacity="0.7"/>
+         <text x="50" y="22" font-size="8" text-anchor="middle">♡</text>` },
+  { id:"cookie", cat:"sweets", name:"クッキー", price:6, unlocked:false,
+    svg:`<circle cx="50" cy="50" r="34" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <circle cx="34" cy="38" r="3" fill="#5a3a00"/>
+         <circle cx="60" cy="32" r="3" fill="#5a3a00"/>
+         <circle cx="44" cy="56" r="3" fill="#5a3a00"/>
+         <circle cx="62" cy="60" r="3" fill="#5a3a00"/>
+         <circle cx="32" cy="62" r="3" fill="#5a3a00"/>
+         <circle cx="74" cy="46" r="3" fill="#5a3a00"/>
+         <ellipse cx="38" cy="34" rx="2" ry="3" fill="#fff" opacity="0.4"/>` },
+  { id:"chocolate", cat:"sweets", name:"チョコ", price:8, unlocked:false,
+    svg:`<rect x="18" y="22" width="64" height="56" rx="4" fill="#7a4a2a" stroke="#5a3a00" stroke-width="2"/>
+         <line x1="34" y1="22" x2="34" y2="78" stroke="#5a3a00" stroke-width="1.5"/>
+         <line x1="50" y1="22" x2="50" y2="78" stroke="#5a3a00" stroke-width="1.5"/>
+         <line x1="66" y1="22" x2="66" y2="78" stroke="#5a3a00" stroke-width="1.5"/>
+         <line x1="18" y1="40" x2="82" y2="40" stroke="#5a3a00" stroke-width="1.5"/>
+         <line x1="18" y1="60" x2="82" y2="60" stroke="#5a3a00" stroke-width="1.5"/>
+         <ellipse cx="26" cy="30" rx="4" ry="2" fill="#a87648" opacity="0.6"/>` },
+  { id:"strawberry", cat:"sweets", name:"いちご", price:6, unlocked:false,
+    svg:`<path d="M 50 18 Q 22 26 26 56 Q 30 86 50 88 Q 70 86 74 56 Q 78 26 50 18 Z" fill="#ff4466" stroke="#d62652" stroke-width="2"/>
+         <path d="M 38 18 L 32 8 L 38 14 L 44 6 L 46 16 L 54 6 L 56 16 L 62 8 L 62 18 Z" fill="#7cc868" stroke="#5a8a3a" stroke-width="1.5"/>
+         <circle cx="38" cy="40" r="1.5" fill="#fff4a0"/>
+         <circle cx="50" cy="46" r="1.5" fill="#fff4a0"/>
+         <circle cx="62" cy="40" r="1.5" fill="#fff4a0"/>
+         <circle cx="34" cy="56" r="1.5" fill="#fff4a0"/>
+         <circle cx="50" cy="62" r="1.5" fill="#fff4a0"/>
+         <circle cx="66" cy="56" r="1.5" fill="#fff4a0"/>
+         <circle cx="42" cy="74" r="1.5" fill="#fff4a0"/>
+         <circle cx="58" cy="74" r="1.5" fill="#fff4a0"/>` },
+  { id:"cupcake", cat:"sweets", name:"カップケーキ", price:14, unlocked:false,
+    svg:`<path d="M 26 50 L 30 90 L 70 90 L 74 50 Z" fill="#fff4a0" stroke="#d4a000" stroke-width="2"/>
+         <line x1="34" y1="56" x2="34" y2="86" stroke="#d4a000" stroke-width="1"/>
+         <line x1="44" y1="56" x2="44" y2="86" stroke="#d4a000" stroke-width="1"/>
+         <line x1="56" y1="56" x2="56" y2="86" stroke="#d4a000" stroke-width="1"/>
+         <line x1="66" y1="56" x2="66" y2="86" stroke="#d4a000" stroke-width="1"/>
+         <path d="M 22 50 Q 50 18 78 50 Q 70 56 50 50 Q 30 56 22 50 Z" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <circle cx="36" cy="40" r="2" fill="#fff"/>
+         <circle cx="50" cy="32" r="2" fill="#fff"/>
+         <circle cx="64" cy="40" r="2" fill="#fff"/>
+         <text x="50" y="28" font-size="10" text-anchor="middle">🍒</text>` },
+
+  // ============== ぬいぐるみ（8） ==============
+  { id:"teddy", cat:"plush", name:"くまさん", price:0, unlocked:true,
+    svg:`<ellipse cx="50" cy="64" rx="26" ry="22" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <circle cx="50" cy="40" r="22" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <circle cx="32" cy="22" r="8" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <circle cx="68" cy="22" r="8" fill="#d4a87a" stroke="#a87648" stroke-width="2"/>
+         <circle cx="32" cy="22" r="4" fill="#ffd6a0"/>
+         <circle cx="68" cy="22" r="4" fill="#ffd6a0"/>
+         <circle cx="42" cy="38" r="2.5" fill="#222"/>
+         <circle cx="58" cy="38" r="2.5" fill="#222"/>
+         <ellipse cx="50" cy="46" rx="6" ry="4" fill="#ffd6a0"/>
+         <ellipse cx="50" cy="46" rx="2" ry="1.5" fill="#222"/>
+         <path d="M 46 50 Q 50 54 54 50" stroke="#222" stroke-width="1.5" fill="none"/>
+         <ellipse cx="40" cy="80" rx="6" ry="4" fill="#ffd6a0"/>` },
+  { id:"plush_rabbit", cat:"plush", name:"うさぎぬい", price:20, unlocked:false,
+    svg:`<ellipse cx="50" cy="68" rx="28" ry="22" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <circle cx="50" cy="44" r="22" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <ellipse cx="36" cy="20" rx="6" ry="14" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <ellipse cx="64" cy="20" rx="6" ry="14" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <circle cx="42" cy="42" r="3" fill="#222"/>
+         <circle cx="58" cy="42" r="3" fill="#222"/>
+         <ellipse cx="50" cy="50" rx="2" ry="1.5" fill="#ff6aa8"/>
+         <path d="M 46 54 Q 50 58 54 54" stroke="#222" stroke-width="1.5" fill="none"/>
+         <circle cx="36" cy="64" r="3" fill="#fff"/>
+         <circle cx="64" cy="64" r="3" fill="#fff"/>
+         <rect x="44" y="76" width="12" height="6" rx="2" fill="#ff6aa8"/>` },
+  { id:"plush_unicorn", cat:"plush", name:"ユニコーンぬい", price:55, unlocked:false,
+    svg:`<ellipse cx="50" cy="64" rx="28" ry="22" fill="#fff" stroke="#c9a0ff" stroke-width="2"/>
+         <circle cx="50" cy="42" r="20" fill="#fff" stroke="#c9a0ff" stroke-width="2"/>
+         <polygon points="46,18 50,2 54,18" fill="#ffd700" stroke="#d4a000" stroke-width="1.5"/>
+         <path d="M 32 26 Q 22 26 24 38 Q 28 32 32 36" fill="#ff8fc0" stroke="#d96aa0" stroke-width="1.5"/>
+         <path d="M 68 26 Q 78 26 76 38 Q 72 32 68 36" fill="#c9a0ff" stroke="#9c6cff" stroke-width="1.5"/>
+         <circle cx="42" cy="42" r="2.5" fill="#222"/>
+         <circle cx="58" cy="42" r="2.5" fill="#222"/>
+         <ellipse cx="50" cy="50" rx="2" ry="1.5" fill="#ff6aa8"/>
+         <path d="M 46 54 Q 50 58 54 54" stroke="#222" stroke-width="1.5" fill="none"/>
+         <circle cx="38" cy="48" r="2" fill="#ffd6e8"/>
+         <circle cx="62" cy="48" r="2" fill="#ffd6e8"/>` },
+  { id:"heart_cushion", cat:"plush", name:"ハートクッション", price:15, unlocked:false,
+    svg:`<path d="M 50 86 Q 10 60 10 36 Q 10 14 32 14 Q 50 14 50 30 Q 50 14 68 14 Q 90 14 90 36 Q 90 60 50 86 Z" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <ellipse cx="34" cy="32" rx="6" ry="4" fill="#fff" opacity="0.7"/>
+         <text x="50" y="58" font-size="20" text-anchor="middle" fill="#fff">♡</text>
+         <path d="M 18 18 Q 14 22 18 26" stroke="#fff" stroke-width="2" fill="none"/>
+         <path d="M 82 18 Q 86 22 82 26" stroke="#fff" stroke-width="2" fill="none"/>` },
+  { id:"plush_cat", cat:"plush", name:"ねこぬい", price:22, unlocked:false,
+    svg:`<ellipse cx="50" cy="68" rx="28" ry="22" fill="#fff" stroke="#aaa" stroke-width="2"/>
+         <circle cx="50" cy="42" r="22" fill="#fff" stroke="#aaa" stroke-width="2"/>
+         <polygon points="32,26 36,8 44,22" fill="#fff" stroke="#aaa" stroke-width="2"/>
+         <polygon points="68,26 64,8 56,22" fill="#fff" stroke="#aaa" stroke-width="2"/>
+         <ellipse cx="42" cy="40" rx="3" ry="4" fill="#222"/>
+         <ellipse cx="58" cy="40" rx="3" ry="4" fill="#222"/>
+         <polygon points="48,48 52,48 50,52" fill="#ff8fc0"/>
+         <line x1="50" y1="52" x2="50" y2="56" stroke="#222" stroke-width="1.5"/>
+         <path d="M 50 56 Q 46 58 42 56" stroke="#222" stroke-width="1.5" fill="none"/>
+         <path d="M 50 56 Q 54 58 58 56" stroke="#222" stroke-width="1.5" fill="none"/>
+         <rect x="36" y="74" width="28" height="6" rx="2" fill="#ff6aa8"/>
+         <circle cx="50" cy="78" r="3" fill="#ffd700"/>` },
+  { id:"plush_panda", cat:"plush", name:"パンダぬい", price:32, unlocked:false,
+    svg:`<ellipse cx="50" cy="66" rx="28" ry="22" fill="#fff" stroke="#222" stroke-width="2"/>
+         <circle cx="50" cy="42" r="22" fill="#fff" stroke="#222" stroke-width="2"/>
+         <circle cx="32" cy="22" r="8" fill="#222"/>
+         <circle cx="68" cy="22" r="8" fill="#222"/>
+         <ellipse cx="40" cy="42" rx="6" ry="8" fill="#222"/>
+         <ellipse cx="60" cy="42" rx="6" ry="8" fill="#222"/>
+         <circle cx="40" cy="42" r="2" fill="#fff"/>
+         <circle cx="60" cy="42" r="2" fill="#fff"/>
+         <ellipse cx="50" cy="54" rx="3" ry="2" fill="#222"/>
+         <path d="M 46 60 Q 50 64 54 60" stroke="#222" stroke-width="1.5" fill="none"/>
+         <rect x="36" y="74" width="28" height="6" rx="2" fill="#ff6aa8"/>` },
+  { id:"plush_pig", cat:"plush", name:"ぶたぬい", price:18, unlocked:false,
+    svg:`<ellipse cx="50" cy="66" rx="28" ry="22" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <circle cx="50" cy="42" r="22" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <polygon points="32,26 28,12 40,20" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <polygon points="68,26 72,12 60,20" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <ellipse cx="50" cy="50" rx="10" ry="6" fill="#ff8fc0" stroke="#d96aa0" stroke-width="1.5"/>
+         <ellipse cx="46" cy="50" rx="1.5" ry="2" fill="#222"/>
+         <ellipse cx="54" cy="50" rx="1.5" ry="2" fill="#222"/>
+         <circle cx="42" cy="40" r="2.5" fill="#222"/>
+         <circle cx="58" cy="40" r="2.5" fill="#222"/>` },
+  { id:"plush_sheep", cat:"plush", name:"ひつじぬい", price:24, unlocked:false,
+    svg:`<ellipse cx="50" cy="66" rx="32" ry="22" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <circle cx="20" cy="52" r="6" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+         <circle cx="80" cy="52" r="6" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+         <circle cx="22" cy="68" r="6" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+         <circle cx="78" cy="68" r="6" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+         <circle cx="50" cy="42" r="18" fill="#ffd6a0" stroke="#d4a000" stroke-width="2"/>
+         <ellipse cx="32" cy="38" rx="6" ry="8" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+         <ellipse cx="68" cy="38" rx="6" ry="8" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+         <circle cx="42" cy="42" r="2.5" fill="#222"/>
+         <circle cx="58" cy="42" r="2.5" fill="#222"/>
+         <ellipse cx="50" cy="50" rx="2" ry="1.5" fill="#222"/>` },
+
+  // ============== かべがみ（6） ==============
+  { id:"wp_pink", cat:"wall", name:"ピンクのかべ", price:0, unlocked:true,
+    wallpaper:"pink",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="url(#wpp)"/>
+         <defs><linearGradient id="wpp" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffe6f3"/><stop offset="1" stop-color="#ffd6e8"/></linearGradient></defs>
+         <text x="50" y="56" font-size="16" text-anchor="middle">🌸</text>` },
+  { id:"wp_blue", cat:"wall", name:"みずいろのかべ", price:20, unlocked:false,
+    wallpaper:"blue",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#aae0ff"/>
+         <text x="50" y="56" font-size="16" text-anchor="middle">☁️</text>` },
+  { id:"wp_stars", cat:"wall", name:"ほしのかべ", price:35, unlocked:false,
+    wallpaper:"stars",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#c9a0ff"/>
+         <text x="22" y="30" font-size="14">⭐</text>
+         <text x="60" y="48" font-size="14">⭐</text>
+         <text x="36" y="68" font-size="14">⭐</text>
+         <text x="70" y="80" font-size="14">⭐</text>` },
+  { id:"wp_flowers", cat:"wall", name:"おはなのかべ", price:30, unlocked:false,
+    wallpaper:"flowers",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#ffd6e8"/>
+         <text x="22" y="30" font-size="14">🌸</text>
+         <text x="60" y="40" font-size="14">🌷</text>
+         <text x="36" y="64" font-size="14">🌺</text>
+         <text x="68" y="78" font-size="14">🌼</text>` },
+  { id:"wp_mint", cat:"wall", name:"ミントのかべ", price:25, unlocked:false,
+    wallpaper:"mint",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#aaf0c8"/>
+         <text x="50" y="56" font-size="16" text-anchor="middle">🌿</text>` },
+  { id:"wp_yellow", cat:"wall", name:"きいろのかべ", price:25, unlocked:false,
+    wallpaper:"yellow",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#fff4a0"/>
+         <text x="50" y="56" font-size="16" text-anchor="middle">☀️</text>` },
+  { id:"wp_rainbow", cat:"wall", name:"にじのかべ", price:80, unlocked:false,
+    wallpaper:"rainbow",
+    svg:`<rect x="6" y="6" width="88" height="14" fill="#ffd6e8"/>
+         <rect x="6" y="20" width="88" height="14" fill="#ffe5b4"/>
+         <rect x="6" y="34" width="88" height="14" fill="#fff4a0"/>
+         <rect x="6" y="48" width="88" height="14" fill="#d4ffea"/>
+         <rect x="6" y="62" width="88" height="14" fill="#aae0ff"/>
+         <rect x="6" y="76" width="88" height="18" rx="0 0 6 6" fill="#c9a0ff"/>
+         <text x="50" y="56" font-size="14" text-anchor="middle">🌈</text>` },
+
+  // ============== ゆか（4） ==============
+  { id:"fl_wood", cat:"floor", name:"きのゆか", price:0, unlocked:true,
+    floor:"wood",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#d4a87a"/>
+         <line x1="6" y1="30" x2="94" y2="30" stroke="#a87648" stroke-width="2"/>
+         <line x1="6" y1="54" x2="94" y2="54" stroke="#a87648" stroke-width="2"/>
+         <line x1="6" y1="78" x2="94" y2="78" stroke="#a87648" stroke-width="2"/>
+         <text x="50" y="56" font-size="14" text-anchor="middle">🪵</text>` },
+  { id:"fl_pink", cat:"floor", name:"ピンクのゆか", price:25, unlocked:false,
+    floor:"pink",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#ffb6d5"/>
+         <text x="50" y="56" font-size="14" text-anchor="middle">🩷</text>` },
+  { id:"fl_grass", cat:"floor", name:"くさのゆか", price:30, unlocked:false,
+    floor:"grass",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#7cc868"/>
+         <text x="50" y="56" font-size="14" text-anchor="middle">🌱</text>` },
+  { id:"fl_tile", cat:"floor", name:"タイルゆか", price:40, unlocked:false,
+    floor:"tile",
+    svg:`<rect x="6" y="6" width="88" height="88" rx="6" fill="#ffd6e8"/>
+         <line x1="6" y1="34" x2="94" y2="34" stroke="#fff" stroke-width="2"/>
+         <line x1="6" y1="62" x2="94" y2="62" stroke="#fff" stroke-width="2"/>
+         <line x1="34" y1="6" x2="34" y2="94" stroke="#fff" stroke-width="2"/>
+         <line x1="62" y1="6" x2="62" y2="94" stroke="#fff" stroke-width="2"/>` },
+
+  // ============== アクセサリー（8） ==============
+  { id:"ribbon", cat:"acc", name:"リボン", price:0, unlocked:true,
+    svg:`<path d="M 14 36 L 50 50 L 14 64 L 22 50 Z" fill="#ff6aa8" stroke="#d94a88" stroke-width="2"/>
+         <path d="M 86 36 L 50 50 L 86 64 L 78 50 Z" fill="#ff6aa8" stroke="#d94a88" stroke-width="2"/>
+         <ellipse cx="50" cy="50" rx="8" ry="10" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <line x1="44" y1="50" x2="56" y2="50" stroke="#fff" stroke-width="1.5"/>
+         <text x="50" y="54" font-size="8" text-anchor="middle" fill="#fff">♡</text>` },
+  { id:"feather", cat:"acc", name:"はね", price:14, unlocked:false,
+    svg:`<path d="M 50 8 Q 30 30 30 60 Q 30 84 50 90 Q 70 84 70 60 Q 70 30 50 8 Z" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <line x1="50" y1="8" x2="50" y2="90" stroke="#d96aa0" stroke-width="1.5"/>
+         <path d="M 50 20 L 38 28" stroke="#d96aa0" stroke-width="1"/>
+         <path d="M 50 20 L 62 28" stroke="#d96aa0" stroke-width="1"/>
+         <path d="M 50 32 L 36 42" stroke="#d96aa0" stroke-width="1"/>
+         <path d="M 50 32 L 64 42" stroke="#d96aa0" stroke-width="1"/>
+         <path d="M 50 48 L 34 58" stroke="#d96aa0" stroke-width="1"/>
+         <path d="M 50 48 L 66 58" stroke="#d96aa0" stroke-width="1"/>` },
+  { id:"hairpin", cat:"acc", name:"ヘアピン", price:8, unlocked:false,
+    svg:`<rect x="14" y="44" width="60" height="6" rx="3" fill="#ffd700" stroke="#d4a000" stroke-width="1.5"/>
+         <circle cx="78" cy="47" r="10" fill="#ff6aa8" stroke="#d94a88" stroke-width="2"/>
+         <text x="78" y="52" font-size="12" text-anchor="middle" fill="#fff">♡</text>` },
+  { id:"necklace", cat:"acc", name:"ネックレス", price:30, unlocked:false,
+    svg:`<path d="M 14 16 Q 50 60 86 16" fill="none" stroke="#ffd700" stroke-width="3"/>
+         <circle cx="20" cy="22" r="3" fill="#ffd700"/>
+         <circle cx="32" cy="36" r="3" fill="#ffd700"/>
+         <circle cx="44" cy="48" r="3" fill="#ffd700"/>
+         <circle cx="56" cy="48" r="3" fill="#ffd700"/>
+         <circle cx="68" cy="36" r="3" fill="#ffd700"/>
+         <circle cx="80" cy="22" r="3" fill="#ffd700"/>
+         <polygon points="50,52 60,68 50,84 40,68" fill="#ff6aa8" stroke="#d94a88" stroke-width="1.5"/>
+         <polygon points="50,52 60,68 50,68" fill="#ffd6e8"/>` },
+  { id:"bow_blue", cat:"acc", name:"あおいリボン", price:12, unlocked:false,
+    svg:`<path d="M 14 36 L 50 50 L 14 64 L 22 50 Z" fill="#6cc4ff" stroke="#4f96c8" stroke-width="2"/>
+         <path d="M 86 36 L 50 50 L 86 64 L 78 50 Z" fill="#6cc4ff" stroke="#4f96c8" stroke-width="2"/>
+         <ellipse cx="50" cy="50" rx="8" ry="10" fill="#aae0ff" stroke="#4f96c8" stroke-width="2"/>
+         <text x="50" y="54" font-size="8" text-anchor="middle" fill="#fff">♡</text>` },
+  { id:"bow_lav", cat:"acc", name:"むらさきリボン", price:14, unlocked:false,
+    svg:`<path d="M 14 36 L 50 50 L 14 64 L 22 50 Z" fill="#c9a0ff" stroke="#9c6cff" stroke-width="2"/>
+         <path d="M 86 36 L 50 50 L 86 64 L 78 50 Z" fill="#c9a0ff" stroke="#9c6cff" stroke-width="2"/>
+         <ellipse cx="50" cy="50" rx="8" ry="10" fill="#e6d4ff" stroke="#9c6cff" stroke-width="2"/>
+         <text x="50" y="54" font-size="8" text-anchor="middle" fill="#fff">♡</text>` },
+  { id:"wand", cat:"acc", name:"まほうのつえ", price:65, unlocked:false,
+    svg:`<rect x="46" y="40" width="8" height="50" rx="2" fill="#c9a0ff" stroke="#9c6cff" stroke-width="2"/>
+         <polygon points="50,8 58,32 84,32 64,46 72,72 50,58 28,72 36,46 16,32 42,32" fill="#ffd700" stroke="#d4a000" stroke-width="2"/>
+         <circle cx="50" cy="36" r="6" fill="#ff8fc0"/>
+         <text x="50" y="40" font-size="8" text-anchor="middle" fill="#fff">♡</text>
+         <text x="22" y="68" font-size="10">✨</text>
+         <text x="68" y="64" font-size="10">✨</text>` },
+  { id:"perfume", cat:"acc", name:"こうすい", price:28, unlocked:false,
+    svg:`<rect x="34" y="40" width="32" height="42" rx="6" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="42" y="20" width="16" height="20" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="38" y="14" width="24" height="10" rx="3" fill="#ffd700" stroke="#d4a000" stroke-width="1.5"/>
+         <ellipse cx="50" cy="56" rx="10" ry="14" fill="#fff" opacity="0.4"/>
+         <text x="50" y="68" font-size="8" text-anchor="middle" fill="#d96aa0">♡</text>
+         <text x="50" y="62" font-size="6" text-anchor="middle" fill="#d96aa0">PERFUME</text>` },
+
+  // ============== とくべつ（5） ==============
+  { id:"castle", cat:"special", name:"おしろ", price:120, unlocked:false, size:"2x2",
+    svg:`<rect x="14" y="40" width="72" height="50" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="14" y="40" width="72" height="6" fill="#ffd6e8" stroke="#d96aa0" stroke-width="1"/>
+         <rect x="10" y="30" width="14" height="14" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="76" y="30" width="14" height="14" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <polygon points="10,30 17,14 24,30" fill="#ff6aa8" stroke="#d94a88" stroke-width="2"/>
+         <polygon points="76,30 83,14 90,30" fill="#ff6aa8" stroke="#d94a88" stroke-width="2"/>
+         <polygon points="36,40 50,18 64,40" fill="#ff6aa8" stroke="#d94a88" stroke-width="2"/>
+         <line x1="50" y1="14" x2="50" y2="20" stroke="#fff4a0" stroke-width="2"/>
+         <polygon points="50,14 58,18 50,22" fill="#fff4a0"/>
+         <rect x="42" y="58" width="16" height="32" rx="8 8 0 0" fill="#a87648"/>
+         <rect x="22" y="56" width="10" height="12" fill="#aae0ff"/>
+         <rect x="68" y="56" width="10" height="12" fill="#aae0ff"/>` },
+  { id:"fountain", cat:"special", name:"ふんすい", price:75, unlocked:false, size:"2x2",
+    svg:`<ellipse cx="50" cy="80" rx="40" ry="10" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <ellipse cx="50" cy="60" rx="22" ry="6" fill="#aae0ff" stroke="#6cc4ff" stroke-width="2"/>
+         <rect x="46" y="20" width="8" height="40" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+         <circle cx="50" cy="20" r="8" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <path d="M 30 30 Q 36 14 42 18 Q 48 14 50 12 Q 52 14 58 18 Q 64 14 70 30" fill="none" stroke="#aae0ff" stroke-width="3"/>
+         <circle cx="36" cy="20" r="2" fill="#6cc4ff"/>
+         <circle cx="64" cy="20" r="2" fill="#6cc4ff"/>` },
+  { id:"music_box", cat:"special", name:"オルゴール", price:48, unlocked:false,
+    svg:`<rect x="20" y="40" width="60" height="40" rx="4" fill="#ffd6e8" stroke="#d96aa0" stroke-width="2"/>
+         <rect x="20" y="40" width="60" height="8" fill="#ff8fc0"/>
+         <rect x="40" y="14" width="20" height="30" rx="3" fill="#fff" stroke="#ccc" stroke-width="2"/>
+         <ellipse cx="50" cy="22" rx="6" ry="3" fill="#ff8fc0"/>
+         <text x="50" y="36" font-size="10" text-anchor="middle">♪</text>
+         <text x="32" y="68" font-size="12">♫</text>
+         <text x="58" y="74" font-size="12">♪</text>` },
+  { id:"big_bear", cat:"special", name:"おおきなクマ", price:100, unlocked:false, size:"2x2",
+    svg:`<ellipse cx="50" cy="68" rx="36" ry="24" fill="#a87648" stroke="#5a3a00" stroke-width="2"/>
+         <circle cx="50" cy="36" r="28" fill="#a87648" stroke="#5a3a00" stroke-width="2"/>
+         <circle cx="26" cy="14" r="10" fill="#a87648" stroke="#5a3a00" stroke-width="2"/>
+         <circle cx="74" cy="14" r="10" fill="#a87648" stroke="#5a3a00" stroke-width="2"/>
+         <circle cx="26" cy="14" r="5" fill="#ffd6a0"/>
+         <circle cx="74" cy="14" r="5" fill="#ffd6a0"/>
+         <circle cx="40" cy="32" r="3" fill="#222"/>
+         <circle cx="60" cy="32" r="3" fill="#222"/>
+         <ellipse cx="50" cy="44" rx="10" ry="6" fill="#ffd6a0"/>
+         <ellipse cx="50" cy="44" rx="3" ry="2" fill="#222"/>
+         <path d="M 44 50 Q 50 56 56 50" stroke="#222" stroke-width="2" fill="none"/>
+         <rect x="42" y="56" width="16" height="6" rx="2" fill="#ff6aa8"/>` },
+  { id:"princess_dress", cat:"special", name:"ドレス", price:85, unlocked:false, size:"1x2",
+    svg:`<circle cx="50" cy="14" r="10" fill="#ffd6a0" stroke="#d4a000" stroke-width="1.5"/>
+         <path d="M 42 20 L 38 30 L 62 30 L 58 20 Z" fill="#ff6aa8" stroke="#d94a88" stroke-width="1.5"/>
+         <path d="M 32 30 Q 18 88 14 92 L 86 92 Q 82 88 68 30 Z" fill="#ff8fc0" stroke="#d96aa0" stroke-width="2"/>
+         <path d="M 40 30 Q 38 70 32 92" stroke="#ffd6e8" stroke-width="1" fill="none"/>
+         <path d="M 60 30 Q 62 70 68 92" stroke="#ffd6e8" stroke-width="1" fill="none"/>
+         <circle cx="50" cy="40" r="3" fill="#ffd700"/>
+         <circle cx="40" cy="60" r="2" fill="#fff4a0"/>
+         <circle cx="60" cy="60" r="2" fill="#fff4a0"/>
+         <circle cx="50" cy="74" r="2" fill="#fff4a0"/>
+         <text x="50" y="20" font-size="8" text-anchor="middle">👑</text>` },
+];
+
+const CATS = [
+  { id:"furn", name:"かぐ", icon:"🛋️" },
+  { id:"flower", name:"おはな", icon:"🌸" },
+  { id:"sparkle", name:"キラキラ", icon:"💎" },
+  { id:"animal", name:"どうぶつ", icon:"🐰" },
+  { id:"sweets", name:"おかし", icon:"🍰" },
+  { id:"plush", name:"ぬいぐるみ", icon:"🧸" },
+  { id:"acc", name:"アクセ", icon:"🎀" },
+  { id:"wall", name:"かべ", icon:"🪞" },
+  { id:"floor", name:"ゆか", icon:"⬜" },
+  { id:"special", name:"とくべつ", icon:"✨" },
+];
+
+const ROOMS = [
+  { id:"living", name:"リビング", icon:"🛋️", unlockHearts:0 },
+  { id:"bedroom", name:"ねむるおへや", icon:"🛌", unlockHearts:5 },
+  { id:"kitchen", name:"キッチン", icon:"🍳", unlockHearts:20 },
+  { id:"garden",  name:"おにわ",   icon:"🌷", unlockHearts:50 },
+];
+
+// ===========================================================================
+// 状態管理
+// ===========================================================================
+const SAVE_KEY = "precure_house_v1";
+const GRID_COLS = 8;
+const GRID_ROWS = 6;
+
+let state = {
+  hearts: 0,
+  unlocked: {},   // itemId -> true
+  rooms: {},      // roomId -> { wallpaper, floor, items: [{itemId, gx, gy}] }
+  currentRoom: "living",
+  currentCat: "furn",
+  selectedItem: null,
+  removeMode: false,
+  bgmOn: false,
+};
+
+function defaultRoomState() {
+  return { wallpaper: "pink", floor: "wood", items: [] };
+}
+
+function initState() {
+  state.hearts = 0;
+  state.unlocked = {};
+  for (const it of ITEMS) {
+    if (it.unlocked) state.unlocked[it.id] = true;
+  }
+  state.rooms = {};
+  for (const r of ROOMS) {
+    state.rooms[r.id] = defaultRoomState();
+  }
+  state.currentRoom = "living";
+  state.currentCat = "furn";
+  state.selectedItem = null;
+  state.removeMode = false;
+}
+
+function save() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      hearts: state.hearts,
+      unlocked: state.unlocked,
+      rooms: state.rooms,
+      currentRoom: state.currentRoom,
+      bgmOn: state.bgmOn,
+    }));
+  } catch(e) { /* ignore */ }
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    state.hearts = data.hearts || 0;
+    state.unlocked = data.unlocked || {};
+    // 最初から解禁のものは強制解禁
+    for (const it of ITEMS) {
+      if (it.unlocked) state.unlocked[it.id] = true;
+    }
+    state.rooms = {};
+    for (const r of ROOMS) {
+      state.rooms[r.id] = (data.rooms && data.rooms[r.id]) || defaultRoomState();
+    }
+    state.currentRoom = data.currentRoom || "living";
+    state.bgmOn = !!data.bgmOn;
+    return true;
+  } catch(e) { return false; }
+}
+
+function hasSave() {
+  try { return !!localStorage.getItem(SAVE_KEY); } catch(e) { return false; }
+}
+
+// ===========================================================================
+// 描画ヘルパー
+// ===========================================================================
+function getItem(id) { return ITEMS.find(it => it.id === id); }
+
+function makeItemSVG(item) {
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${item.svg}</svg>`;
+}
+
+function showToast(msg, dur = 1800) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function sparkleAt(x, y, container) {
+  const c = container || document.body;
+  const r = c.getBoundingClientRect();
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = ['✨','💖','⭐','♡'][i % 4];
+    s.style.left = (x - r.left) + 'px';
+    s.style.top = (y - r.top) + 'px';
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 30 + Math.random() * 40;
+    s.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+    s.style.setProperty('--dy', Math.sin(ang) * dist + 'px');
+    c.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  }
+}
+
+// ===========================================================================
+// シーン切り替え
+// ===========================================================================
+function showScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// ===========================================================================
+// タイトル画面の泡演出
+// ===========================================================================
+function setupTitleBg() {
+  const bg = $('titleBg');
+  bg.innerHTML = '';
+  const emojis = ['💖','✨','⭐','🌸','🎀','💎','🧸','🌷'];
+  for (let i = 0; i < 18; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const sz = 28 + Math.random() * 30;
+    b.style.width = sz + 'px';
+    b.style.height = sz + 'px';
+    b.style.left = (Math.random() * 100) + '%';
+    b.style.top = (Math.random() * 100) + '%';
+    b.style.fontSize = sz * 0.7 + 'px';
+    b.style.display = 'flex';
+    b.style.alignItems = 'center';
+    b.style.justifyContent = 'center';
+    b.style.background = 'transparent';
+    b.style.animationDelay = (Math.random() * 4) + 's';
+    b.style.animationDuration = (4 + Math.random() * 4) + 's';
+    b.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    bg.appendChild(b);
+  }
+}
+
+// ===========================================================================
+// メイン画面: 部屋表示
+// ===========================================================================
+function renderRoomTabs() {
+  const wrap = $('roomTabs');
+  wrap.innerHTML = '';
+  for (const r of ROOMS) {
+    const t = document.createElement('button');
+    t.className = 'room-tab' + (r.id === state.currentRoom ? ' active' : '');
+    const totalHearts = totalHeartsCollected();
+    const locked = totalHearts < r.unlockHearts;
+    if (locked) t.classList.add('locked');
+    t.innerHTML = locked
+      ? `🔒 ${r.icon}<small style="display:block;font-size:9px;">${r.unlockHearts}💖</small>`
+      : `${r.icon}<small style="display:block;font-size:10px;">${r.name}</small>`;
+    if (!locked) {
+      attachTap(t, () => { state.currentRoom = r.id; renderAll(); save(); });
+    } else {
+      attachTap(t, () => showToast(`💖 ${r.unlockHearts}こで あくよ`));
+    }
+    wrap.appendChild(t);
+  }
+}
+
+function totalHeartsCollected() {
+  // 集めた累計ハートを記録するため、unlocked された購入品の合計コスト + 現在所持
+  // シンプルにするため、購入したアイテムの合計コスト + 現在所持を「累計」とみなす
+  let total = state.hearts;
+  for (const id of Object.keys(state.unlocked)) {
+    const it = getItem(id);
+    if (it && !it.unlocked) total += (it.price || 0);
+  }
+  return total;
+}
+
+function renderRoomBg() {
+  const room = state.rooms[state.currentRoom];
+  const wall = $('wallEl');
+  const floor = $('floorEl');
+  // Wallpaper
+  wall.className = 'wall';
+  if (room.wallpaper === "stars") wall.classList.add('pattern-stars');
+  else if (room.wallpaper === "flowers") wall.classList.add('pattern-flowers');
+  else if (room.wallpaper === "blue") wall.classList.add('pattern-blue');
+  else if (room.wallpaper === "mint") wall.classList.add('pattern-mint');
+  else if (room.wallpaper === "yellow") wall.classList.add('pattern-yellow');
+  else if (room.wallpaper === "rainbow") wall.classList.add('pattern-rainbow');
+  // Floor
+  floor.className = 'floor';
+  if (room.floor === "pink") floor.classList.add('pattern-pink');
+  else if (room.floor === "grass") floor.classList.add('pattern-grass');
+  else if (room.floor === "tile") floor.classList.add('pattern-tile');
+  // 庭は壁を空、床を草に
+  if (state.currentRoom === "garden") {
+    wall.className = 'wall pattern-blue';
+    if (room.floor === "wood") floor.className = 'floor pattern-grass';
+  }
+  if (state.currentRoom === "kitchen" && room.floor === "wood") {
+    floor.className = 'floor pattern-tile';
+  }
+  if (state.currentRoom === "bedroom" && room.wallpaper === "pink") {
+    // OK as default
+  }
+}
+
+function renderGrid() {
+  const grid = $('gridOverlay');
+  grid.innerHTML = '';
+  for (let y = 0; y < GRID_ROWS; y++) {
+    for (let x = 0; x < GRID_COLS; x++) {
+      const c = document.createElement('div');
+      c.className = 'grid-cell';
+      c.dataset.gx = x;
+      c.dataset.gy = y;
+      attachTap(c, () => onGridTap(x, y));
+      grid.appendChild(c);
+    }
+  }
+}
+
+function renderPlacedItems() {
+  const container = $('placedItems');
+  container.innerHTML = '';
+  const room = state.rooms[state.currentRoom];
+  for (let i = 0; i < room.items.length; i++) {
+    const placed = room.items[i];
+    const item = getItem(placed.itemId);
+    if (!item) continue;
+    const el = document.createElement('div');
+    el.className = 'placed';
+    if (item.size === "2x2") el.classList.add('size-2x2');
+    else if (item.size === "2x1") el.classList.add('size-2x1');
+    else if (item.size === "1x2") el.classList.add('size-1x2');
+    if (state.removeMode) el.classList.add('deletable');
+    el.style.left = (placed.gx / GRID_COLS * 100) + '%';
+    el.style.top = (placed.gy / GRID_ROWS * 100) + '%';
+    el.innerHTML = makeItemSVG(item);
+    attachTap(el, (e) => onPlacedTap(i, e));
+    container.appendChild(el);
+  }
+}
+
+function onGridTap(gx, gy) {
+  if (state.removeMode) return; // 削除モード中は配置しない
+  if (!state.selectedItem) {
+    showToast("したから アイテムを えらんでね");
+    return;
+  }
+  const item = getItem(state.selectedItem);
+  if (!item) return;
+  // 壁紙・床は部屋全体を変更
+  if (item.cat === "wall") {
+    state.rooms[state.currentRoom].wallpaper = item.wallpaper;
+    showToast(`${item.name}に かわった！`);
+    renderRoomBg();
+    save();
+    return;
+  }
+  if (item.cat === "floor") {
+    state.rooms[state.currentRoom].floor = item.floor;
+    showToast(`${item.name}に かわった！`);
+    renderRoomBg();
+    save();
+    return;
+  }
+  // サイズチェック (はみ出し防止)
+  const w = (item.size === "2x1" || item.size === "2x2") ? 2 : 1;
+  const h = (item.size === "1x2" || item.size === "2x2") ? 2 : 1;
+  let placedX = gx, placedY = gy;
+  if (placedX + w > GRID_COLS) placedX = GRID_COLS - w;
+  if (placedY + h > GRID_ROWS) placedY = GRID_ROWS - h;
+  // 配置追加
+  state.rooms[state.currentRoom].items.push({
+    itemId: item.id, gx: placedX, gy: placedY
+  });
+  renderPlacedItems();
+  // キラキラ演出
+  const grid = $('gridOverlay').getBoundingClientRect();
+  const cx = grid.left + grid.width * ((placedX + w/2) / GRID_COLS);
+  const cy = grid.top + grid.height * ((placedY + h/2) / GRID_ROWS);
+  sparkleAt(cx, cy, document.body);
+  save();
+}
+
+function onPlacedTap(idx, e) {
+  if (!state.removeMode) return;
+  const room = state.rooms[state.currentRoom];
+  room.items.splice(idx, 1);
+  renderPlacedItems();
+  save();
+}
+
+function renderCatTabs() {
+  const wrap = $('catTabs');
+  wrap.innerHTML = '';
+  for (const c of CATS) {
+    const t = document.createElement('button');
+    t.className = 'cat-tab' + (c.id === state.currentCat ? ' active' : '');
+    t.innerHTML = `${c.icon} ${c.name}`;
+    attachTap(t, () => { state.currentCat = c.id; renderItemRow(); });
+    wrap.appendChild(t);
+  }
+}
+
+function renderItemRow() {
+  const wrap = $('itemRow');
+  wrap.innerHTML = '';
+  const items = ITEMS.filter(it => it.cat === state.currentCat);
+  for (const it of items) {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    if (state.unlocked[it.id]) {
+      // 表示
+    } else {
+      card.classList.add('locked');
+    }
+    if (state.selectedItem === it.id) card.classList.add('selected');
+    card.innerHTML = makeItemSVG(it) + `<div class="nm">${it.name}</div>`;
+    attachTap(card, () => {
+      if (!state.unlocked[it.id]) {
+        showToast(`🛒ショップで ${it.price}💖`);
+        return;
+      }
+      state.selectedItem = (state.selectedItem === it.id) ? null : it.id;
+      // 削除モード解除
+      state.removeMode = false;
+      renderItemRow();
+      renderPlacedItems();
+      updateHelpBubble();
+    });
+    wrap.appendChild(card);
+  }
+  // カテゴリ切替時のヒント
+  const catName = CATS.find(c => c.id === state.currentCat).name;
+  if (items.length === 0) {
+    wrap.innerHTML = `<div style="padding:20px;text-align:center;color:#aaa;font-size:13px;">${catName}は まだ ないよ</div>`;
+  }
+}
+
+function updateHelpBubble() {
+  // 既存の吹き出し削除
+  document.querySelectorAll('.help-bubble').forEach(el => el.remove());
+  if (state.removeMode) {
+    const b = document.createElement('div');
+    b.className = 'help-bubble';
+    b.textContent = "けしたい アイテムを タップ";
+    $('roomArea').appendChild(b);
+  } else if (state.selectedItem) {
+    const b = document.createElement('div');
+    b.className = 'help-bubble';
+    b.textContent = "おへやの どこかを タップ♡";
+    $('roomArea').appendChild(b);
+  }
+}
+
+function updateHeartCount() {
+  $('heartCount').textContent = state.hearts;
+  if ($('shopHeartCount')) $('shopHeartCount').textContent = state.hearts;
+}
+
+function renderAll() {
+  renderRoomTabs();
+  renderRoomBg();
+  renderGrid();
+  renderPlacedItems();
+  renderCatTabs();
+  renderItemRow();
+  updateHeartCount();
+  updateHelpBubble();
+  // editing mode visual
+  $('roomArea').classList.toggle('editing', !!state.selectedItem);
+}
+
+// ===========================================================================
+// ハート降ってくる
+// ===========================================================================
+let heartFallTimer = null;
+function startHeartRain() {
+  if (heartFallTimer) clearInterval(heartFallTimer);
+  heartFallTimer = setInterval(() => {
+    if (!$('scene-main').classList.contains('active')) return;
+    spawnFallingHeart();
+  }, 4000 + Math.random() * 6000);
+  // 初回早めに
+  setTimeout(spawnFallingHeart, 1500);
+}
+
+function spawnFallingHeart() {
+  const fh = $('fallingHearts');
+  if (!fh) return;
+  const heart = document.createElement('div');
+  heart.className = 'falling-heart';
+  heart.innerHTML = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 50 80 Q 16 56 16 36 Q 16 16 36 16 Q 50 16 50 30 Q 50 16 64 16 Q 84 16 84 36 Q 84 56 50 80 Z"
+      fill="#ff6aa8" stroke="#fff" stroke-width="3"/>
+    <ellipse cx="36" cy="32" rx="6" ry="4" fill="#fff" opacity="0.7"/>
+  </svg>`;
+  const left = 6 + Math.random() * 86;
+  heart.style.left = left + '%';
+  heart.style.top = '0';
+  const dur = 5 + Math.random() * 3;
+  heart.style.animationDuration = dur + 's';
+  fh.appendChild(heart);
+  attachTap(heart, (e) => {
+    const r = heart.getBoundingClientRect();
+    state.hearts += 1;
+    updateHeartCount();
+    showHeartPop(r.left + r.width/2, r.top + r.height/2, "+1 💖");
+    sparkleAt(r.left + r.width/2, r.top + r.height/2, document.body);
+    heart.remove();
+    save();
+    playPickupSound();
+    // 解禁チェック
+    checkRoomUnlock();
+  });
+  setTimeout(() => heart.remove(), dur * 1000 + 500);
+}
+
+function showHeartPop(x, y, txt) {
+  const p = document.createElement('div');
+  p.className = 'heart-pop';
+  p.textContent = txt;
+  p.style.left = x + 'px';
+  p.style.top = y + 'px';
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), 900);
+}
+
+function checkRoomUnlock() {
+  const total = totalHeartsCollected();
+  for (const r of ROOMS) {
+    if (r.unlockHearts > 0 && total >= r.unlockHearts && !state._unlockedRoomsShown) {
+      // 一度しか通知しないように
+    }
+  }
+  renderRoomTabs();
+}
+
+// ===========================================================================
+// ショップ
+// ===========================================================================
+let shopCurrentCat = "furn";
+
+function openShop() {
+  $('shopOverlay').classList.add('active');
+  shopCurrentCat = state.currentCat;
+  renderShopCatTabs();
+  renderShopGrid();
+  updateHeartCount();
+}
+
+function closeShop() {
+  $('shopOverlay').classList.remove('active');
+  renderItemRow();
+}
+
+function renderShopCatTabs() {
+  const wrap = $('shopCatTabs');
+  wrap.innerHTML = '';
+  for (const c of CATS) {
+    const t = document.createElement('button');
+    t.className = 'shop-cat-tab' + (c.id === shopCurrentCat ? ' active' : '');
+    t.innerHTML = `${c.icon} ${c.name}`;
+    attachTap(t, () => { shopCurrentCat = c.id; renderShopCatTabs(); renderShopGrid(); });
+    wrap.appendChild(t);
+  }
+}
+
+function renderShopGrid() {
+  const grid = $('shopGrid');
+  grid.innerHTML = '';
+  const items = ITEMS.filter(it => it.cat === shopCurrentCat);
+  for (const it of items) {
+    const card = document.createElement('div');
+    card.className = 'shop-card';
+    const owned = !!state.unlocked[it.id];
+    if (owned) card.classList.add('owned');
+    else if (state.hearts < it.price) card.classList.add('cant');
+    card.innerHTML = makeItemSVG(it) +
+      `<div class="nm">${it.name}</div>` +
+      (owned ? `<div class="price" style="background:#aae0ff;">もってる</div>`
+             : `<div class="price">${it.price}💖</div>`);
+    attachTap(card, () => {
+      if (owned) { showToast(`もう もってるよ♡`); return; }
+      if (state.hearts < it.price) {
+        showToast(`💖が ${it.price - state.hearts}こ たりないよ`);
+        return;
+      }
+      // 購入
+      state.hearts -= it.price;
+      state.unlocked[it.id] = true;
+      updateHeartCount();
+      renderShopGrid();
+      showToast(`${it.name} を てにいれた！🎉`);
+      const r = card.getBoundingClientRect();
+      sparkleAt(r.left + r.width/2, r.top + r.height/2, document.body);
+      playBuySound();
+      save();
+    });
+    grid.appendChild(card);
+  }
+}
+
+// ===========================================================================
+// 図鑑
+// ===========================================================================
+function openZukan() {
+  $('zukanOverlay').classList.add('active');
+  renderZukan();
+}
+
+function closeZukan() {
+  $('zukanOverlay').classList.remove('active');
+}
+
+function renderZukan() {
+  const grid = $('zukanGrid');
+  grid.innerHTML = '';
+  const total = ITEMS.length;
+  let owned = 0;
+  for (const it of ITEMS) {
+    const card = document.createElement('div');
+    card.className = 'zukan-card';
+    const isOwned = !!state.unlocked[it.id];
+    if (!isOwned) card.classList.add('locked');
+    else owned++;
+    card.innerHTML = isOwned ? makeItemSVG(it) : '';
+    if (isOwned) {
+      attachTap(card, () => showToast(it.name));
+    }
+    grid.appendChild(card);
+  }
+  $('zukanCount').textContent = owned;
+  $('zukanTotal').textContent = total;
+}
+
+// ===========================================================================
+// 写真モード
+// ===========================================================================
+function openPhoto() {
+  $('photoOverlay').classList.add('active');
+  drawPhoto();
+}
+
+function closePhoto() {
+  $('photoOverlay').classList.remove('active');
+}
+
+function drawPhoto() {
+  const canvas = $('photoCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  // 背景: グラデキラキラ枠
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#ffd6e8');
+  grad.addColorStop(0.5, '#e6d4ff');
+  grad.addColorStop(1, '#d4f0ff');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 内枠（部屋表示エリア）
+  const margin = 16;
+  const titleH = 60;
+  const footerH = 70;
+  const roomX = margin;
+  const roomY = margin + titleH;
+  const roomW = W - margin * 2;
+  const roomH = H - margin * 2 - titleH - footerH;
+
+  // タイトル
+  ctx.fillStyle = '#ff6aa8';
+  ctx.font = 'bold 26px "Hiragino Maru Gothic ProN", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('♡ わたしの おうち ♡', W/2, margin + titleH/2);
+
+  // 部屋背景
+  const room = state.rooms[state.currentRoom];
+  ctx.save();
+  // wall
+  let wallGrad = ctx.createLinearGradient(roomX, roomY, roomX, roomY + roomH * 0.65);
+  if (room.wallpaper === "blue") { wallGrad.addColorStop(0, '#d4f0ff'); wallGrad.addColorStop(1, '#aae0ff'); }
+  else if (room.wallpaper === "stars") { wallGrad.addColorStop(0, '#c9a0ff'); wallGrad.addColorStop(1, '#b380ff'); }
+  else if (room.wallpaper === "flowers") { wallGrad.addColorStop(0, '#ffe6f3'); wallGrad.addColorStop(1, '#ffd6e8'); }
+  else if (room.wallpaper === "mint") { wallGrad.addColorStop(0, '#d4ffea'); wallGrad.addColorStop(1, '#aaf0c8'); }
+  else if (room.wallpaper === "yellow") { wallGrad.addColorStop(0, '#fff8d4'); wallGrad.addColorStop(1, '#fff4a0'); }
+  else { wallGrad.addColorStop(0, '#ffe6f3'); wallGrad.addColorStop(1, '#ffd6e8'); }
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(roomX, roomY, roomW, roomH * 0.65);
+
+  // floor
+  if (room.floor === "pink") ctx.fillStyle = '#ffb6d5';
+  else if (room.floor === "grass") ctx.fillStyle = '#7cc868';
+  else if (room.floor === "tile") ctx.fillStyle = '#ffd6e8';
+  else ctx.fillStyle = '#d4a87a';
+  ctx.fillRect(roomX, roomY + roomH * 0.65, roomW, roomH * 0.35);
+
+  // 配置アイテムをcanvasに描画（簡易：Imageに変換して描く）
+  ctx.restore();
+
+  // 各アイテム位置
+  const cellW = roomW / GRID_COLS;
+  const cellH = roomH / GRID_ROWS;
+
+  // アイテムは個別にSVG→DataURL→Imageに変換して描画する
+  // 同期的にやるため、一旦すべての .placed の position と svg を取得し、Imageを並列ロード
+  const items = room.items.slice();
+  let loaded = 0;
+  const total = items.length;
+  if (total === 0) finalizePhoto();
+  else {
+    for (const placed of items) {
+      const it = getItem(placed.itemId);
+      if (!it) { loaded++; if (loaded === total) finalizePhoto(); continue; }
+      const w = (it.size === "2x1" || it.size === "2x2") ? 2 : 1;
+      const h = (it.size === "1x2" || it.size === "2x2") ? 2 : 1;
+      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${it.svg}</svg>`;
+      const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img,
+          roomX + placed.gx * cellW,
+          roomY + placed.gy * cellH,
+          cellW * w, cellH * h);
+        URL.revokeObjectURL(url);
+        loaded++;
+        if (loaded === total) finalizePhoto();
+      };
+      img.onerror = () => {
+        loaded++;
+        if (loaded === total) finalizePhoto();
+      };
+      img.src = url;
+    }
+  }
+
+  function finalizePhoto() {
+    // キラキラ枠
+    ctx.strokeStyle = '#ff6aa8';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(roomX, roomY, roomW, roomH);
+
+    // 装飾(キラキラ)
+    ctx.fillStyle = '#ffd700';
+    ctx.font = '18px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('✨', roomX + 6, roomY + 6 + 14);
+    ctx.textAlign = 'right';
+    ctx.fillText('✨', roomX + roomW - 6, roomY + 6 + 14);
+    ctx.textAlign = 'left';
+    ctx.fillText('✨', roomX + 6, roomY + roomH - 6);
+    ctx.textAlign = 'right';
+    ctx.fillText('✨', roomX + roomW - 6, roomY + roomH - 6);
+
+    // フッター: 日付
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    ctx.fillStyle = '#5b3a5e';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`💖 ${dateStr} 💖`, W/2, H - footerH/2 - 14);
+    ctx.font = '12px sans-serif';
+    const roomName = ROOMS.find(r => r.id === state.currentRoom).name;
+    ctx.fillText(`${roomName}の しゃしん`, W/2, H - footerH/2 + 8);
+  }
+}
+
+// ===========================================================================
+// オーディオ（軽いSE）
+// ===========================================================================
+let audioCtx = null;
+let bgmOsc = null;
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch(e) {}
+}
+
+function playPickupSound() {
+  if (!audioCtx) return;
+  try {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880;
+    o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
+    o.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    o.start();
+    o.stop(audioCtx.currentTime + 0.32);
+  } catch(e) {}
+}
+
+function playBuySound() {
+  if (!audioCtx) return;
+  try {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((f, i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'triangle';
+      o.frequency.value = f;
+      o.connect(g); g.connect(audioCtx.destination);
+      const t = audioCtx.currentTime + i * 0.08;
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      o.start(t);
+      o.stop(t + 0.27);
+    });
+  } catch(e) {}
+}
+
+function startBGM() {
+  if (!audioCtx) return;
+  if (bgmOsc) return;
+  try {
+    const melody = [523, 659, 784, 880, 784, 659, 523, 0]; // ド ミ ソ ラ ソ ミ ド ―
+    let i = 0;
+    bgmOsc = setInterval(() => {
+      if (!state.bgmOn) return;
+      const f = melody[i % melody.length];
+      i++;
+      if (f === 0) return;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      o.connect(g); g.connect(audioCtx.destination);
+      const t = audioCtx.currentTime;
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.exponentialRampToValueAtTime(0.05, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      o.start(t);
+      o.stop(t + 0.5);
+    }, 500);
+  } catch(e) {}
+}
+
+function stopBGM() {
+  if (bgmOsc) { clearInterval(bgmOsc); bgmOsc = null; }
+}
+
+function toggleBGM() {
+  state.bgmOn = !state.bgmOn;
+  $('bgmBtn').textContent = state.bgmOn ? '🎵' : '🔇';
+  if (state.bgmOn) startBGM();
+  else stopBGM();
+  save();
+}
+
+// ===========================================================================
+// 確認モーダル
+// ===========================================================================
+function confirmDialog(msg, onYes) {
+  $('confirmMsg').textContent = msg;
+  $('confirmOverlay').classList.add('active');
+  $('confirmYes').onclick = () => {
+    $('confirmOverlay').classList.remove('active');
+    onYes();
+  };
+  $('confirmNo').onclick = () => {
+    $('confirmOverlay').classList.remove('active');
+  };
+}
+
+// ===========================================================================
+// イベント設定
+// ===========================================================================
+function bindEvents() {
+  // タイトル
+  attachTap($('btnStart'), () => {
+    initState();
+    save();
+    showScene('scene-main');
+    renderAll();
+    startHeartRain();
+    initAudio();
+    if (state.bgmOn) startBGM();
+  });
+  attachTap($('btnContinue'), () => {
+    if (load()) {
+      showScene('scene-main');
+      renderAll();
+      startHeartRain();
+      initAudio();
+      if (state.bgmOn) startBGM();
+    } else {
+      showToast("セーブが ないよ");
+    }
+  });
+  attachTap($('btnZukan'), () => {
+    if (!hasSave()) {
+      // 新規はとりあえず初期解禁分のみ表示するため一時的に init
+      initState();
+    } else {
+      load();
+    }
+    openZukan();
+  });
+
+  // メイン画面
+  attachTap($('btnShop'), () => openShop());
+  attachTap($('btnPhoto'), () => openPhoto());
+  attachTap($('btnRemoveMode'), () => {
+    state.removeMode = !state.removeMode;
+    state.selectedItem = null;
+    renderItemRow();
+    renderPlacedItems();
+    updateHelpBubble();
+    if (state.removeMode) showToast("けしたい アイテムを タップ");
+  });
+  attachTap($('btnClearRoom'), () => {
+    confirmDialog("ぜんぶ けしちゃう？", () => {
+      state.rooms[state.currentRoom].items = [];
+      renderPlacedItems();
+      save();
+      showToast("おへやが きれいになった♡");
+    });
+  });
+
+  // モーダル閉じる
+  attachTap($('shopCloseBtn'), () => closeShop());
+  attachTap($('zukanCloseBtn'), () => closeZukan());
+  attachTap($('photoCloseBtn'), () => closePhoto());
+  attachTap($('photoRedoBtn'), () => drawPhoto());
+
+  // BGM
+  attachTap($('bgmBtn'), () => {
+    initAudio();
+    toggleBGM();
+  });
+
+  // 最初のタッチで audio prime
+  document.addEventListener('touchstart', () => initAudio(), { once: true, passive: true });
+  document.addEventListener('click', () => initAudio(), { once: true });
+}
+
+// ===========================================================================
+// 起動
+// ===========================================================================
+window.addEventListener('load', () => {
+  setupTitleBg();
+  bindEvents();
+  // セーブがある場合「つづきから」を強調
+  if (hasSave()) {
+    $('btnContinue').style.boxShadow = '0 6px 0 #6f4cc7, 0 8px 16px rgba(0,0,0,0.2), 0 0 16px #ffd700';
+  } else {
+    $('btnContinue').style.opacity = '0.6';
+  }
+});
+
+// 画面外タップでモーダル閉じる
+['shopOverlay', 'zukanOverlay', 'photoOverlay', 'confirmOverlay'].forEach(id => {
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', (e) => {
+      if (e.target === el) {
+        if (id === 'confirmOverlay') return; // 確認はボタンでのみ閉じる
+        el.classList.remove('active');
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>
