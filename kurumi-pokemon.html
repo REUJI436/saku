@@ -118,9 +118,66 @@
   #field-area {
     flex: 1; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
+  /* When inside the field scene, lock scroll for canvas play */
+  #field-scene #field-area {
+    overflow: hidden;
+    touch-action: none;
+  }
   #field-canvas-wrap {
     position: relative; width: 100%; min-height: 100%;
   }
+  #field-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block;
+    background: linear-gradient(180deg,#ffe6f5,#d6f0ff 60%,#c0e8c0);
+  }
+  /* Encounter "!" mark */
+  #encounter-mark {
+    position: absolute;
+    top: 30%; left: 50%; transform: translate(-50%, -50%) scale(0);
+    font-size: 64px; font-weight: bold;
+    color: #fff; text-shadow: 3px 3px 0 #d63384, 5px 5px 0 #c44d85;
+    z-index: 80; pointer-events: none;
+    transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #encounter-mark.show { transform: translate(-50%, -50%) scale(1); }
+  #field-area.shake { animation: fieldShake 0.4s; }
+  @keyframes fieldShake {
+    0%,100% { transform: translate(0,0); }
+    20% { transform: translate(-6px,3px); }
+    40% { transform: translate(5px,-4px); }
+    60% { transform: translate(-4px,5px); }
+    80% { transform: translate(6px,-3px); }
+  }
+  /* Virtual D-Pad */
+  #dpad {
+    position: absolute; left: 12px; bottom: 12px;
+    width: 168px; height: 168px;
+    z-index: 70;
+    pointer-events: none;
+  }
+  .dpad-btn {
+    position: absolute;
+    width: 56px; height: 56px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,200,230,0.85));
+    border: 3px solid #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 0 #c44d85, 0 5px 10px rgba(0,0,0,0.25);
+    color: #d63384; font-size: 22px; font-weight: bold;
+    pointer-events: auto;
+    touch-action: none;
+    user-select: none; -webkit-user-select: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dpad-btn.active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #c44d85, 0 3px 6px rgba(0,0,0,0.25);
+    background: linear-gradient(180deg, #ffd0e8, #ffb0d8);
+  }
+  .dpad-up    { top: 0;    left: 56px; }
+  .dpad-left  { top: 56px; left: 0; }
+  .dpad-down  { top: 112px;left: 56px; }
+  .dpad-right { top: 56px; left: 112px; }
   .field-mob {
     position: absolute;
     width: 64px; height: 64px;
@@ -544,7 +601,15 @@
     <span class="coins">💰<span id="field-coins">0</span></span>
   </div>
   <div id="field-area">
-    <div id="field-canvas-wrap"></div>
+    <canvas id="field-canvas"></canvas>
+    <div id="encounter-mark">！</div>
+    <!-- Virtual D-Pad (mobile) -->
+    <div id="dpad">
+      <button class="dpad-btn dpad-up"   data-dir="up">▲</button>
+      <button class="dpad-btn dpad-left" data-dir="left">◀</button>
+      <button class="dpad-btn dpad-down" data-dir="down">▼</button>
+      <button class="dpad-btn dpad-right" data-dir="right">▶</button>
+    </div>
   </div>
   <div id="field-bottom">
     <button class="btn yellow" id="btn-field-party"><ruby>手持<rt>ても</rt></ruby>ち</button>
@@ -792,7 +857,9 @@ const SKILLS = {
   hug:     { name: 'もふもふハグ', mp: 4,  power: 0.0, type: 'pink',   msg: 'もふもふハグで かいふく！', fx: '💗', heal: true, healAmt: 0.4 },
   shine:   { name: 'きらめきパワー', mp: 8,  power: 0.0, type: 'yellow', msg: 'きらめきパワーで かいふく！', fx: '💫', heal: true, healAmt: 0.6 },
   dragon:  { name: 'ドラゴンブレス', mp: 12, power: 2.2, type: 'purple', msg: 'ドラゴンブレス！！',   fx: '🔥' },
-  lullaby: { name: 'こもりうた',   mp: 3,  power: 0.7, type: 'pink',   msg: 'こもりうたで ねむらせた！', fx: '🎵' }
+  lullaby: { name: 'こもりうた',   mp: 3,  power: 0.7, type: 'pink',   msg: 'こもりうたで ねむらせた！', fx: '🎵' },
+  watergun:{ name: 'みずでっぽう', mp: 3,  power: 1.3, type: 'sky',    msg: 'みずでっぽう！',       fx: '💦' },
+  peck:    { name: 'つつく',       mp: 0,  power: 1.0, type: 'pink',   msg: 'くちばしで つついた！', fx: '✨' }
 };
 
 const MONSTERS = [
@@ -848,7 +915,12 @@ const MONSTERS = [
 
   // purple legendary単体
   { id:29, name:'ドラゴリン',   type:'purple',color:'#a070d0', shape:'dragon',  face:'🐲', hp:78, atk:26, def:24, spd:26, learn:{1:'dragon',20:'hyper'}, evo:null, dex:'ドラゴンの こども。レア。' },
-  { id:30, name:'メガロン',     type:'purple',color:'#7040b0', shape:'dragon',  face:'🐉', hp:120, atk:34, def:30, spd:28, learn:{1:'hyper',10:'dragon'}, evo:null, dex:'でんせつの ドラゴン。' }
+  { id:30, name:'メガロン',     type:'purple',color:'#7040b0', shape:'dragon',  face:'🐉', hp:120, atk:34, def:30, spd:28, learn:{1:'hyper',10:'dragon'}, evo:null, dex:'でんせつの ドラゴン。' },
+
+  // sky starter line ポチャミン → ポチャミー → ポチャマスター
+  { id:31, name:'ポチャミン',     type:'sky', color:'#4a9fd9', shape:'penguin',  face:'', hp:18, atk:12, def:10, spd:8,  learn:{1:'watergun',2:'peck'}, evo:{lvl:16,to:32}, dex:'ちっちゃい あおいペンギン。みずが すき。', starter:true, evoStage:0 },
+  { id:32, name:'ポチャミー',     type:'sky', color:'#3a85c0', shape:'penguin',  face:'', hp:36, atk:20, def:18, spd:14, learn:{16:'splash',22:'bubble'}, evo:{lvl:32,to:33}, dex:'すこし そだった ペンギン。はねが ふくらむ。', evoStage:1 },
+  { id:33, name:'ポチャマスター', type:'sky', color:'#1a55a0', shape:'penguin',  face:'', hp:78, atk:34, def:30, spd:22, learn:{32:'hyper',38:'bubble'}, evo:null, dex:'おおきなトサカが かんむりみたい。みずの 王者。', evoStage:2 }
 ];
 
 function getMonsterDef(id) { return MONSTERS.find(m => m.id === id); }
@@ -882,7 +954,8 @@ let state = {
   unlocked: 1,
   cleared: [],
   curStage: null,
-  fieldMobs: []   // { x, y, id, lvl, defeated }
+  fieldMobs: [],   // { x, y, id, lvl, defeated, isBoss, dx, dy, dir }
+  field: null      // { px, py, dir, walkPhase, w, h }
 };
 
 function makeMon(id, lvl) {
@@ -1032,6 +1105,67 @@ function svgShape(shape, color, dark, face) {
       <circle cx="50" cy="78" r="4" fill="#fff"/><circle cx="50" cy="79" r="2" fill="#000"/>
       <circle cx="70" cy="78" r="4" fill="#fff"/><circle cx="70" cy="79" r="2" fill="#000"/>
       <path d="M50 90 Q60 95 70 90" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else if (shape === 'penguin') {
+    // Determine evolution stage by color brightness/dex hint via passed color
+    // Stage 0 (small/cute) — default
+    // Stage 1 — taller body, longer beak
+    // Stage 2 — crown-like crest, regal
+    const stage = (color === '#3a85c0') ? 1 : (color === '#1a55a0') ? 2 : 0;
+    if (stage === 0) {
+      // small round penguin
+      body = `
+        <ellipse cx="60" cy="80" rx="34" ry="30" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <ellipse cx="60" cy="84" rx="22" ry="22" fill="#f0f8ff"/>
+        <path d="M52 70 Q60 80 68 70 L68 86 Q60 92 52 86 Z" fill="${dark}" opacity="0.55"/>
+        <ellipse cx="50" cy="62" rx="9" ry="11" fill="#fff"/>
+        <ellipse cx="70" cy="62" rx="9" ry="11" fill="#fff"/>
+        <circle cx="51" cy="64" r="5" fill="#000"/>
+        <circle cx="71" cy="64" r="5" fill="#000"/>
+        <circle cx="53" cy="62" r="2" fill="#fff"/>
+        <circle cx="73" cy="62" r="2" fill="#fff"/>
+        <polygon points="55,72 65,72 60,80" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>
+        <ellipse cx="36" cy="86" rx="8" ry="16" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="84" cy="86" rx="8" ry="16" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="50" cy="106" rx="9" ry="3" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>
+        <ellipse cx="70" cy="106" rx="9" ry="3" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>`;
+    } else if (stage === 1) {
+      // mid penguin - taller, longer beak, fuller wings
+      body = `
+        <ellipse cx="60" cy="76" rx="38" ry="38" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <ellipse cx="60" cy="82" rx="24" ry="26" fill="#f0f8ff"/>
+        <path d="M50 66 Q60 78 70 66 L70 88 Q60 96 50 88 Z" fill="${dark}" opacity="0.55"/>
+        <ellipse cx="49" cy="56" rx="9" ry="11" fill="#fff"/>
+        <ellipse cx="71" cy="56" rx="9" ry="11" fill="#fff"/>
+        <circle cx="50" cy="58" r="5" fill="#000"/>
+        <circle cx="72" cy="58" r="5" fill="#000"/>
+        <circle cx="52" cy="56" r="2" fill="#fff"/>
+        <circle cx="74" cy="56" r="2" fill="#fff"/>
+        <polygon points="54,68 66,68 60,82" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>
+        <ellipse cx="30" cy="84" rx="10" ry="22" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="90" cy="84" rx="10" ry="22" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="50" cy="110" rx="10" ry="3" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>
+        <ellipse cx="70" cy="110" rx="10" ry="3" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>`;
+    } else {
+      // master - crown crest, regal eyes
+      body = `
+        <polygon points="40,28 48,8 56,26 60,6 64,26 72,8 80,28" fill="#ffd700" stroke="#c08000" stroke-width="2"/>
+        <ellipse cx="60" cy="78" rx="40" ry="38" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <ellipse cx="60" cy="84" rx="26" ry="28" fill="#f0f8ff"/>
+        <path d="M48 66 Q60 80 72 66 L72 92 Q60 100 48 92 Z" fill="${dark}" opacity="0.6"/>
+        <ellipse cx="48" cy="50" rx="9" ry="10" fill="#fff"/>
+        <ellipse cx="72" cy="50" rx="9" ry="10" fill="#fff"/>
+        <ellipse cx="49" cy="52" rx="4" ry="5" fill="#000"/>
+        <ellipse cx="73" cy="52" rx="4" ry="5" fill="#000"/>
+        <circle cx="51" cy="50" r="2" fill="#fff"/>
+        <circle cx="75" cy="50" r="2" fill="#fff"/>
+        <polygon points="54,62 66,62 60,80" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>
+        <ellipse cx="26" cy="84" rx="12" ry="26" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="94" cy="84" rx="12" ry="26" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="48" cy="112" rx="11" ry="3" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>
+        <ellipse cx="72" cy="112" rx="11" ry="3" fill="#ffd040" stroke="#c08000" stroke-width="1.5"/>`;
+    }
+    // Penguin uses no emoji face overlay
+    return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
   } else {
     body = `<circle cx="60" cy="60" r="40" fill="${color}" stroke="${dark}" stroke-width="3"/>`;
   }
@@ -1075,14 +1209,15 @@ function initTitle() {
 
 function startNewGame() {
   state = {
-    party: [makeMon(1, 5), makeMon(13, 5)],
+    party: [makeMon(31, 5)],
     box: [],
     bag: { ball: 5, potion: 3 },
     coins: 200,
     unlocked: 1,
     cleared: [],
     curStage: null,
-    fieldMobs: []
+    fieldMobs: [],
+    field: null
   };
   saveGame(true);
   goStageSelect();
@@ -1106,58 +1241,330 @@ function goStageSelect() {
   });
 }
 
-// ===================== FIELD =====================
+// ===================== FIELD (walk + encounter) =====================
+// World coordinate system in pixels. Camera follows the player.
+const WORLD_W = 1600;  // wide
+const WORLD_H = 2200;  // tall
+const PLAYER_SIZE = 44;
+const MOB_SIZE = 56;
+const BOSS_SIZE = 92;
+const PLAYER_SPEED = 2.8; // px / frame ≈ 168 px/sec at 60fps
+
+// SVG image cache so we don't re-parse SVG every frame.
+const svgImgCache = {};
+function getSvgImg(key, svgStr) {
+  if (svgImgCache[key]) return svgImgCache[key];
+  const img = new Image();
+  // Encode SVG as data URI
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  svgImgCache[key] = img;
+  return img;
+}
+function getMonImg(id) {
+  return getSvgImg('mon_' + id, svgMon(id));
+}
+function getKurumiImg() {
+  return getSvgImg('kurumi', svgKurumi());
+}
+
+let fieldLoop = null;
+let fieldKeys = { up:false, down:false, left:false, right:false };
+let fieldRunning = false;
+
 function enterStage(stage) {
   state.curStage = stage.id;
   $('field-stage-name').innerHTML = stage.name;
   $('field-coins').textContent = state.coins;
   document.body.style.background = stage.bg;
   generateFieldMobs(stage);
-  renderField(stage);
+  // Place player at top-center of the world
+  state.field = {
+    px: WORLD_W / 2,
+    py: 80,
+    dir: 'down',
+    walkPhase: 0,
+    walking: false,
+    bgKey: stage.bg
+  };
   switchScene('field-scene');
+  startFieldLoop();
 }
 
 function generateFieldMobs(stage) {
   state.fieldMobs = [];
-  const count = 6 + Math.floor(Math.random() * 4);
+  // 12 random mobs spread across the world (avoid top spawn area)
+  const count = 12;
   for (let i = 0; i < count; i++) {
     const id = pick(stage.mobs);
     const lvl = rand(stage.lvl[0], stage.lvl[1]);
+    // grid-ish placement to avoid overlap
+    const col = i % 3, row = Math.floor(i / 3);
+    const cellW = WORLD_W / 3;
+    const cellH = (WORLD_H - 400) / Math.ceil(count / 3);
+    const cx = col * cellW + 60 + Math.random() * (cellW - 120);
+    const cy = 260 + row * cellH + Math.random() * (cellH - 80);
     state.fieldMobs.push({
       id, lvl,
-      x: 10 + Math.random() * 70,
-      y: 5 + i * (95 / count) + Math.random() * 6,
+      x: cx, y: cy,
       defeated: false,
-      isBoss: false
+      isBoss: false,
+      // wandering motion
+      dx: (Math.random() - 0.5) * 0.8,
+      dy: (Math.random() - 0.5) * 0.8,
+      wanderTimer: rand(40, 120)
     });
   }
-  // boss at bottom
+  // Boss at bottom-center
   state.fieldMobs.push({
     id: stage.boss.id, lvl: stage.boss.lvl,
-    x: 30 + Math.random() * 30,
-    y: 100,
+    x: WORLD_W / 2, y: WORLD_H - 140,
     defeated: false,
-    isBoss: true
+    isBoss: true,
+    dx: 0, dy: 0,
+    wanderTimer: 0
   });
 }
 
-function renderField(stage) {
-  const wrap = $('field-canvas-wrap');
-  wrap.innerHTML = '';
-  wrap.style.minHeight = '120vh';
-  wrap.style.background = stage.bg;
+// === Canvas drawing ===
+function drawField() {
+  const cv = $('field-canvas');
+  const f = state.field;
+  if (!cv || !f) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const cw = cv.clientWidth, ch = cv.clientHeight;
+  if (cv.width !== cw * dpr || cv.height !== ch * dpr) {
+    cv.width = cw * dpr; cv.height = ch * dpr;
+  }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cw, ch);
 
-  state.fieldMobs.forEach((fm, idx) => {
-    const el = document.createElement('div');
-    el.className = 'field-mob' + (fm.isBoss ? ' boss' : '') + (fm.defeated ? ' cleared' : '');
-    el.style.left = fm.x + '%';
-    el.style.top = fm.y + 'vh';
-    el.innerHTML = svgMon(fm.id) + `<div class="lvl">Lv${fm.lvl}</div>`;
-    if (!fm.defeated) {
-      attachTap(el, () => startBattle(fm, idx));
+  // camera follows player
+  let camX = f.px - cw / 2;
+  let camY = f.py - ch / 2;
+  camX = clamp(camX, 0, Math.max(0, WORLD_W - cw));
+  camY = clamp(camY, 0, Math.max(0, WORLD_H - ch));
+  f._camX = camX; f._camY = camY;
+
+  // ---- background ----
+  // Soft pastel field with some grass tufts
+  const stage = STAGES.find(s => s.id === state.curStage);
+  // Base gradient
+  const grd = ctx.createLinearGradient(0, 0, 0, ch);
+  grd.addColorStop(0, '#ffe6f5');
+  grd.addColorStop(0.6, '#d6f0ff');
+  grd.addColorStop(1, '#c0e8c0');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, cw, ch);
+
+  // Soft grid tufts (use a deterministic pattern)
+  ctx.save();
+  for (let gx = -((camX) % 80); gx < cw; gx += 80) {
+    for (let gy = -((camY) % 80); gy < ch; gy += 80) {
+      const wx = Math.floor((gx + camX) / 80);
+      const wy = Math.floor((gy + camY) / 80);
+      const seed = ((wx * 73856093) ^ (wy * 19349663)) >>> 0;
+      const r = (seed % 100) / 100;
+      if (r < 0.3) {
+        ctx.fillStyle = 'rgba(120,200,120,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(gx + 40, gy + 50, 9, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (r < 0.45) {
+        ctx.fillStyle = 'rgba(255,200,230,0.5)';
+        ctx.beginPath();
+        ctx.arc(gx + 30, gy + 30, 5, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (r < 0.55) {
+        ctx.fillStyle = 'rgba(255,230,140,0.5)';
+        ctx.beginPath();
+        ctx.arc(gx + 60, gy + 60, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
-    wrap.appendChild(el);
+  }
+  ctx.restore();
+
+  // World border indicator (subtle)
+  ctx.strokeStyle = 'rgba(214,51,132,0.25)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(-camX, -camY, WORLD_W, WORLD_H);
+
+  // ---- Mobs ----
+  state.fieldMobs.forEach(m => {
+    if (m.defeated) return;
+    const sx = m.x - camX, sy = m.y - camY;
+    const size = m.isBoss ? BOSS_SIZE : MOB_SIZE;
+    // off-screen culling
+    if (sx + size < -20 || sx - size > cw + 20 || sy + size < -20 || sy - size > ch + 20) return;
+    // Boss: golden ring
+    if (m.isBoss) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,215,0,0.35)';
+      ctx.beginPath(); ctx.arc(sx, sy, size * 0.85, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#ffd700';
+      ctx.beginPath(); ctx.arc(sx, sy, size * 0.65, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    } else {
+      // simple shadow disc
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy + size * 0.4, size * 0.45, size * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // mob art
+    const img = getMonImg(m.id);
+    if (img && img.complete && img.naturalWidth) {
+      ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
+    } else {
+      ctx.fillStyle = '#ffb0d8';
+      ctx.beginPath(); ctx.arc(sx, sy, size / 2, 0, Math.PI * 2); ctx.fill();
+    }
+    // level badge
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = '#ff4090';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    const lt = 'Lv' + m.lvl;
+    const tw = ctx.measureText(lt).width;
+    const lx = sx + size * 0.4 - tw / 2;
+    const ly = sy + size * 0.5;
+    ctx.strokeText(lt, lx, ly);
+    ctx.fillText(lt, lx, ly);
   });
+
+  // ---- Player (kurumi) ----
+  const psx = f.px - camX, psy = f.py - camY;
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(psx, psy + PLAYER_SIZE * 0.45, PLAYER_SIZE * 0.4, PLAYER_SIZE * 0.16, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // walk bob
+  const bob = f.walking ? Math.sin(f.walkPhase / 6) * 2 : 0;
+  // direction tilt
+  let rot = 0;
+  if (f.dir === 'left') rot = -0.1;
+  else if (f.dir === 'right') rot = 0.1;
+  ctx.save();
+  ctx.translate(psx, psy + bob);
+  if (f.dir === 'left') ctx.scale(-1, 1);
+  ctx.rotate(rot);
+  const kImg = getKurumiImg();
+  const ks = PLAYER_SIZE;
+  if (kImg && kImg.complete && kImg.naturalWidth) {
+    ctx.drawImage(kImg, -ks / 2, -ks / 2, ks, ks);
+  } else {
+    ctx.fillStyle = '#ffb0d8';
+    ctx.beginPath(); ctx.arc(0, 0, ks / 2, 0, Math.PI * 2); ctx.fill();
+  }
+  // tiny feet (bob)
+  ctx.fillStyle = '#d63384';
+  const footY = ks / 2 - 2;
+  const footOff = (Math.sin(f.walkPhase / 5) * (f.walking ? 4 : 0));
+  ctx.beginPath(); ctx.ellipse(-6, footY + footOff, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(6, footY - footOff, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function updateField() {
+  const f = state.field;
+  if (!f) return;
+  // input -> velocity
+  let vx = 0, vy = 0;
+  if (fieldKeys.left)  vx -= 1;
+  if (fieldKeys.right) vx += 1;
+  if (fieldKeys.up)    vy -= 1;
+  if (fieldKeys.down)  vy += 1;
+  if (vx !== 0 && vy !== 0) { vx *= 0.7071; vy *= 0.7071; }
+  const moving = (vx !== 0 || vy !== 0);
+  if (moving) {
+    f.px = clamp(f.px + vx * PLAYER_SPEED, 24, WORLD_W - 24);
+    f.py = clamp(f.py + vy * PLAYER_SPEED, 24, WORLD_H - 24);
+    // direction by dominant axis
+    if (Math.abs(vx) > Math.abs(vy)) f.dir = vx < 0 ? 'left' : 'right';
+    else f.dir = vy < 0 ? 'up' : 'down';
+    f.walkPhase = (f.walkPhase + 1) % 6000;
+  }
+  f.walking = moving;
+
+  // mob wandering + encounter check
+  const pBox = { x: f.px - PLAYER_SIZE * 0.35, y: f.py - PLAYER_SIZE * 0.35, w: PLAYER_SIZE * 0.7, h: PLAYER_SIZE * 0.7 };
+  for (let i = 0; i < state.fieldMobs.length; i++) {
+    const m = state.fieldMobs[i];
+    if (m.defeated) continue;
+    if (!m.isBoss) {
+      m.wanderTimer--;
+      if (m.wanderTimer <= 0) {
+        m.dx = (Math.random() - 0.5) * 1.2;
+        m.dy = (Math.random() - 0.5) * 1.2;
+        m.wanderTimer = rand(40, 140);
+      }
+      m.x = clamp(m.x + m.dx, 30, WORLD_W - 30);
+      m.y = clamp(m.y + m.dy, 220, WORLD_H - 60);
+    }
+    const sz = m.isBoss ? BOSS_SIZE : MOB_SIZE;
+    const mBox = { x: m.x - sz * 0.35, y: m.y - sz * 0.35, w: sz * 0.7, h: sz * 0.7 };
+    if (rectsOverlap(pBox, mBox)) {
+      triggerEncounter(m, i);
+      return;
+    }
+  }
+}
+
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function triggerEncounter(fieldMob, idx) {
+  if (!fieldRunning) return;
+  fieldRunning = false; // freeze field
+  // Mark spot to step back to after battle
+  if (state.field) {
+    const f = state.field;
+    // step away from mob a bit
+    const dx = f.px - fieldMob.x, dy = f.py - fieldMob.y;
+    const len = Math.hypot(dx, dy) || 1;
+    state.field.lastSafePx = clamp(fieldMob.x + (dx / len) * 80, 24, WORLD_W - 24);
+    state.field.lastSafePy = clamp(fieldMob.y + (dy / len) * 80, 24, WORLD_H - 24);
+  }
+  // visuals
+  const fieldArea = document.querySelector('#field-scene #field-area');
+  $('encounter-mark').classList.add('show');
+  if (fieldArea) fieldArea.classList.add('shake');
+  sfxCrit();
+  setTimeout(() => {
+    $('encounter-mark').classList.remove('show');
+    if (fieldArea) fieldArea.classList.remove('shake');
+    stopFieldLoop();
+    startBattle(fieldMob, idx);
+  }, 700);
+}
+
+function startFieldLoop() {
+  fieldRunning = true;
+  if (fieldLoop) cancelAnimationFrame(fieldLoop);
+  // Force one paint to ensure scene is laid out before reading sizes
+  const tick = () => {
+    if (!fieldRunning) return;
+    updateField();
+    drawField();
+    fieldLoop = requestAnimationFrame(tick);
+  };
+  // Defer start by a frame to give layout a chance
+  requestAnimationFrame(() => {
+    if (fieldRunning) fieldLoop = requestAnimationFrame(tick);
+  });
+}
+
+function stopFieldLoop() {
+  fieldRunning = false;
+  if (fieldLoop) cancelAnimationFrame(fieldLoop);
+  fieldLoop = null;
+  // release any held keys
+  fieldKeys.up = fieldKeys.down = fieldKeys.left = fieldKeys.right = false;
+  document.querySelectorAll('.dpad-btn').forEach(b => b.classList.remove('active'));
 }
 
 // ===================== BATTLE =====================
@@ -1416,6 +1823,8 @@ function winBattle() {
 
 function returnToFieldOrStage() {
   if (battle.isBoss) {
+    state.field = null;
+    state.curStage = null;
     goStageSelect();
   } else {
     enterStageRefresh();
@@ -1427,8 +1836,14 @@ function enterStageRefresh() {
   $('field-stage-name').innerHTML = stage.name;
   $('field-coins').textContent = state.coins;
   document.body.style.background = stage.bg;
-  renderField(stage);
+  // Move player back to safe position (just before encounter)
+  if (state.field) {
+    if (state.field.lastSafePx != null) state.field.px = state.field.lastSafePx;
+    if (state.field.lastSafePy != null) state.field.py = state.field.lastSafePy;
+    state.field.walking = false;
+  }
   switchScene('field-scene');
+  startFieldLoop();
 }
 
 function loseBattle() {
@@ -1442,6 +1857,8 @@ function loseBattle() {
     const s = monStats(m);
     if (m.hp <= 0) m.hp = Math.floor(s.hp * 0.4);
   });
+  state.field = null;
+  state.curStage = null;
   saveGame(true);
   setTimeout(() => goStageSelect(), 2200);
 }
@@ -1900,7 +2317,7 @@ function setupUI() {
   attachTap($('btn-stage-save'), () => saveGame());
 
   // field
-  attachTap($('btn-field-party'), goPartyScene);
+  attachTap($('btn-field-party'), () => { stopFieldLoop(); goPartyScene(); });
   attachTap($('btn-field-bag'), () => {
     // simple bag view via modal
     let html = '<div style="text-align:left; max-height:50vh; overflow-y:auto;">';
@@ -1914,10 +2331,22 @@ function setupUI() {
     html += '</div>';
     showModal('🎒 バッグ', html, [{ label: 'とじる', cls: 'gray' }]);
   });
-  attachTap($('btn-field-back'), () => goStageSelect());
+  attachTap($('btn-field-back'), () => {
+    stopFieldLoop();
+    state.field = null;
+    state.curStage = null;
+    goStageSelect();
+  });
 
   // party
-  attachTap($('party-back'), () => goStageSelect());
+  attachTap($('party-back'), () => {
+    // If we entered party from the field, go back to field; otherwise stage select
+    if (state.curStage && state.field) {
+      enterStageRefresh();
+    } else {
+      goStageSelect();
+    }
+  });
 
   // shop
   attachTap($('shop-back'), () => goStageSelect());
@@ -1935,16 +2364,62 @@ function setupUI() {
 
   // tap button
   attachTap($('tap-button'), tapHit);
-  // also keypress for PC
+  // ----- Field controls (PC keyboard + Mobile D-pad) -----
+  const keyMap = {
+    'ArrowUp':'up','ArrowDown':'down','ArrowLeft':'left','ArrowRight':'right',
+    'KeyW':'up','KeyS':'down','KeyA':'left','KeyD':'right',
+    'w':'up','s':'down','a':'left','d':'right'
+  };
   document.addEventListener('keydown', (e) => {
     if (tap && (e.key === ' ' || e.key === 'Enter' || e.code === 'Space')) {
       e.preventDefault();
       tapHit();
+      return;
+    }
+    if (!fieldRunning) return;
+    const dir = keyMap[e.code] || keyMap[e.key];
+    if (dir) {
+      fieldKeys[dir] = true;
+      e.preventDefault();
     }
   });
+  document.addEventListener('keyup', (e) => {
+    if (!state.field) return;
+    const dir = keyMap[e.code] || keyMap[e.key];
+    if (dir) {
+      fieldKeys[dir] = false;
+      e.preventDefault();
+    }
+  });
+  // D-pad — touch & mouse with hold
+  document.querySelectorAll('.dpad-btn').forEach(btn => {
+    const dir = btn.dataset.dir;
+    const press = (e) => {
+      e.preventDefault();
+      fieldKeys[dir] = true;
+      btn.classList.add('active');
+    };
+    const release = (e) => {
+      if (e) e.preventDefault();
+      fieldKeys[dir] = false;
+      btn.classList.remove('active');
+    };
+    btn.addEventListener('touchstart', press, { passive: false });
+    btn.addEventListener('touchend', release, { passive: false });
+    btn.addEventListener('touchcancel', release, { passive: false });
+    btn.addEventListener('mousedown', press);
+    btn.addEventListener('mouseup', release);
+    btn.addEventListener('mouseleave', release);
+    // Prevent context menu / selection
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+  });
+  // Stop movement when window loses focus
+  window.addEventListener('blur', () => {
+    fieldKeys.up = fieldKeys.down = fieldKeys.left = fieldKeys.right = false;
+    document.querySelectorAll('.dpad-btn').forEach(b => b.classList.remove('active'));
+  });
 
-  // evo next handled inline in doEvolution (rebound)
-  attachTap($('evo-next'), () => switchScene('field-scene'));
+  // evo next is handled inline in doEvolution (rebound dynamically)
 
   // prime audio after first gesture
   document.body.addEventListener('click', ensureAudio, { once: true });
