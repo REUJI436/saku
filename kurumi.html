@@ -646,6 +646,27 @@
   <a href="./" class="portal-back">🏠 ゲームせんたく</a>
 
 <script>
+// ====================== ANDROID TOUCH FIX ======================
+// 一部のAndroid Chromeでは <button> の click イベントがタップで発火しない問題に対応。
+// touchend で確実に click を発火させる（タップ＝同じボタンで開始＆終了したとき）
+(function() {
+  let touchStartBtn = null;
+  document.addEventListener('touchstart', function(e) {
+    touchStartBtn = e.target.closest('button');
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    const endBtn = e.target.closest('button');
+    if (endBtn && endBtn === touchStartBtn && !endBtn.disabled) {
+      e.preventDefault();  // 後続のクリック合成を抑止して二重発火防止
+      endBtn.click();
+    }
+    touchStartBtn = null;
+  }, { passive: false });
+  document.addEventListener('touchcancel', function() {
+    touchStartBtn = null;
+  }, { passive: true });
+})();
+
 // ====================== CHARACTER SVG ======================
 // Kurumi: extra detailed anime-style eyes, cute features
 // Mobs (haruka/miku/yuuta/sensei): simpler anime-lite look
