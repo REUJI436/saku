@@ -4450,7 +4450,7 @@ function tryCatch(ballKey) {
       // success
       const captured = makeMon(f.mon.id, f.mon.lvl);
       captured.hp = f.mon.hp;
-      if (state.party.length < 3) state.party.push(captured);
+      if (state.party.length < 4) state.party.push(captured);
       else state.box.push(captured);
       if (battle.isToton) {
         showTotonCatchBanner();
@@ -4652,7 +4652,7 @@ function renderParty() {
   state.box.forEach((m, i) => {
     const def = getMonsterDef(m.id);
     const stats = monStats(m);
-    const can = state.party.length < 3;
+    const can = state.party.length < 4;
     const row = document.createElement('div');
     row.className = 'sub-row' + (can ? '' : ' disabled');
     row.innerHTML = `<div class="mob-art-small">${svgMon(m.id)}</div>
