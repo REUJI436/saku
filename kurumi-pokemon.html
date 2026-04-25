@@ -837,6 +837,19 @@
     border-radius: 12px;
   }
   #btn-restore-backup:active { opacity: 1; }
+  /* Danger reset link (very subtle, hard to misclick) */
+  #btn-reset-danger {
+    position: fixed;
+    right: 10px; bottom: 8px;
+    font-size: 11px;
+    opacity: 0.4;
+    color: #888;
+    text-decoration: underline;
+    background: rgba(255,255,255,0.4);
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+  #btn-reset-danger:active { opacity: 0.9; }
 
   /* Modal */
   .modal-bg {
@@ -1146,6 +1159,7 @@
     <button id="btn-save-import" class="title-tool-btn">セーブを よみこみ</button>
   </div>
   <a id="btn-restore-backup" href="#"><ruby>壊<rt>こわ</rt></ruby>れた？ ひとつ前にもどす</a>
+  <a id="btn-reset-danger" href="#" style="display:none;">ぜんぶ けして あたらしく はじめる</a>
   <div id="title-last-save" style="display:none;"></div>
 </div>
 
@@ -2387,13 +2401,37 @@ function goTitle() {
 function initTitle() {
   $('title-art-svg').innerHTML = svgKurumi();
   updateTitleLastSave();
-  attachTap($('btn-new'), () => {
-    if (hasSave()) {
-      showModal('かくにん', 'いまの ほぞんデータを<br>けして、はじめから<br>あそびますか？', [
-        { label: 'はじめる', cls: '', fn: startNewGame },
-        { label: 'やめる', cls: 'gray' }
-      ]);
-    } else startNewGame();
+  // セーブがある場合は誤タップ防止のため「はじめから」ボタンを非表示にする
+  // （代わりに右下の小さい「ぜんぶ けして〜」リンクから2段確認でリセット可能）
+  const hasSv = hasSave();
+  const btnNew = $('btn-new');
+  const btnReset = $('btn-reset-danger');
+  if (btnNew) btnNew.style.display = hasSv ? 'none' : '';
+  if (btnReset) btnReset.style.display = hasSv ? '' : 'none';
+  attachTap(btnNew, () => {
+    // セーブが無いときだけここに到達
+    startNewGame();
+  });
+  attachTap(btnReset, (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    // 2段階確認：1回目「ほんとうに？」→ 2回目「ほぞんデータも きえちゃうよ。それでも？」
+    showModal('ほんとうに けすの？', 'いままで そだてた ポケモンが<br>ぜんぶ きえちゃうよ。', [
+      { label: 'やめる', cls: 'gray' },
+      { label: 'つづける', cls: '', fn: () => {
+        showModal('さいごの かくにん', 'これを おしたら<br>もとには もどせないよ！<br><br>(まちがいじゃ ない？)', [
+          { label: 'やっぱり やめる', cls: 'gray' },
+          { label: 'けして あたらしく はじめる', cls: '', fn: () => {
+            // セーブを直前バックアップに退避してから消去（万が一に備え）
+            try {
+              const prev = localStorage.getItem(SAVE_KEY);
+              if (prev) localStorage.setItem(BACKUP_KEY, prev);
+            } catch(e2) {}
+            localStorage.removeItem(SAVE_KEY);
+            startNewGame();
+          } }
+        ]);
+      } }
+    ]);
   });
   attachTap($('btn-continue'), () => {
     if (loadGame()) {
