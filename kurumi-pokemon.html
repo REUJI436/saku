@@ -3671,22 +3671,30 @@ function startTapPhase(skillKey) {
   hideCommands();
   hideAllSubPanels();
   $('tap-arena').classList.add('active');
-  tap = { count: 0, end: Date.now() + 3000, skill: skillKey, raf: 0 };
+  tap = { count: 0, end: null, skill: skillKey, raf: 0, duration: 3000 };
   $('tap-count').textContent = '0';
-  setBattleMessage(skillKey ? SKILLS[skillKey].name + ' を じゅんびちゅう！れんだ！' : 'れんだして こうげき！');
-  const tick = () => {
-    if (!tap) return;
-    const left = tap.end - Date.now();
-    if (left <= 0) { endTapPhase(); return; }
-    $('tap-timer-text').textContent = (left / 1000).toFixed(1);
-    $('tap-timer-fill').style.width = (left / 30) + '%';
-    tap.raf = requestAnimationFrame(tick);
-  };
-  tap.raf = requestAnimationFrame(tick);
+  // タイマーは止めて初期表示（1回目のタップで動き出す）
+  $('tap-timer-text').textContent = (tap.duration / 1000).toFixed(1);
+  $('tap-timer-fill').style.width = (tap.duration / 30) + '%';
+  setBattleMessage(skillKey ? SKILLS[skillKey].name + ' を じゅんびちゅう！<br>1かいタップで タイマースタート！' : '1かいタップで タイマースタート！');
 }
 
 function tapHit() {
   if (!tap) return;
+  // 初回タップでタイマー起動
+  if (tap.end == null) {
+    tap.end = Date.now() + tap.duration;
+    setBattleMessage('れんだ！');
+    const tick = () => {
+      if (!tap) return;
+      const left = tap.end - Date.now();
+      if (left <= 0) { endTapPhase(); return; }
+      $('tap-timer-text').textContent = (left / 1000).toFixed(1);
+      $('tap-timer-fill').style.width = (left / 30) + '%';
+      tap.raf = requestAnimationFrame(tick);
+    };
+    tap.raf = requestAnimationFrame(tick);
+  }
   tap.count++;
   $('tap-count').textContent = tap.count;
   sfxTap();
