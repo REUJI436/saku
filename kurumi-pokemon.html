@@ -1550,7 +1550,28 @@ const SKILLS = {
   heartatk: { name: 'ハートアタック', mp: 0, power: 1.0, type: 'pink',  msg: 'ハートで たいあたり！', fx: '💕' },
   loveBeam: { name: 'ラブラブビーム', mp: 5, power: 1.3, type: 'pink',  msg: 'あいの ビーム！', fx: '💖', heal: false, healAmt: 0.1, healSelf: true },
   shock:    { name: '<ruby>電気<rt>でんき</rt></ruby>ショック', mp: 3, power: 1.1, type: 'yellow', msg: 'ビリッと しびれた！', fx: '⚡' },
-  charge:   { name: 'とつげき',     mp: 3, power: 1.3, type: 'yellow', msg: 'いきおいよく とつげき！', fx: '💨' }
+  charge:   { name: 'とつげき',     mp: 3, power: 1.3, type: 'yellow', msg: 'いきおいよく とつげき！', fx: '💨' },
+
+  // ===== 伝説とーとん専用わざ =====
+  zansetsu:    { name: 'のこぎょうブレイク', mp: 4, power: 1.2, type: 'human', msg: '<ruby>残業<rt>ざんぎょう</rt></ruby>で つかれて あばれた！', fx: '⚡', confuseChance: 0.3 },
+  canCoffee:   { name: 'カンコーヒー<ruby>瞬間<rt>しゅんかん</rt></ruby>いどう', mp: 3, power: 1.4, type: 'human', msg: 'カンコーヒーで シャキッと しゅんかんいどう！', fx: '☕⚡' },
+  shudenDash:  { name: 'しゅうでんダッシュ', mp: 5, power: 1.7, type: 'human', msg: 'しゅうでんに まにあわせるため ぜんりょくダッシュ！', fx: '💨' },
+  blackThunder:{ name: 'ブラックサンダー', mp: 6, power: 1.9, type: 'human', msg: 'まっくろな いかずちが おちた！', fx: '⚡⚡', critBoost: true }, // TODO: status effect not yet wired
+  // ----- 炎 -----
+  shimekiriFire:{ name: 'しめきりファイヤー', mp: 4, power: 1.5, type: 'human', msg: 'しめきりに おわれて ねっけつ！', fx: '🔥' },
+  tetsuyaOni:  { name: 'てつやの<ruby>鬼火<rt>おにび</rt></ruby>', mp: 5, power: 1.6, type: 'human', msg: 'ねむけが ほのおと なって ふきだした！', fx: '🔥👻', burnChance: 0.3 }, // TODO: status effect not yet wired
+  shuraba:     { name: 'しゅらば', mp: 6, power: 2.2, type: 'human', msg: 'しゅらばを くぐり にくだんとつげき！', fx: '💥', recoil: 0.2 },
+  moetsukiAtk: { name: 'もえつきアタック', mp: 7, power: 2.5, type: 'human', msg: 'もえつきて さいごの ひとうち！', fx: '🔥🌟', recoil: 0.15 },
+  // ----- 氷 -----
+  coldFeedback:{ name: 'れいこくな フィードバック', mp: 4, power: 1.3, type: 'human', msg: 'つめたい ことばで ぐさり…', fx: '❄️', atkDown: 0.25 }, // TODO: status effect not yet wired
+  koriSeiron:  { name: 'こおりの<ruby>正論<rt>せいろん</rt></ruby>', mp: 4, power: 1.2, type: 'human', msg: 'ただしすぎて こおりついた！', fx: '🧊', confuseChance: 0.4 },
+  mugonAtsu:   { name: 'むごんの<ruby>圧力<rt>あつりょく</rt></ruby>', mp: 5, power: 1.0, type: 'human', msg: 'なにも いわずに ジッと みつめた…', fx: '😶', atkDown: 0.4 }, // TODO: status effect not yet wired
+  zettaiPresen:{ name: 'ぜったいれいど プレゼン', mp: 7, power: 2.4, type: 'human', msg: 'ぜったいれいどの プレゼンが はじまった！', fx: '❄️📊' },
+  // ----- テラスタルキョダイマックス（チート級） -----
+  shachoKourin:{ name: 'しゃちょー<ruby>降臨<rt>こうりん</rt></ruby>', mp: 8, power: 3.0, type: 'human', msg: 'しゃちょーが あらわれて いっかつ！', fx: '👔💢', critBoost: true }, // TODO: status effect not yet wired
+  taishoku:    { name: 'たいしょくだいこう アタック', mp: 7, power: 2.5, type: 'human', msg: 'たいしょくだいこうの ふうとうを たたきつけた！', fx: '📨💥' },
+  ultimateCoffee:{ name: 'きわみの コーヒーブレイク', mp: 6, power: 0.0, type: 'human', msg: 'きわみの コーヒーで HP・MPが ぜんかい！つぎのターン むてき！', fx: '☕✨', heal: true, healAmt: 1.0, mpRecover: 999, invincibleNext: true }, // TODO: status effect not yet wired
+  kyodaiManin: { name: 'キョダイ まんいんでんしゃ', mp: 9, power: 4.0, type: 'human', msg: 'まんいんでんしゃに つめこまれた！', fx: '🚆💢', confuseChance: 1.0, paralyzeChance: 1.0, burnChance: 1.0 } // TODO: status effect not yet wired
 };
 
 const MONSTERS = [
@@ -1629,7 +1650,13 @@ const MONSTERS = [
   { id:108, name:'ピウーラ',     type:'yellow', color:'#ffa800', shape:'chick',     face:'', hp:74, atk:34, def:22, spd:34, learn:{32:'hyper',38:'shock'}, evo:null, dex:'でんきの わを まとう。すばやさ さいきょう。', evoStage:2 },
 
   // ===== 隠しキャラクター: とーとん（人間） =====
-  { id:99, name:'とーとん', type:'human', color:'#9a9a9a', shape:'human', face:'', hp:20, atk:8, def:7, spd:35, learn:{1:'jimu',2:'coffee',3:'eigyou',4:'riman'}, evo:null, dex:'モンスターだらけの せかいに まぎれこんだ ヒト。やせた おとなの おとこのひと。', stage:0, hidden:true }
+  { id:99, name:'とーとん', type:'human', color:'#9a9a9a', shape:'human', face:'', hp:20, atk:8, def:7, spd:35, learn:{1:'jimu',2:'coffee',3:'eigyou',4:'riman'}, evo:null, dex:'モンスターだらけの せかいに まぎれこんだ ヒト。やせた おとなの おとこのひと。', stage:0, hidden:true },
+
+  // ===== 伝説とーとん4兄弟 =====
+  { id:96, name:'<ruby>雷<rt>かみなり</rt></ruby>とーとん', type:'yellow', color:'#ffd040', shape:'human', face:'⚡', hp:80, atk:32, def:18, spd:42, learn:{}, startSkills:['zansetsu','canCoffee','shudenDash','blackThunder'], evo:null, dex:'<ruby>残業<rt>ざんぎょう</rt></ruby>かえりに かみなりを まとった おじさん。', stage:0, hidden:true, legendary:true },
+  { id:97, name:'<ruby>炎<rt>ほのお</rt></ruby>とーとん', type:'red', color:'#ff5040', shape:'human', face:'🔥', hp:90, atk:40, def:20, spd:30, learn:{}, startSkills:['shimekiriFire','tetsuyaOni','shuraba','moetsukiAtk'], evo:null, dex:'しめきりに おわれて もえあがった おじさん。', stage:0, hidden:true, legendary:true },
+  { id:98, name:'<ruby>氷<rt>こおり</rt></ruby>とーとん', type:'sky', color:'#80c8ff', shape:'human', face:'❄️', hp:110, atk:25, def:34, spd:22, learn:{}, startSkills:['coldFeedback','koriSeiron','mugonAtsu','zettaiPresen'], evo:null, dex:'クールビズで れいせいすぎる おじさん。むごん。', stage:0, hidden:true, legendary:true },
+  { id:95, name:'テラスタルとーとんキョダイマックス', type:'human-god', color:'#ff00ff', shape:'human', face:'👑', hp:350, atk:80, def:60, spd:60, learn:{}, startSkills:['shachoKourin','taishoku','ultimateCoffee','kyodaiManin'], evo:null, dex:'すべてを こえた でんせつの おじさん。にじいろに かがやく…', stage:0, hidden:true, legendary:true, godTier:true }
 ];
 
 function getMonsterDef(id) { return MONSTERS.find(m => m.id === id); }
@@ -1691,9 +1718,14 @@ function makeMon(id, lvl) {
   };
   // skills based on level
   mon.skills = [];
-  Object.keys(def.learn).forEach(k => {
-    if (lvl >= +k) mon.skills.push(def.learn[k]);
-  });
+  if (Array.isArray(def.startSkills) && def.startSkills.length) {
+    // 伝説とーとん用: Lv1から全技習得済み
+    mon.skills = def.startSkills.slice();
+  } else {
+    Object.keys(def.learn).forEach(k => {
+      if (lvl >= +k) mon.skills.push(def.learn[k]);
+    });
+  }
   if (mon.skills.length === 0) mon.skills.push('tail');
   const stats = monStats(mon);
   mon.hp = stats.hp; mon.mp = stats.mp;
@@ -2796,6 +2828,66 @@ function generateFieldMobs(stage) {
       wanderTimer: rand(40, 120)
     });
   }
+
+  // ===== 雷とーとん（ステージ2、1.5%） =====
+  if (stage.id === 2 && Math.random() < 0.015) {
+    spawnLegendaryToton(96, stage);
+  }
+  // ===== 炎とーとん（ステージ3、1.5%） =====
+  if (stage.id === 3 && Math.random() < 0.015) {
+    spawnLegendaryToton(97, stage);
+  }
+  // ===== 氷とーとん（ステージ4、1.5%） =====
+  if (stage.id === 4 && Math.random() < 0.015) {
+    spawnLegendaryToton(98, stage);
+  }
+}
+
+let _terastalTapCount = 0;
+let _terastalTapTimer = null;
+
+function tryTerastalSpawn() {
+  const haveCaught = id => state.party.some(m => m.id === id) || state.box.some(m => m.id === id);
+  const ids = [99, 96, 97, 98];
+  if (!ids.every(haveCaught)) return; // 静かに失敗（ヒントを与えない）
+  const top4 = state.party.slice(0, 4).map(m => m.id).sort();
+  const want = ids.slice().sort();
+  if (top4.length < 4 || top4.join(',') !== want.join(',')) return;
+  if (state.fieldMobs.some(m => m.id === 95 && !m.defeated)) return;
+
+  const stage = STAGES.find(s => s.id === 5);
+  spawnLegendaryToton(95, stage, { lvl: 1, godTier: true });
+  showToast('!? せかいが ゆれている…');
+  if (typeof sfxLevel === 'function') sfxLevel();
+  const flash = document.createElement('div');
+  flash.style.cssText = 'position:fixed;inset:0;background:radial-gradient(circle, #fff 0%, #ff00ff 50%, transparent 100%);z-index:9000;pointer-events:none;animation:terastalFlash 1.2s forwards;';
+  document.body.appendChild(flash);
+  if (!document.getElementById('terastalStyle')) {
+    const st = document.createElement('style');
+    st.id = 'terastalStyle';
+    st.textContent = '@keyframes terastalFlash{0%{opacity:0}30%{opacity:0.85}100%{opacity:0}}';
+    document.head.appendChild(st);
+  }
+  setTimeout(() => flash.remove(), 1300);
+}
+
+function spawnLegendaryToton(monId, stage, opts) {
+  opts = opts || {};
+  const tx = 100 + Math.random() * (WORLD_W - 200);
+  const ty = 320 + Math.random() * (WORLD_H - 500);
+  state.fieldMobs.push({
+    id: monId,
+    lvl: opts.lvl != null ? opts.lvl : rand(stage.lvl[0], stage.lvl[1]),
+    x: tx, y: ty,
+    defeated: false,
+    isBoss: false,
+    isToton: true,           // 既存のとーとん演出フローを再利用
+    isLegendaryToton: true,
+    isGodToton: !!opts.godTier,
+    dx: (Math.random() - 0.5) * 0.6,
+    dy: (Math.random() - 0.5) * 0.6,
+    wanderTimer: rand(40, 120)
+  });
 }
 
 // ===================== FIELD CHESTS =====================
@@ -3351,15 +3443,45 @@ function triggerTotonEncounter(fieldMob, idx) {
   // 暗転オーバーレイを生成
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9000;opacity:0;transition:opacity 0.25s;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;text-align:center;';
+  // id別のエンカウント演出
+  let bigText = '!?';
+  let subText = 'あれ…？<ruby>人間<rt>にんげん</rt></ruby>…？';
+  let bigStyle = 'font-size:96px;font-weight:900;color:#fff;text-shadow:3px 3px 0 #888,5px 5px 12px rgba(255,255,255,0.4);letter-spacing:6px;';
+  let displayMs = 1100;
+  if (fieldMob.id === 96) {
+    bigText = '⚡';
+    subText = '<ruby>雷<rt>かみなり</rt></ruby>とーとん が あらわれた！';
+    bigStyle = 'font-size:120px;color:#ffd040;text-shadow:0 0 20px #ffea80,3px 3px 0 #884400;';
+  } else if (fieldMob.id === 97) {
+    bigText = '🔥';
+    subText = '<ruby>炎<rt>ほのお</rt></ruby>とーとん が あらわれた！';
+    bigStyle = 'font-size:120px;color:#ff5040;text-shadow:0 0 20px #ff8040,3px 3px 0 #602010;';
+  } else if (fieldMob.id === 98) {
+    bigText = '❄️';
+    subText = '<ruby>氷<rt>こおり</rt></ruby>とーとん が あらわれた！';
+    bigStyle = 'font-size:120px;color:#80c8ff;text-shadow:0 0 20px #c0e8ff,3px 3px 0 #204060;';
+  } else if (fieldMob.id === 95) {
+    bigText = '!?';
+    subText = 'テラスタルとーとんキョダイマックス…！？<br>せかいの あいだから あらわれた！';
+    // にじいろグラデ文字
+    bigStyle = 'font-size:140px;font-weight:900;letter-spacing:8px;background:linear-gradient(90deg,#ff0080,#ffd040,#40ff80,#40c8ff,#c080ff,#ff0080);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:terastalRainbow 1.2s linear infinite;text-shadow:0 0 24px rgba(255,255,255,0.6);';
+    displayMs = 2000;
+    // 虹色キーフレーム注入
+    if (!document.getElementById('terastalRainbowStyle')) {
+      const st = document.createElement('style');
+      st.id = 'terastalRainbowStyle';
+      st.textContent = '@keyframes terastalRainbow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}';
+      document.head.appendChild(st);
+    }
+  }
   overlay.innerHTML = `
-    <div style="font-size:96px;font-weight:900;color:#fff;text-shadow:3px 3px 0 #888,5px 5px 12px rgba(255,255,255,0.4);letter-spacing:6px;">!?</div>
-    <div style="margin-top:20px;font-size:22px;font-weight:bold;color:#fff;text-shadow:2px 2px 0 #444;">あれ…？<ruby>人間<rt>にんげん</rt></ruby>…？</div>
+    <div style="${bigStyle}">${bigText}</div>
+    <div style="margin-top:20px;font-size:22px;font-weight:bold;color:#fff;text-shadow:2px 2px 0 #444;">${subText}</div>
   `;
   document.body.appendChild(overlay);
   // フェードイン
   requestAnimationFrame(() => { overlay.style.opacity = '0.92'; });
   sfxCrit();
-  // 1秒間表示してからバトルへ
   setTimeout(() => {
     overlay.style.opacity = '0';
     setTimeout(() => {
@@ -3367,7 +3489,7 @@ function triggerTotonEncounter(fieldMob, idx) {
       stopFieldLoop();
       startBattle(fieldMob, idx);
     }, 280);
-  }, 1100);
+  }, displayMs);
 }
 
 function startFieldLoop() {
@@ -3428,7 +3550,12 @@ function startBattle(fieldMob, idx) {
   battle.foe.mon.hp = foeStats.hp;
   refreshBattleUI();
   if (battle.isToton) {
-    setBattleMessage('まさかの <ruby>人間<rt>にんげん</rt></ruby> 「とーとん」 が あらわれた！');
+    const fid = battle.foe.mon.id;
+    if (fid === 96)      setBattleMessage('⚡ <ruby>雷<rt>かみなり</rt></ruby>とーとん が あらわれた！');
+    else if (fid === 97) setBattleMessage('🔥 <ruby>炎<rt>ほのお</rt></ruby>とーとん が あらわれた！');
+    else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が あらわれた！');
+    else if (fid === 95) setBattleMessage('!? テラスタルとーとんキョダイマックス…！？<br>せかいの あいだから あらわれた！');
+    else                 setBattleMessage('まさかの <ruby>人間<rt>にんげん</rt></ruby> 「とーとん」 が あらわれた！');
   } else {
     setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が あらわれた！');
   }
@@ -3772,9 +3899,13 @@ function winBattle() {
   // とーとんは経験値少なめ、コイン報酬は+500ボーナス
   let expGain = Math.floor(8 + foe.mon.lvl * 4 + (battle.isBoss ? foe.mon.lvl * 5 : 0));
   let coinGain = Math.floor(10 + foe.mon.lvl * (battle.isBoss ? 6 : 2));
+  let totonTier = 0; // 0:なし 1:通常 2:伝説4兄弟 3:神
   if (battle.isToton) {
     expGain = Math.max(4, Math.floor(expGain * 0.4)); // 経験値は少なめ
-    coinGain += 500;                                   // ボーナス +500
+    const fid = battle.foe.mon.id;
+    if (fid === 95)                                  { coinGain += 5000; totonTier = 3; }
+    else if (fid === 96 || fid === 97 || fid === 98) { coinGain += 1500; totonTier = 2; }
+    else                                             { coinGain += 500;  totonTier = 1; }
   }
   state.coins += coinGain;
 
@@ -3797,7 +3928,16 @@ function winBattle() {
   }
 
   if (battle.isToton) {
-    setBattleMessage('🎉 とーとん を たおした！？<br>けいけんち ' + expGain + '・コイン ' + coinGain + ' （ボーナス+500！）を てに いれた！' + dropHtml);
+    let bonusLabel = 'ボーナス+500！';
+    let title = '🎉 とーとん を たおした！？';
+    if (totonTier === 2) {
+      bonusLabel = 'ボーナス+1500！';
+      title = '🎉 でんせつの とーとん を たおした！';
+    } else if (totonTier === 3) {
+      bonusLabel = 'ボーナス+5000！！';
+      title = '🌈 テラスタルとーとんキョダイマックス を たおした！！';
+    }
+    setBattleMessage(title + '<br>けいけんち ' + expGain + '・コイン ' + coinGain + ' （' + bonusLabel + '）を てに いれた！' + dropHtml);
   } else {
     setBattleMessage('🎉 かった！<br>' + foe.def.name + 'を たおして、けいけんち ' + expGain + '・コイン ' + coinGain + ' を てに いれた！' + dropHtml);
   }
@@ -4294,8 +4434,13 @@ function tryCatch(ballKey) {
   // success rate: low HP -> high
   let chance = (1 - ratio) * 0.7 * ballRate + 0.05;
   chance = clamp(chance, 0.05, 0.95);
-  // とーとんは捕獲率5%固定（HP残量・ボール種類に関係なく超レア）
-  if (battle.isToton) chance = 0.05;
+  // とーとんは捕獲率固定（HP残量・ボール種類に関係なく超レア）
+  if (battle.isToton) {
+    const fid = battle.foe.mon.id;
+    if (fid === 95)                         chance = 0.01;  // テラスタル: 1%
+    else if (fid === 96 || fid === 97 || fid === 98) chance = 0.03;  // 4兄弟: 3%
+    else                                    chance = 0.05;  // 通常とーとん: 5%
+  }
   // マスターボールは100%（とーとんも捕獲可能）
   if (ITEMS[ballKey].masterball) chance = 1.0;
   setBattleMessage('えい！ ' + ITEMS[ballKey].name + ' を なげた！');
@@ -4309,7 +4454,12 @@ function tryCatch(ballKey) {
       else state.box.push(captured);
       if (battle.isToton) {
         showTotonCatchBanner();
-        setBattleMessage('！ とーとん が なかまに なった…！？');
+        const fid = f.mon.id;
+        if (fid === 96)      setBattleMessage('⚡ <ruby>雷<rt>かみなり</rt></ruby>とーとん が なかまに なった！');
+        else if (fid === 97) setBattleMessage('🔥 <ruby>炎<rt>ほのお</rt></ruby>とーとん が なかまに なった！');
+        else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が なかまに なった！');
+        else if (fid === 95) setBattleMessage('🌈 テラスタルとーとんキョダイマックス が なかまに なった！！');
+        else                 setBattleMessage('！ とーとん が なかまに なった…！？');
       } else {
         setBattleMessage('🎉 ' + f.def.name + ' を つかまえた！');
       }
@@ -4613,6 +4763,17 @@ function setupUI() {
     state.minimapVisible = !state.minimapVisible;
     applyMinimapVisibility();
     saveGame(true);
+
+    // 隠しコマンド: 虹のお城で4兄弟連れて10連打 → テラスタルキョダイマックス出現
+    if (state.curStage === 5) {
+      _terastalTapCount++;
+      clearTimeout(_terastalTapTimer);
+      _terastalTapTimer = setTimeout(() => { _terastalTapCount = 0; }, 5000);
+      if (_terastalTapCount >= 10) {
+        _terastalTapCount = 0;
+        tryTerastalSpawn();
+      }
+    }
   });
 
   // party
