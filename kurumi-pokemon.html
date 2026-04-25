@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>くるみのポケモンさがし</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; font-family: "Hiragino Maru Gothic ProN", "Comic Sans MS", "Yu Gothic", sans-serif; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: linear-gradient(180deg, #ffd6ec 0%, #c9e4ff 100%);
+    touch-action: manipulation;
+    color: #333;
+    overscroll-behavior: none;
+  }
+  rt { font-size: 0.55em; color: #e91e63; font-weight: normal; }
+
+  /* Portal button */
+  #portalBtn {
+    position: fixed; top: 8px; left: 8px; z-index: 9999;
+    background: linear-gradient(to bottom, #ff8fc0, #d63384);
+    color: #fff; text-decoration: none;
+    padding: 6px 10px; border-radius: 50%;
+    font-size: 18px; font-weight: bold;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    touch-action: manipulation;
+    display: inline-block; line-height: 1;
+  }
+  #portalBtn:active { transform: scale(0.92); opacity: 0.85; }
+
+  /* Scene container */
+  .scene {
+    position: fixed; inset: 0;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .scene.active { display: flex; }
+
+  /* Common cute button */
+  .btn {
+    background: linear-gradient(180deg, #ffb0d8 0%, #ff7ab8 100%);
+    color: #fff;
+    border: 3px solid #fff;
+    border-radius: 24px;
+    padding: 12px 22px;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 0 4px 0 #c44d85, 0 6px 12px rgba(255,111,168,0.4);
+    cursor: pointer;
+    text-shadow: 1px 1px 0 #d63384;
+    transition: transform 0.08s, box-shadow 0.08s;
+    letter-spacing: 1px;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #c44d85, 0 2px 4px rgba(255,111,168,0.4); }
+  .btn:disabled { opacity: 0.5; }
+  .btn.blue { background: linear-gradient(180deg, #aee3ff 0%, #5cb8f5 100%); box-shadow: 0 4px 0 #2a6da6, 0 6px 12px rgba(92,184,245,0.4); text-shadow: 1px 1px 0 #2a6da6; }
+  .btn.yellow { background: linear-gradient(180deg, #ffe89a 0%, #ffc94a 100%); box-shadow: 0 4px 0 #c08820, 0 6px 12px rgba(255,201,74,0.4); text-shadow: 1px 1px 0 #c08820; color: #6b4500; }
+  .btn.green { background: linear-gradient(180deg, #c0f0a8 0%, #80d860 100%); box-shadow: 0 4px 0 #4a8030, 0 6px 12px rgba(128,216,96,0.4); text-shadow: 1px 1px 0 #4a8030; }
+  .btn.gray { background: linear-gradient(180deg, #d8d8d8 0%, #a0a0a0 100%); box-shadow: 0 4px 0 #555, 0 6px 12px rgba(120,120,120,0.4); text-shadow: 1px 1px 0 #555; }
+
+  /* ===== TITLE ===== */
+  #title-scene {
+    justify-content: center; align-items: center;
+    padding: 20px; text-align: center;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.3), transparent 40%),
+      radial-gradient(circle at 80% 30%, rgba(201, 160, 255, 0.3), transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(255, 182, 193, 0.4), transparent 50%),
+      linear-gradient(180deg, #ffe0f0 0%, #ffc9e6 40%, #ffb3d9 70%, #ff9ecd 100%);
+  }
+  #title-scene h1 {
+    font-size: clamp(28px, 8vw, 48px);
+    font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(135deg, #ff4090, #ffd700, #ff6fa8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(2px 2px 0 #fff) drop-shadow(3px 3px 0 #c44d85);
+    margin-bottom: 6px;
+  }
+  #title-scene .sub {
+    color: #fff; font-size: 16px; font-weight: bold;
+    text-shadow: 1px 1px 0 #d63384, 2px 2px 0 #c44d85;
+    margin-bottom: 18px;
+  }
+  .title-art {
+    width: min(60vw, 220px); height: min(60vw, 220px);
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 65%, #ffe4f0 100%);
+    padding: 6px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 111, 168, 0.4);
+    animation: bounce 2s ease-in-out infinite;
+    margin-bottom: 20px;
+  }
+  .title-art svg { width: 100%; height: 100%; display: block; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+  .title-buttons { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+
+  /* ===== MAP / FIELD ===== */
+  #field-scene {
+    background: linear-gradient(180deg, #ffe6f5 0%, #d6f0ff 60%, #c0e8c0 100%);
+  }
+  #field-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; padding-left: 56px;
+    background: rgba(255,255,255,0.7);
+    border-bottom: 3px solid #ff8fc0;
+    flex-shrink: 0;
+  }
+  #field-header .stage-name { font-weight: bold; color: #d63384; font-size: 16px; }
+  #field-header .coins { color: #c08820; font-weight: bold; font-size: 14px; }
+  #field-area {
+    flex: 1; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  #field-canvas-wrap {
+    position: relative; width: 100%; min-height: 100%;
+  }
+  .field-mob {
+    position: absolute;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.85);
+    border: 3px solid #fff;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    animation: mobBob 2s ease-in-out infinite;
+  }
+  .field-mob.boss {
+    width: 92px; height: 92px;
+    border-color: #ffd700;
+    box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 3px 8px rgba(0,0,0,0.3);
+    background: radial-gradient(circle, #fff8d8, #ffe48a);
+  }
+  .field-mob.cleared { opacity: 0.4; pointer-events: none; }
+  .field-mob svg { width: 80%; height: 80%; }
+  @keyframes mobBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .field-mob .lvl {
+    position: absolute; bottom: -6px; right: -6px;
+    background: #ff4090; color: #fff;
+    font-size: 10px; font-weight: bold;
+    border-radius: 8px; padding: 2px 5px;
+    border: 2px solid #fff;
+  }
+  #field-bottom {
+    display: flex; justify-content: space-around; gap: 8px;
+    padding: 10px; background: rgba(255,255,255,0.85);
+    border-top: 3px solid #ff8fc0;
+    flex-shrink: 0;
+  }
+  #field-bottom .btn { font-size: 14px; padding: 10px 14px; flex: 1; }
+
+  /* ===== BATTLE ===== */
+  #battle-scene {
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255,215,0,0.25), transparent 40%),
+      radial-gradient(circle at 70% 80%, rgba(201,160,255,0.25), transparent 40%),
+      linear-gradient(180deg, #ffe0f0 0%, #c9e4ff 100%);
+    position: relative;
+  }
+  #battle-flash {
+    position: absolute; inset: 0; background: #fff;
+    opacity: 0; pointer-events: none; z-index: 100;
+    transition: opacity 0.1s;
+  }
+  #battle-particles {
+    position: absolute; inset: 0; pointer-events: none; z-index: 50;
+  }
+  .particle {
+    position: absolute;
+    pointer-events: none;
+    font-size: 24px;
+    animation: particleFly 0.8s ease-out forwards;
+  }
+  @keyframes particleFly {
+    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0.4); opacity: 0; }
+  }
+  #battle-top {
+    flex: 1; display: flex; flex-direction: column;
+    padding: 56px 14px 8px;
+    gap: 8px;
+    overflow: hidden;
+  }
+  .combatant {
+    background: rgba(255,255,255,0.85);
+    border: 3px solid #fff;
+    border-radius: 16px;
+    padding: 8px 12px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .combatant.foe { align-self: flex-start; }
+  .combatant.mine { align-self: flex-end; }
+  .combatant .info { flex: 1; min-width: 0; }
+  .combatant .name { font-weight: bold; font-size: 14px; color: #d63384; }
+  .combatant .hpbar {
+    height: 10px; background: #eee; border-radius: 6px; overflow: hidden;
+    margin-top: 4px; border: 1px solid #ccc;
+  }
+  .combatant .hpfill {
+    height: 100%;
+    background: linear-gradient(90deg, #80d860, #2a8000);
+    transition: width 0.3s;
+  }
+  .combatant .hpfill.mid { background: linear-gradient(90deg, #ffd54a, #d68800); }
+  .combatant .hpfill.low { background: linear-gradient(90deg, #ff7090, #c40020); }
+  .combatant .hptext { font-size: 11px; color: #666; margin-top: 2px; }
+  .combatant .mpbar {
+    height: 6px; background: #eee; border-radius: 3px; overflow: hidden;
+    margin-top: 3px; border: 1px solid #ccc;
+  }
+  .combatant .mpfill {
+    height: 100%;
+    background: linear-gradient(90deg, #aee3ff, #2a6da6);
+    transition: width 0.3s;
+  }
+  .combatant .mob-art {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    border: 2px solid #ffb0d8;
+    display: flex; align-items: center; justify-content: center;
+    animation: mobBob 1.5s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  .combatant .mob-art svg { width: 80%; height: 80%; }
+  .combatant.shake { animation: shake 0.4s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  #battle-message {
+    background: rgba(255,255,255,0.92);
+    border: 3px solid #ff8fc0;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin: 4px 0;
+    font-size: 14px; font-weight: bold;
+    color: #6b2350;
+    min-height: 38px;
+    line-height: 1.4;
+  }
+  #battle-bottom {
+    background: rgba(255,255,255,0.92);
+    border-top: 3px solid #ff8fc0;
+    padding: 10px;
+    flex-shrink: 0;
+  }
+  #cmd-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+  }
+  #cmd-grid .btn { font-size: 14px; padding: 10px 8px; }
+
+  /* Tap arena */
+  #tap-arena {
+    display: none;
+    flex-direction: column; align-items: center; gap: 8px;
+  }
+  #tap-arena.active { display: flex; }
+  #tap-button {
+    width: 100%; max-width: 320px; height: 110px;
+    border-radius: 24px;
+    background: radial-gradient(circle at 30% 30%, #fff8d8, #ffd700 60%, #ff8fc0);
+    border: 4px solid #fff;
+    box-shadow: 0 4px 0 #c44d85, 0 6px 12px rgba(255,111,168,0.5), inset 0 0 20px rgba(255,255,255,0.6);
+    color: #6b2350;
+    font-size: 22px; font-weight: bold;
+    text-shadow: 1px 1px 0 #fff, 2px 2px 0 #ffd0e8;
+    cursor: pointer;
+    transition: transform 0.05s;
+  }
+  #tap-button:active { transform: scale(0.96); }
+  #tap-info {
+    display: flex; gap: 12px; justify-content: center; font-size: 13px;
+  }
+  #tap-info .pill {
+    background: #fff; border: 2px solid #ff8fc0;
+    border-radius: 12px; padding: 4px 10px;
+    font-weight: bold;
+  }
+  #tap-info .pill .lbl { color: #d63384; margin-right: 4px; }
+  #tap-timer-bar {
+    width: 100%; max-width: 320px; height: 8px;
+    background: #eee; border-radius: 4px; overflow: hidden;
+  }
+  #tap-timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff8fc0, #ffd700);
+    width: 100%;
+    transition: width 0.05s linear;
+  }
+
+  /* Sub menu / list */
+  .sub-panel {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.95);
+    z-index: 200;
+    padding: 56px 14px 14px;
+    display: none;
+    flex-direction: column;
+  }
+  .sub-panel.active { display: flex; }
+  .sub-panel h2 {
+    color: #d63384; font-size: 20px; text-align: center;
+    margin-bottom: 8px;
+  }
+  .sub-list {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 4px;
+  }
+  .sub-row {
+    background: linear-gradient(180deg, #fff, #ffeaf5);
+    border: 2px solid #ffb0d8;
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+  }
+  .sub-row:active { transform: scale(0.98); }
+  .sub-row.selected { border-color: #ff4090; box-shadow: 0 0 0 3px #ffd0e8; }
+  .sub-row.disabled { opacity: 0.5; }
+  .sub-row .mob-art-small {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    border: 2px solid #ffb0d8;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sub-row .mob-art-small svg { width: 80%; height: 80%; }
+  .sub-row .info-block { flex: 1; min-width: 0; }
+  .sub-row .name { font-weight: bold; color: #6b2350; font-size: 14px; }
+  .sub-row .stats { font-size: 11px; color: #666; }
+  .sub-row .stats .hpbar { height: 6px; background: #eee; border-radius: 3px; margin-top: 2px; overflow: hidden; }
+  .sub-row .stats .hpfill { height: 100%; background: linear-gradient(90deg, #80d860, #2a8000); }
+
+  .sub-buttons {
+    display: flex; gap: 8px; padding: 8px 0; flex-shrink: 0;
+  }
+  .sub-buttons .btn { flex: 1; font-size: 14px; padding: 10px; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 30%; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(60,20,40,0.92);
+    color: #fff; font-weight: bold;
+    padding: 10px 18px; border-radius: 18px;
+    border: 2px solid #ffb0d8;
+    z-index: 9000;
+    pointer-events: none;
+    opacity: 0; transition: opacity 0.3s;
+    font-size: 14px;
+    text-align: center;
+    max-width: 80%;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 8000;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-bg.active { display: flex; }
+  .modal {
+    background: linear-gradient(180deg, #fff, #ffeaf5);
+    border: 4px solid #ff8fc0;
+    border-radius: 20px;
+    padding: 20px;
+    max-width: 360px; width: 100%;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(255,111,168,0.4);
+  }
+  .modal h2 { color: #d63384; margin-bottom: 10px; font-size: 22px; }
+  .modal p { color: #6b2350; margin-bottom: 14px; font-size: 14px; line-height: 1.5; }
+  .modal .modal-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .modal .modal-buttons .btn { font-size: 14px; padding: 8px 16px; }
+
+  /* Levelup banner */
+  #levelup-banner {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: radial-gradient(circle, #fff8d8 30%, #ffd700);
+    border: 4px solid #fff;
+    border-radius: 20px;
+    padding: 18px 26px;
+    box-shadow: 0 0 40px rgba(255,215,0,0.8);
+    z-index: 7000;
+    text-align: center;
+    color: #6b4500;
+    font-weight: bold;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  #levelup-banner.show { transform: translate(-50%, -50%) scale(1); }
+  #levelup-banner h2 { color: #ff4090; margin-bottom: 6px; font-size: 22px; text-shadow: 1px 1px 0 #fff; }
+  #levelup-banner p { font-size: 14px; }
+
+  /* Evolution scene */
+  #evo-scene {
+    background: radial-gradient(circle at center, #fff 0%, #ffd0e8 40%, #c0a0ff 100%);
+    justify-content: center; align-items: center;
+    padding: 20px; text-align: center;
+  }
+  #evo-art-wrap {
+    width: min(60vw, 240px); height: min(60vw, 240px);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(255,215,0,0.5));
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+    animation: evoSpin 2s linear infinite;
+    box-shadow: 0 0 60px rgba(255,215,0,0.9), 0 0 120px rgba(255,111,168,0.6);
+  }
+  @keyframes evoSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  #evo-art-wrap svg { width: 70%; height: 70%; }
+  #evo-text {
+    font-size: 20px; font-weight: bold; color: #d63384;
+    text-shadow: 2px 2px 0 #fff;
+    margin-bottom: 14px;
+    min-height: 50px;
+  }
+  #evo-scene .btn { display: none; }
+  #evo-scene .btn.show { display: inline-block; }
+
+  /* shop */
+  .shop-item {
+    background: linear-gradient(180deg, #fff, #ffeaf5);
+    border: 2px solid #ffb0d8;
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .shop-item .icon { font-size: 32px; }
+  .shop-item .info-block { flex: 1; }
+  .shop-item .name { font-weight: bold; color: #6b2350; font-size: 14px; }
+  .shop-item .desc { font-size: 11px; color: #666; }
+  .shop-item .price { color: #c08820; font-weight: bold; font-size: 13px; }
+  .shop-item .btn { font-size: 12px; padding: 6px 10px; flex-shrink: 0; }
+
+  /* damage popup */
+  .dmg-pop {
+    position: absolute;
+    font-weight: bold; font-size: 28px;
+    color: #ff4090;
+    text-shadow: 2px 2px 0 #fff, 3px 3px 0 #c44d85;
+    animation: dmgFly 1s ease-out forwards;
+    pointer-events: none;
+    z-index: 60;
+  }
+  .dmg-pop.heal { color: #2a8000; text-shadow: 2px 2px 0 #fff, 3px 3px 0 #4a8030; }
+  .dmg-pop.crit { color: #ffd700; font-size: 36px; text-shadow: 2px 2px 0 #c44d85, 3px 3px 0 #6b2350; }
+  @keyframes dmgFly {
+    0% { transform: translateY(0) scale(0.5); opacity: 0; }
+    20% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-60px) scale(1); opacity: 0; }
+  }
+
+  /* small kurumi avatar in title */
+  .field-kurumi {
+    position: absolute;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    border: 3px solid #ff8fc0;
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  }
+
+  .stage-pick {
+    background: linear-gradient(180deg, #fff, #ffeaf5);
+    border: 3px solid #ffb0d8;
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .stage-pick.locked { opacity: 0.5; }
+  .stage-pick.cleared { border-color: #ffd700; background: linear-gradient(180deg, #fff8d8, #ffe48a); }
+  .stage-pick h3 { color: #d63384; margin-bottom: 4px; font-size: 16px; }
+  .stage-pick p { font-size: 12px; color: #666; }
+
+  .center-row { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+
+<a id="portalBtn" href="./">🏠</a>
+
+<!-- ====== TITLE ====== -->
+<div id="title-scene" class="scene active">
+  <div class="title-art" id="title-art-svg"></div>
+  <h1>くるみのポケモン<ruby>探<rt>さが</rt></ruby>し</h1>
+  <p class="sub">かわいいモンスターを<ruby>捕<rt>つか</rt></ruby>まえて<ruby>育<rt>そだ</rt></ruby>てよう！</p>
+  <div class="title-buttons">
+    <button id="btn-new" class="btn">はじめから</button>
+    <button id="btn-continue" class="btn blue">つづきから</button>
+  </div>
+</div>
+
+<!-- ====== STAGE SELECT ====== -->
+<div id="stage-scene" class="scene">
+  <div id="field-header">
+    <span class="stage-name"><ruby>冒険<rt>ぼうけん</rt></ruby>のステージをえらぼう</span>
+    <span class="coins">💰<span id="stage-coins">0</span></span>
+  </div>
+  <div id="field-area">
+    <div id="stage-list" style="padding: 14px;"></div>
+  </div>
+  <div id="field-bottom">
+    <button class="btn yellow" id="btn-stage-party"><ruby>手持<rt>ても</rt></ruby>ち</button>
+    <button class="btn green" id="btn-stage-shop">ショップ</button>
+    <button class="btn blue" id="btn-stage-box">ボックス</button>
+    <button class="btn gray" id="btn-stage-save"><ruby>保存<rt>ほぞん</rt></ruby></button>
+  </div>
+</div>
+
+<!-- ====== FIELD ====== -->
+<div id="field-scene" class="scene">
+  <div id="field-header">
+    <span class="stage-name" id="field-stage-name">ステージ</span>
+    <span class="coins">💰<span id="field-coins">0</span></span>
+  </div>
+  <div id="field-area">
+    <div id="field-canvas-wrap"></div>
+  </div>
+  <div id="field-bottom">
+    <button class="btn yellow" id="btn-field-party"><ruby>手持<rt>ても</rt></ruby>ち</button>
+    <button class="btn green" id="btn-field-bag">バッグ</button>
+    <button class="btn blue" id="btn-field-back"><ruby>戻<rt>もど</rt></ruby>る</button>
+  </div>
+</div>
+
+<!-- ====== BATTLE ====== -->
+<div id="battle-scene" class="scene">
+  <div id="battle-flash"></div>
+  <div id="battle-particles"></div>
+  <div id="battle-top">
+    <div id="foe-row" class="combatant foe">
+      <div class="mob-art" id="foe-art"></div>
+      <div class="info">
+        <div class="name" id="foe-name"></div>
+        <div class="hpbar"><div class="hpfill" id="foe-hpfill"></div></div>
+        <div class="hptext" id="foe-hptext"></div>
+      </div>
+    </div>
+    <div id="my-row" class="combatant mine">
+      <div class="info">
+        <div class="name" id="my-name"></div>
+        <div class="hpbar"><div class="hpfill" id="my-hpfill"></div></div>
+        <div class="hptext" id="my-hptext"></div>
+        <div class="mpbar"><div class="mpfill" id="my-mpfill"></div></div>
+      </div>
+      <div class="mob-art" id="my-art"></div>
+    </div>
+    <div id="battle-message"><ruby>戦闘<rt>せんとう</rt></ruby><ruby>開始<rt>かいし</rt></ruby>！</div>
+  </div>
+  <div id="battle-bottom">
+    <div id="cmd-grid">
+      <button class="btn" id="cmd-attack">たたかう</button>
+      <button class="btn blue" id="cmd-skill">とくぎ</button>
+      <button class="btn yellow" id="cmd-item">アイテム</button>
+      <button class="btn green" id="cmd-ball">ボール</button>
+      <button class="btn gray" id="cmd-swap"><ruby>交代<rt>こうたい</rt></ruby></button>
+      <button class="btn gray" id="cmd-run">にげる</button>
+    </div>
+    <div id="tap-arena">
+      <div id="tap-info">
+        <div class="pill"><span class="lbl"><ruby>残時間<rt>のこじかん</rt></ruby></span><span id="tap-timer-text">3.0</span>びょう</div>
+        <div class="pill"><span class="lbl">タップ</span><span id="tap-count">0</span>かい</div>
+      </div>
+      <div id="tap-timer-bar"><div id="tap-timer-fill"></div></div>
+      <button id="tap-button">れんだ！！</button>
+    </div>
+  </div>
+
+  <!-- Skill submenu -->
+  <div class="sub-panel" id="skill-panel">
+    <h2>とくぎを<ruby>選<rt>えら</rt></ruby>ぼう</h2>
+    <div class="sub-list" id="skill-list"></div>
+    <div class="sub-buttons">
+      <button class="btn gray" id="skill-cancel">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- Item submenu -->
+  <div class="sub-panel" id="item-panel">
+    <h2>アイテム</h2>
+    <div class="sub-list" id="item-list"></div>
+    <div class="sub-buttons">
+      <button class="btn gray" id="item-cancel">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- Swap submenu -->
+  <div class="sub-panel" id="swap-panel">
+    <h2><ruby>交代<rt>こうたい</rt></ruby>する<ruby>仲間<rt>なかま</rt></ruby></h2>
+    <div class="sub-list" id="swap-list"></div>
+    <div class="sub-buttons">
+      <button class="btn gray" id="swap-cancel">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PARTY ====== -->
+<div id="party-scene" class="scene">
+  <div id="field-header">
+    <span class="stage-name"><ruby>手持<rt>ても</rt></ruby>ちパーティ</span>
+    <span class="coins">💰<span id="party-coins">0</span></span>
+  </div>
+  <div id="field-area" style="padding: 14px;">
+    <div id="party-list-mine" class="sub-list" style="padding-bottom: 10px;"></div>
+    <h3 style="color:#d63384; margin: 10px 0 6px;">ボックス</h3>
+    <div id="party-list-box" class="sub-list"></div>
+  </div>
+  <div id="field-bottom">
+    <button class="btn blue" id="party-back"><ruby>戻<rt>もど</rt></ruby>る</button>
+  </div>
+</div>
+
+<!-- ====== SHOP ====== -->
+<div id="shop-scene" class="scene">
+  <div id="field-header">
+    <span class="stage-name">ショップ</span>
+    <span class="coins">💰<span id="shop-coins">0</span></span>
+  </div>
+  <div id="field-area" style="padding: 14px;">
+    <div id="shop-list" class="sub-list"></div>
+  </div>
+  <div id="field-bottom">
+    <button class="btn blue" id="shop-back"><ruby>戻<rt>もど</rt></ruby>る</button>
+  </div>
+</div>
+
+<!-- ====== EVOLUTION ====== -->
+<div id="evo-scene" class="scene">
+  <div id="evo-art-wrap"></div>
+  <div id="evo-text"></div>
+  <button class="btn" id="evo-next">つぎへ</button>
+</div>
+
+<!-- ===== Floating UI ===== -->
+<div id="toast"></div>
+
+<div id="modal-bg" class="modal-bg">
+  <div class="modal">
+    <h2 id="modal-title"></h2>
+    <p id="modal-body"></p>
+    <div class="modal-buttons" id="modal-buttons"></div>
+  </div>
+</div>
+
+<div id="levelup-banner">
+  <h2>レベルアップ！</h2>
+  <p id="levelup-text"></p>
+</div>
+
+<script>
+// ===================== UTIL =====================
+function attachTap(el, fn) {
+  if (!el) return;
+  let touched = false;
+  el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (!touched || el.disabled) { touched = false; return; }
+    touched = false;
+    e.preventDefault();
+    fn.call(el, e);
+  }, { passive: false });
+  el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
+  el.addEventListener('click', (e) => fn.call(el, e));
+}
+
+function $(id) { return document.getElementById(id); }
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+
+function showToast(msg, ms) {
+  const t = $('toast');
+  t.innerHTML = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), ms || 1600);
+}
+
+function showModal(title, body, buttons) {
+  $('modal-title').innerHTML = title;
+  $('modal-body').innerHTML = body;
+  const bc = $('modal-buttons');
+  bc.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn ' + (b.cls || '');
+    btn.innerHTML = b.label;
+    attachTap(btn, () => { hideModal(); if (b.fn) b.fn(); });
+    bc.appendChild(btn);
+  });
+  $('modal-bg').classList.add('active');
+}
+function hideModal() { $('modal-bg').classList.remove('active'); }
+
+function switchScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// ===================== AUDIO =====================
+let audioCtx = null;
+let muted = false;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function sfx(freq, dur, type, vol) {
+  if (muted) return;
+  ensureAudio(); if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol || 0.15, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, t + (dur || 0.15));
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + (dur || 0.15) + 0.05);
+}
+function sfxTap()  { sfx(880 + Math.random()*200, 0.04, 'square', 0.06); }
+function sfxHit()  { sfx(180, 0.18, 'sawtooth', 0.18); }
+function sfxCrit() { sfx(120, 0.3, 'sawtooth', 0.22); sfx(800, 0.15, 'square', 0.1); }
+function sfxHeal() { sfx(660, 0.1, 'sine', 0.15); setTimeout(()=>sfx(880, 0.15, 'sine', 0.15), 80); }
+function sfxLevel() { sfx(523, 0.1, 'square', 0.15); setTimeout(()=>sfx(659, 0.1, 'square', 0.15), 100); setTimeout(()=>sfx(784, 0.18, 'square', 0.15), 200); }
+function sfxWin() { sfxLevel(); setTimeout(()=>sfx(1047, 0.25, 'square', 0.18), 350); }
+function sfxLose() { sfx(330, 0.2, 'sawtooth', 0.18); setTimeout(()=>sfx(220, 0.3, 'sawtooth', 0.18), 200); }
+function sfxCatch() { sfx(660, 0.08, 'sine', 0.12); setTimeout(()=>sfx(440, 0.08, 'sine', 0.12), 100); setTimeout(()=>sfx(880, 0.2, 'sine', 0.16), 200); }
+function sfxEvo() { for (let i=0; i<6; i++) setTimeout(()=>sfx(440 + i*120, 0.08, 'square', 0.12), i*120); }
+
+// ===================== MONSTER DATABASE =====================
+// 30 monsters. Some evolve, some don't. Types: pink, sky, yellow, green
+// Each: id, name, type, color (hex), shape (svg generator key), face (emoji), baseHP/atk/def/spd, learnset (level: skill), evo (level/to)
+
+const TYPES = {
+  pink:   { name: 'ピンク',     color: '#ff8fc0', dark: '#d63384' },
+  sky:    { name: 'みずいろ', color: '#80c8f5', dark: '#2a6da6' },
+  yellow: { name: 'きいろ',     color: '#ffd700', dark: '#c08820' },
+  green:  { name: 'みどり',     color: '#90d870', dark: '#4a8030' },
+  purple: { name: 'むらさき', color: '#c8a0f0', dark: '#6030a0' }
+};
+
+const SKILLS = {
+  // name, mp, power, type, msg, fx
+  tail:    { name: 'しっぽビンタ', mp: 0,  power: 1.0, type: 'pink',   msg: 'しっぽでビンタ！',     fx: '✨' },
+  bite:    { name: 'かみつき',     mp: 0,  power: 1.0, type: 'pink',   msg: 'かみついた！',         fx: '💢' },
+  splash:  { name: 'みずしぶき',   mp: 4,  power: 1.4, type: 'sky',    msg: 'みずしぶきを とばした！', fx: '💧' },
+  bubble:  { name: 'バブルジェット', mp: 8,  power: 1.7, type: 'sky',    msg: 'バブルジェット！',     fx: '🫧' },
+  thunder: { name: 'ビリビリショック', mp: 5,  power: 1.5, type: 'yellow', msg: 'ビリビリでしびれた！', fx: '⚡' },
+  flash:   { name: 'フラッシュ',   mp: 8,  power: 1.6, type: 'yellow', msg: 'まばゆい ひかり！',     fx: '⭐' },
+  leaf:    { name: 'はっぱカッター', mp: 4,  power: 1.4, type: 'green',  msg: 'はっぱを とばした！', fx: '🍃' },
+  vine:    { name: 'つるムチ',     mp: 6,  power: 1.6, type: 'green',  msg: 'つるムチでしばいた！', fx: '🌿' },
+  heart:   { name: 'ラブビーム',   mp: 6,  power: 1.6, type: 'pink',   msg: 'ラブビーム！',         fx: '💕' },
+  star:    { name: 'スターショット', mp: 7,  power: 1.7, type: 'yellow', msg: 'スターショット！',     fx: '🌟' },
+  magic:   { name: 'まほうのこな', mp: 5,  power: 1.4, type: 'purple', msg: 'まほうのこな！',       fx: '✨' },
+  hyper:   { name: 'はかいビーム', mp: 14, power: 2.5, type: 'purple', msg: 'はかいビーム！！',     fx: '💥' },
+  hug:     { name: 'もふもふハグ', mp: 4,  power: 0.0, type: 'pink',   msg: 'もふもふハグで かいふく！', fx: '💗', heal: true, healAmt: 0.4 },
+  shine:   { name: 'きらめきパワー', mp: 8,  power: 0.0, type: 'yellow', msg: 'きらめきパワーで かいふく！', fx: '💫', heal: true, healAmt: 0.6 },
+  dragon:  { name: 'ドラゴンブレス', mp: 12, power: 2.2, type: 'purple', msg: 'ドラゴンブレス！！',   fx: '🔥' },
+  lullaby: { name: 'こもりうた',   mp: 3,  power: 0.7, type: 'pink',   msg: 'こもりうたで ねむらせた！', fx: '🎵' }
+};
+
+const MONSTERS = [
+  // pink line ピンキャット → ピンキャッツ → ピンキャット王
+  { id:1,  name:'ピンキャット', type:'pink',  color:'#ff8fc0', shape:'cat',     face:'😺', hp:38, atk:11, def:9, spd:13, learn:{1:'tail',5:'bite',12:'heart'}, evo:{lvl:16,to:2}, dex:'ピンクねこ。やわらかい毛並み。' },
+  { id:2,  name:'ピンキャッツ', type:'pink',  color:'#ff70a8', shape:'cat',     face:'😻', hp:60, atk:18, def:14, spd:18, learn:{16:'heart',22:'star'}, evo:{lvl:32,to:3}, dex:'おねえちゃんネコ。れんあいがすき。' },
+  { id:3,  name:'ピンキャット<ruby>女王<rt>じょおう</rt></ruby>', type:'pink', color:'#ff4090', shape:'cat', face:'👑', hp:90, atk:28, def:22, spd:24, learn:{32:'hyper',40:'heart'}, evo:null, dex:'ねこの しはい者。' },
+
+  // sky line フワリン → ソラリン → アオラリン
+  { id:4,  name:'フワリン',     type:'sky',   color:'#aee3ff', shape:'cloud',   face:'☁️', hp:34, atk:9, def:11, spd:15, learn:{1:'splash',6:'shine'}, evo:{lvl:16,to:5}, dex:'ふわふわ くも。あまずっぱい。' },
+  { id:5,  name:'ソラリン',     type:'sky',   color:'#80c8f5', shape:'cloud',   face:'⛅', hp:55, atk:15, def:17, spd:21, learn:{14:'bubble',20:'shine'}, evo:{lvl:32,to:6}, dex:'空をとぶ。にじを かける。' },
+  { id:6,  name:'アオラリン',   type:'sky',   color:'#3aa0e8', shape:'cloud',   face:'🌈', hp:84, atk:22, def:25, spd:28, learn:{32:'hyper'}, evo:null, dex:'にじの ぬし。' },
+
+  // yellow ハートン → スパーク → カミナリン
+  { id:7,  name:'ピヨリン',     type:'yellow',color:'#ffeb80', shape:'bird',    face:'🐤', hp:32, atk:10, def:8, spd:18, learn:{1:'tail',6:'thunder'}, evo:{lvl:16,to:8}, dex:'ひよこ。たまごから うまれたて。' },
+  { id:8,  name:'スパーク',     type:'yellow',color:'#ffd54a', shape:'bird',    face:'🐦', hp:54, atk:17, def:13, spd:24, learn:{14:'flash',22:'star'}, evo:{lvl:32,to:9}, dex:'でんき とり。バチバチ。' },
+  { id:9,  name:'カミナリン',   type:'yellow',color:'#ffb800', shape:'bird',    face:'🦅', hp:80, atk:24, def:18, spd:30, learn:{32:'hyper'}, evo:null, dex:'かみなりを よぶ。' },
+
+  // green リーフィ → ハッパン → モリオウ
+  { id:10, name:'リーフィ',     type:'green', color:'#c0f0a8', shape:'leaf',    face:'🌱', hp:36, atk:10, def:12, spd:11, learn:{1:'leaf',8:'shine'}, evo:{lvl:16,to:11}, dex:'はの あかちゃん。' },
+  { id:11, name:'ハッパン',     type:'green', color:'#80d860', shape:'leaf',    face:'🍀', hp:58, atk:16, def:18, spd:16, learn:{14:'vine',20:'shine'}, evo:{lvl:32,to:12}, dex:'もりの まもりて。' },
+  { id:12, name:'モリオウ',     type:'green', color:'#3aa040', shape:'leaf',    face:'🌳', hp:88, atk:24, def:26, spd:22, learn:{32:'hyper'}, evo:null, dex:'もりの ぬし。たいぼく。' },
+
+  // pink ハートン → ラブリン
+  { id:13, name:'ハートン',     type:'pink',  color:'#ff70b8', shape:'heart',   face:'💗', hp:34, atk:11, def:10, spd:14, learn:{1:'heart',5:'hug'}, evo:{lvl:16,to:14}, dex:'ハートのいきもの。やさしい。' },
+  { id:14, name:'ラブリン',     type:'pink',  color:'#ff4080', shape:'heart',   face:'💖', hp:66, atk:20, def:18, spd:22, learn:{16:'heart',24:'hyper'}, evo:null, dex:'あいの ようせい。' },
+
+  // sky スターン → スターラ → スターレディ
+  { id:15, name:'スターン',     type:'yellow',color:'#fff080', shape:'star',    face:'⭐', hp:30, atk:12, def:8, spd:16, learn:{1:'star',8:'flash'}, evo:{lvl:16,to:16}, dex:'よぞらの こぼし。' },
+  { id:16, name:'スターラ',     type:'yellow',color:'#ffd64a', shape:'star',    face:'🌟', hp:54, atk:19, def:14, spd:23, learn:{16:'star',22:'shine'}, evo:{lvl:32,to:17}, dex:'きらめく。みんな まもる。' },
+  { id:17, name:'スターレディ', type:'yellow',color:'#ffb800', shape:'star',    face:'✨', hp:84, atk:26, def:20, spd:30, learn:{32:'hyper',38:'flash'}, evo:null, dex:'よぞらの じょおう。' },
+
+  // purple ムーニャ → ナイトニャ
+  { id:18, name:'ムーニャ',     type:'purple',color:'#c8a0f0', shape:'cat',     face:'🌙', hp:36, atk:12, def:10, spd:14, learn:{1:'magic',8:'lullaby'}, evo:{lvl:18,to:19}, dex:'よるに あらわれる。' },
+  { id:19, name:'ナイトニャ',   type:'purple',color:'#9060d0', shape:'cat',     face:'🦇', hp:62, atk:20, def:18, spd:22, learn:{18:'magic',24:'hyper'}, evo:null, dex:'よるの しはい者。' },
+
+  // pink ウサピン → ウサルン
+  { id:20, name:'ウサピン',     type:'pink',  color:'#ffd0e8', shape:'bunny',   face:'🐰', hp:32, atk:9, def:9, spd:18, learn:{1:'tail',6:'hug'}, evo:{lvl:16,to:21}, dex:'うさぎ。ぴょんぴょん。' },
+  { id:21, name:'ウサルン',     type:'pink',  color:'#ff90c0', shape:'bunny',   face:'🐇', hp:54, atk:16, def:14, spd:26, learn:{16:'heart',22:'star'}, evo:null, dex:'すばやい。' },
+
+  // sky フィッシュ → アクアリン
+  { id:22, name:'フィッシュ',   type:'sky',   color:'#80e0d0', shape:'fish',    face:'🐟', hp:34, atk:11, def:10, spd:14, learn:{1:'splash',8:'bubble'}, evo:{lvl:16,to:23}, dex:'きれいな おさかな。' },
+  { id:23, name:'アクアリン',   type:'sky',   color:'#3acba0', shape:'fish',    face:'🐠', hp:60, atk:18, def:16, spd:20, learn:{16:'bubble',24:'hyper'}, evo:null, dex:'みずの ぬし。' },
+
+  // yellow タマリン → タマレモン
+  { id:24, name:'タマリン',     type:'yellow',color:'#fff0a0', shape:'fruit',   face:'🍋', hp:32, atk:10, def:11, spd:12, learn:{1:'leaf',8:'shine'}, evo:{lvl:16,to:25}, dex:'すっぱい くだもの。' },
+  { id:25, name:'タマレモン',   type:'yellow',color:'#ffd040', shape:'fruit',   face:'🍊', hp:56, atk:18, def:18, spd:18, learn:{16:'flash',22:'shine'}, evo:null, dex:'あまずっぱい。' },
+
+  // green プチリーン → リーフィン → グランリーフ
+  { id:26, name:'プチリーン',   type:'green', color:'#a0e890', shape:'fruit',   face:'🍏', hp:34, atk:11, def:11, spd:13, learn:{1:'leaf',6:'hug'}, evo:{lvl:16,to:27}, dex:'ちっちゃい はっぱ。' },
+  { id:27, name:'リーフィン',   type:'green', color:'#60c050', shape:'leaf',    face:'🍃', hp:58, atk:18, def:18, spd:18, learn:{14:'vine',22:'shine'}, evo:{lvl:32,to:28}, dex:'もりの ようせい。' },
+  { id:28, name:'グランリーフ', type:'green', color:'#2a8030', shape:'leaf',    face:'🌲', hp:90, atk:25, def:28, spd:20, learn:{32:'hyper',40:'dragon'}, evo:null, dex:'もりの 王。' },
+
+  // purple legendary単体
+  { id:29, name:'ドラゴリン',   type:'purple',color:'#a070d0', shape:'dragon',  face:'🐲', hp:78, atk:26, def:24, spd:26, learn:{1:'dragon',20:'hyper'}, evo:null, dex:'ドラゴンの こども。レア。' },
+  { id:30, name:'メガロン',     type:'purple',color:'#7040b0', shape:'dragon',  face:'🐉', hp:120, atk:34, def:30, spd:28, learn:{1:'hyper',10:'dragon'}, evo:null, dex:'でんせつの ドラゴン。' }
+];
+
+function getMonsterDef(id) { return MONSTERS.find(m => m.id === id); }
+
+// ===================== STAGES =====================
+const STAGES = [
+  { id:1, name:'プリキュアの<ruby>森<rt>もり</rt></ruby>',     bg:'linear-gradient(180deg,#ffe6f5,#d6f0a0)', mobs:[1,4,10,13,20], lvl:[2,5], boss:{id:14, lvl:8} },
+  { id:2, name:'お<ruby>菓子<rt>かし</rt></ruby>のまち',         bg:'linear-gradient(180deg,#ffe0a0,#ffd0e8)', mobs:[1,7,15,20,24], lvl:[6,10], boss:{id:25, lvl:14} },
+  { id:3, name:'キラキラ<ruby>城<rt>じょう</rt></ruby>',         bg:'linear-gradient(180deg,#d8c0ff,#ffe0a0)', mobs:[2,8,11,15,22], lvl:[12,18], boss:{id:17, lvl:22} },
+  { id:4, name:'ふしぎな<ruby>湖<rt>みずうみ</rt></ruby>',       bg:'linear-gradient(180deg,#a0e0ff,#80c0e0)', mobs:[5,8,18,22,26], lvl:[18,26], boss:{id:23, lvl:30} },
+  { id:5, name:'<ruby>虹<rt>にじ</rt></ruby>のお<ruby>城<rt>しろ</rt></ruby>', bg:'linear-gradient(180deg,#ffd0e8,#a0d8f0,#ffe080)', mobs:[3,6,9,12,17,19,29], lvl:[28,38], boss:{id:30, lvl:45} }
+];
+
+// ===================== ITEMS =====================
+const ITEMS = {
+  ball:    { name:'ふつうボール',   icon:'⚪', rate:1.0, desc:'モンスターを つかまえるボール', price: 100 },
+  superball:{ name:'スーパーボール', icon:'🟦', rate:1.5, desc:'よく つかまるボール', price: 300 },
+  hyperball:{ name:'ハイパーボール', icon:'🟨', rate:2.0, desc:'とても よく つかまる', price: 800 },
+  potion:  { name:'かいふくのみ',   icon:'🍓', heal:30, desc:'HPを30 かいふく', price: 60 },
+  hipotion:{ name:'スーパーのみ',   icon:'🍎', heal:80, desc:'HPを80 かいふく', price: 180 },
+  fullpotion:{name:'まんたんのみ',  icon:'🍰', heal:9999, desc:'HPぜんかい', price: 500 },
+  ether:   { name:'まほうのみず',   icon:'💧', mp:30, desc:'MPを30 かいふく', price: 200 }
+};
+
+// ===================== STATE =====================
+let state = {
+  party: [],   // [{id, lvl, exp, hp, mp, ...}]
+  box: [],
+  bag: { ball: 5, potion: 3 },
+  coins: 200,
+  unlocked: 1,
+  cleared: [],
+  curStage: null,
+  fieldMobs: []   // { x, y, id, lvl, defeated }
+};
+
+function makeMon(id, lvl) {
+  const def = getMonsterDef(id);
+  const mon = {
+    id: id,
+    lvl: lvl,
+    exp: 0,
+    hp: 0, mp: 0,
+    skills: ['tail']
+  };
+  // skills based on level
+  mon.skills = [];
+  Object.keys(def.learn).forEach(k => {
+    if (lvl >= +k) mon.skills.push(def.learn[k]);
+  });
+  if (mon.skills.length === 0) mon.skills.push('tail');
+  const stats = monStats(mon);
+  mon.hp = stats.hp; mon.mp = stats.mp;
+  return mon;
+}
+
+function monStats(mon) {
+  const def = getMonsterDef(mon.id);
+  const lv = mon.lvl;
+  return {
+    hp:  Math.floor(def.hp  + (def.hp  * 0.06 + 2) * (lv-1)),
+    atk: Math.floor(def.atk + (def.atk * 0.06 + 1) * (lv-1)),
+    def: Math.floor(def.def + (def.def * 0.06 + 1) * (lv-1)),
+    spd: Math.floor(def.spd + (def.spd * 0.05 + 1) * (lv-1)),
+    mp:  Math.floor(15 + lv * 1.5)
+  };
+}
+
+function expForNext(lvl) { return Math.floor(8 + lvl * lvl * 1.2); }
+
+// ===================== SAVE / LOAD =====================
+const SAVE_KEY = 'kurumi_pokemon_v1';
+function saveGame(silent) {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    if (!silent) showToast('💾 ほぞんしました！');
+  } catch(e) { showToast('ほぞんに しっぱい'); }
+}
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.party) return false;
+    state = obj;
+    return true;
+  } catch(e) { return false; }
+}
+function hasSave() {
+  try { return !!localStorage.getItem(SAVE_KEY); } catch(e) { return false; }
+}
+
+// ===================== SVG MONSTER ART =====================
+function svgMon(mon) {
+  const def = getMonsterDef(mon.id || mon);
+  if (!def) return '';
+  const c = def.color;
+  const dark = TYPES[def.type].dark;
+  const face = def.face;
+  return svgShape(def.shape, c, dark, face);
+}
+function svgShape(shape, color, dark, face) {
+  // common SVG wrap
+  const f = `<text x="60" y="68" font-size="32" text-anchor="middle">${face}</text>`;
+  let body = '';
+  if (shape === 'cat') {
+    body = `
+      <ellipse cx="60" cy="78" rx="38" ry="30" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <polygon points="35,55 28,30 50,52" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <polygon points="85,55 92,30 70,52" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <ellipse cx="50" cy="80" rx="6" ry="8" fill="#fff"/><circle cx="50" cy="82" r="3" fill="#000"/>
+      <ellipse cx="70" cy="80" rx="6" ry="8" fill="#fff"/><circle cx="70" cy="82" r="3" fill="#000"/>
+      <ellipse cx="60" cy="92" rx="4" ry="2" fill="${dark}"/>`;
+  } else if (shape === 'cloud') {
+    body = `
+      <circle cx="40" cy="70" r="22" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <circle cx="80" cy="70" r="22" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <circle cx="60" cy="55" r="26" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <circle cx="48" cy="60" r="3" fill="#000"/><circle cx="72" cy="60" r="3" fill="#000"/>
+      <path d="M50 72 Q60 80 70 72" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else if (shape === 'bird') {
+    body = `
+      <ellipse cx="60" cy="70" rx="32" ry="28" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <circle cx="60" cy="42" r="22" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <polygon points="58,42 70,48 58,54" fill="#ff8800" stroke="${dark}" stroke-width="2"/>
+      <circle cx="52" cy="40" r="3" fill="#000"/><circle cx="68" cy="40" r="3" fill="#000"/>
+      <ellipse cx="35" cy="75" rx="10" ry="20" fill="${color}" stroke="${dark}" stroke-width="2"/>
+      <ellipse cx="85" cy="75" rx="10" ry="20" fill="${color}" stroke="${dark}" stroke-width="2"/>`;
+  } else if (shape === 'leaf') {
+    body = `
+      <ellipse cx="60" cy="65" rx="30" ry="38" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <line x1="60" y1="30" x2="60" y2="100" stroke="${dark}" stroke-width="2"/>
+      <line x1="60" y1="50" x2="48" y2="55" stroke="${dark}" stroke-width="1.5"/>
+      <line x1="60" y1="50" x2="72" y2="55" stroke="${dark}" stroke-width="1.5"/>
+      <line x1="60" y1="65" x2="44" y2="70" stroke="${dark}" stroke-width="1.5"/>
+      <line x1="60" y1="65" x2="76" y2="70" stroke="${dark}" stroke-width="1.5"/>
+      <circle cx="52" cy="60" r="3" fill="#000"/><circle cx="68" cy="60" r="3" fill="#000"/>
+      <path d="M52 75 Q60 82 68 75" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else if (shape === 'heart') {
+    body = `
+      <path d="M60 95 C20 70 25 35 50 35 C58 35 60 42 60 48 C60 42 62 35 70 35 C95 35 100 70 60 95 Z"
+        fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <circle cx="50" cy="55" r="3" fill="#000"/><circle cx="70" cy="55" r="3" fill="#000"/>
+      <path d="M52 65 Q60 72 68 65" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else if (shape === 'star') {
+    body = `
+      <polygon points="60,20 70,48 100,48 76,66 84,96 60,78 36,96 44,66 20,48 50,48"
+        fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <circle cx="52" cy="58" r="3" fill="#000"/><circle cx="68" cy="58" r="3" fill="#000"/>
+      <path d="M53 68 Q60 74 67 68" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else if (shape === 'bunny') {
+    body = `
+      <ellipse cx="42" cy="35" rx="8" ry="22" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <ellipse cx="78" cy="35" rx="8" ry="22" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <ellipse cx="60" cy="75" rx="32" ry="28" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <circle cx="52" cy="70" r="3" fill="#000"/><circle cx="68" cy="70" r="3" fill="#000"/>
+      <ellipse cx="60" cy="80" rx="3" ry="2" fill="${dark}"/>
+      <path d="M53 84 Q60 90 67 84" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else if (shape === 'fish') {
+    body = `
+      <ellipse cx="58" cy="65" rx="32" ry="22" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <polygon points="88,65 105,45 105,85" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <circle cx="48" cy="60" r="4" fill="#fff"/><circle cx="48" cy="61" r="2" fill="#000"/>
+      <path d="M40 70 Q50 75 60 70" stroke="${dark}" stroke-width="2" fill="none"/>
+      <ellipse cx="65" cy="55" rx="4" ry="3" fill="${dark}"/>`;
+  } else if (shape === 'fruit') {
+    body = `
+      <circle cx="60" cy="70" r="32" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <line x1="60" y1="38" x2="60" y2="28" stroke="#5a3300" stroke-width="3"/>
+      <ellipse cx="65" cy="32" rx="10" ry="4" fill="#80c050" stroke="#508030" stroke-width="2" transform="rotate(-30 65 32)"/>
+      <circle cx="52" cy="65" r="3" fill="#000"/><circle cx="68" cy="65" r="3" fill="#000"/>
+      <path d="M52 76 Q60 82 68 76" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else if (shape === 'dragon') {
+    body = `
+      <ellipse cx="60" cy="78" rx="36" ry="28" fill="${color}" stroke="${dark}" stroke-width="3"/>
+      <polygon points="40,55 30,30 55,52" fill="${color}" stroke="${dark}" stroke-width="2"/>
+      <polygon points="80,55 90,30 65,52" fill="${color}" stroke="${dark}" stroke-width="2"/>
+      <polygon points="55,50 60,40 65,50" fill="${dark}"/>
+      <polygon points="50,55 55,45 60,55" fill="${dark}"/>
+      <polygon points="60,55 65,45 70,55" fill="${dark}"/>
+      <circle cx="50" cy="78" r="4" fill="#fff"/><circle cx="50" cy="79" r="2" fill="#000"/>
+      <circle cx="70" cy="78" r="4" fill="#fff"/><circle cx="70" cy="79" r="2" fill="#000"/>
+      <path d="M50 90 Q60 95 70 90" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else {
+    body = `<circle cx="60" cy="60" r="40" fill="${color}" stroke="${dark}" stroke-width="3"/>`;
+  }
+  return `<svg viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg">${body}${f}</svg>`;
+}
+
+// ===================== KURUMI ART =====================
+function svgKurumi() {
+  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="60" cy="78" rx="36" ry="34" fill="#ff8fc0" stroke="#d63384" stroke-width="2"/>
+    <circle cx="60" cy="55" r="32" fill="#ffd6c0" stroke="#d63384" stroke-width="2"/>
+    <path d="M30 50 Q35 25 60 22 Q85 25 90 50 L88 60 Q80 35 60 32 Q40 35 32 60 Z" fill="#ff7ab8" stroke="#c44d85" stroke-width="2"/>
+    <circle cx="50" cy="55" r="5" fill="#fff"/><circle cx="50" cy="56" r="3" fill="#6030a0"/><circle cx="51" cy="55" r="1" fill="#fff"/>
+    <circle cx="70" cy="55" r="5" fill="#fff"/><circle cx="70" cy="56" r="3" fill="#6030a0"/><circle cx="71" cy="55" r="1" fill="#fff"/>
+    <path d="M52 67 Q60 72 68 67" stroke="#d63384" stroke-width="2" fill="none"/>
+    <circle cx="42" cy="62" r="3" fill="#ff8fc0" opacity="0.7"/><circle cx="78" cy="62" r="3" fill="#ff8fc0" opacity="0.7"/>
+    <text x="60" y="105" font-size="14" text-anchor="middle">💖</text>
+  </svg>`;
+}
+
+// ===================== TITLE =====================
+function initTitle() {
+  $('title-art-svg').innerHTML = svgKurumi();
+  attachTap($('btn-new'), () => {
+    if (hasSave()) {
+      showModal('かくにん', 'いまの ほぞんデータを<br>けして、はじめから<br>あそびますか？', [
+        { label: 'はじめる', cls: '', fn: startNewGame },
+        { label: 'やめる', cls: 'gray' }
+      ]);
+    } else startNewGame();
+  });
+  attachTap($('btn-continue'), () => {
+    if (loadGame()) {
+      showToast('ほぞんデータを よみこみました！');
+      goStageSelect();
+    } else {
+      showToast('ほぞんデータが ないよ');
+    }
+  });
+}
+
+function startNewGame() {
+  state = {
+    party: [makeMon(1, 5), makeMon(13, 5)],
+    box: [],
+    bag: { ball: 5, potion: 3 },
+    coins: 200,
+    unlocked: 1,
+    cleared: [],
+    curStage: null,
+    fieldMobs: []
+  };
+  saveGame(true);
+  goStageSelect();
+}
+
+// ===================== STAGE SELECT =====================
+function goStageSelect() {
+  switchScene('stage-scene');
+  $('stage-coins').textContent = state.coins;
+  const list = $('stage-list');
+  list.innerHTML = '';
+  STAGES.forEach(s => {
+    const cleared = state.cleared.includes(s.id);
+    const locked = s.id > state.unlocked;
+    const div = document.createElement('div');
+    div.className = 'stage-pick' + (locked ? ' locked' : '') + (cleared ? ' cleared' : '');
+    div.innerHTML = `<h3>${cleared?'⭐':''}ステージ${s.id}：${s.name}${cleared?'⭐':''}</h3>
+      <p>レベル${s.lvl[0]}〜${s.lvl[1]} のモンスターが いるよ。${locked?' (ロック<ruby>中<rt>ちゅう</rt></ruby>)':''}</p>`;
+    if (!locked) attachTap(div, () => enterStage(s));
+    list.appendChild(div);
+  });
+}
+
+// ===================== FIELD =====================
+function enterStage(stage) {
+  state.curStage = stage.id;
+  $('field-stage-name').innerHTML = stage.name;
+  $('field-coins').textContent = state.coins;
+  document.body.style.background = stage.bg;
+  generateFieldMobs(stage);
+  renderField(stage);
+  switchScene('field-scene');
+}
+
+function generateFieldMobs(stage) {
+  state.fieldMobs = [];
+  const count = 6 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < count; i++) {
+    const id = pick(stage.mobs);
+    const lvl = rand(stage.lvl[0], stage.lvl[1]);
+    state.fieldMobs.push({
+      id, lvl,
+      x: 10 + Math.random() * 70,
+      y: 5 + i * (95 / count) + Math.random() * 6,
+      defeated: false,
+      isBoss: false
+    });
+  }
+  // boss at bottom
+  state.fieldMobs.push({
+    id: stage.boss.id, lvl: stage.boss.lvl,
+    x: 30 + Math.random() * 30,
+    y: 100,
+    defeated: false,
+    isBoss: true
+  });
+}
+
+function renderField(stage) {
+  const wrap = $('field-canvas-wrap');
+  wrap.innerHTML = '';
+  wrap.style.minHeight = '120vh';
+  wrap.style.background = stage.bg;
+
+  state.fieldMobs.forEach((fm, idx) => {
+    const el = document.createElement('div');
+    el.className = 'field-mob' + (fm.isBoss ? ' boss' : '') + (fm.defeated ? ' cleared' : '');
+    el.style.left = fm.x + '%';
+    el.style.top = fm.y + 'vh';
+    el.innerHTML = svgMon(fm.id) + `<div class="lvl">Lv${fm.lvl}</div>`;
+    if (!fm.defeated) {
+      attachTap(el, () => startBattle(fm, idx));
+    }
+    wrap.appendChild(el);
+  });
+}
+
+// ===================== BATTLE =====================
+let battle = null; // { foe:{def, lvl, hp, hpMax, mp, skills}, my:..., turn, ended, fieldIdx }
+
+function activeMon() {
+  return state.party.find(m => m.hp > 0);
+}
+
+function startBattle(fieldMob, idx) {
+  if (!activeMon()) {
+    showToast('たたかえる モンスターが いないよ！<br>かいふくしてね');
+    return;
+  }
+  const foe = makeMon(fieldMob.id, fieldMob.lvl);
+  const foeStats = monStats(foe);
+  battle = {
+    foe: { mon: foe, def: getMonsterDef(foe.id), stats: foeStats, hpMax: foeStats.hp },
+    me: { mon: activeMon() },
+    fieldIdx: idx,
+    isBoss: fieldMob.isBoss,
+    turn: 'me',
+    ended: false
+  };
+  battle.foe.mon.hp = foeStats.hp;
+  refreshBattleUI();
+  setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が あらわれた！');
+  switchScene('battle-scene');
+  showCommands();
+}
+
+function refreshBattleUI() {
+  // foe
+  const f = battle.foe;
+  $('foe-art').innerHTML = svgMon(f.mon.id);
+  $('foe-name').innerHTML = `${f.def.name} <small style="font-size:10px">Lv${f.mon.lvl}</small>`;
+  const fpct = (f.mon.hp / f.hpMax) * 100;
+  const fill = $('foe-hpfill');
+  fill.style.width = fpct + '%';
+  fill.classList.toggle('mid', fpct < 50 && fpct >= 25);
+  fill.classList.toggle('low', fpct < 25);
+  $('foe-hptext').textContent = `HP ${f.mon.hp}/${f.hpMax}`;
+  // me
+  const m = battle.me.mon;
+  const mDef = getMonsterDef(m.id);
+  const mStats = monStats(m);
+  $('my-art').innerHTML = svgMon(m.id);
+  $('my-name').innerHTML = `${mDef.name} <small style="font-size:10px">Lv${m.lvl}</small>`;
+  const mpct = (m.hp / mStats.hp) * 100;
+  const mfill = $('my-hpfill');
+  mfill.style.width = mpct + '%';
+  mfill.classList.toggle('mid', mpct < 50 && mpct >= 25);
+  mfill.classList.toggle('low', mpct < 25);
+  $('my-hptext').textContent = `HP ${m.hp}/${mStats.hp}`;
+  $('my-mpfill').style.width = clamp(m.mp / mStats.mp * 100, 0, 100) + '%';
+}
+
+function setBattleMessage(msg) {
+  $('battle-message').innerHTML = msg;
+}
+
+function hideAllSubPanels() {
+  document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+}
+
+function showCommands() {
+  hideAllSubPanels();
+  $('cmd-grid').style.display = 'grid';
+  $('tap-arena').classList.remove('active');
+  // enable buttons
+  ['cmd-attack','cmd-skill','cmd-item','cmd-ball','cmd-swap','cmd-run'].forEach(id => $(id).disabled = false);
+  if (battle && battle.isBoss) $('cmd-run').disabled = true;
+}
+
+function hideCommands() {
+  $('cmd-grid').style.display = 'none';
+}
+
+// ----- TAP ARENA -----
+let tap = null;
+function startTapPhase(skillKey) {
+  hideCommands();
+  hideAllSubPanels();
+  $('tap-arena').classList.add('active');
+  tap = { count: 0, end: Date.now() + 3000, skill: skillKey, raf: 0 };
+  $('tap-count').textContent = '0';
+  setBattleMessage(skillKey ? SKILLS[skillKey].name + ' を じゅんびちゅう！れんだ！' : 'れんだして こうげき！');
+  const tick = () => {
+    if (!tap) return;
+    const left = tap.end - Date.now();
+    if (left <= 0) { endTapPhase(); return; }
+    $('tap-timer-text').textContent = (left / 1000).toFixed(1);
+    $('tap-timer-fill').style.width = (left / 30) + '%';
+    tap.raf = requestAnimationFrame(tick);
+  };
+  tap.raf = requestAnimationFrame(tick);
+}
+
+function tapHit() {
+  if (!tap) return;
+  tap.count++;
+  $('tap-count').textContent = tap.count;
+  sfxTap();
+  // small visual punch
+  const tb = $('tap-button');
+  tb.style.transform = 'scale(0.94)';
+  setTimeout(() => { tb.style.transform = ''; }, 50);
+}
+
+function endTapPhase() {
+  if (!tap) return;
+  cancelAnimationFrame(tap.raf);
+  const count = tap.count;
+  const skillKey = tap.skill;
+  tap = null;
+  $('tap-arena').classList.remove('active');
+  doMyAttack(count, skillKey);
+}
+
+function doMyAttack(tapCount, skillKey) {
+  if (battle.ended) return;
+  const skill = skillKey ? SKILLS[skillKey] : SKILLS.tail;
+  const meStats = monStats(battle.me.mon);
+  const foeStats = battle.foe.stats;
+  // base damage formula
+  const power = skill.power;
+  const tapMul = clamp(0.4 + tapCount * 0.05, 0.4, 2.5);
+  let dmg = Math.floor((meStats.atk * power * tapMul - foeStats.def * 0.4) * (0.85 + Math.random() * 0.3));
+  dmg = Math.max(1, dmg);
+  // type bonus: same type as user
+  const meDef = getMonsterDef(battle.me.mon.id);
+  if (skill.type === meDef.type) dmg = Math.floor(dmg * 1.2);
+  // crit on lots of taps
+  let crit = false;
+  if (tapCount >= 25 && Math.random() < 0.3) { dmg = Math.floor(dmg * 1.6); crit = true; }
+  // heal skill
+  if (skill.heal) {
+    const heal = Math.floor(meStats.hp * skill.healAmt);
+    battle.me.mon.hp = Math.min(meStats.hp, battle.me.mon.hp + heal);
+    spawnDmg('my-row', heal, 'heal');
+    sfxHeal();
+    setBattleMessage(meDef.name + 'は ' + skill.msg + '<br>HPが ' + heal + ' かいふく！');
+  } else {
+    battle.foe.mon.hp = Math.max(0, battle.foe.mon.hp - dmg);
+    flashScreen();
+    spawnParticles('foe-row', skill.fx);
+    spawnDmg('foe-row', dmg, crit ? 'crit' : '');
+    shakeRow('foe-row');
+    if (crit) sfxCrit(); else sfxHit();
+    setBattleMessage(meDef.name + 'の ' + skill.msg + '<br>(' + tapCount + 'タップ)' + (crit?' クリティカル！':'') + ' ' + dmg + ' ダメージ！');
+  }
+  // mp cost
+  if (skill.mp) battle.me.mon.mp = Math.max(0, battle.me.mon.mp - skill.mp);
+  refreshBattleUI();
+
+  setTimeout(() => {
+    if (battle.foe.mon.hp <= 0) { winBattle(); return; }
+    // foe turn
+    foeTurn();
+  }, 1100);
+}
+
+function foeTurn() {
+  battle.turn = 'foe';
+  if (battle.ended) return;
+  const skills = battle.foe.mon.skills || ['tail'];
+  // pick random skill it can afford
+  const usable = skills.filter(s => (SKILLS[s].mp || 0) <= battle.foe.mon.mp);
+  const skillKey = usable.length ? pick(usable) : 'tail';
+  const skill = SKILLS[skillKey];
+  const foeStats = battle.foe.stats;
+  const meStats = monStats(battle.me.mon);
+  const foeDef = battle.foe.def;
+  if (skill.heal && battle.foe.mon.hp < battle.foe.hpMax * 0.5) {
+    const heal = Math.floor(battle.foe.hpMax * skill.healAmt);
+    battle.foe.mon.hp = Math.min(battle.foe.hpMax, battle.foe.mon.hp + heal);
+    setBattleMessage(foeDef.name + 'は ' + skill.msg);
+    spawnDmg('foe-row', heal, 'heal');
+    sfxHeal();
+  } else {
+    let dmg = Math.floor((foeStats.atk * skill.power - meStats.def * 0.4) * (0.85 + Math.random() * 0.3));
+    dmg = Math.max(1, dmg);
+    if (skill.type === foeDef.type) dmg = Math.floor(dmg * 1.2);
+    battle.me.mon.hp = Math.max(0, battle.me.mon.hp - dmg);
+    spawnParticles('my-row', skill.fx);
+    spawnDmg('my-row', dmg);
+    shakeRow('my-row');
+    sfxHit();
+    setBattleMessage(foeDef.name + 'の ' + skill.msg + ' ' + dmg + 'ダメージ！');
+  }
+  if (skill.mp) battle.foe.mon.mp = Math.max(0, battle.foe.mon.mp - skill.mp);
+  refreshBattleUI();
+  setTimeout(() => {
+    if (battle.me.mon.hp <= 0) {
+      onMyFaint();
+      return;
+    }
+    battle.turn = 'me';
+    showCommands();
+    setBattleMessage('どうする？');
+  }, 1100);
+}
+
+function onMyFaint() {
+  showToast(getMonsterDef(battle.me.mon.id).name + ' は たおれた！');
+  // try next mon
+  const next = state.party.find(m => m.hp > 0 && m !== battle.me.mon);
+  if (next) {
+    battle.me.mon = next;
+    refreshBattleUI();
+    setTimeout(() => { showCommands(); setBattleMessage(getMonsterDef(next.id).name + 'が とびだした！'); }, 800);
+  } else {
+    loseBattle();
+  }
+}
+
+function winBattle() {
+  battle.ended = true;
+  hideCommands();
+  hideAllSubPanels();
+  sfxWin();
+  // exp + coins
+  const foe = battle.foe;
+  const expGain = Math.floor(8 + foe.mon.lvl * 4 + (battle.isBoss ? foe.mon.lvl * 5 : 0));
+  const coinGain = Math.floor(10 + foe.mon.lvl * (battle.isBoss ? 6 : 2));
+  state.coins += coinGain;
+
+  setBattleMessage('🎉 かった！<br>' + foe.def.name + 'を たおして、けいけんち ' + expGain + '・コイン ' + coinGain + ' を てに いれた！');
+
+  // give exp to all alive party
+  setTimeout(() => {
+    const levelups = [];
+    state.party.forEach(m => { if (m.hp > 0) levelups.push(...giveExp(m, expGain)); });
+    if (battle.fieldIdx != null && state.fieldMobs[battle.fieldIdx]) {
+      state.fieldMobs[battle.fieldIdx].defeated = true;
+    }
+    // Boss clear
+    if (battle.isBoss) {
+      const stage = STAGES.find(s => s.id === state.curStage);
+      if (!state.cleared.includes(stage.id)) state.cleared.push(stage.id);
+      if (stage.id + 1 <= STAGES.length && state.unlocked < stage.id + 1) state.unlocked = stage.id + 1;
+      showToast('🎊 ボスを たおした！つぎのステージが ひらいた！', 2400);
+    }
+    saveGame(true);
+
+    const proceed = () => {
+      if (levelups.length) {
+        showLevelup(levelups, () => maybeEvolve(levelups, () => returnToFieldOrStage()));
+      } else {
+        returnToFieldOrStage();
+      }
+    };
+    setTimeout(proceed, 800);
+  }, 1400);
+}
+
+function returnToFieldOrStage() {
+  if (battle.isBoss) {
+    goStageSelect();
+  } else {
+    enterStageRefresh();
+  }
+}
+
+function enterStageRefresh() {
+  const stage = STAGES.find(s => s.id === state.curStage);
+  $('field-stage-name').innerHTML = stage.name;
+  $('field-coins').textContent = state.coins;
+  document.body.style.background = stage.bg;
+  renderField(stage);
+  switchScene('field-scene');
+}
+
+function loseBattle() {
+  battle.ended = true;
+  hideCommands();
+  hideAllSubPanels();
+  sfxLose();
+  setBattleMessage('まけてしまった... <br>すこし HPを かいふくして もどろう。');
+  // revive minimum
+  state.party.forEach(m => {
+    const s = monStats(m);
+    if (m.hp <= 0) m.hp = Math.floor(s.hp * 0.4);
+  });
+  saveGame(true);
+  setTimeout(() => goStageSelect(), 2200);
+}
+
+function giveExp(mon, amt) {
+  const ups = [];
+  mon.exp += amt;
+  while (mon.exp >= expForNext(mon.lvl) && mon.lvl < 50) {
+    mon.exp -= expForNext(mon.lvl);
+    mon.lvl++;
+    // learn new skill if any
+    const def = getMonsterDef(mon.id);
+    if (def.learn[mon.lvl] && !mon.skills.includes(def.learn[mon.lvl])) {
+      mon.skills.push(def.learn[mon.lvl]);
+    }
+    // refill HP partly
+    const s = monStats(mon);
+    mon.hp = Math.min(s.hp, mon.hp + Math.floor(s.hp * 0.2));
+    mon.mp = s.mp;
+    ups.push({ mon, lvl: mon.lvl, def });
+  }
+  return ups;
+}
+
+function showLevelup(ups, after) {
+  if (ups.length === 0) { after(); return; }
+  const up = ups.shift();
+  $('levelup-text').innerHTML = up.def.name + ' は<br>レベル ' + up.lvl + ' に なった！';
+  const banner = $('levelup-banner');
+  banner.classList.add('show');
+  sfxLevel();
+  setTimeout(() => {
+    banner.classList.remove('show');
+    setTimeout(() => showLevelup(ups, after), 200);
+  }, 1400);
+}
+
+function maybeEvolve(ups, after) {
+  // ups already consumed, but we tracked them; just check all party
+  const evos = [];
+  state.party.forEach(m => {
+    const def = getMonsterDef(m.id);
+    if (def.evo && m.lvl >= def.evo.lvl) {
+      evos.push({ mon: m, fromDef: def, toDef: getMonsterDef(def.evo.to) });
+    }
+  });
+  if (evos.length === 0) { after(); return; }
+  doEvolution(evos, after);
+}
+
+function doEvolution(evos, after) {
+  if (evos.length === 0) { after(); return; }
+  const e = evos.shift();
+  switchScene('evo-scene');
+  $('evo-art-wrap').innerHTML = svgMon(e.mon.id);
+  $('evo-text').innerHTML = e.fromDef.name + ' は しんかしている...';
+  $('evo-next').classList.remove('show');
+  sfxEvo();
+  let step = 0;
+  const swap = () => {
+    step++;
+    if (step > 6) {
+      // evolve!
+      e.mon.id = e.toDef.id;
+      // grant new skills
+      Object.keys(e.toDef.learn).forEach(k => {
+        if (e.mon.lvl >= +k && !e.mon.skills.includes(e.toDef.learn[k])) e.mon.skills.push(e.toDef.learn[k]);
+      });
+      $('evo-art-wrap').innerHTML = svgMon(e.toDef.id);
+      $('evo-text').innerHTML = '✨ ' + e.fromDef.name + ' は<br>' + e.toDef.name + ' に しんかした！ ✨';
+      $('evo-next').classList.add('show');
+      sfxWin();
+      saveGame(true);
+      return;
+    }
+    $('evo-art-wrap').innerHTML = step % 2 === 0 ? svgMon(e.mon.id) : svgMon(e.toDef.id);
+    setTimeout(swap, 200 + step * 30);
+  };
+  setTimeout(swap, 600);
+  $('evo-next').onclick = () => doEvolution(evos, after);
+  attachTap($('evo-next'), () => doEvolution(evos, after));
+}
+
+// ----- ATTACK CMDS -----
+function cmdAttack() { startTapPhase(null); }
+
+function cmdSkill() {
+  const list = $('skill-list');
+  list.innerHTML = '';
+  const m = battle.me.mon;
+  const stats = monStats(m);
+  m.skills.forEach(sk => {
+    const s = SKILLS[sk];
+    const can = (s.mp || 0) <= m.mp;
+    const row = document.createElement('div');
+    row.className = 'sub-row' + (can ? '' : ' disabled');
+    row.innerHTML = `<div style="font-size:24px">${s.fx}</div>
+      <div class="info-block">
+        <div class="name">${s.name}</div>
+        <div class="stats">タイプ:${TYPES[s.type].name}・MP ${s.mp}・<ruby>威力<rt>いりょく</rt></ruby>${s.power}${s.heal?' (かいふく)':''}</div>
+      </div>`;
+    if (can) attachTap(row, () => {
+      $('skill-panel').classList.remove('active');
+      startTapPhase(sk);
+    });
+    list.appendChild(row);
+  });
+  $('skill-panel').classList.add('active');
+}
+
+function cmdItem() {
+  const list = $('item-list');
+  list.innerHTML = '';
+  let any = false;
+  Object.keys(state.bag).forEach(key => {
+    const count = state.bag[key];
+    if (!count) return;
+    any = true;
+    const it = ITEMS[key];
+    if (!it) return;
+    const row = document.createElement('div');
+    row.className = 'sub-row';
+    row.innerHTML = `<div style="font-size:30px">${it.icon}</div>
+      <div class="info-block">
+        <div class="name">${it.name} ×${count}</div>
+        <div class="stats">${it.desc}</div>
+      </div>`;
+    attachTap(row, () => {
+      $('item-panel').classList.remove('active');
+      useItem(key);
+    });
+    list.appendChild(row);
+  });
+  if (!any) {
+    list.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">アイテムが ないよ</div>';
+  }
+  $('item-panel').classList.add('active');
+}
+
+function useItem(key) {
+  const it = ITEMS[key];
+  state.bag[key]--;
+  if (it.heal) {
+    const m = battle.me.mon;
+    const s = monStats(m);
+    const heal = Math.min(it.heal, s.hp - m.hp);
+    m.hp = Math.min(s.hp, m.hp + it.heal);
+    spawnDmg('my-row', heal, 'heal');
+    sfxHeal();
+    setBattleMessage(it.name + ' を つかった！HP ' + heal + ' かいふく！');
+    refreshBattleUI();
+    setTimeout(foeTurn, 1100);
+  } else if (it.mp) {
+    const m = battle.me.mon;
+    const s = monStats(m);
+    m.mp = Math.min(s.mp, m.mp + it.mp);
+    sfxHeal();
+    setBattleMessage(it.name + ' を つかった！MP ' + it.mp + ' かいふく！');
+    refreshBattleUI();
+    setTimeout(foeTurn, 1100);
+  } else if (key === 'ball' || key === 'superball' || key === 'hyperball') {
+    tryCatch(key);
+  }
+}
+
+function tryCatch(ballKey) {
+  const f = battle.foe;
+  if (battle.isBoss) {
+    setBattleMessage('ボスは つかまえられない！');
+    setTimeout(foeTurn, 1100);
+    return;
+  }
+  const ratio = f.mon.hp / f.hpMax;
+  const ballRate = ITEMS[ballKey].rate;
+  // success rate: low HP -> high
+  let chance = (1 - ratio) * 0.7 * ballRate + 0.05;
+  chance = clamp(chance, 0.05, 0.95);
+  setBattleMessage('えい！ ' + ITEMS[ballKey].name + ' を なげた！');
+  sfxCatch();
+  setTimeout(() => {
+    if (Math.random() < chance) {
+      // success
+      const captured = makeMon(f.mon.id, f.mon.lvl);
+      captured.hp = f.mon.hp;
+      if (state.party.length < 3) state.party.push(captured);
+      else state.box.push(captured);
+      setBattleMessage('🎉 ' + f.def.name + ' を つかまえた！');
+      sfxWin();
+      battle.ended = true;
+      // mark defeated on field
+      if (battle.fieldIdx != null && state.fieldMobs[battle.fieldIdx]) state.fieldMobs[battle.fieldIdx].defeated = true;
+      // give half xp
+      const expGain = Math.floor(4 + f.mon.lvl * 2);
+      const ups = [];
+      state.party.forEach(m => { if (m.hp > 0 && m !== captured) ups.push(...giveExp(m, expGain)); });
+      saveGame(true);
+      setTimeout(() => {
+        if (ups.length) showLevelup(ups, () => maybeEvolve(ups, returnToFieldOrStage));
+        else returnToFieldOrStage();
+      }, 1500);
+    } else {
+      setBattleMessage('くっ... にげられた！');
+      showToast('つかまえ そこねた！');
+      setTimeout(foeTurn, 1100);
+    }
+  }, 1000);
+}
+
+function cmdBall() {
+  // pick lowest tier ball available
+  const ballKeys = ['ball', 'superball', 'hyperball'];
+  const list = $('item-list');
+  list.innerHTML = '';
+  let any = false;
+  ballKeys.forEach(key => {
+    const count = state.bag[key];
+    if (!count) return;
+    any = true;
+    const it = ITEMS[key];
+    const row = document.createElement('div');
+    row.className = 'sub-row';
+    row.innerHTML = `<div style="font-size:30px">${it.icon}</div>
+      <div class="info-block">
+        <div class="name">${it.name} ×${count}</div>
+        <div class="stats">${it.desc}</div>
+      </div>`;
+    attachTap(row, () => {
+      $('item-panel').classList.remove('active');
+      state.bag[key]--;
+      tryCatch(key);
+    });
+    list.appendChild(row);
+  });
+  if (!any) {
+    showToast('ボールが ないよ！ショップで かおう');
+    return;
+  }
+  $('item-panel').classList.add('active');
+}
+
+function cmdSwap() {
+  const list = $('swap-list');
+  list.innerHTML = '';
+  state.party.forEach((m, i) => {
+    if (m === battle.me.mon) return;
+    const def = getMonsterDef(m.id);
+    const stats = monStats(m);
+    const row = document.createElement('div');
+    row.className = 'sub-row' + (m.hp <= 0 ? ' disabled' : '');
+    row.innerHTML = `<div class="mob-art-small">${svgMon(m.id)}</div>
+      <div class="info-block">
+        <div class="name">${def.name} Lv${m.lvl}</div>
+        <div class="stats">HP ${m.hp}/${stats.hp}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
+      </div>`;
+    if (m.hp > 0) attachTap(row, () => {
+      $('swap-panel').classList.remove('active');
+      battle.me.mon = m;
+      setBattleMessage(def.name + ' に こうたい！');
+      refreshBattleUI();
+      setTimeout(foeTurn, 1100);
+    });
+    list.appendChild(row);
+  });
+  if (list.children.length === 0) {
+    showToast('こうたいできる なかまが いない！');
+    return;
+  }
+  $('swap-panel').classList.add('active');
+}
+
+function cmdRun() {
+  if (battle.isBoss) { showToast('ボスからは にげられない！'); return; }
+  const meSpd = monStats(battle.me.mon).spd;
+  const foeSpd = battle.foe.stats.spd;
+  if (Math.random() < clamp(meSpd / (foeSpd + meSpd) + 0.2, 0.4, 0.95)) {
+    setBattleMessage('うまく にげられた！');
+    sfxTap();
+    battle.ended = true;
+    setTimeout(() => returnToFieldOrStage(), 1000);
+  } else {
+    setBattleMessage('にげられない！');
+    setTimeout(foeTurn, 1000);
+  }
+}
+
+// ----- effect helpers -----
+function flashScreen() {
+  const f = $('battle-flash');
+  f.style.opacity = '0.7';
+  setTimeout(() => f.style.opacity = '0', 100);
+}
+function shakeRow(id) {
+  const r = $(id);
+  r.classList.add('shake');
+  setTimeout(() => r.classList.remove('shake'), 400);
+}
+function spawnDmg(rowId, amt, kind) {
+  const row = $(rowId);
+  const rect = row.getBoundingClientRect();
+  const p = document.createElement('div');
+  p.className = 'dmg-pop' + (kind ? ' ' + kind : '');
+  p.textContent = (kind === 'heal' ? '+' : '') + amt;
+  p.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+  p.style.top = (rect.top + rect.height / 2 - 10) + 'px';
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), 1000);
+}
+function spawnParticles(rowId, fx) {
+  const row = $(rowId);
+  const rect = row.getBoundingClientRect();
+  const layer = $('battle-particles');
+  for (let i = 0; i < 8; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = fx || '✨';
+    p.style.left = (rect.left + rect.width / 2 - 12) + 'px';
+    p.style.top = (rect.top + rect.height / 2 - 12) + 'px';
+    p.style.setProperty('--tx', (Math.random() * 200 - 100) + 'px');
+    p.style.setProperty('--ty', (Math.random() * 200 - 100) + 'px');
+    layer.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
+}
+
+// ===================== PARTY UI =====================
+function goPartyScene() {
+  switchScene('party-scene');
+  $('party-coins').textContent = state.coins;
+  renderParty();
+}
+
+function renderParty() {
+  const mineList = $('party-list-mine');
+  const boxList = $('party-list-box');
+  mineList.innerHTML = '';
+  boxList.innerHTML = '';
+
+  state.party.forEach((m, i) => {
+    const def = getMonsterDef(m.id);
+    const stats = monStats(m);
+    const row = document.createElement('div');
+    row.className = 'sub-row';
+    row.innerHTML = `<div class="mob-art-small">${svgMon(m.id)}</div>
+      <div class="info-block">
+        <div class="name">${def.name} Lv${m.lvl}</div>
+        <div class="stats">HP ${m.hp}/${stats.hp}・MP ${m.mp}/${stats.mp}・<ruby>経験<rt>けいけん</rt></ruby>${m.exp}/${expForNext(m.lvl)}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
+      </div>
+      <button class="btn gray" style="font-size:11px;padding:4px 8px;">⇆</button>`;
+    const btn = row.querySelector('button');
+    attachTap(btn, (e) => {
+      e.stopPropagation && e.stopPropagation();
+      // move to box if party > 1
+      if (state.party.length <= 1) { showToast('せんとうメンバーは 1ぴき<ruby>残<rt>のこ</rt></ruby>す ひつようがあるよ'); return; }
+      state.box.push(m);
+      state.party.splice(i, 1);
+      saveGame(true);
+      renderParty();
+    });
+    mineList.appendChild(row);
+  });
+  if (state.party.length === 0) {
+    mineList.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">パーティに モンスターが いないよ</div>';
+  }
+
+  state.box.forEach((m, i) => {
+    const def = getMonsterDef(m.id);
+    const stats = monStats(m);
+    const can = state.party.length < 3;
+    const row = document.createElement('div');
+    row.className = 'sub-row' + (can ? '' : ' disabled');
+    row.innerHTML = `<div class="mob-art-small">${svgMon(m.id)}</div>
+      <div class="info-block">
+        <div class="name">${def.name} Lv${m.lvl}</div>
+        <div class="stats">HP ${m.hp}/${stats.hp}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
+      </div>
+      <button class="btn green" style="font-size:11px;padding:4px 8px;" ${can?'':'disabled'}>つれてく</button>`;
+    const btn = row.querySelector('button');
+    if (can) attachTap(btn, (e) => {
+      e.stopPropagation && e.stopPropagation();
+      state.party.push(m);
+      state.box.splice(i, 1);
+      saveGame(true);
+      renderParty();
+    });
+    boxList.appendChild(row);
+  });
+  if (state.box.length === 0) {
+    boxList.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">ボックスは からっぽ</div>';
+  }
+}
+
+// ===================== SHOP =====================
+function goShop() {
+  switchScene('shop-scene');
+  $('shop-coins').textContent = state.coins;
+  const list = $('shop-list');
+  list.innerHTML = '';
+  Object.keys(ITEMS).forEach(key => {
+    const it = ITEMS[key];
+    if (!it.price) return;
+    const row = document.createElement('div');
+    row.className = 'shop-item';
+    const have = state.bag[key] || 0;
+    row.innerHTML = `<span class="icon">${it.icon}</span>
+      <div class="info-block">
+        <div class="name">${it.name}<small style="color:#888"> ×${have}</small></div>
+        <div class="desc">${it.desc}</div>
+        <div class="price">💰${it.price}</div>
+      </div>
+      <button class="btn yellow">かう</button>`;
+    const btn = row.querySelector('button');
+    attachTap(btn, () => {
+      if (state.coins < it.price) { showToast('コインが たりないよ'); return; }
+      state.coins -= it.price;
+      state.bag[key] = (state.bag[key] || 0) + 1;
+      sfxTap();
+      $('shop-coins').textContent = state.coins;
+      saveGame(true);
+      goShop();
+    });
+    list.appendChild(row);
+  });
+
+  // also offer party heal
+  const heal = document.createElement('div');
+  heal.className = 'shop-item';
+  heal.innerHTML = `<span class="icon">💗</span>
+    <div class="info-block">
+      <div class="name">パーティ ぜんかい かいふく</div>
+      <div class="desc">てもちぜんいんの HP/MP を まんたんに</div>
+      <div class="price">💰150</div>
+    </div>
+    <button class="btn">かいふく</button>`;
+  const hbtn = heal.querySelector('button');
+  attachTap(hbtn, () => {
+    if (state.coins < 150) { showToast('コインが たりないよ'); return; }
+    state.coins -= 150;
+    state.party.forEach(m => { const s = monStats(m); m.hp = s.hp; m.mp = s.mp; });
+    sfxHeal();
+    showToast('まんたんに かいふくしたよ💗');
+    $('shop-coins').textContent = state.coins;
+    saveGame(true);
+  });
+  list.appendChild(heal);
+}
+
+// ===================== SETUP UI =====================
+function setupUI() {
+  // title
+  initTitle();
+
+  // stage
+  attachTap($('btn-stage-party'), goPartyScene);
+  attachTap($('btn-stage-shop'), goShop);
+  attachTap($('btn-stage-box'), goPartyScene);
+  attachTap($('btn-stage-save'), () => saveGame());
+
+  // field
+  attachTap($('btn-field-party'), goPartyScene);
+  attachTap($('btn-field-bag'), () => {
+    // simple bag view via modal
+    let html = '<div style="text-align:left; max-height:50vh; overflow-y:auto;">';
+    Object.keys(state.bag).forEach(k => {
+      if (!state.bag[k] || !ITEMS[k]) return;
+      html += `<div style="display:flex; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #ffb0d8;">
+        <span style="font-size:24px">${ITEMS[k].icon}</span>
+        <span><b>${ITEMS[k].name}</b> ×${state.bag[k]}<br><small style="color:#666">${ITEMS[k].desc}</small></span>
+      </div>`;
+    });
+    html += '</div>';
+    showModal('🎒 バッグ', html, [{ label: 'とじる', cls: 'gray' }]);
+  });
+  attachTap($('btn-field-back'), () => goStageSelect());
+
+  // party
+  attachTap($('party-back'), () => goStageSelect());
+
+  // shop
+  attachTap($('shop-back'), () => goStageSelect());
+
+  // battle
+  attachTap($('cmd-attack'), cmdAttack);
+  attachTap($('cmd-skill'), cmdSkill);
+  attachTap($('cmd-item'), cmdItem);
+  attachTap($('cmd-ball'), cmdBall);
+  attachTap($('cmd-swap'), cmdSwap);
+  attachTap($('cmd-run'), cmdRun);
+  attachTap($('skill-cancel'), () => $('skill-panel').classList.remove('active'));
+  attachTap($('item-cancel'), () => $('item-panel').classList.remove('active'));
+  attachTap($('swap-cancel'), () => $('swap-panel').classList.remove('active'));
+
+  // tap button
+  attachTap($('tap-button'), tapHit);
+  // also keypress for PC
+  document.addEventListener('keydown', (e) => {
+    if (tap && (e.key === ' ' || e.key === 'Enter' || e.code === 'Space')) {
+      e.preventDefault();
+      tapHit();
+    }
+  });
+
+  // evo next handled inline in doEvolution (rebound)
+  attachTap($('evo-next'), () => switchScene('field-scene'));
+
+  // prime audio after first gesture
+  document.body.addEventListener('click', ensureAudio, { once: true });
+  document.body.addEventListener('touchstart', ensureAudio, { once: true });
+}
+
+setupUI();
+
+// auto-load if save exists, but stay on title
+window.addEventListener('beforeunload', () => { try { saveGame(true); } catch(e){} });
+</script>
+</body>
+</html>
