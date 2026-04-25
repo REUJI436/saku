@@ -244,60 +244,223 @@
   }
   #battle-top {
     flex: 1; display: flex; flex-direction: column;
-    padding: 56px 14px 8px;
-    gap: 8px;
+    padding: 56px 10px 8px;
+    gap: 6px;
     overflow: hidden;
+    position: relative;
+  }
+  /* turn label */
+  #turn-label {
+    align-self: center;
+    background: rgba(255,255,255,0.95);
+    border: 3px solid #ffd700;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 14px; font-weight: bold;
+    color: #6b2350;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    text-align: center;
+    min-width: 60%;
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+  }
+  #turn-label.me { background: linear-gradient(180deg,#fff,#ffe0ee); border-color: #ff6fa8; color: #c0327a; animation: turnPulse 1.2s ease-in-out infinite; }
+  #turn-label.foe { background: linear-gradient(180deg,#f0e0ff,#d6b8f0); border-color: #4a1080; color: #2a0a50; }
+  @keyframes turnPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,111,168,0.6), 0 2px 6px rgba(0,0,0,0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(255,111,168,0), 0 2px 6px rgba(0,0,0,0.2); }
+  }
+
+  /* battle stage: foe top-right, me bottom-left */
+  .battle-stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
   }
   .combatant {
-    background: rgba(255,255,255,0.85);
-    border: 3px solid #fff;
+    position: absolute;
     border-radius: 16px;
-    padding: 8px 12px;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    display: flex; align-items: center; gap: 10px;
+    padding: 6px 10px 8px;
+    display: flex; flex-direction: column; align-items: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.18);
+    transition: transform 0.25s, box-shadow 0.25s;
   }
-  .combatant.foe { align-self: flex-start; }
-  .combatant.mine { align-self: flex-end; }
-  .combatant .info { flex: 1; min-width: 0; }
-  .combatant .name { font-weight: bold; font-size: 14px; color: #d63384; }
+  .combatant.foe {
+    /* enemy: top-right, smaller */
+    top: 0; right: 4px;
+    width: 46%;
+    transform: scale(0.82);
+    transform-origin: top right;
+    background: linear-gradient(180deg, #d6b8f0 0%, #c490e0 100%);
+    border: 4px solid #4a1080;
+    border-radius: 14px 14px 22px 22px;
+  }
+  .combatant.foe::before {
+    content: '👑 VS';
+    position: absolute;
+    top: -14px; left: 8px;
+    background: #4a1080;
+    color: #ffd700;
+    font-size: 11px; font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 2px solid #ffd700;
+    letter-spacing: 1px;
+  }
+  .combatant.mine {
+    /* me: bottom-left, bigger */
+    bottom: 4px; left: 4px;
+    width: 56%;
+    transform: scale(1.08);
+    transform-origin: bottom left;
+    background: linear-gradient(180deg, #fff, #ffd6e8 100%);
+    border: 4px solid #ff6fa8;
+    border-radius: 22px;
+  }
+  .combatant.mine::before {
+    content: '💗 あなた';
+    position: absolute;
+    top: -14px; right: 8px;
+    background: #ff6fa8;
+    color: #fff;
+    font-size: 11px; font-weight: bold;
+    padding: 2px 10px;
+    border-radius: 10px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .combatant .info { width: 100%; min-width: 0; }
+  .combatant.foe .name { font-weight: bold; font-size: 13px; color: #2a0a50; text-align: center; text-shadow: 1px 1px 0 #fff; }
+  .combatant.mine .name { font-weight: bold; font-size: 14px; color: #c0327a; text-align: center; text-shadow: 1px 1px 0 #fff; }
   .combatant .hpbar {
-    height: 10px; background: #eee; border-radius: 6px; overflow: hidden;
-    margin-top: 4px; border: 1px solid #ccc;
+    height: 10px; background: rgba(255,255,255,0.6); border-radius: 6px; overflow: hidden;
+    margin-top: 3px; border: 1px solid rgba(0,0,0,0.2);
   }
+  .combatant.foe .hpbar { height: 8px; }
   .combatant .hpfill {
     height: 100%;
-    background: linear-gradient(90deg, #80d860, #2a8000);
+    background: linear-gradient(90deg, #ff6fa8, #c0327a);
     transition: width 0.3s;
+  }
+  .combatant.foe .hpfill {
+    background: linear-gradient(90deg, #9050d0, #4a1080);
   }
   .combatant .hpfill.mid { background: linear-gradient(90deg, #ffd54a, #d68800); }
   .combatant .hpfill.low { background: linear-gradient(90deg, #ff7090, #c40020); }
-  .combatant .hptext { font-size: 11px; color: #666; margin-top: 2px; }
+  .combatant.foe .hpfill.mid { background: linear-gradient(90deg, #ffb060, #d66800); }
+  .combatant.foe .hpfill.low { background: linear-gradient(90deg, #ff5070, #a01040); }
+  .combatant .hptext { font-size: 11px; margin-top: 2px; font-weight: bold; }
+  .combatant.mine .hptext { color: #6b2350; }
+  .combatant.foe .hptext { color: #2a0a50; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); }
   .combatant .mpbar {
-    height: 6px; background: #eee; border-radius: 3px; overflow: hidden;
-    margin-top: 3px; border: 1px solid #ccc;
+    height: 6px; background: rgba(255,255,255,0.6); border-radius: 3px; overflow: hidden;
+    margin-top: 3px; border: 1px solid rgba(0,0,0,0.2);
   }
   .combatant .mpfill {
     height: 100%;
-    background: linear-gradient(90deg, #aee3ff, #2a6da6);
+    background: linear-gradient(90deg, #aee3ff, #4a9fd9);
     transition: width 0.3s;
   }
   .combatant .mob-art {
-    width: 64px; height: 64px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.6);
-    border: 2px solid #ffb0d8;
+    background: rgba(255,255,255,0.7);
     display: flex; align-items: center; justify-content: center;
     animation: mobBob 1.5s ease-in-out infinite;
-    flex-shrink: 0;
+    margin-bottom: 4px;
   }
-  .combatant .mob-art svg { width: 80%; height: 80%; }
-  .combatant.shake { animation: shake 0.4s; }
+  .combatant.foe .mob-art {
+    width: clamp(70px, 22vw, 110px); height: clamp(70px, 22vw, 110px);
+    border: 3px solid #4a1080;
+    box-shadow: 0 2px 6px rgba(74,16,128,0.4);
+  }
+  .combatant.mine .mob-art {
+    width: clamp(96px, 30vw, 150px); height: clamp(96px, 30vw, 150px);
+    border: 3px solid #ff6fa8;
+    box-shadow: 0 3px 8px rgba(255,111,168,0.4);
+  }
+  .combatant .mob-art svg { width: 84%; height: 84%; }
+
+  /* Active turn highlight */
+  .combatant.active-turn.mine {
+    box-shadow: 0 0 0 3px rgba(255,111,168,0.5), 0 0 18px 4px rgba(255,111,168,0.6), 0 3px 6px rgba(0,0,0,0.18);
+    animation: meActivePulse 1.4s ease-in-out infinite;
+  }
+  .combatant.active-turn.mine .mob-art {
+    animation: meBounce 0.7s ease-in-out infinite;
+  }
+  .combatant.active-turn.foe {
+    box-shadow: 0 0 0 3px rgba(160,80,200,0.5), 0 0 14px 4px rgba(120,40,180,0.5), 0 3px 6px rgba(0,0,0,0.18);
+  }
+  .combatant.active-turn.foe.attacking .mob-art {
+    animation: foeAttack 0.5s ease-out;
+  }
+  @keyframes meActivePulse {
+    0%,100% { box-shadow: 0 0 0 3px rgba(255,111,168,0.5), 0 0 18px 4px rgba(255,111,168,0.6), 0 3px 6px rgba(0,0,0,0.18); }
+    50% { box-shadow: 0 0 0 5px rgba(255,111,168,0.7), 0 0 24px 8px rgba(255,111,168,0.8), 0 3px 6px rgba(0,0,0,0.18); }
+  }
+  @keyframes meBounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px) scale(1.04); }
+  }
+  @keyframes foeAttack {
+    0% { transform: scale(1) translateX(0); }
+    40% { transform: scale(1.18) translateX(-10px); }
+    100% { transform: scale(1) translateX(0); }
+  }
+
+  /* Hit feedback */
+  .combatant.shake { animation: shake 0.45s; }
+  .combatant.hit-flash { animation: hitFlash 0.45s; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); }
-    60% { transform: translateX(-6px); }
-    80% { transform: translateX(6px); }
+    20% { transform: translateX(-10px) rotate(-2deg); }
+    40% { transform: translateX(10px) rotate(2deg); }
+    60% { transform: translateX(-8px) rotate(-1deg); }
+    80% { transform: translateX(8px) rotate(1deg); }
+  }
+  /* shake variants preserve foe/mine base scale */
+  .combatant.foe.shake { animation: shakeFoe 0.45s; }
+  .combatant.mine.shake { animation: shakeMine 0.45s; }
+  @keyframes shakeFoe {
+    0%, 100% { transform: scale(0.82) translateX(0); }
+    20% { transform: scale(0.82) translateX(-10px) rotate(-2deg); }
+    40% { transform: scale(0.82) translateX(10px) rotate(2deg); }
+    60% { transform: scale(0.82) translateX(-8px) rotate(-1deg); }
+    80% { transform: scale(0.82) translateX(8px) rotate(1deg); }
+  }
+  @keyframes shakeMine {
+    0%, 100% { transform: scale(1.08) translateX(0); }
+    20% { transform: scale(1.08) translateX(-10px) rotate(-2deg); }
+    40% { transform: scale(1.08) translateX(10px) rotate(2deg); }
+    60% { transform: scale(1.08) translateX(-8px) rotate(-1deg); }
+    80% { transform: scale(1.08) translateX(8px) rotate(1deg); }
+  }
+  @keyframes hitFlash {
+    0% { filter: brightness(1) saturate(1); }
+    25% { filter: brightness(1.6) saturate(2) hue-rotate(-20deg); background-color: #ffaaaa; }
+    100% { filter: brightness(1) saturate(1); }
+  }
+
+  /* Critical text */
+  #crit-text {
+    position: absolute;
+    top: 30%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: clamp(36px, 10vw, 64px);
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 3px 3px 0 #c40020, 5px 5px 0 #6b2350, 0 0 20px #fff;
+    pointer-events: none;
+    z-index: 80;
+    letter-spacing: 2px;
+    opacity: 0;
+  }
+  #crit-text.show { animation: critPop 1.1s ease-out forwards; }
+  @keyframes critPop {
+    0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.3) rotate(5deg); opacity: 1; }
+    60% { transform: translate(-50%, -50%) scale(1) rotate(-2deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.1) rotate(0); opacity: 0; }
   }
 
   #battle-message {
@@ -623,22 +786,26 @@
   <div id="battle-flash"></div>
   <div id="battle-particles"></div>
   <div id="battle-top">
-    <div id="foe-row" class="combatant foe">
-      <div class="mob-art" id="foe-art"></div>
-      <div class="info">
-        <div class="name" id="foe-name"></div>
-        <div class="hpbar"><div class="hpfill" id="foe-hpfill"></div></div>
-        <div class="hptext" id="foe-hptext"></div>
+    <div id="turn-label">⚔️ <ruby>戦闘<rt>せんとう</rt></ruby><ruby>開始<rt>かいし</rt></ruby>！</div>
+    <div class="battle-stage">
+      <div id="foe-row" class="combatant foe">
+        <div class="mob-art" id="foe-art"></div>
+        <div class="info">
+          <div class="name" id="foe-name"></div>
+          <div class="hpbar"><div class="hpfill" id="foe-hpfill"></div></div>
+          <div class="hptext" id="foe-hptext"></div>
+        </div>
       </div>
-    </div>
-    <div id="my-row" class="combatant mine">
-      <div class="info">
-        <div class="name" id="my-name"></div>
-        <div class="hpbar"><div class="hpfill" id="my-hpfill"></div></div>
-        <div class="hptext" id="my-hptext"></div>
-        <div class="mpbar"><div class="mpfill" id="my-mpfill"></div></div>
+      <div id="my-row" class="combatant mine">
+        <div class="mob-art" id="my-art"></div>
+        <div class="info">
+          <div class="name" id="my-name"></div>
+          <div class="hpbar"><div class="hpfill" id="my-hpfill"></div></div>
+          <div class="hptext" id="my-hptext"></div>
+          <div class="mpbar"><div class="mpfill" id="my-mpfill"></div></div>
+        </div>
       </div>
-      <div class="mob-art" id="my-art"></div>
+      <div id="crit-text">💥 きゅうしょ！</div>
     </div>
     <div id="battle-message"><ruby>戦闘<rt>せんとう</rt></ruby><ruby>開始<rt>かいし</rt></ruby>！</div>
   </div>
@@ -1593,33 +1760,64 @@ function startBattle(fieldMob, idx) {
   refreshBattleUI();
   setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が あらわれた！');
   switchScene('battle-scene');
+  setTurnUI('me');
   showCommands();
 }
 
 function refreshBattleUI() {
-  // foe
+  // foe (% only, lighter info)
   const f = battle.foe;
   $('foe-art').innerHTML = svgMon(f.mon.id);
-  $('foe-name').innerHTML = `${f.def.name} <small style="font-size:10px">Lv${f.mon.lvl}</small>`;
+  $('foe-name').innerHTML = `👾 ${f.def.name} <small style="font-size:10px">Lv${f.mon.lvl}</small>`;
   const fpct = (f.mon.hp / f.hpMax) * 100;
   const fill = $('foe-hpfill');
   fill.style.width = fpct + '%';
   fill.classList.toggle('mid', fpct < 50 && fpct >= 25);
   fill.classList.toggle('low', fpct < 25);
-  $('foe-hptext').textContent = `HP ${f.mon.hp}/${f.hpMax}`;
-  // me
+  $('foe-hptext').textContent = `HP ${Math.ceil(fpct)}%`;
+  // me (full HP/MP detail)
   const m = battle.me.mon;
   const mDef = getMonsterDef(m.id);
   const mStats = monStats(m);
   $('my-art').innerHTML = svgMon(m.id);
-  $('my-name').innerHTML = `${mDef.name} <small style="font-size:10px">Lv${m.lvl}</small>`;
+  $('my-name').innerHTML = `💗 ${mDef.name} <small style="font-size:10px">Lv${m.lvl}</small>`;
   const mpct = (m.hp / mStats.hp) * 100;
   const mfill = $('my-hpfill');
   mfill.style.width = mpct + '%';
   mfill.classList.toggle('mid', mpct < 50 && mpct >= 25);
   mfill.classList.toggle('low', mpct < 25);
-  $('my-hptext').textContent = `HP ${m.hp}/${mStats.hp}`;
+  $('my-hptext').textContent = `HP ${m.hp}/${mStats.hp}  MP ${m.mp}/${mStats.mp}`;
   $('my-mpfill').style.width = clamp(m.mp / mStats.mp * 100, 0, 100) + '%';
+}
+
+function setTurnUI(who) {
+  // who: 'me' | 'foe' | null
+  const myRow = $('my-row');
+  const foeRow = $('foe-row');
+  const label = $('turn-label');
+  if (!myRow || !foeRow || !label) return;
+  myRow.classList.remove('active-turn');
+  foeRow.classList.remove('active-turn', 'attacking');
+  label.classList.remove('me', 'foe');
+  if (who === 'me') {
+    myRow.classList.add('active-turn');
+    label.classList.add('me');
+    label.innerHTML = '🔆 あなたのターン！';
+  } else if (who === 'foe') {
+    foeRow.classList.add('active-turn');
+    label.classList.add('foe');
+    label.innerHTML = '👾 あいてのターン';
+  }
+}
+
+function showCritText() {
+  const el = $('crit-text');
+  if (!el) return;
+  el.classList.remove('show');
+  // force reflow to restart animation
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1100);
 }
 
 function setBattleMessage(msg) {
@@ -1713,7 +1911,8 @@ function doMyAttack(tapCount, skillKey) {
     spawnParticles('foe-row', skill.fx);
     spawnDmg('foe-row', dmg, crit ? 'crit' : '');
     shakeRow('foe-row');
-    if (crit) sfxCrit(); else sfxHit();
+    hitFlashRow('foe-row');
+    if (crit) { sfxCrit(); showCritText(); } else sfxHit();
     setBattleMessage(meDef.name + 'の ' + skill.msg + '<br>(' + tapCount + 'タップ)' + (crit?' クリティカル！':'') + ' ' + dmg + ' ダメージ！');
   }
   // mp cost
@@ -1730,6 +1929,13 @@ function doMyAttack(tapCount, skillKey) {
 function foeTurn() {
   battle.turn = 'foe';
   if (battle.ended) return;
+  setTurnUI('foe');
+  // brief attack motion before the hit lands
+  const foeRow = $('foe-row');
+  if (foeRow) {
+    foeRow.classList.add('attacking');
+    setTimeout(() => foeRow.classList.remove('attacking'), 500);
+  }
   const skills = battle.foe.mon.skills || ['tail'];
   // pick random skill it can afford
   const usable = skills.filter(s => (SKILLS[s].mp || 0) <= battle.foe.mon.mp);
@@ -1752,6 +1958,7 @@ function foeTurn() {
     spawnParticles('my-row', skill.fx);
     spawnDmg('my-row', dmg);
     shakeRow('my-row');
+    hitFlashRow('my-row');
     sfxHit();
     setBattleMessage(foeDef.name + 'の ' + skill.msg + ' ' + dmg + 'ダメージ！');
   }
@@ -1763,6 +1970,7 @@ function foeTurn() {
       return;
     }
     battle.turn = 'me';
+    setTurnUI('me');
     showCommands();
     setBattleMessage('どうする？');
   }, 1100);
@@ -1775,7 +1983,7 @@ function onMyFaint() {
   if (next) {
     battle.me.mon = next;
     refreshBattleUI();
-    setTimeout(() => { showCommands(); setBattleMessage(getMonsterDef(next.id).name + 'が とびだした！'); }, 800);
+    setTimeout(() => { battle.turn = 'me'; setTurnUI('me'); showCommands(); setBattleMessage(getMonsterDef(next.id).name + 'が とびだした！'); }, 800);
   } else {
     loseBattle();
   }
@@ -1785,6 +1993,8 @@ function winBattle() {
   battle.ended = true;
   hideCommands();
   hideAllSubPanels();
+  setTurnUI(null);
+  $('turn-label').innerHTML = '🎉 かった！';
   sfxWin();
   // exp + coins
   const foe = battle.foe;
@@ -1850,6 +2060,8 @@ function loseBattle() {
   battle.ended = true;
   hideCommands();
   hideAllSubPanels();
+  setTurnUI(null);
+  $('turn-label').innerHTML = '💧 まけちゃった...';
   sfxLose();
   setBattleMessage('まけてしまった... <br>すこし HPを かいふくして もどろう。');
   // revive minimum
@@ -2153,7 +2365,15 @@ function flashScreen() {
 function shakeRow(id) {
   const r = $(id);
   r.classList.add('shake');
-  setTimeout(() => r.classList.remove('shake'), 400);
+  setTimeout(() => r.classList.remove('shake'), 450);
+}
+function hitFlashRow(id) {
+  const r = $(id);
+  if (!r) return;
+  r.classList.remove('hit-flash');
+  void r.offsetWidth;
+  r.classList.add('hit-flash');
+  setTimeout(() => r.classList.remove('hit-flash'), 450);
 }
 function spawnDmg(rowId, amt, kind) {
   const row = $(rowId);
