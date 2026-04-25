@@ -1054,6 +1054,135 @@
   .stage-pick h3 { color: #d63384; margin-bottom: 4px; font-size: 16px; }
   .stage-pick p { font-size: 12px; color: #666; }
 
+  /* ===== WORLD MAP ===== */
+  #stage-scene {
+    background: linear-gradient(180deg,#ffe6f5 0%,#d6f0ff 50%,#c0e8c0 100%);
+  }
+  #map-area {
+    flex: 1; position: relative; overflow-x: auto; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: linear-gradient(180deg,#ffe6f5 0%,#d6f0ff 50%,#c0e8c0 100%);
+  }
+  #map-canvas-wrap {
+    position: relative;
+    width: 2600px; height: 800px;
+    background:
+      radial-gradient(circle at 10% 30%, rgba(255, 200, 230, 0.5), transparent 25%),
+      radial-gradient(circle at 30% 60%, rgba(255, 230, 150, 0.4), transparent 25%),
+      radial-gradient(circle at 50% 30%, rgba(180, 220, 255, 0.5), transparent 25%),
+      radial-gradient(circle at 70% 60%, rgba(180, 240, 180, 0.5), transparent 25%),
+      radial-gradient(circle at 90% 30%, rgba(255, 200, 240, 0.5), transparent 25%),
+      linear-gradient(180deg,#fff5e0 0%,#e0f5ff 50%,#e0ffe0 100%);
+  }
+  #map-paths {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  #map-decor { position: absolute; inset: 0; pointer-events: none; }
+  #map-decor .world-banner {
+    position: absolute;
+    top: 20px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #fff, #ffe0f0);
+    border: 3px solid #ff8fc0;
+    border-radius: 14px;
+    padding: 6px 14px;
+    color: #d63384;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.18);
+    white-space: nowrap;
+  }
+  #map-decor .world-fence {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 4px;
+    background: repeating-linear-gradient(180deg, #ff8fc0 0 12px, transparent 12px 22px);
+    opacity: 0.55;
+  }
+  #map-nodes { position: absolute; inset: 0; }
+  .map-node {
+    position: absolute;
+    width: 64px; height: 64px;
+    margin: -32px 0 0 -32px;
+    border-radius: 50%;
+    background: linear-gradient(180deg,#fff,#ffeaf5);
+    border: 3px solid #ffb0d8;
+    color: #d63384;
+    font-weight: bold;
+    font-size: 13px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.18);
+    user-select: none;
+    transition: transform 0.12s;
+  }
+  .map-node:active { transform: scale(0.93); }
+  .map-node .node-label { font-size: 13px; line-height: 1; }
+  .map-node .node-emoji { font-size: 18px; line-height: 1; margin-top: 2px; }
+  .map-node.cleared {
+    background: linear-gradient(180deg,#fff8d8,#ffd54a);
+    border-color: #ffb000;
+    color: #c44d00;
+  }
+  .map-node.cleared::before {
+    content: '⭐';
+    position: absolute;
+    top: -14px; right: -10px;
+    font-size: 22px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .map-node.current {
+    background: linear-gradient(180deg,#fff,#ffd0e8);
+    border-color: #ff4090;
+    animation: nodePulse 1.1s infinite;
+    z-index: 5;
+  }
+  .map-node.current::after {
+    content: 'ココ';
+    position: absolute;
+    top: -22px; left: 50%;
+    transform: translateX(-50%);
+    background: #ff4090;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  @keyframes nodePulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255, 64, 144, 0.6), 0 4px 8px rgba(0,0,0,0.18); }
+    50%     { box-shadow: 0 0 0 12px rgba(255, 64, 144, 0), 0 4px 8px rgba(0,0,0,0.18); }
+  }
+  .map-node.locked {
+    background: linear-gradient(180deg,#ddd,#aaa);
+    border-color: #888;
+    color: #555;
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  }
+  .map-node.locked .node-emoji { font-size: 22px; }
+  .map-node.boss { border-width: 4px; }
+  .map-node.boss.cleared { border-color: #ff8a00; }
+
+  #map-avatar {
+    position: absolute;
+    width: 56px; height: 56px;
+    margin: -50px 0 0 -28px;  /* 上に乗せる */
+    pointer-events: none;
+    transition: left 0.5s ease, top 0.5s ease;
+    z-index: 10;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.3));
+  }
+  #map-avatar svg { width: 100%; height: 100%; }
+
+  @media (max-width: 480px) {
+    .map-node { width: 56px; height: 56px; margin: -28px 0 0 -28px; font-size: 12px; }
+    .map-node .node-emoji { font-size: 16px; }
+    #map-avatar { width: 44px; height: 44px; margin: -42px 0 0 -22px; }
+  }
+
   .center-row { display: flex; justify-content: center; }
 
   /* ===== STARTER SELECT ===== */
@@ -1247,14 +1376,19 @@
   <div id="starter-fly"></div>
 </div>
 
-<!-- ====== STAGE SELECT ====== -->
+<!-- ====== WORLD MAP (旧 STAGE SELECT) ====== -->
 <div id="stage-scene" class="scene">
   <div id="field-header">
-    <span class="stage-name"><ruby>冒険<rt>ぼうけん</rt></ruby>のステージをえらぼう</span>
+    <span class="stage-name">せかいの ちず</span>
     <span class="coins">💰<span id="stage-coins">0</span></span>
   </div>
-  <div id="field-area">
-    <div id="stage-list" style="padding: 14px;"></div>
+  <div id="map-area">
+    <div id="map-canvas-wrap">
+      <svg id="map-paths" width="2600" height="800" viewBox="0 0 2600 800" preserveAspectRatio="none"></svg>
+      <div id="map-decor"></div>
+      <div id="map-nodes"></div>
+      <div id="map-avatar"></div>
+    </div>
   </div>
   <div id="field-bottom">
     <button class="btn yellow" id="btn-stage-party"><ruby>手持<rt>ても</rt></ruby>ち</button>
@@ -1484,9 +1618,19 @@ function switchScene(id) {
   }
   if (typeof playBgm === 'function') {
     if (id === 'title-scene') playBgm('title');
+    else if (id === 'stage-scene') {
+      // ワールドマップ表示中はタイトル曲を流用
+      playBgm('title');
+    }
     else if (id === 'field-scene') {
-      const sid = (typeof state !== 'undefined' && state && state.curStage) ? state.curStage : 1;
-      playBgm('stage' + sid);
+      // curStage は 'W-K' 形式の文字列。先頭のワールドIDで stageX BGM を選ぶ
+      let worldId = 1;
+      if (typeof state !== 'undefined' && state && state.curStage) {
+        const cs = String(state.curStage);
+        const m = cs.match(/^(\d+)/);
+        if (m) worldId = parseInt(m[1], 10);
+      }
+      playBgm('stage' + worldId);
     }
     else if (id === 'battle-scene') {
       const isTotonBattle = (typeof battle !== 'undefined' && battle && battle.isToton);
@@ -1938,13 +2082,94 @@ const MONSTERS = [
 function getMonsterDef(id) { return MONSTERS.find(m => m.id === id); }
 
 // ===================== STAGES =====================
-const STAGES = [
-  { id:1, name:'プリキュアの<ruby>森<rt>もり</rt></ruby>',     bg:'linear-gradient(180deg,#ffe6f5,#d6f0a0)', mobs:[1,4,10,13,20], lvl:[2,5], boss:{id:14, lvl:8} },
-  { id:2, name:'お<ruby>菓子<rt>かし</rt></ruby>のまち',         bg:'linear-gradient(180deg,#ffe0a0,#ffd0e8)', mobs:[1,7,15,20,24], lvl:[6,10], boss:{id:25, lvl:14} },
-  { id:3, name:'キラキラ<ruby>城<rt>じょう</rt></ruby>',         bg:'linear-gradient(180deg,#d8c0ff,#ffe0a0)', mobs:[2,8,11,15,22], lvl:[12,18], boss:{id:17, lvl:22} },
-  { id:4, name:'ふしぎな<ruby>湖<rt>みずうみ</rt></ruby>',       bg:'linear-gradient(180deg,#a0e0ff,#80c0e0)', mobs:[5,8,18,22,26], lvl:[18,26], boss:{id:23, lvl:30} },
-  { id:5, name:'<ruby>虹<rt>にじ</rt></ruby>のお<ruby>城<rt>しろ</rt></ruby>', bg:'linear-gradient(180deg,#ffd0e8,#a0d8f0,#ffe080)', mobs:[3,6,9,12,17,19,29], lvl:[28,38], boss:{id:30, lvl:45} }
+// 25ステージ（5ワールド×5サブ）。スーパーマリオ風のワールドマップ用
+// id は 'W-K' 形式の文字列。worldId, mapPos(マップ上のpx座標) を持つ
+const WORLD_DEFS = [
+  { id:1, name:'ピンクのもり',            bg:'linear-gradient(180deg,#ffe6f5,#d6f0a0)',                 mobs:[1,13,20,22,26], low:3,  high:10, midBossId:2,  bossId:3,   bossLvl:12 },
+  { id:2, name:'きいろの<ruby>平原<rt>へいげん</rt></ruby>', bg:'linear-gradient(180deg,#ffe0a0,#ffd0e8)',                 mobs:[7,15,24,4],     low:8,  high:16, midBossId:8,  bossId:9,   bossLvl:18 },
+  { id:3, name:'あおぞら',                bg:'linear-gradient(180deg,#a0d8f0,#d8c0ff)',                 mobs:[4,5,18,22,15],  low:14, high:24, midBossId:5,  bossId:23,  bossLvl:26 },
+  { id:4, name:'みどりの<ruby>森<rt>もり</rt></ruby>',         bg:'linear-gradient(180deg,#a0e0a0,#80c080)',                 mobs:[10,11,24,26,27,18], low:22, high:34, midBossId:11, bossId:28, bossLvl:36 },
+  { id:5, name:'<ruby>虹<rt>にじ</rt></ruby>のお<ruby>城<rt>しろ</rt></ruby>', bg:'linear-gradient(180deg,#ffd0e8,#a0d8f0,#ffe080)', mobs:[3,6,9,12,17,19,29], low:30, high:45, midBossId:19, bossId:30, bossLvl:45 }
 ];
+
+// 各ワールド5サブの相対x配置（ワールド内 0..1）。曲線パスっぽく上下に振る
+const SUBSTAGE_OFFSETS = [
+  { dx:0.10, dy: 80 }, // N-1
+  { dx:0.30, dy:-60 }, // N-2
+  { dx:0.50, dy: 40 }, // N-3 中ボス
+  { dx:0.70, dy:-40 }, // N-4
+  { dx:0.90, dy: 80 }  // N-5 ボス
+];
+
+const MAP_W = 2600;
+const MAP_H = 800;
+const WORLD_MAP_BASE_Y = 420; // マップ中央付近を基準に上下に振る
+
+const STAGES = (function buildStages(){
+  const arr = [];
+  const worldW = MAP_W / WORLD_DEFS.length;
+  WORLD_DEFS.forEach((w, wi) => {
+    SUBSTAGE_OFFSETS.forEach((off, si) => {
+      const k = si + 1; // 1..5
+      const id = w.id + '-' + k;
+      let mobCount, lvlLo, lvlHi, boss = null, midBoss = null;
+      // 難度規約
+      if (k === 1)      { mobCount = 4;  lvlLo = w.low;     lvlHi = w.low + 2; }
+      else if (k === 2) { mobCount = 8;  lvlLo = w.low + 1; lvlHi = w.low + 4; }
+      else if (k === 3) { mobCount = 4;  lvlLo = w.low + 2; lvlHi = w.low + 5; midBoss = { id: w.midBossId, lvl: Math.floor((w.low + w.high) / 2) - 2 }; }
+      else if (k === 4) { mobCount = 10; lvlLo = w.low + 3; lvlHi = w.low + 7; }
+      else              { mobCount = 4;  lvlLo = w.low + 5; lvlHi = w.high;    boss = { id: w.bossId, lvl: w.bossLvl }; }
+      const px = Math.round(wi * worldW + off.dx * worldW);
+      const py = Math.round(WORLD_MAP_BASE_Y + off.dy);
+      const subLabel = ['はじまり','すすむ','ちょっとずつ','もうすこし','ボス'][si];
+      arr.push({
+        id,
+        worldId: w.id,
+        sub: k,
+        name: id + ' ' + w.name + (k===5?'のボス':k===3?'のなかほど':''),
+        shortName: id,
+        bg: w.bg,
+        mobs: w.mobs,
+        lvl: [lvlLo, lvlHi],
+        mobCount,
+        boss,
+        midBoss,
+        mapPos: { x: px, y: py }
+      });
+    });
+  });
+  return arr;
+})();
+
+// ステージ解禁判定: 1-1は常に解禁、N-K は (K>1 なら N-(K-1) クリア) または (K===1 なら N===1 or (N-1)-5 クリア)
+function isStageUnlocked(stageId) {
+  if (!stageId) return false;
+  const m = String(stageId).match(/^(\d+)-(\d+)$/);
+  if (!m) return false;
+  const N = parseInt(m[1], 10), K = parseInt(m[2], 10);
+  if (N === 1 && K === 1) return true;
+  const cleared = (state && Array.isArray(state.cleared)) ? state.cleared : [];
+  if (K > 1) return cleared.includes(N + '-' + (K - 1));
+  return cleared.includes((N - 1) + '-5');
+}
+
+// 「いまココ」の対象ステージ: 解禁済みでまだ未クリアの最も若いステージ
+function getCurrentTargetStageId() {
+  for (const s of STAGES) {
+    if (isStageUnlocked(s.id) && !(state.cleared || []).includes(s.id)) return s.id;
+  }
+  return STAGES[STAGES.length - 1].id; // 全クリ済みなら最後
+}
+
+// クリア後に新たに解禁される次のステージID（無ければ null）
+function getNextStageId(stageId) {
+  const m = String(stageId).match(/^(\d+)-(\d+)$/);
+  if (!m) return null;
+  const N = parseInt(m[1], 10), K = parseInt(m[2], 10);
+  if (K < 5) return N + '-' + (K + 1);
+  if (N < 5) return (N + 1) + '-1';
+  return null;
+}
 
 // ===================== ITEMS =====================
 // dropOnly:true なアイテムはショップに並ばない（戦闘ドロップ専用）
@@ -1952,7 +2177,7 @@ const ITEMS = {
   ball:    { name:'ふつうボール',   icon:'⚪', rate:1.0, desc:'モンスターを つかまえるボール', price: 100 },
   superball:{ name:'スーパーボール', icon:'🟦', rate:1.5, desc:'よく つかまるボール', price: 300 },
   hyperball:{ name:'ハイパーボール', icon:'🟨', rate:2.0, desc:'とても よく つかまる', price: 800 },
-  masterball:{name:'マスターボール', icon:'🎯', rate:99, desc:'ぜったい つかまる！すごいボール', price: 5000, unlockStage: 5, masterball: true },
+  masterball:{name:'マスターボール', icon:'🎯', rate:99, desc:'ぜったい つかまる！すごいボール', price: 5000, unlockStage: '5-5', masterball: true },
   potion:  { name:'かいふくのみ',   icon:'🍓', heal:30, desc:'HPを30 かいふく', price: 60 },
   hipotion:{ name:'スーパーのみ',   icon:'🍎', heal:80, desc:'HPを80 かいふく', price: 180 },
   fullpotion:{name:'まんたんのみ',  icon:'🍰', heal:9999, desc:'HPぜんかい', price: 500 },
@@ -1976,7 +2201,12 @@ function applyDemoMode() {
   if (!_isDemoMode || !state) return;
   if (!state.bag) state.bag = {};
   if ((state.bag.masterball || 0) < 99) state.bag.masterball = 99;
-  if (!state.unlocked || state.unlocked < 5) state.unlocked = 5;
+  // 25ステージ全解禁にするため、5-5 以外の全IDを cleared に詰める（5-5 は新鮮にプレイ可）
+  if (!Array.isArray(state.cleared)) state.cleared = [];
+  for (const s of STAGES) {
+    if (s.id === '5-5') continue;
+    if (!state.cleared.includes(s.id)) state.cleared.push(s.id);
+  }
 }
 
 // ===================== STATE =====================
@@ -1985,14 +2215,14 @@ let state = {
   box: [],
   bag: { ball: 5, potion: 3 },
   coins: 200,
-  unlocked: 1,
-  cleared: [],
-  curStage: null,
-  fieldMobs: [],   // { x, y, id, lvl, defeated, isBoss, dx, dy, dir }
+  cleared: [],     // 文字列 'W-K' のリスト
+  curStage: null,  // 'W-K' or null
+  fieldMobs: [],   // { x, y, id, lvl, defeated, isBoss, isMidBoss, dx, dy, dir }
   field: null,     // { px, py, dir, walkPhase, w, h }
   fieldChests: {}, // { [stageId]: [{ x, y, opened, item }] }  各ステージの宝箱
   minimapVisible: true,
-  invertDrag: true
+  invertDrag: true,
+  v2WorldMapShown: false
 };
 
 function makeMon(id, lvl) {
@@ -2037,7 +2267,7 @@ function expForNext(lvl) { return Math.floor(8 + lvl * lvl * 1.2); }
 // ===================== SAVE / LOAD =====================
 const SAVE_KEY = 'kurumi_pokemon_v1';
 const BACKUP_KEY = 'kurumi_pokemon_v1_backup';
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 let lastSaveToastAt = 0;
 
 function showSaveToast(isError) {
@@ -2104,12 +2334,31 @@ function migrateSaveData(data) {
   // 必須フィールドのデフォルト補完（v1 → v2 共通）
   if (!Array.isArray(data.box)) data.box = [];
   if (typeof data.coins !== 'number') data.coins = 0;
-  if (typeof data.unlocked !== 'number') data.unlocked = 1;
   if (!Array.isArray(data.cleared)) data.cleared = [];
   if (!data.bag || typeof data.bag !== 'object') data.bag = { ball: 5, potion: 3 };
   if (!Array.isArray(data.fieldMobs)) data.fieldMobs = [];
   if (typeof data.field === 'undefined') data.field = null;
   if (typeof data.curStage === 'undefined') data.curStage = null;
+
+  // === v3: 25ステージ・ワールドマップ移行 ===
+  // 旧 cleared が数値配列なら新形式へ。手持ち/ボックス/コインは温存。
+  const oldNumberCleared = data.cleared.some(v => typeof v === 'number');
+  if (oldNumberCleared) {
+    data.cleared = [];
+    data.curStage = null;
+    data.fieldMobs = [];
+    data.field = null;
+    data.fieldChests = {};
+    data.v2WorldMapShown = false;
+  }
+  // 不要になった旧 unlocked は保持しても害は無いが、curStage が数値ならリセット
+  if (typeof data.curStage === 'number') {
+    data.curStage = null;
+    data.field = null;
+    data.fieldMobs = [];
+  }
+  if (typeof data.v2WorldMapShown !== 'boolean') data.v2WorldMapShown = false;
+  // 旧 unlocked プロパティは新ロジックでは未使用（互換のため残置）
   // === 宝箱・ミニマップ（v2.1で追加） 旧セーブにない場合は初期化 ===
   if (!data.fieldChests || typeof data.fieldChests !== 'object' || Array.isArray(data.fieldChests)) {
     data.fieldChests = {};
@@ -2876,14 +3125,14 @@ function startNewGame() {
     box: [],
     bag: { ball: 5, potion: 3 },
     coins: 200,
-    unlocked: 1,
     cleared: [],
     curStage: null,
     fieldMobs: [],
     field: null,
     fieldChests: {},
     minimapVisible: true,
-    invertDrag: true
+    invertDrag: true,
+    v2WorldMapShown: true
   };
   applyDemoMode();
   // ※ ここでは saveGame しない（party空のため saveGame ガードで保存されない & タイトル既存セーブを温存）
@@ -3017,22 +3266,122 @@ function confirmStarter() {
   }, 3100);
 }
 
-// ===================== STAGE SELECT =====================
-function goStageSelect() {
+// ===================== WORLD MAP (旧 STAGE SELECT) =====================
+function goStageSelect() { return goWorldMap(); }
+function goWorldMap() {
   switchScene('stage-scene');
   $('stage-coins').textContent = state.coins;
-  const list = $('stage-list');
-  list.innerHTML = '';
+  renderWorldMap();
+  // 一度だけ移行のお知らせ
+  if (state && state.cleared && state.v2WorldMapShown === false) {
+    state.v2WorldMapShown = true;
+    try { saveGame(true); } catch(e) {}
+    setTimeout(() => showToast('あたらしい せかいに ようこそ！<br>てもちの ポケモンは そのままだよ', 3000), 400);
+  }
+}
+
+function renderWorldMap() {
+  const decor = $('map-decor');
+  const nodesEl = $('map-nodes');
+  const svg = $('map-paths');
+  const avatar = $('map-avatar');
+  if (!decor || !nodesEl || !svg || !avatar) return;
+
+  decor.innerHTML = '';
+  nodesEl.innerHTML = '';
+  svg.innerHTML = '';
+
+  const worldW = MAP_W / WORLD_DEFS.length;
+  WORLD_DEFS.forEach((w, wi) => {
+    const cx = Math.round(wi * worldW + worldW / 2);
+    const banner = document.createElement('div');
+    banner.className = 'world-banner';
+    banner.style.left = cx + 'px';
+    banner.innerHTML = 'ワールド ' + w.id + ' ' + w.name;
+    decor.appendChild(banner);
+    if (wi > 0) {
+      const fence = document.createElement('div');
+      fence.className = 'world-fence';
+      fence.style.left = (wi * worldW) + 'px';
+      decor.appendChild(fence);
+    }
+  });
+
+  const target = getCurrentTargetStageId();
+
+  // パスを先に描く（ノードの下）
+  for (let i = 0; i < STAGES.length - 1; i++) {
+    const a = STAGES[i], b = STAGES[i+1];
+    const cleared = state.cleared.includes(a.id);
+    const nextUnlocked = isStageUnlocked(b.id);
+    let stroke, dash;
+    if (cleared && state.cleared.includes(b.id)) { stroke = '#ffb000'; dash = '0'; }
+    else if (cleared || nextUnlocked) { stroke = '#ff8fc0'; dash = '6 6'; }
+    else { stroke = '#bbb'; dash = '4 8'; }
+    const x1 = a.mapPos.x, y1 = a.mapPos.y;
+    const x2 = b.mapPos.x, y2 = b.mapPos.y;
+    const mx = (x1 + x2) / 2;
+    const cy1 = y1 + (y2 - y1) * 0.2 + (i % 2 === 0 ? -40 : 40);
+    const cy2 = y2 - (y2 - y1) * 0.2 + (i % 2 === 0 ? -40 : 40);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${x1} ${y1} C ${mx} ${cy1}, ${mx} ${cy2}, ${x2} ${y2}`);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', stroke);
+    path.setAttribute('stroke-width', '6');
+    path.setAttribute('stroke-linecap', 'round');
+    if (dash !== '0') path.setAttribute('stroke-dasharray', dash);
+    svg.appendChild(path);
+  }
+
+  // ノード
   STAGES.forEach(s => {
     const cleared = state.cleared.includes(s.id);
-    const locked = s.id > state.unlocked;
-    const div = document.createElement('div');
-    div.className = 'stage-pick' + (locked ? ' locked' : '') + (cleared ? ' cleared' : '');
-    div.innerHTML = `<h3>${cleared?'⭐':''}ステージ${s.id}：${s.name}${cleared?'⭐':''}</h3>
-      <p>レベル${s.lvl[0]}〜${s.lvl[1]} のモンスターが いるよ。${locked?' (ロック<ruby>中<rt>ちゅう</rt></ruby>)':''}</p>`;
-    if (!locked) attachTap(div, () => enterStage(s));
-    list.appendChild(div);
+    const unlocked = isStageUnlocked(s.id);
+    const isCurrent = (s.id === target) && unlocked && !cleared;
+    const div = document.createElement('button');
+    div.type = 'button';
+    div.className = 'map-node';
+    if (cleared) div.classList.add('cleared');
+    if (isCurrent) div.classList.add('current');
+    if (!unlocked) div.classList.add('locked');
+    if (s.boss) div.classList.add('boss');
+    div.style.left = s.mapPos.x + 'px';
+    div.style.top  = s.mapPos.y + 'px';
+    let emoji = '';
+    if (!unlocked) emoji = '🔒';
+    else if (s.boss) emoji = '👑';
+    else if (s.midBoss) emoji = '💪';
+    div.innerHTML = `<span class="node-label">${s.id}</span>` + (emoji ? `<span class="node-emoji">${emoji}</span>` : '');
+    if (unlocked) attachTap(div, () => {
+      // アバターを移動演出してから入場
+      moveAvatarTo(s, () => enterStage(s));
+    });
+    nodesEl.appendChild(div);
   });
+
+  // アバター（ココ）の初期位置
+  const here = STAGES.find(s => s.id === target) || STAGES[0];
+  avatar.innerHTML = svgKurumi();
+  avatar.style.left = here.mapPos.x + 'px';
+  avatar.style.top  = here.mapPos.y + 'px';
+
+  // スクロール: アバター位置を中心に
+  const wrap = $('map-area');
+  if (wrap) {
+    setTimeout(() => {
+      const cx = here.mapPos.x - wrap.clientWidth / 2;
+      wrap.scrollLeft = Math.max(0, cx);
+    }, 0);
+  }
+}
+
+function moveAvatarTo(stage, done) {
+  const avatar = $('map-avatar');
+  if (!avatar) { if (done) done(); return; }
+  avatar.style.left = stage.mapPos.x + 'px';
+  avatar.style.top  = stage.mapPos.y + 'px';
+  // CSS transition は 0.5s。短めに 320ms で入場へ
+  setTimeout(() => { if (done) done(); }, 320);
 }
 
 // ===================== FIELD (walk + encounter) =====================
@@ -3090,15 +3439,16 @@ function enterStage(stage) {
 
 function generateFieldMobs(stage) {
   state.fieldMobs = [];
-  // 12 random mobs spread across the world (avoid top spawn area)
-  const count = 12;
+  const count = stage.mobCount || 8;
+  // grid 3 x ceil(count/3) に分散配置（既存ロジックを流用）
+  const cols = 3;
+  const rows = Math.max(1, Math.ceil(count / cols));
+  const cellW = WORLD_W / cols;
+  const cellH = (WORLD_H - 400) / rows;
   for (let i = 0; i < count; i++) {
     const id = pick(stage.mobs);
     const lvl = rand(stage.lvl[0], stage.lvl[1]);
-    // grid-ish placement to avoid overlap
-    const col = i % 3, row = Math.floor(i / 3);
-    const cellW = WORLD_W / 3;
-    const cellH = (WORLD_H - 400) / Math.ceil(count / 3);
+    const col = i % cols, row = Math.floor(i / cols);
     const cx = col * cellW + 60 + Math.random() * (cellW - 120);
     const cy = 260 + row * cellH + Math.random() * (cellH - 80);
     state.fieldMobs.push({
@@ -3106,28 +3456,40 @@ function generateFieldMobs(stage) {
       x: cx, y: cy,
       defeated: false,
       isBoss: false,
-      // wandering motion
       dx: (Math.random() - 0.5) * 0.8,
       dy: (Math.random() - 0.5) * 0.8,
       wanderTimer: rand(40, 120)
     });
   }
-  // Boss at bottom-center
-  state.fieldMobs.push({
-    id: stage.boss.id, lvl: stage.boss.lvl,
-    x: WORLD_W / 2, y: WORLD_H - 140,
-    defeated: false,
-    isBoss: true,
-    dx: 0, dy: 0,
-    wanderTimer: 0
-  });
+  // 中ボス（N-3）：見た目は isBoss:true で大きく出すが、isMidBoss でクリア判定を分離
+  if (stage.midBoss) {
+    state.fieldMobs.push({
+      id: stage.midBoss.id, lvl: stage.midBoss.lvl,
+      x: WORLD_W / 2, y: WORLD_H - 140,
+      defeated: false,
+      isBoss: true,
+      isMidBoss: true,
+      dx: 0, dy: 0,
+      wanderTimer: 0
+    });
+  }
+  // ワールドボス（N-5）
+  if (stage.boss) {
+    state.fieldMobs.push({
+      id: stage.boss.id, lvl: stage.boss.lvl,
+      x: WORLD_W / 2, y: WORLD_H - 140,
+      defeated: false,
+      isBoss: true,
+      dx: 0, dy: 0,
+      wanderTimer: 0
+    });
+  }
 
   // ===== 隠しキャラ「とーとん」スポーン処理 =====
-  // ステージ5（虹のお城）でのみ、1〜2%の確率で1体出現。
-  // 通常モブに加えて配置される（最大1体）。
-  // デモモード(?demo=1)では50%に上昇
+  // 対応ステージで 1.5% / デモ50% で1体スポーン
   const totonRate = _isDemoMode ? 0.5 : 0.015;
-  if (stage.id === 5 && Math.random() < totonRate) {
+  // 通常とーとん（id:99）: 5-4
+  if (stage.id === '5-4' && Math.random() < totonRate) {
     const tx = 100 + Math.random() * (WORLD_W - 200);
     const ty = 320 + Math.random() * (WORLD_H - 500);
     state.fieldMobs.push({
@@ -3136,23 +3498,22 @@ function generateFieldMobs(stage) {
       x: tx, y: ty,
       defeated: false,
       isBoss: false,
-      isToton: true,   // 特殊フラグ
+      isToton: true,
       dx: (Math.random() - 0.5) * 0.6,
       dy: (Math.random() - 0.5) * 0.6,
       wanderTimer: rand(40, 120)
     });
   }
-
-  // ===== 雷とーとん（ステージ2、1.5% / デモ50%） =====
-  if (stage.id === 2 && Math.random() < totonRate) {
+  // 雷とーとん（id:96）: 2-4
+  if (stage.id === '2-4' && Math.random() < totonRate) {
     spawnLegendaryToton(96, stage);
   }
-  // ===== 炎とーとん（ステージ3、1.5% / デモ50%） =====
-  if (stage.id === 3 && Math.random() < totonRate) {
+  // 炎とーとん（id:97）: 3-4
+  if (stage.id === '3-4' && Math.random() < totonRate) {
     spawnLegendaryToton(97, stage);
   }
-  // ===== 氷とーとん（ステージ4、1.5% / デモ50%） =====
-  if (stage.id === 4 && Math.random() < totonRate) {
+  // 氷とーとん（id:98）: 4-4
+  if (stage.id === '4-4' && Math.random() < totonRate) {
     spawnLegendaryToton(98, stage);
   }
 }
@@ -3169,7 +3530,7 @@ function tryTerastalSpawn() {
   if (top4.length < 4 || top4.join(',') !== want.join(',')) return;
   if (state.fieldMobs.some(m => m.id === 95 && !m.defeated)) return;
 
-  const stage = STAGES.find(s => s.id === 5);
+  const stage = STAGES.find(s => s.id === '5-5') || STAGES.find(s => s.worldId === 5);
   spawnLegendaryToton(95, stage, { lvl: 1, godTier: true });
   showToast('!? せかいが ゆれている…');
   if (typeof sfxLevel === 'function') sfxLevel();
@@ -4298,12 +4659,36 @@ function winBattle() {
     if (battle.fieldIdx != null && state.fieldMobs[battle.fieldIdx]) {
       state.fieldMobs[battle.fieldIdx].defeated = true;
     }
-    // Boss clear
-    if (battle.isBoss) {
-      const stage = STAGES.find(s => s.id === state.curStage);
-      if (!state.cleared.includes(stage.id)) state.cleared.push(stage.id);
-      if (stage.id + 1 <= STAGES.length && state.unlocked < stage.id + 1) state.unlocked = stage.id + 1;
-      showToast('🎊 ボスを たおした！つぎのステージが ひらいた！', 2400);
+    // ステージクリア判定
+    // - ボス/中ボス撃破 → そのステージクリア
+    // - 通常ステージ(N-1/N-2/N-4)は 全モブ撃破でクリア
+    const stage = STAGES.find(s => s.id === state.curStage);
+    let didClear = false;
+    let isWorldBossClear = false;
+    if (stage) {
+      if (battle.isBoss) {
+        if (!state.cleared.includes(stage.id)) {
+          state.cleared.push(stage.id);
+          didClear = true;
+        }
+        // 中ボスかボスかを fieldIdx の mob で判定
+        const km = (battle.fieldIdx != null) ? state.fieldMobs[battle.fieldIdx] : null;
+        isWorldBossClear = !(km && km.isMidBoss);
+      } else if (!stage.boss && !stage.midBoss) {
+        const remaining = state.fieldMobs.filter(m => !m.defeated);
+        if (remaining.length === 0 && !state.cleared.includes(stage.id)) {
+          state.cleared.push(stage.id);
+          didClear = true;
+        }
+      }
+    }
+    if (didClear) {
+      const nextId = getNextStageId(stage.id);
+      if (nextId) {
+        showToast(isWorldBossClear ? '🎊 ワールドボスを たおした！つぎの ワールドが ひらいた！' : '🎊 ステージクリア！つぎが ひらいた！', 2400);
+      } else {
+        showToast('🌈 ぜんぶ クリア！おめでとう！', 2800);
+      }
     }
     saveGame(true);
 
@@ -4319,10 +4704,13 @@ function winBattle() {
 }
 
 function returnToFieldOrStage() {
-  if (battle.isBoss) {
+  // ステージがクリア済みになっていたら ワールドマップへ。それ以外はフィールド継続
+  const stage = STAGES.find(s => s.id === state.curStage);
+  const justCleared = stage && state.cleared.includes(stage.id);
+  if (battle.isBoss || justCleared) {
     state.field = null;
     state.curStage = null;
-    goStageSelect();
+    goWorldMap();
   } else {
     enterStageRefresh();
   }
@@ -5077,8 +5465,16 @@ function goShop() {
     if (!it.price) return;
     // dropOnly はショップに並ばない（戦闘ドロップ専用）
     if (it.dropOnly) return;
-    // unlockStage 設定があり、まだ解禁してない場合は表示しない
-    if (it.unlockStage && (state.unlocked || 0) < it.unlockStage) return;
+    // unlockStage 設定があり、対応するステージID をクリアしていない場合は表示しない
+    if (it.unlockStage) {
+      const need = it.unlockStage;
+      if (typeof need === 'string') {
+        if (!state.cleared || !state.cleared.includes(need)) return;
+      } else if (typeof need === 'number') {
+        // 旧データ互換（数値の場合は N-5 をクリア済みかで判定）
+        if (!state.cleared || !state.cleared.includes(need + '-5')) return;
+      }
+    }
     const row = document.createElement('div');
     row.className = 'shop-item';
     const have = state.bag[key] || 0;
@@ -5154,8 +5550,8 @@ function setupUI() {
     applyMinimapVisibility();
     saveGame(true);
 
-    // 隠しコマンド: 虹のお城で4兄弟連れて10連打 → テラスタルとーとんキョダイマックス出現
-    if (state.curStage === 5) {
+    // 隠しコマンド: 虹のお城ボス(5-5)で4兄弟連れて10連打 → テラスタルとーとんキョダイマックス出現
+    if (state.curStage === '5-5') {
       _terastalTapCount++;
       clearTimeout(_terastalTapTimer);
       _terastalTapTimer = setTimeout(() => { _terastalTapCount = 0; }, 5000);
