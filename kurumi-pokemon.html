@@ -1474,7 +1474,10 @@ function switchScene(id) {
       const sid = (typeof state !== 'undefined' && state && state.curStage) ? state.curStage : 1;
       playBgm('stage' + sid);
     }
-    else if (id === 'battle-scene') playBgm('battle');
+    else if (id === 'battle-scene') {
+      const isTotonBattle = (typeof battle !== 'undefined' && battle && battle.isToton);
+      playBgm(isTotonBattle ? 'totonBattle' : 'battle');
+    }
   }
 }
 
@@ -1620,6 +1623,33 @@ const BGM_TRACKS = {
       {n:'A2',d:0.25},{n:'A2',d:0.25},{n:'A2',d:0.25},{n:'A2',d:0.25},
       {n:'F2',d:0.25},{n:'F2',d:0.25},{n:'F2',d:0.25},{n:'F2',d:0.25},
       {n:'E2',d:0.25},{n:'E2',d:0.25},{n:'E2',d:0.25},{n:'E2',d:0.25},
+    ] },
+  // ===== とーとん戦専用：FFラスボス風（D minor、ドラマティック） =====
+  totonBattle: { tempo: 96, leadType:'square', bassType:'sawtooth',
+    lead: [
+      // 第1フレーズ：宣言（D minor 上昇）
+      {n:'D5',d:0.5},{n:'F5',d:0.5},{n:'A5',d:0.5},{n:'D6',d:0.5},
+      {n:'C6',d:0.5},{n:'A5',d:0.5},{n:'F5',d:0.75},{n:'E5',d:0.25},
+      // 第2フレーズ：Bb→A7 半音下降の不穏
+      {n:'D6',d:0.5},{n:'Bb5',d:0.5},{n:'F5',d:0.5},{n:'D5',d:0.5},
+      {n:'C#5',d:0.5},{n:'E5',d:0.5},{n:'G5',d:0.5},{n:'A5',d:0.5},
+      // 第3フレーズ：壮大な高音上昇
+      {n:'D5',d:0.25},{n:'F5',d:0.25},{n:'A5',d:0.25},{n:'D6',d:0.25},{n:'F6',d:0.5},{n:'D6',d:0.5},
+      {n:'A5',d:0.5},{n:'F5',d:0.5},{n:'D5',d:1.0},
+      // 第4フレーズ：終結
+      {n:'A5',d:1.5},{n:'G5',d:0.5},
+      {n:'F5',d:0.5},{n:'E5',d:0.5},{n:'D5',d:1.0},
+    ],
+    bass: [
+      // 8拍 × 8小節分（重い四分音符の足音）
+      {n:'D2',d:0.5},{n:'D2',d:0.5},{n:'A2',d:0.5},{n:'A2',d:0.5},
+      {n:'D2',d:0.5},{n:'D2',d:0.5},{n:'A2',d:0.5},{n:'A2',d:0.5},
+      {n:'Bb2',d:0.5},{n:'Bb2',d:0.5},{n:'F2',d:0.5},{n:'F2',d:0.5},
+      {n:'A2',d:0.5},{n:'A2',d:0.5},{n:'E2',d:0.5},{n:'E2',d:0.5},
+      {n:'D2',d:0.5},{n:'D2',d:0.5},{n:'A2',d:0.5},{n:'A2',d:0.5},
+      {n:'G2',d:0.5},{n:'G2',d:0.5},{n:'D2',d:0.5},{n:'D2',d:0.5},
+      {n:'A2',d:0.5},{n:'A2',d:0.5},{n:'C#3',d:0.5},{n:'C#3',d:0.5},
+      {n:'D2',d:0.5},{n:'A2',d:0.5},{n:'D2',d:1.0},
     ] },
 };
 
