@@ -1,0 +1,2307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>キラキラ☆シールちょう</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; font-family: "Hiragino Maru Gothic ProN", "Comic Sans MS", "Yu Gothic", sans-serif; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: linear-gradient(180deg, #ffe0f0 0%, #ffd6ec 50%, #c9e4ff 100%);
+    touch-action: manipulation;
+    color: #4a3050;
+    overscroll-behavior: none;
+    -webkit-touch-callout: none;
+  }
+  rt { font-size: 0.55em; color: #e91e63; font-weight: normal; }
+
+  /* Portal back button */
+  #portalBtn {
+    position: fixed; top: 8px; left: 8px; z-index: 9999;
+    background: linear-gradient(to bottom, #ff8fc0, #d63384);
+    color: #fff; text-decoration: none;
+    padding: 6px 10px; border-radius: 50%;
+    font-size: 18px; font-weight: bold;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    touch-action: manipulation;
+    display: inline-block; line-height: 1;
+  }
+  #portalBtn:active { transform: scale(0.92); opacity: 0.85; }
+
+  /* Mute toggle */
+  #muteBtn {
+    position: fixed; top: 8px; right: 8px; z-index: 9999;
+    background: linear-gradient(to bottom, #fff4a0, #ffd040);
+    color: #6b4500; padding: 6px 10px; border-radius: 50%;
+    font-size: 16px; font-weight: bold;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    cursor: pointer;
+  }
+  #muteBtn:active { transform: scale(0.92); }
+
+  /* Scenes */
+  .scene {
+    position: fixed; inset: 0;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .scene.active { display: flex; }
+
+  /* Common buttons */
+  .btn {
+    background: linear-gradient(180deg, #ffb0d8 0%, #ff7ab8 100%);
+    color: #fff;
+    border: 3px solid #fff;
+    border-radius: 22px;
+    padding: 10px 18px;
+    font-size: 17px;
+    font-weight: bold;
+    box-shadow: 0 4px 0 #c44d85, 0 6px 12px rgba(255,111,168,0.4);
+    cursor: pointer;
+    text-shadow: 1px 1px 0 #d63384;
+    transition: transform 0.08s, box-shadow 0.08s;
+    letter-spacing: 1px;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #c44d85, 0 2px 4px rgba(255,111,168,0.4); }
+  .btn:disabled { opacity: 0.5; }
+  .btn.purple { background: linear-gradient(180deg, #d6b0ff 0%, #a878f5 100%); box-shadow: 0 4px 0 #6030a0, 0 6px 12px rgba(168,120,245,0.4); text-shadow: 1px 1px 0 #6030a0; }
+  .btn.blue { background: linear-gradient(180deg, #aee3ff 0%, #5cb8f5 100%); box-shadow: 0 4px 0 #2a6da6, 0 6px 12px rgba(92,184,245,0.4); text-shadow: 1px 1px 0 #2a6da6; }
+  .btn.yellow { background: linear-gradient(180deg, #ffe89a 0%, #ffc94a 100%); box-shadow: 0 4px 0 #c08820, 0 6px 12px rgba(255,201,74,0.4); text-shadow: 1px 1px 0 #c08820; color: #6b4500; }
+  .btn.green { background: linear-gradient(180deg, #c0f0a8 0%, #80d860 100%); box-shadow: 0 4px 0 #4a8030, 0 6px 12px rgba(128,216,96,0.4); text-shadow: 1px 1px 0 #4a8030; }
+  .btn.gray { background: linear-gradient(180deg, #d8d8d8 0%, #a0a0a0 100%); box-shadow: 0 4px 0 #555, 0 6px 12px rgba(120,120,120,0.4); text-shadow: 1px 1px 0 #555; }
+
+  /* ===== TITLE ===== */
+  #title-scene {
+    justify-content: center; align-items: center;
+    padding: 20px; text-align: center;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.4), transparent 40%),
+      radial-gradient(circle at 80% 30%, rgba(201, 160, 255, 0.4), transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(255, 182, 193, 0.5), transparent 50%),
+      linear-gradient(180deg, #ffe0f0 0%, #ffc9e6 40%, #ffb3d9 70%, #c0a0ff 100%);
+    position: relative;
+  }
+  #title-scene h1 {
+    font-size: clamp(32px, 9vw, 56px);
+    font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(135deg, #ff4090, #ffd700, #ff6fa8, #c870ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-stroke: 2px #fff;
+    margin-bottom: 10px;
+    text-shadow: 0 4px 8px rgba(255,80,180,0.4);
+    animation: titleBounce 2s ease-in-out infinite;
+  }
+  @keyframes titleBounce {
+    0%, 100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-6px) rotate(1deg); }
+  }
+  #title-scene .sub {
+    font-size: 18px; color: #d63384; font-weight: bold;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px 0 #fff;
+  }
+  #title-buttons {
+    display: flex; flex-direction: column; gap: 14px;
+    width: 80%; max-width: 320px;
+  }
+  #title-buttons .btn { font-size: 22px; padding: 16px 22px; }
+
+  .title-deco {
+    position: absolute; font-size: 34px;
+    pointer-events: none;
+    animation: floatDeco 3s ease-in-out infinite;
+  }
+  @keyframes floatDeco {
+    0%,100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-12px) rotate(8deg); }
+  }
+
+  /* ===== MAIN ===== */
+  #main-scene {
+    background:
+      radial-gradient(circle at 30% 10%, rgba(255,200,230,0.5), transparent 40%),
+      linear-gradient(180deg, #fff0f8 0%, #ffe0ee 100%);
+  }
+  #top-bar {
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 50px 6px 50px;
+    background: linear-gradient(180deg, #ff80c0, #ff6fa8);
+    color: #fff;
+    border-bottom: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    font-weight: bold;
+    font-size: 14px;
+    height: 44px;
+  }
+  #stars-display {
+    background: rgba(255,255,255,0.3);
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 16px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  #theme-name {
+    font-size: 15px;
+    text-shadow: 1px 1px 0 #c44d85;
+  }
+
+  /* Board (main canvas area) */
+  #board-wrap {
+    flex: 1;
+    position: relative;
+    margin: 6px;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(255,80,180,0.2);
+  }
+  #board {
+    width: 100%; height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  /* placed sticker */
+  .placed {
+    position: absolute;
+    width: 64px; height: 64px;
+    transform: translate(-50%,-50%);
+    cursor: grab;
+    transition: transform 0.1s;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+    touch-action: none;
+  }
+  .placed.dragging { z-index: 999; transform: translate(-50%,-50%) scale(1.15); filter: drop-shadow(0 6px 8px rgba(0,0,0,0.4)); }
+  .placed.removing { animation: stickerPop 0.3s forwards; }
+  @keyframes stickerPop {
+    to { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+  }
+
+  /* Bottom shelf (inventory) */
+  #bottom-bar {
+    flex-shrink: 0;
+    background: linear-gradient(180deg, #fff4ff, #ffe0f0);
+    border-top: 3px solid #fff;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+    padding: 4px 4px 6px;
+    height: 150px;
+    display: flex; flex-direction: column;
+  }
+  #cat-tabs {
+    display: flex; gap: 3px;
+    overflow-x: auto;
+    padding: 2px;
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  #cat-tabs::-webkit-scrollbar { display: none; }
+  .cat-tab {
+    flex-shrink: 0;
+    background: #fff;
+    border: 2px solid #ffb0d8;
+    border-radius: 14px;
+    padding: 3px 8px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #d63384;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .cat-tab.active {
+    background: linear-gradient(180deg, #ff80c0, #ff5096);
+    color: #fff;
+    border-color: #fff;
+    box-shadow: 0 2px 4px rgba(255,80,180,0.4);
+  }
+  #inventory {
+    flex: 1;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px;
+    align-items: center;
+    scrollbar-width: thin;
+  }
+  .inv-sticker {
+    flex-shrink: 0;
+    width: 64px; height: 64px;
+    background: #fff;
+    border: 2px solid #ffb0d8;
+    border-radius: 14px;
+    padding: 4px;
+    cursor: grab;
+    position: relative;
+    touch-action: none;
+    transition: transform 0.1s;
+  }
+  .inv-sticker:active { transform: scale(0.92); }
+  .inv-sticker.empty { opacity: 0.3; cursor: default; }
+  .inv-sticker .count {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    background: #ff5096;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 1px 5px;
+    border-radius: 10px;
+    border: 2px solid #fff;
+    min-width: 18px; text-align: center;
+  }
+  .inv-sticker.rare { border-color: #5cb8f5; box-shadow: 0 0 6px rgba(92,184,245,0.5); }
+  .inv-sticker.srare { border-color: #c870ff; box-shadow: 0 0 8px rgba(200,112,255,0.6); }
+  .inv-sticker.urare {
+    border-color: #ffd700;
+    box-shadow: 0 0 12px rgba(255,215,0,0.8);
+    animation: shineUR 1.5s linear infinite;
+  }
+  @keyframes shineUR {
+    0%,100% { box-shadow: 0 0 8px rgba(255,215,0,0.6); }
+    50% { box-shadow: 0 0 16px rgba(255,215,0,1); }
+  }
+
+  /* Right command pad */
+  #cmd-pad {
+    position: fixed;
+    top: 56px;
+    right: 6px;
+    display: flex; flex-direction: column;
+    gap: 6px;
+    z-index: 50;
+  }
+  .cmd-btn {
+    width: 48px; height: 48px;
+    background: linear-gradient(180deg, #fff, #ffe0f0);
+    border: 3px solid #ff80c0;
+    border-radius: 14px;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #c44d85, 0 4px 8px rgba(0,0,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cmd-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #c44d85; }
+
+  /* Left small pad (size etc.) */
+  #left-pad {
+    position: fixed;
+    top: 56px;
+    left: 6px;
+    display: flex; flex-direction: column;
+    gap: 6px;
+    z-index: 50;
+  }
+
+  /* Drag follower */
+  #drag-follower {
+    position: fixed;
+    width: 80px; height: 80px;
+    pointer-events: none;
+    z-index: 9000;
+    transform: translate(-50%,-50%) scale(1.1);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+    display: none;
+  }
+
+  /* Gacha overlay */
+  #gacha-overlay {
+    position: fixed; inset: 0;
+    background: rgba(50,20,80,0.85);
+    z-index: 5000;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #gacha-overlay.active { display: flex; }
+  #gacha-box {
+    width: 220px; height: 220px;
+    position: relative;
+    transition: transform 0.4s;
+  }
+  #gacha-box.shake { animation: gachaShake 0.4s ease-in-out 3; }
+  @keyframes gachaShake {
+    0%,100% { transform: rotate(0); }
+    25% { transform: rotate(-12deg); }
+    75% { transform: rotate(12deg); }
+  }
+  #gacha-result {
+    margin-top: 20px;
+    text-align: center;
+    color: #fff;
+    display: none;
+  }
+  #gacha-result.show { display: block; animation: gachaResultIn 0.6s ease-out; }
+  @keyframes gachaResultIn {
+    0% { transform: scale(0.2) rotate(-10deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  #gacha-result svg { width: 160px; height: 160px; filter: drop-shadow(0 0 20px gold); }
+  #gacha-result .gname {
+    font-size: 28px; font-weight: 900;
+    background: linear-gradient(135deg, #fff, #ffd700);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-top: 10px;
+    -webkit-text-stroke: 1px #ff80c0;
+  }
+  #gacha-result .grarity {
+    font-size: 18px;
+    margin-top: 4px;
+    font-weight: bold;
+  }
+  #gacha-buttons {
+    margin-top: 22px;
+    display: flex; gap: 14px;
+    display: none;
+  }
+  #gacha-buttons.show { display: flex; }
+
+  /* sparkles */
+  .spark {
+    position: absolute;
+    pointer-events: none;
+    font-size: 20px;
+    animation: sparkAnim 0.8s ease-out forwards;
+  }
+  @keyframes sparkAnim {
+    0% { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
+    100% { transform: translate(var(--tx,0),var(--ty,-40px)) scale(1.3); opacity: 0; }
+  }
+  .ur-burst {
+    position: fixed; inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+  }
+
+  /* Theme picker */
+  #theme-scene {
+    background: linear-gradient(180deg, #ffe0f0 0%, #c0a0ff 100%);
+    overflow-y: auto;
+    padding: 50px 10px 20px;
+    display: none;
+  }
+  #theme-scene.active { display: block; }
+  #theme-scene h2 {
+    text-align: center;
+    color: #fff;
+    font-size: 26px;
+    text-shadow: 2px 2px 0 #d63384;
+    margin: 4px 0 14px;
+  }
+  #theme-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .theme-card {
+    aspect-ratio: 4/3;
+    border-radius: 18px;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: flex-end;
+    transition: transform 0.1s;
+  }
+  .theme-card:active { transform: scale(0.96); }
+  .theme-card .tlabel {
+    width: 100%;
+    background: rgba(255,255,255,0.85);
+    padding: 6px;
+    text-align: center;
+    font-weight: bold;
+    color: #d63384;
+    font-size: 14px;
+  }
+  .theme-card.locked {
+    filter: grayscale(0.7) brightness(0.7);
+  }
+  .theme-card.locked::after {
+    content: '🔒';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 50px;
+  }
+
+  /* Album/Zukan */
+  #zukan-scene {
+    background: linear-gradient(180deg, #c0a0ff 0%, #ffb3d9 100%);
+    overflow-y: auto;
+    padding: 50px 10px 20px;
+    display: none;
+  }
+  #zukan-scene.active { display: block; }
+  #zukan-scene h2 {
+    text-align: center;
+    color: #fff;
+    font-size: 26px;
+    text-shadow: 2px 2px 0 #6030a0;
+    margin: 4px 0 6px;
+  }
+  #zukan-progress {
+    text-align: center;
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 0 #6030a0;
+  }
+  .zukan-section {
+    background: rgba(255,255,255,0.6);
+    border-radius: 16px;
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+  .zukan-section h3 {
+    color: #6030a0;
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .zukan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    gap: 6px;
+  }
+  .zukan-cell {
+    aspect-ratio: 1;
+    background: #fff;
+    border: 2px solid #c0a0ff;
+    border-radius: 10px;
+    padding: 4px;
+    position: relative;
+  }
+  .zukan-cell.locked { background: #e8d8ff; }
+  .zukan-cell.locked svg { filter: brightness(0); opacity: 0.2; }
+
+  /* Mini game (renda) */
+  #mini-overlay {
+    position: fixed; inset: 0;
+    background: rgba(255,200,240,0.95);
+    z-index: 6000;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #mini-overlay.active { display: flex; }
+  #mini-overlay h2 {
+    font-size: 30px;
+    color: #d63384;
+    text-shadow: 2px 2px 0 #fff;
+    margin-bottom: 14px;
+  }
+  #mini-counter {
+    font-size: 60px;
+    font-weight: 900;
+    color: #ff5096;
+    text-shadow: 3px 3px 0 #fff;
+  }
+  #mini-timer {
+    font-size: 22px;
+    color: #6030a0;
+    margin-bottom: 14px;
+    font-weight: bold;
+  }
+  #mini-btn {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    border: 6px solid #fff;
+    background: radial-gradient(circle at 30% 30%, #ff80c0, #d63384);
+    color: #fff;
+    font-size: 50px;
+    box-shadow: 0 6px 0 #c44d85, 0 8px 16px rgba(0,0,0,0.3);
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  #mini-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c44d85; }
+  #mini-result { margin-top: 20px; font-size: 22px; color: #6030a0; font-weight: bold; }
+
+  /* Card / Photo mode */
+  #card-overlay {
+    position: fixed; inset: 0;
+    background: rgba(40,20,60,0.92);
+    z-index: 6500;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #card-overlay.active { display: flex; }
+  #card-canvas-wrap {
+    background: #fff;
+    border: 6px solid gold;
+    border-radius: 18px;
+    box-shadow: 0 0 30px gold;
+    padding: 8px;
+    max-width: 95vw;
+    max-height: 70vh;
+  }
+  #card-canvas-wrap canvas, #card-canvas-wrap img {
+    max-width: 100%;
+    max-height: 60vh;
+    display: block;
+    border-radius: 10px;
+  }
+  #card-overlay .help {
+    color: #fff; margin-top: 12px; font-size: 14px;
+    text-align: center;
+  }
+
+  /* Modal */
+  #modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 8000;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #modal-bg.active { display: flex; }
+  #modal-box {
+    background: #fff;
+    border-radius: 18px;
+    border: 4px solid #ff80c0;
+    padding: 18px;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  }
+  #modal-title { font-size: 20px; color: #d63384; margin-bottom: 8px; font-weight: bold; }
+  #modal-body { color: #555; margin-bottom: 14px; font-size: 16px; }
+  #modal-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(50,20,80,0.85);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 9500;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Floating sparkles around board */
+  .bg-sparkle {
+    position: absolute;
+    pointer-events: none;
+    font-size: 18px;
+    opacity: 0.5;
+    animation: bgSparkAnim 4s linear infinite;
+  }
+  @keyframes bgSparkAnim {
+    0%,100% { transform: translateY(0) rotate(0); opacity: 0.3; }
+    50% { transform: translateY(-12px) rotate(180deg); opacity: 0.8; }
+  }
+
+  /* Sticker glow on placement */
+  .placed.justplaced { animation: placedAnim 0.5s; }
+  @keyframes placedAnim {
+    0% { transform: translate(-50%,-50%) scale(1.5); filter: drop-shadow(0 0 10px gold); }
+    100% { transform: translate(-50%,-50%) scale(1); }
+  }
+
+  /* Responsive tweaks */
+  @media (max-height: 600px) {
+    #bottom-bar { height: 120px; }
+    .cmd-btn { width: 42px; height: 42px; font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<a id="portalBtn" href="./" aria-label="ポータルへもどる">🏠</a>
+<button id="muteBtn" aria-label="おとON/OFF">🔊</button>
+
+<!-- ============= TITLE SCENE ============= -->
+<div id="title-scene" class="scene active">
+  <div class="title-deco" style="top:8%; left:10%;">⭐</div>
+  <div class="title-deco" style="top:14%; right:12%; animation-delay:0.5s;">💖</div>
+  <div class="title-deco" style="bottom:20%; left:8%; animation-delay:1s;">🌸</div>
+  <div class="title-deco" style="bottom:30%; right:14%; animation-delay:1.5s;">✨</div>
+  <div class="title-deco" style="top:30%; left:20%; animation-delay:0.8s;">🦄</div>
+  <div class="title-deco" style="bottom:10%; right:20%; animation-delay:1.2s;">🌟</div>
+  <h1>キラキラ☆<br>シールちょう</h1>
+  <div class="sub">あつめて♪ はって♪ かわいくしよう！</div>
+  <div id="title-buttons">
+    <button class="btn" id="btn-new">✨ はじめる</button>
+    <button class="btn purple" id="btn-continue">📖 つづきから</button>
+    <button class="btn yellow" id="btn-zukan-from-title">🌟 シールずかん</button>
+  </div>
+</div>
+
+<!-- ============= MAIN SCENE ============= -->
+<div id="main-scene" class="scene">
+  <div id="top-bar">
+    <div id="theme-name">🌸 おはなばたけ</div>
+    <div id="stars-display">⭐ <span id="stars-num">20</span></div>
+  </div>
+  <div id="board-wrap">
+    <div id="board"></div>
+  </div>
+  <div id="bottom-bar">
+    <div id="cat-tabs"></div>
+    <div id="inventory"></div>
+  </div>
+
+  <div id="cmd-pad">
+    <button class="cmd-btn" id="btn-gacha" aria-label="シールゲット">🎁</button>
+    <button class="cmd-btn" id="btn-theme" aria-label="だいし">🖼️</button>
+    <button class="cmd-btn" id="btn-zukan" aria-label="ずかん">📖</button>
+    <button class="cmd-btn" id="btn-photo" aria-label="しゃしん">📷</button>
+    <button class="cmd-btn" id="btn-mini" aria-label="ミニゲーム">🎮</button>
+    <button class="cmd-btn" id="btn-bonus" aria-label="おまけ">🎀</button>
+  </div>
+</div>
+
+<!-- ============= THEME SELECT SCENE ============= -->
+<div id="theme-scene" class="scene">
+  <h2>🖼️ どのだいしにする？</h2>
+  <div id="theme-grid"></div>
+  <div style="text-align:center; margin-top:16px;">
+    <button class="btn gray" id="theme-back">← もどる</button>
+  </div>
+</div>
+
+<!-- ============= ZUKAN SCENE ============= -->
+<div id="zukan-scene" class="scene">
+  <h2>📖 シールずかん</h2>
+  <div id="zukan-progress">あつめたシール: 0/60</div>
+  <div id="zukan-content"></div>
+  <div style="text-align:center; margin-top:16px;">
+    <button class="btn gray" id="zukan-back">← もどる</button>
+  </div>
+</div>
+
+<!-- ============= GACHA OVERLAY ============= -->
+<div id="gacha-overlay">
+  <div id="gacha-box">
+    <svg viewBox="0 0 200 200" width="100%" height="100%">
+      <defs>
+        <linearGradient id="boxGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffe89a"/>
+          <stop offset="1" stop-color="#ffc94a"/>
+        </linearGradient>
+      </defs>
+      <rect x="20" y="60" width="160" height="120" rx="14" fill="url(#boxGrad)" stroke="#fff" stroke-width="4"/>
+      <rect id="boxLid" x="14" y="40" width="172" height="40" rx="10" fill="#ff80c0" stroke="#fff" stroke-width="4"/>
+      <rect x="92" y="40" width="16" height="140" fill="#ff5096"/>
+      <circle cx="100" cy="40" r="14" fill="#ff5096" stroke="#fff" stroke-width="3"/>
+      <text x="100" y="46" text-anchor="middle" font-size="18" fill="#fff" font-weight="bold">★</text>
+    </svg>
+  </div>
+  <div id="gacha-result">
+    <div id="gacha-svg-wrap"></div>
+    <div class="gname" id="gacha-name"></div>
+    <div class="grarity" id="gacha-rarity"></div>
+  </div>
+  <div id="gacha-buttons">
+    <button class="btn yellow" id="btn-gacha-again">もういっかい</button>
+    <button class="btn green" id="btn-gacha-ok">OK！</button>
+  </div>
+</div>
+
+<!-- ============= MINI GAME OVERLAY ============= -->
+<div id="mini-overlay">
+  <h2>💖 ハート れんだ！</h2>
+  <div id="mini-timer">3</div>
+  <div id="mini-counter">0</div>
+  <button id="mini-btn">💖</button>
+  <div id="mini-result"></div>
+</div>
+
+<!-- ============= CARD/PHOTO OVERLAY ============= -->
+<div id="card-overlay">
+  <div id="card-canvas-wrap"></div>
+  <div class="help">がぞうを <b>ながおし</b> すると ほぞんできるよ！</div>
+  <div style="margin-top:14px; display:flex; gap:10px;">
+    <button class="btn green" id="card-close">OK！</button>
+  </div>
+</div>
+
+<!-- ============= MODAL ============= -->
+<div id="modal-bg">
+  <div id="modal-box">
+    <div id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div id="modal-buttons"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<img id="drag-follower" alt="">
+
+<script>
+// ===================== UTIL =====================
+function attachTap(el, fn) {
+  if (!el) return;
+  let touched = false;
+  el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (!touched || el.disabled) { touched = false; return; }
+    touched = false;
+    e.preventDefault();
+    fn.call(el, e);
+  }, { passive: false });
+  el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
+  el.addEventListener('click', (e) => fn.call(el, e));
+}
+
+function $(id) { return document.getElementById(id); }
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+
+function showToast(msg, ms) {
+  const t = $('toast');
+  t.innerHTML = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), ms || 1500);
+}
+
+function showModal(title, body, buttons) {
+  $('modal-title').innerHTML = title;
+  $('modal-body').innerHTML = body;
+  const bc = $('modal-buttons');
+  bc.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn ' + (b.cls || '');
+    btn.innerHTML = b.label;
+    attachTap(btn, () => { hideModal(); if (b.fn) b.fn(); });
+    bc.appendChild(btn);
+  });
+  $('modal-bg').classList.add('active');
+}
+function hideModal() { $('modal-bg').classList.remove('active'); }
+
+function switchScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// ===================== AUDIO =====================
+let audioCtx = null;
+let muted = false;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function sfx(freq, dur, type, vol) {
+  if (muted) return;
+  ensureAudio(); if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol || 0.12, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, t + (dur || 0.15));
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + (dur || 0.15) + 0.05);
+}
+function sfxTap()    { sfx(880 + Math.random()*200, 0.04, 'sine', 0.06); }
+function sfxPeta()   { sfx(660, 0.06, 'sine', 0.12); setTimeout(()=>sfx(880,0.05,'sine',0.1),40); }
+function sfxRemove() { sfx(440, 0.08, 'triangle', 0.1); setTimeout(()=>sfx(330,0.1,'triangle',0.08),50); }
+function sfxGet()    { sfx(660, 0.08, 'sine', 0.14); setTimeout(()=>sfx(880,0.08,'sine',0.14),80); setTimeout(()=>sfx(1175,0.16,'sine',0.16),160); }
+function sfxRare()   { for (let i=0;i<6;i++) setTimeout(()=>sfx(440+i*120,0.08,'sine',0.12), i*70); }
+function sfxUR()     { for (let i=0;i<10;i++) setTimeout(()=>sfx(523+i*80,0.1,'sine',0.16), i*60); setTimeout(()=>sfx(1568,0.4,'sine',0.18),700); }
+function sfxOpen()   { sfx(330, 0.1, 'sine', 0.12); setTimeout(()=>sfx(523,0.1,'sine',0.12),100); setTimeout(()=>sfx(784,0.18,'sine',0.14),200); }
+function sfxNoStar() { sfx(220, 0.18, 'triangle', 0.14); }
+function sfxBgm() {
+  // tiny twinkle melody loop (handled by interval)
+}
+
+// Soft BGM via interval
+let bgmTimer = null;
+const bgmNotes = [523, 659, 784, 1047, 784, 659, 523, 587, 659, 587];
+let bgmIdx = 0;
+function startBgm() {
+  if (bgmTimer || muted) return;
+  bgmTimer = setInterval(() => {
+    if (muted) return;
+    sfx(bgmNotes[bgmIdx % bgmNotes.length], 0.15, 'sine', 0.04);
+    bgmIdx++;
+  }, 600);
+}
+function stopBgm() {
+  if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; }
+}
+
+// ===================== STICKER DATABASE =====================
+// Each sticker: id, name, cat, rarity ('n','r','sr','ur'), draw(svg) function
+// rarity: n (80%), r (15%), sr (4.5%), ur (0.5%)
+const RARITY = {
+  n:  { name: 'ふつう',    color: '#888', weight: 80 },
+  r:  { name: 'レア',      color: '#5cb8f5', weight: 15 },
+  sr: { name: 'スーパーレア', color: '#c870ff', weight: 4.5 },
+  ur: { name: 'ウルトラレア', color: '#ffd700', weight: 0.5 }
+};
+
+const CATEGORIES = [
+  { id: 'animal', label: '🐰 どうぶつ' },
+  { id: 'flower', label: '🌸 おはな' },
+  { id: 'kira',   label: '⭐ キラキラ' },
+  { id: 'sweet',  label: '🍰 おかし' },
+  { id: 'magic',  label: '🦄 まほう' },
+  { id: 'ride',   label: '🚗 のりもの' },
+  { id: 'food',   label: '🍎 たべもの' },
+  { id: 'princess', label: '👑 おひめさま' },
+  { id: 'rare',   label: '🌟 レア' }
+];
+
+// SVG drawing helpers (small reusable shapes)
+function svgWrap(inner, vbox) {
+  return `<svg viewBox="${vbox||'0 0 100 100'}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
+// Each sticker draws a 100x100 viewbox SVG. Cute, simple shapes.
+const STICKERS = [
+  // ===== Animals =====
+  { id:'a_rabbit', name:'うさぎ', cat:'animal', rarity:'n', draw: () => svgWrap(`
+    <ellipse cx="50" cy="65" rx="28" ry="26" fill="#fff8f0" stroke="#d8a8b0" stroke-width="2"/>
+    <ellipse cx="36" cy="30" rx="8" ry="20" fill="#fff8f0" stroke="#d8a8b0" stroke-width="2"/>
+    <ellipse cx="64" cy="30" rx="8" ry="20" fill="#fff8f0" stroke="#d8a8b0" stroke-width="2"/>
+    <ellipse cx="36" cy="32" rx="4" ry="14" fill="#ffc0d8"/>
+    <ellipse cx="64" cy="32" rx="4" ry="14" fill="#ffc0d8"/>
+    <circle cx="42" cy="60" r="3" fill="#222"/>
+    <circle cx="58" cy="60" r="3" fill="#222"/>
+    <ellipse cx="50" cy="70" rx="3" ry="2" fill="#ff80a0"/>
+    <path d="M50 73 Q45 78 42 76 M50 73 Q55 78 58 76" stroke="#444" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <circle cx="36" cy="70" r="3" fill="#ffd0e0"/>
+    <circle cx="64" cy="70" r="3" fill="#ffd0e0"/>`) },
+  { id:'a_cat', name:'ねこ', cat:'animal', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="55" r="32" fill="#fff0c0" stroke="#c89030" stroke-width="2"/>
+    <polygon points="22,30 32,50 38,30" fill="#fff0c0" stroke="#c89030" stroke-width="2"/>
+    <polygon points="78,30 68,50 62,30" fill="#fff0c0" stroke="#c89030" stroke-width="2"/>
+    <polygon points="26,32 32,46 35,32" fill="#ffc090"/>
+    <polygon points="74,32 68,46 65,32" fill="#ffc090"/>
+    <ellipse cx="40" cy="55" rx="3" ry="4" fill="#222"/>
+    <ellipse cx="60" cy="55" rx="3" ry="4" fill="#222"/>
+    <path d="M50 62 L46 66 L54 66 Z" fill="#ff80a0"/>
+    <path d="M50 66 Q44 72 40 70 M50 66 Q56 72 60 70" stroke="#444" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <line x1="20" y1="60" x2="32" y2="58" stroke="#444" stroke-width="1"/>
+    <line x1="20" y1="65" x2="32" y2="64" stroke="#444" stroke-width="1"/>
+    <line x1="80" y1="60" x2="68" y2="58" stroke="#444" stroke-width="1"/>
+    <line x1="80" y1="65" x2="68" y2="64" stroke="#444" stroke-width="1"/>`) },
+  { id:'a_dog', name:'いぬ', cat:'animal', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="55" r="32" fill="#f0d0a0" stroke="#a07030" stroke-width="2"/>
+    <ellipse cx="28" cy="40" rx="10" ry="16" fill="#a06028" stroke="#704020" stroke-width="2"/>
+    <ellipse cx="72" cy="40" rx="10" ry="16" fill="#a06028" stroke="#704020" stroke-width="2"/>
+    <circle cx="42" cy="55" r="3" fill="#222"/>
+    <circle cx="58" cy="55" r="3" fill="#222"/>
+    <ellipse cx="50" cy="65" rx="6" ry="4" fill="#222"/>
+    <path d="M50 70 Q45 76 42 74 M50 70 Q55 76 58 74" stroke="#444" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <circle cx="50" cy="76" r="2" fill="#ff80a0"/>`) },
+  { id:'a_panda', name:'パンダ', cat:'animal', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="55" r="32" fill="#fff" stroke="#333" stroke-width="2"/>
+    <circle cx="28" cy="34" r="10" fill="#333"/>
+    <circle cx="72" cy="34" r="10" fill="#333"/>
+    <ellipse cx="40" cy="55" rx="7" ry="9" fill="#333"/>
+    <ellipse cx="60" cy="55" rx="7" ry="9" fill="#333"/>
+    <circle cx="40" cy="55" r="3" fill="#fff"/>
+    <circle cx="60" cy="55" r="3" fill="#fff"/>
+    <ellipse cx="50" cy="65" rx="4" ry="3" fill="#222"/>
+    <path d="M46 68 Q50 72 54 68" stroke="#222" stroke-width="1.5" fill="none"/>`) },
+  { id:'a_elephant', name:'ぞう', cat:'animal', rarity:'n', draw: () => svgWrap(`
+    <ellipse cx="50" cy="60" rx="34" ry="28" fill="#c8c0e0" stroke="#7060a0" stroke-width="2"/>
+    <path d="M50 60 Q35 80 35 90 Q35 95 40 95 Q42 92 42 88 Q42 80 50 75 Z" fill="#c8c0e0" stroke="#7060a0" stroke-width="2"/>
+    <ellipse cx="22" cy="50" rx="14" ry="16" fill="#c8c0e0" stroke="#7060a0" stroke-width="2"/>
+    <ellipse cx="78" cy="50" rx="14" ry="16" fill="#c8c0e0" stroke="#7060a0" stroke-width="2"/>
+    <circle cx="42" cy="55" r="3" fill="#222"/>
+    <circle cx="60" cy="55" r="3" fill="#222"/>
+    <circle cx="50" cy="50" r="6" fill="#ffb0d0" opacity="0.5"/>`) },
+  { id:'a_giraffe', name:'キリン', cat:'animal', rarity:'r', draw: () => svgWrap(`
+    <rect x="44" y="20" width="14" height="40" fill="#ffd068" stroke="#a07020" stroke-width="2"/>
+    <ellipse cx="50" cy="22" rx="14" ry="12" fill="#ffd068" stroke="#a07020" stroke-width="2"/>
+    <circle cx="46" cy="22" r="2" fill="#222"/>
+    <circle cx="54" cy="22" r="2" fill="#222"/>
+    <ellipse cx="50" cy="75" rx="22" ry="14" fill="#ffd068" stroke="#a07020" stroke-width="2"/>
+    <circle cx="48" cy="35" r="3" fill="#a07020"/>
+    <circle cx="55" cy="45" r="3" fill="#a07020"/>
+    <circle cx="40" cy="70" r="4" fill="#a07020"/>
+    <circle cx="60" cy="70" r="4" fill="#a07020"/>
+    <circle cx="50" cy="80" r="3" fill="#a07020"/>
+    <line x1="45" y1="14" x2="44" y2="10" stroke="#a07020" stroke-width="2"/>
+    <line x1="55" y1="14" x2="56" y2="10" stroke="#a07020" stroke-width="2"/>
+    <circle cx="44" cy="9" r="2" fill="#a07020"/>
+    <circle cx="56" cy="9" r="2" fill="#a07020"/>`) },
+  { id:'a_bear', name:'くま', cat:'animal', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="55" r="32" fill="#c89060" stroke="#704020" stroke-width="2"/>
+    <circle cx="28" cy="34" r="10" fill="#c89060" stroke="#704020" stroke-width="2"/>
+    <circle cx="72" cy="34" r="10" fill="#c89060" stroke="#704020" stroke-width="2"/>
+    <circle cx="28" cy="34" r="5" fill="#f8d0a0"/>
+    <circle cx="72" cy="34" r="5" fill="#f8d0a0"/>
+    <circle cx="42" cy="55" r="3" fill="#222"/>
+    <circle cx="58" cy="55" r="3" fill="#222"/>
+    <ellipse cx="50" cy="65" rx="9" ry="7" fill="#f8d0a0"/>
+    <circle cx="50" cy="63" r="2.5" fill="#222"/>
+    <path d="M50 67 Q46 72 43 70 M50 67 Q54 72 57 70" stroke="#444" stroke-width="1.5" fill="none"/>`) },
+  { id:'a_pig', name:'ぶた', cat:'animal', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="55" r="32" fill="#ffc0d0" stroke="#c84878" stroke-width="2"/>
+    <polygon points="30,32 40,40 32,42" fill="#ffc0d0" stroke="#c84878" stroke-width="2"/>
+    <polygon points="70,32 60,40 68,42" fill="#ffc0d0" stroke="#c84878" stroke-width="2"/>
+    <ellipse cx="50" cy="62" rx="11" ry="8" fill="#ff90b0" stroke="#c84878" stroke-width="2"/>
+    <circle cx="46" cy="62" r="2" fill="#222"/>
+    <circle cx="54" cy="62" r="2" fill="#222"/>
+    <circle cx="42" cy="52" r="2.5" fill="#222"/>
+    <circle cx="58" cy="52" r="2.5" fill="#222"/>`) },
+
+  // ===== Flowers =====
+  { id:'f_rose', name:'バラ', cat:'flower', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="50" r="22" fill="#ff5096"/>
+    <circle cx="50" cy="50" r="15" fill="#ff80b0"/>
+    <circle cx="50" cy="50" r="8" fill="#ffc0d8"/>
+    <path d="M50 72 Q50 90 50 95" stroke="#5a8030" stroke-width="3" fill="none"/>
+    <path d="M50 80 Q40 78 38 82 Q42 86 50 84" fill="#80b050"/>
+    <path d="M50 85 Q60 83 62 87 Q58 91 50 89" fill="#80b050"/>`) },
+  { id:'f_tulip', name:'チューリップ', cat:'flower', rarity:'n', draw: () => svgWrap(`
+    <path d="M30 50 Q30 25 50 25 Q70 25 70 50 Q60 55 50 50 Q40 55 30 50 Z" fill="#ff80c0" stroke="#a04070" stroke-width="2"/>
+    <path d="M50 35 L50 50" stroke="#a04070" stroke-width="1.5"/>
+    <line x1="50" y1="50" x2="50" y2="92" stroke="#5a8030" stroke-width="3"/>
+    <path d="M50 70 Q35 68 32 78 Q40 82 50 75" fill="#80b050"/>`) },
+  { id:'f_sunflower', name:'ヒマワリ', cat:'flower', rarity:'n', draw: () => svgWrap(`
+    ${[0,45,90,135,180,225,270,315].map(a=>`<ellipse cx="50" cy="20" rx="6" ry="14" fill="#ffd040" stroke="#c08820" stroke-width="1.5" transform="rotate(${a} 50 50)"/>`).join('')}
+    <circle cx="50" cy="50" r="14" fill="#704018"/>
+    <circle cx="50" cy="50" r="10" fill="#a06028"/>
+    <line x1="50" y1="64" x2="50" y2="92" stroke="#5a8030" stroke-width="3"/>
+    <path d="M50 80 Q35 78 32 88 Q40 92 50 85" fill="#80b050"/>`) },
+  { id:'f_cosmos', name:'コスモス', cat:'flower', rarity:'n', draw: () => svgWrap(`
+    ${[0,72,144,216,288].map(a=>`<ellipse cx="50" cy="30" rx="8" ry="14" fill="#ffb0d0" stroke="#c06090" stroke-width="1.5" transform="rotate(${a} 50 50)"/>`).join('')}
+    <circle cx="50" cy="50" r="6" fill="#ffd040"/>
+    <line x1="50" y1="56" x2="50" y2="92" stroke="#5a8030" stroke-width="2"/>`) },
+  { id:'f_cherry', name:'さくら', cat:'flower', rarity:'r', draw: () => svgWrap(`
+    ${[0,72,144,216,288].map(a=>`<g transform="rotate(${a} 50 50)"><path d="M50 28 Q42 35 46 45 Q48 50 50 50 Q52 50 54 45 Q58 35 50 28 Z" fill="#ffc0e0" stroke="#e060a0" stroke-width="1.5"/></g>`).join('')}
+    <circle cx="50" cy="50" r="4" fill="#ffd040"/>`) },
+  { id:'f_clover', name:'クローバー', cat:'flower', rarity:'n', draw: () => svgWrap(`
+    <circle cx="35" cy="40" r="14" fill="#80c850" stroke="#406018" stroke-width="2"/>
+    <circle cx="65" cy="40" r="14" fill="#80c850" stroke="#406018" stroke-width="2"/>
+    <circle cx="50" cy="65" r="14" fill="#80c850" stroke="#406018" stroke-width="2"/>
+    <line x1="50" y1="65" x2="50" y2="95" stroke="#406018" stroke-width="3"/>
+    <path d="M50 50 Q48 56 50 60 Q52 56 50 50" fill="#a0e070"/>`) },
+  { id:'f_dandelion', name:'たんぽぽ', cat:'flower', rarity:'n', draw: () => svgWrap(`
+    ${[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>`<ellipse cx="50" cy="30" rx="3" ry="12" fill="#ffd040" stroke="#c08820" stroke-width="1" transform="rotate(${a} 50 50)"/>`).join('')}
+    <circle cx="50" cy="50" r="9" fill="#ffd040"/>
+    <line x1="50" y1="58" x2="50" y2="92" stroke="#5a8030" stroke-width="3"/>`) },
+
+  // ===== Kira (sparkles) =====
+  { id:'k_heart', name:'ハート', cat:'kira', rarity:'n', draw: () => svgWrap(`
+    <path d="M50 80 C20 60 20 35 35 30 C45 27 50 35 50 40 C50 35 55 27 65 30 C80 35 80 60 50 80 Z" fill="#ff5096" stroke="#fff" stroke-width="3"/>
+    <ellipse cx="38" cy="42" rx="5" ry="7" fill="#fff" opacity="0.5"/>`) },
+  { id:'k_star', name:'スター', cat:'kira', rarity:'n', draw: () => svgWrap(`
+    <polygon points="50,15 60,40 87,40 65,57 73,82 50,67 27,82 35,57 13,40 40,40" fill="#ffd700" stroke="#fff" stroke-width="3"/>
+    <polygon points="50,25 56,42 70,42 60,52 64,68 50,58 36,68 40,52 30,42 44,42" fill="#fff" opacity="0.4"/>`) },
+  { id:'k_crystal', name:'クリスタル', cat:'kira', rarity:'r', draw: () => svgWrap(`
+    <polygon points="50,15 70,35 60,80 40,80 30,35" fill="#a0e0ff" stroke="#fff" stroke-width="2"/>
+    <polygon points="50,15 70,35 60,80" fill="#80c8f0" opacity="0.7"/>
+    <polygon points="50,15 30,35 40,80" fill="#c0f0ff" opacity="0.7"/>
+    <line x1="50" y1="15" x2="50" y2="80" stroke="#fff" stroke-width="1.5"/>`) },
+  { id:'k_rainbow', name:'にじ', cat:'kira', rarity:'r', draw: () => svgWrap(`
+    <path d="M10 70 A40 40 0 0 1 90 70" fill="none" stroke="#ff4040" stroke-width="6"/>
+    <path d="M16 70 A34 34 0 0 1 84 70" fill="none" stroke="#ff8040" stroke-width="6"/>
+    <path d="M22 70 A28 28 0 0 1 78 70" fill="none" stroke="#ffd040" stroke-width="6"/>
+    <path d="M28 70 A22 22 0 0 1 72 70" fill="none" stroke="#80d850" stroke-width="6"/>
+    <path d="M34 70 A16 16 0 0 1 66 70" fill="none" stroke="#5cb8f5" stroke-width="6"/>
+    <path d="M40 70 A10 10 0 0 1 60 70" fill="none" stroke="#c870ff" stroke-width="6"/>
+    <ellipse cx="14" cy="74" rx="8" ry="5" fill="#fff" opacity="0.8"/>
+    <ellipse cx="86" cy="74" rx="8" ry="5" fill="#fff" opacity="0.8"/>`) },
+  { id:'k_mushroom', name:'きのこ', cat:'kira', rarity:'n', draw: () => svgWrap(`
+    <path d="M22 50 Q22 22 50 22 Q78 22 78 50 Z" fill="#ff5050" stroke="#a02020" stroke-width="2"/>
+    <circle cx="40" cy="38" r="5" fill="#fff"/>
+    <circle cx="60" cy="34" r="6" fill="#fff"/>
+    <circle cx="55" cy="48" r="4" fill="#fff"/>
+    <rect x="40" y="50" width="20" height="35" fill="#fff8e0" stroke="#a08030" stroke-width="2"/>
+    <circle cx="46" cy="68" r="2" fill="#222"/>
+    <circle cx="54" cy="68" r="2" fill="#222"/>
+    <path d="M44 74 Q50 78 56 74" stroke="#222" stroke-width="1.5" fill="none"/>`) },
+  { id:'k_diamond', name:'ダイヤ', cat:'kira', rarity:'sr', draw: () => svgWrap(`
+    <polygon points="50,15 80,40 50,90 20,40" fill="#a0e0ff" stroke="#fff" stroke-width="2"/>
+    <polygon points="50,15 80,40 65,40" fill="#fff" opacity="0.8"/>
+    <polygon points="50,15 35,40 20,40" fill="#80c8f0" opacity="0.7"/>
+    <polygon points="35,40 65,40 50,90" fill="#60a0d8" opacity="0.5"/>
+    <line x1="50" y1="15" x2="50" y2="90" stroke="#fff" stroke-width="1"/>`) },
+  { id:'k_sparkle', name:'キラキラ', cat:'kira', rarity:'n', draw: () => svgWrap(`
+    <polygon points="50,15 55,45 85,50 55,55 50,85 45,55 15,50 45,45" fill="#ffd700" stroke="#fff" stroke-width="2"/>
+    <circle cx="50" cy="50" r="6" fill="#fff"/>`) },
+
+  // ===== Sweets =====
+  { id:'s_cake', name:'ケーキ', cat:'sweet', rarity:'n', draw: () => svgWrap(`
+    <rect x="22" y="55" width="56" height="30" rx="3" fill="#ffe0c0" stroke="#a06030" stroke-width="2"/>
+    <path d="M22 55 Q50 40 78 55" fill="#ffc0d8" stroke="#c8508a" stroke-width="2"/>
+    <circle cx="50" cy="38" r="6" fill="#ff5050"/>
+    <circle cx="35" cy="46" r="3" fill="#ff80a0"/>
+    <circle cx="65" cy="46" r="3" fill="#ff80a0"/>
+    <rect x="48" y="22" width="4" height="14" fill="#ffd040"/>
+    <ellipse cx="50" cy="22" rx="3" ry="5" fill="#ff8030"/>`) },
+  { id:'s_donut', name:'ドーナツ', cat:'sweet', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="50" r="32" fill="#e0a060" stroke="#a06030" stroke-width="2"/>
+    <circle cx="50" cy="50" r="32" fill="#ffc0d8" stroke="#c8508a" stroke-width="2" clip-path="circle(28 at 50 30)"/>
+    <path d="M22 40 Q22 18 50 18 Q78 18 78 40 Q78 50 50 50 Q22 50 22 40" fill="#ffc0d8" stroke="#c8508a" stroke-width="2"/>
+    <circle cx="50" cy="50" r="10" fill="#fff" stroke="#a06030" stroke-width="2"/>
+    <rect x="32" y="28" width="4" height="2" fill="#80d850"/>
+    <rect x="48" y="22" width="4" height="2" fill="#5cb8f5"/>
+    <rect x="60" y="30" width="4" height="2" fill="#ffd040"/>
+    <rect x="38" y="38" width="4" height="2" fill="#ff80a0"/>
+    <rect x="58" y="40" width="4" height="2" fill="#c870ff"/>`) },
+  { id:'s_icecream', name:'アイス', cat:'sweet', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="32" r="18" fill="#ffc0d8" stroke="#c8508a" stroke-width="2"/>
+    <circle cx="44" cy="26" r="5" fill="#fff" opacity="0.6"/>
+    <polygon points="32,42 68,42 50,90" fill="#e0b080" stroke="#a06030" stroke-width="2"/>
+    <line x1="38" y1="50" x2="60" y2="58" stroke="#a06030" stroke-width="1"/>
+    <line x1="42" y1="60" x2="58" y2="68" stroke="#a06030" stroke-width="1"/>
+    <line x1="46" y1="70" x2="54" y2="76" stroke="#a06030" stroke-width="1"/>
+    <circle cx="50" cy="14" r="3" fill="#ff5050"/>`) },
+  { id:'s_candy', name:'キャンディ', cat:'sweet', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="50" r="22" fill="#ff80a0" stroke="#c0407a" stroke-width="2"/>
+    <path d="M50 28 A22 22 0 0 1 70 50" stroke="#fff" stroke-width="3" fill="none"/>
+    <path d="M50 50 A22 22 0 0 1 30 70" stroke="#fff" stroke-width="3" fill="none"/>
+    <polygon points="22,42 8,30 8,50" fill="#ffd0e0" stroke="#c0407a" stroke-width="2"/>
+    <polygon points="78,42 92,30 92,50" fill="#ffd0e0" stroke="#c0407a" stroke-width="2"/>`) },
+  { id:'s_parfait', name:'パフェ', cat:'sweet', rarity:'r', draw: () => svgWrap(`
+    <polygon points="30,50 70,50 60,90 40,90" fill="#fff" stroke="#a06030" stroke-width="2" opacity="0.8"/>
+    <ellipse cx="50" cy="50" rx="22" ry="6" fill="#ffc0d8"/>
+    <circle cx="40" cy="42" r="8" fill="#a06030"/>
+    <circle cx="60" cy="42" r="8" fill="#fff8e0"/>
+    <circle cx="50" cy="36" r="8" fill="#ffc0d8"/>
+    <circle cx="50" cy="28" r="5" fill="#ff5050"/>
+    <line x1="55" y1="28" x2="55" y2="14" stroke="#80b050" stroke-width="2"/>
+    <ellipse cx="55" cy="14" rx="3" ry="5" fill="#80c850"/>`) },
+  { id:'s_choco', name:'チョコ', cat:'sweet', rarity:'n', draw: () => svgWrap(`
+    <rect x="20" y="20" width="60" height="60" rx="6" fill="#704020" stroke="#3c2010" stroke-width="2"/>
+    <line x1="40" y1="20" x2="40" y2="80" stroke="#3c2010" stroke-width="2"/>
+    <line x1="60" y1="20" x2="60" y2="80" stroke="#3c2010" stroke-width="2"/>
+    <line x1="20" y1="40" x2="80" y2="40" stroke="#3c2010" stroke-width="2"/>
+    <line x1="20" y1="60" x2="80" y2="60" stroke="#3c2010" stroke-width="2"/>
+    <ellipse cx="32" cy="28" rx="4" ry="2" fill="#fff" opacity="0.4"/>`) },
+  { id:'s_macaron', name:'マカロン', cat:'sweet', rarity:'r', draw: () => svgWrap(`
+    <ellipse cx="50" cy="38" rx="28" ry="14" fill="#ffc0d8" stroke="#c8508a" stroke-width="2"/>
+    <ellipse cx="50" cy="62" rx="28" ry="14" fill="#ffc0d8" stroke="#c8508a" stroke-width="2"/>
+    <ellipse cx="50" cy="50" rx="26" ry="6" fill="#fff8e0" stroke="#c08820" stroke-width="2"/>
+    <ellipse cx="40" cy="34" rx="3" ry="1" fill="#fff" opacity="0.6"/>
+    <ellipse cx="55" cy="36" rx="3" ry="1" fill="#fff" opacity="0.6"/>`) },
+
+  // ===== Magic =====
+  { id:'m_unicorn', name:'ユニコーン', cat:'magic', rarity:'sr', draw: () => svgWrap(`
+    <ellipse cx="50" cy="60" rx="30" ry="22" fill="#fff" stroke="#c0a0e0" stroke-width="2"/>
+    <ellipse cx="32" cy="48" rx="14" ry="18" fill="#fff" stroke="#c0a0e0" stroke-width="2"/>
+    <polygon points="32,30 30,16 38,28" fill="#ffd700" stroke="#c08820" stroke-width="1.5"/>
+    <path d="M22 36 Q14 30 18 50" fill="#ff80c0" stroke="#c0407a" stroke-width="1.5"/>
+    <path d="M22 42 Q12 40 16 60" fill="#80c8f5" stroke="#2a6da6" stroke-width="1.5"/>
+    <circle cx="28" cy="48" r="2" fill="#222"/>
+    <ellipse cx="22" cy="56" rx="3" ry="2" fill="#ff80a0"/>
+    <line x1="60" y1="80" x2="62" y2="92" stroke="#444" stroke-width="2"/>
+    <line x1="40" y1="80" x2="38" y2="92" stroke="#444" stroke-width="2"/>
+    <path d="M75 56 Q90 50 88 70 Q82 64 75 70" fill="#c870ff" stroke="#6030a0" stroke-width="1.5"/>`) },
+  { id:'m_fairy', name:'ようせい', cat:'magic', rarity:'sr', draw: () => svgWrap(`
+    <circle cx="50" cy="42" r="12" fill="#ffe0c0" stroke="#c08060" stroke-width="1.5"/>
+    <ellipse cx="50" cy="38" rx="14" ry="6" fill="#ffd040"/>
+    <ellipse cx="30" cy="50" rx="14" ry="20" fill="#a0e0ff" stroke="#5cb8f5" stroke-width="1.5" opacity="0.7"/>
+    <ellipse cx="70" cy="50" rx="14" ry="20" fill="#ffc0e0" stroke="#c8508a" stroke-width="1.5" opacity="0.7"/>
+    <path d="M44 54 L44 80 L56 80 L56 54 Z" fill="#ffc0e0" stroke="#c8508a" stroke-width="1.5"/>
+    <circle cx="46" cy="42" r="1.5" fill="#222"/>
+    <circle cx="54" cy="42" r="1.5" fill="#222"/>
+    <path d="M46 46 Q50 50 54 46" stroke="#222" stroke-width="1" fill="none"/>`) },
+  { id:'m_crown', name:'おうかん', cat:'magic', rarity:'r', draw: () => svgWrap(`
+    <polygon points="20,50 32,30 42,50 50,28 58,50 68,30 80,50 80,70 20,70" fill="#ffd700" stroke="#c08820" stroke-width="2"/>
+    <circle cx="32" cy="30" r="4" fill="#ff5050"/>
+    <circle cx="50" cy="28" r="4" fill="#5cb8f5"/>
+    <circle cx="68" cy="30" r="4" fill="#80d850"/>
+    <rect x="20" y="62" width="60" height="8" fill="#a08020"/>`) },
+  { id:'m_wand', name:'ステッキ', cat:'magic', rarity:'r', draw: () => svgWrap(`
+    <line x1="60" y1="40" x2="30" y2="80" stroke="#fff" stroke-width="4"/>
+    <line x1="60" y1="40" x2="30" y2="80" stroke="#a060ff" stroke-width="2"/>
+    <polygon points="65,15 72,32 88,32 75,42 80,58 65,48 50,58 55,42 42,32 58,32" fill="#ffd700" stroke="#fff" stroke-width="2"/>
+    <circle cx="65" cy="32" r="5" fill="#fff" opacity="0.6"/>`) },
+  { id:'m_potion', name:'まほうやく', cat:'magic', rarity:'r', draw: () => svgWrap(`
+    <rect x="42" y="14" width="16" height="14" fill="#a08060" stroke="#604030" stroke-width="2"/>
+    <path d="M30 30 Q30 90 50 90 Q70 90 70 30 Z" fill="#c870ff" stroke="#6030a0" stroke-width="2" opacity="0.8"/>
+    <ellipse cx="40" cy="50" rx="3" ry="2" fill="#fff" opacity="0.5"/>
+    <ellipse cx="55" cy="65" rx="3" ry="2" fill="#fff" opacity="0.5"/>
+    <ellipse cx="40" cy="40" rx="14" ry="3" fill="#fff" opacity="0.4"/>
+    <text x="50" y="92" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">★</text>`) },
+  { id:'m_book', name:'まほうのほん', cat:'magic', rarity:'n', draw: () => svgWrap(`
+    <rect x="20" y="22" width="60" height="60" rx="3" fill="#a060c0" stroke="#603080" stroke-width="2"/>
+    <rect x="24" y="26" width="52" height="52" fill="#fff8e0"/>
+    <polygon points="50,38 54,48 64,48 56,54 60,64 50,58 40,64 44,54 36,48 46,48" fill="#ffd700" stroke="#c08820" stroke-width="1"/>
+    <line x1="30" y1="68" x2="70" y2="68" stroke="#a060c0" stroke-width="1.5"/>
+    <line x1="30" y1="73" x2="70" y2="73" stroke="#a060c0" stroke-width="1.5"/>`) },
+
+  // ===== Rides =====
+  { id:'r_car', name:'くるま', cat:'ride', rarity:'n', draw: () => svgWrap(`
+    <rect x="14" y="44" width="72" height="22" rx="6" fill="#ff5050" stroke="#a02020" stroke-width="2"/>
+    <path d="M22 44 L30 28 L70 28 L78 44 Z" fill="#ff8080" stroke="#a02020" stroke-width="2"/>
+    <rect x="34" y="32" width="14" height="10" fill="#a0e0ff"/>
+    <rect x="52" y="32" width="14" height="10" fill="#a0e0ff"/>
+    <circle cx="28" cy="68" r="8" fill="#333"/>
+    <circle cx="28" cy="68" r="3" fill="#888"/>
+    <circle cx="72" cy="68" r="8" fill="#333"/>
+    <circle cx="72" cy="68" r="3" fill="#888"/>
+    <circle cx="20" cy="50" r="3" fill="#fff8a0"/>`) },
+  { id:'r_train', name:'でんしゃ', cat:'ride', rarity:'n', draw: () => svgWrap(`
+    <rect x="12" y="30" width="76" height="40" rx="4" fill="#5cb8f5" stroke="#2a6da6" stroke-width="2"/>
+    <rect x="20" y="36" width="14" height="14" fill="#fff"/>
+    <rect x="40" y="36" width="14" height="14" fill="#fff"/>
+    <rect x="60" y="36" width="14" height="14" fill="#fff"/>
+    <rect x="14" y="60" width="72" height="6" fill="#444"/>
+    <circle cx="28" cy="74" r="5" fill="#222"/>
+    <circle cx="50" cy="74" r="5" fill="#222"/>
+    <circle cx="72" cy="74" r="5" fill="#222"/>
+    <rect x="46" y="22" width="8" height="10" fill="#444"/>`) },
+  { id:'r_plane', name:'ひこうき', cat:'ride', rarity:'r', draw: () => svgWrap(`
+    <ellipse cx="50" cy="50" rx="36" ry="10" fill="#fff" stroke="#5cb8f5" stroke-width="2"/>
+    <polygon points="40,50 14,72 28,72 50,52" fill="#5cb8f5" stroke="#2a6da6" stroke-width="2"/>
+    <polygon points="60,50 86,72 72,72 50,52" fill="#5cb8f5" stroke="#2a6da6" stroke-width="2"/>
+    <polygon points="80,46 90,42 90,58 80,54" fill="#fff" stroke="#5cb8f5" stroke-width="1.5"/>
+    <circle cx="30" cy="50" r="3" fill="#a0e0ff"/>
+    <circle cx="42" cy="50" r="3" fill="#a0e0ff"/>
+    <circle cx="54" cy="50" r="3" fill="#a0e0ff"/>`) },
+  { id:'r_balloon', name:'ききゅう', cat:'ride', rarity:'r', draw: () => svgWrap(`
+    <ellipse cx="50" cy="38" rx="26" ry="30" fill="#ff8080" stroke="#a02020" stroke-width="2"/>
+    <path d="M30 50 Q30 28 50 28 Q70 28 70 50" stroke="#fff" stroke-width="2" fill="none" opacity="0.6"/>
+    <line x1="32" y1="60" x2="40" y2="78" stroke="#444" stroke-width="1.5"/>
+    <line x1="68" y1="60" x2="60" y2="78" stroke="#444" stroke-width="1.5"/>
+    <line x1="50" y1="68" x2="50" y2="78" stroke="#444" stroke-width="1.5"/>
+    <rect x="36" y="78" width="28" height="14" fill="#a06030" stroke="#704020" stroke-width="2"/>`) },
+  { id:'r_boat', name:'ボート', cat:'ride', rarity:'n', draw: () => svgWrap(`
+    <path d="M14 60 L86 60 L78 80 L22 80 Z" fill="#ff8060" stroke="#c04020" stroke-width="2"/>
+    <rect x="48" y="20" width="3" height="40" fill="#a06030"/>
+    <polygon points="51,20 80,40 51,40" fill="#fff" stroke="#c0a0a0" stroke-width="1.5"/>
+    <polygon points="48,42 22,58 48,58" fill="#fff" stroke="#c0a0a0" stroke-width="1.5"/>
+    <line x1="14" y1="62" x2="86" y2="62" stroke="#fff" stroke-width="1.5"/>`) },
+  { id:'r_bike', name:'じてんしゃ', cat:'ride', rarity:'n', draw: () => svgWrap(`
+    <circle cx="28" cy="68" r="14" fill="none" stroke="#444" stroke-width="3"/>
+    <circle cx="72" cy="68" r="14" fill="none" stroke="#444" stroke-width="3"/>
+    <line x1="28" y1="68" x2="50" y2="40" stroke="#ff5096" stroke-width="3"/>
+    <line x1="72" y1="68" x2="50" y2="40" stroke="#ff5096" stroke-width="3"/>
+    <line x1="50" y1="40" x2="58" y2="30" stroke="#ff5096" stroke-width="3"/>
+    <line x1="28" y1="68" x2="36" y2="40" stroke="#ff5096" stroke-width="3"/>
+    <rect x="32" y="34" width="14" height="3" fill="#444"/>
+    <circle cx="50" cy="68" r="4" fill="#444"/>`) },
+
+  // ===== Food =====
+  { id:'fd_apple', name:'りんご', cat:'food', rarity:'n', draw: () => svgWrap(`
+    <path d="M50 30 Q22 30 22 60 Q22 90 50 88 Q78 90 78 60 Q78 30 50 30 Z" fill="#ff5050" stroke="#a02020" stroke-width="2"/>
+    <path d="M50 30 Q48 16 56 14" stroke="#604020" stroke-width="2" fill="none"/>
+    <ellipse cx="56" cy="22" rx="6" ry="3" fill="#80c850" stroke="#406018" stroke-width="1"/>
+    <ellipse cx="40" cy="42" rx="6" ry="3" fill="#fff" opacity="0.5"/>`) },
+  { id:'fd_banana', name:'バナナ', cat:'food', rarity:'n', draw: () => svgWrap(`
+    <path d="M22 70 Q22 30 50 22 Q56 22 60 28 Q40 32 32 60 Q30 76 26 80 Z" fill="#ffd040" stroke="#a07020" stroke-width="2"/>
+    <path d="M50 22 Q56 22 60 28" stroke="#604020" stroke-width="2" fill="none"/>`) },
+  { id:'fd_strawberry', name:'いちご', cat:'food', rarity:'n', draw: () => svgWrap(`
+    <path d="M50 30 Q22 30 26 60 Q40 90 50 90 Q60 90 74 60 Q78 30 50 30 Z" fill="#ff4070" stroke="#a02040" stroke-width="2"/>
+    <polygon points="32,30 38,18 44,28 50,16 56,28 62,18 68,30" fill="#80c850" stroke="#406018" stroke-width="1.5"/>
+    <circle cx="36" cy="50" r="2" fill="#fff8e0"/>
+    <circle cx="50" cy="56" r="2" fill="#fff8e0"/>
+    <circle cx="64" cy="50" r="2" fill="#fff8e0"/>
+    <circle cx="42" cy="68" r="2" fill="#fff8e0"/>
+    <circle cx="58" cy="68" r="2" fill="#fff8e0"/>`) },
+  { id:'fd_grape', name:'ぶどう', cat:'food', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="30" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <circle cx="38" cy="42" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <circle cx="62" cy="42" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <circle cx="30" cy="56" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <circle cx="50" cy="56" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <circle cx="70" cy="56" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <circle cx="40" cy="70" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <circle cx="60" cy="70" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <circle cx="50" cy="82" r="8" fill="#a060c0" stroke="#603080" stroke-width="1.5"/>
+    <path d="M50 22 Q52 14 60 14" stroke="#604020" stroke-width="2" fill="none"/>
+    <ellipse cx="60" cy="14" rx="5" ry="3" fill="#80c850"/>`) },
+  { id:'fd_orange', name:'みかん', cat:'food', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="55" r="30" fill="#ff8030" stroke="#c04010" stroke-width="2"/>
+    <circle cx="50" cy="55" r="22" fill="none" stroke="#fff" stroke-width="1" opacity="0.5"/>
+    <ellipse cx="50" cy="22" rx="8" ry="4" fill="#80c850" stroke="#406018" stroke-width="1.5"/>
+    <ellipse cx="40" cy="44" rx="6" ry="3" fill="#fff" opacity="0.4"/>`) },
+  { id:'fd_watermelon', name:'スイカ', cat:'food', rarity:'r', draw: () => svgWrap(`
+    <path d="M14 50 A36 36 0 0 0 86 50 L14 50 Z" fill="#ff5060" stroke="#a02020" stroke-width="2"/>
+    <path d="M14 50 A36 36 0 0 0 86 50" stroke="#80c850" stroke-width="6" fill="none"/>
+    <path d="M14 50 A36 36 0 0 0 86 50" stroke="#fff" stroke-width="2" fill="none" opacity="0.5"/>
+    <ellipse cx="40" cy="62" rx="2" ry="3" fill="#222"/>
+    <ellipse cx="55" cy="68" rx="2" ry="3" fill="#222"/>
+    <ellipse cx="68" cy="60" rx="2" ry="3" fill="#222"/>
+    <ellipse cx="30" cy="56" rx="2" ry="3" fill="#222"/>`) },
+
+  // ===== Princess =====
+  { id:'p_tiara', name:'ティアラ', cat:'princess', rarity:'sr', draw: () => svgWrap(`
+    <path d="M14 60 Q50 40 86 60 L82 70 L18 70 Z" fill="#ffd700" stroke="#c08820" stroke-width="2"/>
+    <circle cx="50" cy="42" r="6" fill="#ff5096" stroke="#a02060" stroke-width="1.5"/>
+    <circle cx="30" cy="56" r="4" fill="#a0e0ff" stroke="#5cb8f5" stroke-width="1.5"/>
+    <circle cx="70" cy="56" r="4" fill="#a0e0ff" stroke="#5cb8f5" stroke-width="1.5"/>
+    <polygon points="50,30 53,40 50,42 47,40" fill="#fff" opacity="0.7"/>`) },
+  { id:'p_dress', name:'ドレス', cat:'princess', rarity:'r', draw: () => svgWrap(`
+    <path d="M40 22 L60 22 L60 36 L70 40 L65 50 L60 50 L78 90 L22 90 L40 50 L35 50 L30 40 L40 36 Z" fill="#ff80c0" stroke="#a02060" stroke-width="2"/>
+    <circle cx="50" cy="50" r="4" fill="#ffd700"/>
+    <circle cx="40" cy="68" r="3" fill="#fff"/>
+    <circle cx="60" cy="68" r="3" fill="#fff"/>
+    <path d="M22 90 Q50 80 78 90" stroke="#fff" stroke-width="1.5" fill="none"/>
+    <rect x="40" y="22" width="20" height="3" fill="#ffd700"/>`) },
+  { id:'p_shoe', name:'くつ', cat:'princess', rarity:'r', draw: () => svgWrap(`
+    <path d="M14 60 Q14 70 22 72 L78 72 Q86 70 86 60 Q86 50 70 48 L40 44 Q24 42 14 60 Z" fill="#ffc0e0" stroke="#a02060" stroke-width="2"/>
+    <ellipse cx="40" cy="56" rx="6" ry="3" fill="#fff" opacity="0.6"/>
+    <circle cx="30" cy="62" r="3" fill="#ffd700" stroke="#c08820" stroke-width="1"/>
+    <path d="M30 48 Q30 28 50 24" stroke="#a02060" stroke-width="2" fill="none"/>`) },
+  { id:'p_teaset', name:'ティーカップ', cat:'princess', rarity:'r', draw: () => svgWrap(`
+    <path d="M22 40 L22 70 Q22 80 30 80 L60 80 Q68 80 68 70 L68 40 Z" fill="#fff" stroke="#c08820" stroke-width="2"/>
+    <ellipse cx="45" cy="40" rx="23" ry="4" fill="#a06030"/>
+    <ellipse cx="45" cy="40" rx="20" ry="2" fill="#fff8e0"/>
+    <path d="M68 50 Q86 50 86 60 Q86 70 68 70" fill="none" stroke="#c08820" stroke-width="2"/>
+    <circle cx="34" cy="50" r="2" fill="#ff80c0"/>
+    <circle cx="56" cy="55" r="2" fill="#ff80c0"/>`) },
+  { id:'p_mirror', name:'てかがみ', cat:'princess', rarity:'sr', draw: () => svgWrap(`
+    <ellipse cx="50" cy="38" rx="22" ry="26" fill="#a0e0ff" stroke="#ffd700" stroke-width="3"/>
+    <ellipse cx="42" cy="30" rx="8" ry="14" fill="#fff" opacity="0.5"/>
+    <rect x="46" y="64" width="8" height="22" fill="#ffd700" stroke="#c08820" stroke-width="2"/>
+    <ellipse cx="50" cy="88" rx="14" ry="5" fill="#ffd700" stroke="#c08820" stroke-width="2"/>`) },
+  { id:'p_ribbon', name:'リボン', cat:'princess', rarity:'n', draw: () => svgWrap(`
+    <path d="M50 50 L20 30 L20 70 Z" fill="#ff80c0" stroke="#a02060" stroke-width="2"/>
+    <path d="M50 50 L80 30 L80 70 Z" fill="#ff80c0" stroke="#a02060" stroke-width="2"/>
+    <ellipse cx="50" cy="50" rx="8" ry="10" fill="#ff5096" stroke="#a02060" stroke-width="2"/>
+    <path d="M44 60 L40 88 L48 84 Z" fill="#ff80c0" stroke="#a02060" stroke-width="1.5"/>
+    <path d="M56 60 L60 88 L52 84 Z" fill="#ff80c0" stroke="#a02060" stroke-width="1.5"/>`) },
+
+  // ===== Rare (special / ultra rare) =====
+  { id:'rare_uni', name:'にじいろユニコーン', cat:'rare', rarity:'ur', draw: () => svgWrap(`
+    <defs>
+      <linearGradient id="rainbg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ff5050"/>
+        <stop offset="0.2" stop-color="#ff8040"/>
+        <stop offset="0.4" stop-color="#ffd040"/>
+        <stop offset="0.6" stop-color="#80d850"/>
+        <stop offset="0.8" stop-color="#5cb8f5"/>
+        <stop offset="1" stop-color="#c870ff"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="50" cy="60" rx="32" ry="24" fill="url(#rainbg)" stroke="#fff" stroke-width="2"/>
+    <ellipse cx="32" cy="46" rx="16" ry="20" fill="url(#rainbg)" stroke="#fff" stroke-width="2"/>
+    <polygon points="32,28 28,12 40,26" fill="#ffd700" stroke="#fff" stroke-width="1.5"/>
+    <path d="M22 36 Q10 28 16 56" fill="url(#rainbg)" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="28" cy="48" r="2" fill="#222"/>
+    <ellipse cx="22" cy="56" rx="3" ry="2" fill="#fff"/>
+    <line x1="60" y1="82" x2="62" y2="94" stroke="#fff" stroke-width="2"/>
+    <line x1="40" y1="82" x2="38" y2="94" stroke="#fff" stroke-width="2"/>
+    <path d="M75 56 Q92 50 90 72 Q82 64 75 70" fill="url(#rainbg)" stroke="#fff" stroke-width="1.5"/>`) },
+  { id:'rare_crown', name:'きんいろおうかん', cat:'rare', rarity:'ur', draw: () => svgWrap(`
+    <polygon points="14,50 28,24 40,50 50,20 60,50 72,24 86,50 86,72 14,72" fill="#ffd700" stroke="#fff" stroke-width="2"/>
+    <circle cx="28" cy="24" r="5" fill="#ff4080" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="50" cy="20" r="6" fill="#a0e0ff" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="72" cy="24" r="5" fill="#80d850" stroke="#fff" stroke-width="1.5"/>
+    <rect x="14" y="62" width="72" height="10" fill="#c08820" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="30" cy="68" r="3" fill="#ff4080"/>
+    <circle cx="50" cy="68" r="3" fill="#a0e0ff"/>
+    <circle cx="70" cy="68" r="3" fill="#80d850"/>`) },
+  { id:'rare_sticker', name:'ふしぎなシール', cat:'rare', rarity:'ur', draw: () => svgWrap(`
+    <defs>
+      <radialGradient id="mystGrad" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#fff"/>
+        <stop offset="0.4" stop-color="#ffd700"/>
+        <stop offset="0.7" stop-color="#c870ff"/>
+        <stop offset="1" stop-color="#5060c0"/>
+      </radialGradient>
+    </defs>
+    <circle cx="50" cy="50" r="38" fill="url(#mystGrad)" stroke="#fff" stroke-width="3"/>
+    <polygon points="50,20 56,42 78,42 60,56 66,80 50,66 34,80 40,56 22,42 44,42" fill="#fff" opacity="0.7"/>
+    <circle cx="50" cy="50" r="10" fill="#fff" opacity="0.8"/>
+    <text x="50" y="56" text-anchor="middle" font-size="14" font-weight="bold" fill="#c870ff">？</text>`) },
+  { id:'rare_phoenix', name:'ほうおう', cat:'rare', rarity:'sr', draw: () => svgWrap(`
+    <path d="M50 20 Q40 30 38 50 L42 60 L38 80 Q44 70 50 75 Q56 70 62 80 L58 60 L62 50 Q60 30 50 20 Z" fill="#ff5050" stroke="#fff" stroke-width="2"/>
+    <path d="M30 40 Q14 50 18 70 Q26 60 32 60" fill="#ffd040" stroke="#a07020" stroke-width="1.5"/>
+    <path d="M70 40 Q86 50 82 70 Q74 60 68 60" fill="#ffd040" stroke="#a07020" stroke-width="1.5"/>
+    <circle cx="46" cy="34" r="2" fill="#222"/>
+    <circle cx="54" cy="34" r="2" fill="#222"/>
+    <polygon points="48,38 50,42 52,38" fill="#ff8030"/>`) },
+  { id:'rare_castle', name:'おしろ', cat:'rare', rarity:'sr', draw: () => svgWrap(`
+    <rect x="22" y="48" width="56" height="36" fill="#fff" stroke="#666" stroke-width="2"/>
+    <rect x="20" y="40" width="14" height="8" fill="#666"/>
+    <rect x="43" y="32" width="14" height="16" fill="#666"/>
+    <rect x="66" y="40" width="14" height="8" fill="#666"/>
+    <polygon points="20,40 27,28 34,40" fill="#ff5060" stroke="#a02020" stroke-width="1.5"/>
+    <polygon points="43,32 50,16 57,32" fill="#ff5060" stroke="#a02020" stroke-width="1.5"/>
+    <polygon points="66,40 73,28 80,40" fill="#ff5060" stroke="#a02020" stroke-width="1.5"/>
+    <rect x="44" y="60" width="12" height="24" fill="#a06030"/>
+    <circle cx="50" cy="68" r="2" fill="#ffd040"/>
+    <rect x="28" y="58" width="6" height="6" fill="#a0e0ff"/>
+    <rect x="66" y="58" width="6" height="6" fill="#a0e0ff"/>`) },
+
+  // ===== Extra cuteness =====
+  { id:'a_chick', name:'ひよこ', cat:'animal', rarity:'n', draw: () => svgWrap(`
+    <ellipse cx="50" cy="55" rx="28" ry="26" fill="#ffe060" stroke="#c08820" stroke-width="2"/>
+    <circle cx="42" cy="48" r="3" fill="#222"/>
+    <circle cx="58" cy="48" r="3" fill="#222"/>
+    <polygon points="44,58 50,64 56,58" fill="#ff8030"/>
+    <ellipse cx="38" cy="78" rx="3" ry="6" fill="#ff8030"/>
+    <ellipse cx="62" cy="78" rx="3" ry="6" fill="#ff8030"/>
+    <path d="M50 24 Q46 18 50 14 Q54 18 50 24" fill="#ffe060" stroke="#c08820" stroke-width="1.5"/>`) },
+  { id:'f_lily', name:'ゆり', cat:'flower', rarity:'n', draw: () => svgWrap(`
+    <path d="M50 30 Q34 38 36 56 Q44 50 50 50 Q56 50 64 56 Q66 38 50 30 Z" fill="#fff" stroke="#c0c0c0" stroke-width="2"/>
+    <path d="M50 30 Q42 22 50 16 Q58 22 50 30 Z" fill="#fff8e0" stroke="#c0a060" stroke-width="1.5"/>
+    <line x1="50" y1="56" x2="50" y2="92" stroke="#5a8030" stroke-width="3"/>
+    <ellipse cx="50" cy="48" rx="2" ry="6" fill="#ffd040"/>`) },
+  { id:'s_cookie', name:'クッキー', cat:'sweet', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="50" r="32" fill="#e0a060" stroke="#a06030" stroke-width="2"/>
+    <circle cx="38" cy="42" r="4" fill="#604020"/>
+    <circle cx="60" cy="40" r="3" fill="#604020"/>
+    <circle cx="48" cy="58" r="4" fill="#604020"/>
+    <circle cx="64" cy="60" r="3" fill="#604020"/>
+    <circle cx="34" cy="60" r="3" fill="#604020"/>`) },
+  { id:'k_moon', name:'おつきさま', cat:'kira', rarity:'r', draw: () => svgWrap(`
+    <circle cx="50" cy="50" r="32" fill="#fff8a0" stroke="#c0a020" stroke-width="2"/>
+    <circle cx="42" cy="44" r="4" fill="#e0c870" opacity="0.6"/>
+    <circle cx="56" cy="56" r="3" fill="#e0c870" opacity="0.6"/>
+    <circle cx="62" cy="42" r="3" fill="#e0c870" opacity="0.6"/>
+    <path d="M40 36 Q42 32 46 34" stroke="#a08020" stroke-width="1" fill="none"/>`) }
+];
+
+// Build by-category
+const byCat = {};
+CATEGORIES.forEach(c => byCat[c.id] = []);
+STICKERS.forEach(s => byCat[s.cat].push(s));
+
+// ===================== THEME (BOARD) DATABASE =====================
+// Each theme: id, name, emoji, gradient, deco draw() returns SVG html for background
+const THEMES = [
+  {
+    id:'flower', name:'おはなばたけ', emoji:'🌸',
+    bg: () => `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+        <defs>
+          <linearGradient id="thflowerG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff8d8"/>
+            <stop offset="0.6" stop-color="#c8f0a8"/>
+            <stop offset="1" stop-color="#80c850"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" fill="url(#thflowerG)"/>
+        <circle cx="20" cy="80" r="3" fill="#ff80c0"/>
+        <circle cx="80" cy="85" r="3" fill="#ffd040"/>
+        <circle cx="50" cy="92" r="2" fill="#fff"/>
+        <circle cx="35" cy="86" r="2" fill="#c870ff"/>
+        <circle cx="65" cy="80" r="3" fill="#ff5096"/>
+        <circle cx="10" cy="90" r="2" fill="#fff"/>
+        <circle cx="90" cy="92" r="3" fill="#ff80c0"/>
+      </svg>
+      <div style="position:absolute;top:10%;left:10%;font-size:30px;opacity:0.6;">🌸</div>
+      <div style="position:absolute;top:14%;right:14%;font-size:26px;opacity:0.6;">🌷</div>
+      <div style="position:absolute;bottom:18%;left:14%;font-size:26px;opacity:0.6;">🌻</div>
+      <div style="position:absolute;bottom:24%;right:10%;font-size:30px;opacity:0.6;">🌼</div>`
+  },
+  {
+    id:'space', name:'うちゅう', emoji:'🌌',
+    bg: () => `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+        <defs>
+          <linearGradient id="thspaceG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1a0838"/>
+            <stop offset="0.6" stop-color="#3a1860"/>
+            <stop offset="1" stop-color="#a060c0"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" fill="url(#thspaceG)"/>
+        <circle cx="20" cy="20" r="0.8" fill="#fff"/>
+        <circle cx="80" cy="14" r="0.6" fill="#fff"/>
+        <circle cx="60" cy="30" r="0.5" fill="#fff"/>
+        <circle cx="40" cy="50" r="0.7" fill="#fff"/>
+        <circle cx="14" cy="60" r="0.6" fill="#fff"/>
+        <circle cx="86" cy="46" r="0.7" fill="#fff"/>
+        <circle cx="55" cy="76" r="0.6" fill="#fff"/>
+      </svg>
+      <div style="position:absolute;top:8%;right:14%;font-size:46px;">🌙</div>
+      <div style="position:absolute;top:30%;left:8%;font-size:30px;">⭐</div>
+      <div style="position:absolute;bottom:14%;left:20%;font-size:32px;">🪐</div>
+      <div style="position:absolute;bottom:30%;right:14%;font-size:26px;">✨</div>`
+  },
+  {
+    id:'sea', name:'うみ', emoji:'🌊',
+    bg: () => `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+        <defs>
+          <linearGradient id="thseaG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#a0e0ff"/>
+            <stop offset="0.5" stop-color="#5cb8f5"/>
+            <stop offset="1" stop-color="#2a6da6"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" fill="url(#thseaG)"/>
+        <path d="M0 30 Q25 24 50 30 Q75 36 100 30" stroke="#fff" stroke-width="0.6" fill="none" opacity="0.6"/>
+        <path d="M0 50 Q25 44 50 50 Q75 56 100 50" stroke="#fff" stroke-width="0.6" fill="none" opacity="0.5"/>
+        <path d="M0 70 Q25 64 50 70 Q75 76 100 70" stroke="#fff" stroke-width="0.6" fill="none" opacity="0.4"/>
+      </svg>
+      <div style="position:absolute;top:10%;left:14%;font-size:30px;">☀️</div>
+      <div style="position:absolute;top:30%;right:14%;font-size:30px;">☁️</div>
+      <div style="position:absolute;bottom:14%;left:10%;font-size:28px;">🐚</div>
+      <div style="position:absolute;bottom:20%;right:18%;font-size:30px;">🐠</div>
+      <div style="position:absolute;bottom:6%;left:50%;font-size:24px;">⭐</div>`
+  },
+  {
+    id:'castle', name:'おしろ', emoji:'🏰',
+    bg: () => `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+        <defs>
+          <linearGradient id="thcastleG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe0f0"/>
+            <stop offset="0.6" stop-color="#c8a0e0"/>
+            <stop offset="1" stop-color="#ffe0c0"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" fill="url(#thcastleG)"/>
+        <circle cx="80" cy="20" r="6" fill="#fff" opacity="0.5"/>
+      </svg>
+      <div style="position:absolute;top:60%;left:8%;font-size:50px;opacity:0.5;">🏰</div>
+      <div style="position:absolute;top:62%;right:10%;font-size:42px;opacity:0.5;">🌷</div>
+      <div style="position:absolute;top:14%;left:20%;font-size:30px;">☁️</div>
+      <div style="position:absolute;top:18%;right:24%;font-size:26px;">☁️</div>`
+  },
+  {
+    id:'sweets', name:'おかしのくに', emoji:'🍭',
+    bg: () => `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+        <defs>
+          <linearGradient id="thsweetG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe0f0"/>
+            <stop offset="0.5" stop-color="#ffc0d8"/>
+            <stop offset="1" stop-color="#ff90c0"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" fill="url(#thsweetG)"/>
+      </svg>
+      <div style="position:absolute;top:8%;left:8%;font-size:34px;">🍭</div>
+      <div style="position:absolute;top:14%;right:14%;font-size:30px;">🧁</div>
+      <div style="position:absolute;bottom:14%;left:18%;font-size:30px;">🍩</div>
+      <div style="position:absolute;bottom:14%;right:18%;font-size:32px;">🍰</div>
+      <div style="position:absolute;top:46%;left:6%;font-size:24px;opacity:0.7;">🍬</div>
+      <div style="position:absolute;top:48%;right:6%;font-size:24px;opacity:0.7;">🍪</div>`
+  },
+  {
+    id:'merry', name:'メリーゴーラウンド', emoji:'🎠',
+    bg: () => `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+        <defs>
+          <linearGradient id="thmerryG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff4ff"/>
+            <stop offset="0.4" stop-color="#ffd0e0"/>
+            <stop offset="1" stop-color="#c0a0e0"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" fill="url(#thmerryG)"/>
+      </svg>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:80px;opacity:0.3;">🎠</div>
+      <div style="position:absolute;top:14%;left:16%;font-size:28px;">✨</div>
+      <div style="position:absolute;top:16%;right:18%;font-size:26px;">🎀</div>
+      <div style="position:absolute;bottom:20%;left:12%;font-size:30px;">🎈</div>
+      <div style="position:absolute;bottom:14%;right:10%;font-size:30px;">🎈</div>`
+  },
+  {
+    id:'cloud', name:'くものうえ', emoji:'☁️',
+    bg: () => `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+        <defs>
+          <linearGradient id="thcloudG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#a0e0ff"/>
+            <stop offset="0.5" stop-color="#fff8ff"/>
+            <stop offset="1" stop-color="#ffe0f0"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" fill="url(#thcloudG)"/>
+      </svg>
+      <div style="position:absolute;top:14%;left:10%;font-size:50px;opacity:0.7;">☁️</div>
+      <div style="position:absolute;top:46%;right:8%;font-size:40px;opacity:0.7;">☁️</div>
+      <div style="position:absolute;bottom:14%;left:20%;font-size:46px;opacity:0.7;">☁️</div>
+      <div style="position:absolute;top:8%;right:30%;font-size:24px;">⭐</div>
+      <div style="position:absolute;bottom:30%;right:30%;font-size:26px;">🌈</div>`
+  },
+  {
+    id:'jungle', name:'ジャングル', emoji:'🌴',
+    bg: () => `
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+        <defs>
+          <linearGradient id="thjunG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#c0f0a8"/>
+            <stop offset="0.5" stop-color="#80d850"/>
+            <stop offset="1" stop-color="#406018"/>
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" fill="url(#thjunG)"/>
+      </svg>
+      <div style="position:absolute;top:10%;left:8%;font-size:46px;opacity:0.8;">🌴</div>
+      <div style="position:absolute;top:10%;right:10%;font-size:42px;opacity:0.8;">🌴</div>
+      <div style="position:absolute;top:50%;left:14%;font-size:30px;opacity:0.7;">🍃</div>
+      <div style="position:absolute;top:54%;right:18%;font-size:30px;opacity:0.7;">🍃</div>
+      <div style="position:absolute;bottom:14%;left:20%;font-size:28px;">🦜</div>
+      <div style="position:absolute;bottom:18%;right:14%;font-size:30px;">🐒</div>`
+  }
+];
+
+// ===================== STATE =====================
+const SAVE_KEY = 'sticker_book_v1';
+
+const defaultState = () => ({
+  stars: 20,
+  lastStarTime: Date.now(),
+  inventory: {}, // { stickerId: count }
+  collected: {}, // { stickerId: true } (zukan)
+  themePlacements: {}, // { themeId: [ { id, x, y, rot, scale } ] }
+  unlockedThemes: { flower:true, sweets:true, cloud:true }, // start unlocked
+  currentTheme: 'flower',
+  lastBonus: 0, // unix ms of last daily bonus
+  muted: false
+});
+
+let state = defaultState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const o = JSON.parse(raw);
+    state = Object.assign(defaultState(), o);
+    // ensure nested
+    state.inventory = state.inventory || {};
+    state.collected = state.collected || {};
+    state.themePlacements = state.themePlacements || {};
+    state.unlockedThemes = state.unlockedThemes || { flower:true, sweets:true, cloud:true };
+    return true;
+  } catch(e) { return false; }
+}
+function saveState() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// ===================== STAR REGEN =====================
+const STAR_REGEN_MS = 5 * 60 * 1000; // 5 min per +1
+const STAR_MAX = 99;
+
+function regenStars() {
+  const now = Date.now();
+  const dt = now - (state.lastStarTime || now);
+  if (dt >= STAR_REGEN_MS && state.stars < STAR_MAX) {
+    const add = Math.min(Math.floor(dt / STAR_REGEN_MS), STAR_MAX - state.stars);
+    state.stars += add;
+    state.lastStarTime = now - (dt % STAR_REGEN_MS);
+    saveState();
+    updateStars();
+  }
+}
+function updateStars() {
+  $('stars-num').textContent = state.stars;
+}
+
+setInterval(regenStars, 30000); // every 30s check
+
+// ===================== ZUKAN =====================
+function buildZukan() {
+  const wrap = $('zukan-content');
+  wrap.innerHTML = '';
+  const total = STICKERS.length;
+  const got = Object.keys(state.collected).length;
+  $('zukan-progress').textContent = `あつめたシール: ${got}/${total}`;
+
+  CATEGORIES.forEach(cat => {
+    const items = byCat[cat.id];
+    if (!items.length) return;
+    const sec = document.createElement('div');
+    sec.className = 'zukan-section';
+    const h3 = document.createElement('h3');
+    h3.textContent = cat.label;
+    sec.appendChild(h3);
+    const grid = document.createElement('div');
+    grid.className = 'zukan-grid';
+    items.forEach(s => {
+      const cell = document.createElement('div');
+      cell.className = 'zukan-cell ' + (state.collected[s.id] ? '' : 'locked');
+      cell.innerHTML = s.draw();
+      cell.title = state.collected[s.id] ? s.name : 'まだだよ';
+      grid.appendChild(cell);
+    });
+    sec.appendChild(grid);
+    wrap.appendChild(sec);
+  });
+}
+
+// ===================== THEME PICKER =====================
+function buildThemeGrid() {
+  const grid = $('theme-grid');
+  grid.innerHTML = '';
+  THEMES.forEach((t, i) => {
+    const card = document.createElement('div');
+    const unlocked = !!state.unlockedThemes[t.id];
+    card.className = 'theme-card' + (unlocked ? '' : ' locked');
+    card.innerHTML = t.bg() + `<div class="tlabel">${t.emoji} ${t.name}</div>`;
+    attachTap(card, () => {
+      if (!unlocked) {
+        // unlock cost: 30 stars
+        if (state.stars >= 30) {
+          showModal('だいしを かう？', `<div style="font-size:18px;">⭐30 で「${t.emoji} ${t.name}」を ひらこう！</div>`, [
+            { label:'やめる', cls:'gray' },
+            { label:'ひらく！', cls:'yellow', fn: () => {
+              state.stars -= 30;
+              state.unlockedThemes[t.id] = true;
+              saveState();
+              updateStars();
+              buildThemeGrid();
+              sfxRare();
+              showToast('だいしが ふえたよ！🎉');
+            } }
+          ]);
+        } else {
+          showToast('⭐が たりないよ〜（30こ ひつよう）');
+          sfxNoStar();
+        }
+        return;
+      }
+      sfxTap();
+      state.currentTheme = t.id;
+      saveState();
+      switchScene('main-scene');
+      renderBoard();
+      updateThemeName();
+    });
+    grid.appendChild(card);
+  });
+}
+
+function updateThemeName() {
+  const t = THEMES.find(x => x.id === state.currentTheme) || THEMES[0];
+  $('theme-name').textContent = `${t.emoji} ${t.name}`;
+}
+
+// ===================== INVENTORY UI =====================
+let activeCat = 'animal';
+let zukanFromMain = false;
+function buildCategoryTabs() {
+  const tabs = $('cat-tabs');
+  tabs.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const t = document.createElement('div');
+    t.className = 'cat-tab' + (c.id === activeCat ? ' active' : '');
+    t.textContent = c.label;
+    attachTap(t, () => {
+      activeCat = c.id;
+      buildCategoryTabs();
+      buildInventory();
+      sfxTap();
+    });
+    tabs.appendChild(t);
+  });
+}
+function buildInventory() {
+  const inv = $('inventory');
+  inv.innerHTML = '';
+  const items = byCat[activeCat] || [];
+  items.forEach(s => {
+    const c = state.inventory[s.id] || 0;
+    const div = document.createElement('div');
+    div.className = 'inv-sticker rarity-' + s.rarity + (c > 0 ? '' : ' empty');
+    if (s.rarity === 'r')  div.classList.add('rare');
+    if (s.rarity === 'sr') div.classList.add('srare');
+    if (s.rarity === 'ur') div.classList.add('urare');
+    div.innerHTML = s.draw() + (c > 0 ? `<div class="count">${c}</div>` : '');
+    div.dataset.sid = s.id;
+    if (c > 0) attachInvDrag(div, s);
+    inv.appendChild(div);
+  });
+  if (!items.length) {
+    inv.innerHTML = '<div style="color:#a06090;font-size:14px;padding:20px;">まだ ないよ〜</div>';
+  }
+}
+
+// ===================== DRAG: INVENTORY -> BOARD =====================
+const dragFollower = $('drag-follower');
+let drag = null; // { sid, sticker, source: 'inv' | 'placed', placedIdx }
+
+function startDrag(sticker, source, placedIdx, x, y) {
+  drag = { sid: sticker.id, sticker, source, placedIdx };
+  dragFollower.style.display = 'block';
+  // Set image via SVG data url
+  dragFollower.src = svgToDataURL(sticker.draw());
+  moveDragFollower(x, y);
+}
+function moveDragFollower(x, y) {
+  dragFollower.style.left = x + 'px';
+  dragFollower.style.top = y + 'px';
+}
+function endDrag(x, y) {
+  if (!drag) return;
+  dragFollower.style.display = 'none';
+  // Check if drop is over board
+  const board = $('board');
+  const rect = board.getBoundingClientRect();
+  if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+    // place
+    const bx = x - rect.left;
+    const by = y - rect.top;
+    if (drag.source === 'inv') {
+      placeSticker(drag.sticker, bx, by);
+    } else if (drag.source === 'placed') {
+      // move existing
+      const arr = state.themePlacements[state.currentTheme] || [];
+      if (arr[drag.placedIdx]) {
+        arr[drag.placedIdx].x = bx / rect.width;
+        arr[drag.placedIdx].y = by / rect.height;
+        saveState();
+        renderBoard();
+      }
+    }
+  } else {
+    // not on board - cancel (no penalty)
+    if (drag.source === 'placed') {
+      // dropping outside in a "trash" gesture? - just leave it
+    }
+  }
+  drag = null;
+}
+
+function svgToDataURL(svg) {
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+function attachInvDrag(el, sticker) {
+  // touchstart -> moves -> touchend
+  let started = false;
+  el.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    started = true;
+    const t = e.touches[0];
+    startDrag(sticker, 'inv', null, t.clientX, t.clientY);
+    sfxTap();
+  }, { passive: false });
+  el.addEventListener('mousedown', (e) => {
+    started = true;
+    startDrag(sticker, 'inv', null, e.clientX, e.clientY);
+    sfxTap();
+  });
+}
+
+// global movement
+document.addEventListener('touchmove', (e) => {
+  if (!drag) return;
+  const t = e.touches[0];
+  if (t) moveDragFollower(t.clientX, t.clientY);
+  e.preventDefault();
+}, { passive: false });
+document.addEventListener('mousemove', (e) => {
+  if (!drag) return;
+  moveDragFollower(e.clientX, e.clientY);
+});
+document.addEventListener('touchend', (e) => {
+  if (!drag) return;
+  const t = e.changedTouches[0];
+  if (t) endDrag(t.clientX, t.clientY);
+  else endDrag(-1,-1);
+}, { passive: false });
+document.addEventListener('mouseup', (e) => {
+  if (!drag) return;
+  endDrag(e.clientX, e.clientY);
+});
+
+// ===================== PLACE / RENDER STICKERS =====================
+function placeSticker(sticker, bx, by) {
+  // requires sticker in inventory > 0
+  if ((state.inventory[sticker.id] || 0) <= 0) {
+    showToast('ストックが ないよ');
+    return;
+  }
+  const board = $('board');
+  const rect = board.getBoundingClientRect();
+  const arr = state.themePlacements[state.currentTheme] = state.themePlacements[state.currentTheme] || [];
+  arr.push({
+    id: sticker.id,
+    x: bx / rect.width,
+    y: by / rect.height,
+    rot: rand(-15, 15),
+    scale: 1
+  });
+  state.inventory[sticker.id]--;
+  saveState();
+  renderBoard();
+  buildInventory();
+  sfxPeta();
+  // sparkle
+  spawnSparkles(bx + rect.left, by + rect.top, 4, ['✨','💖','⭐']);
+}
+
+function renderBoard() {
+  const board = $('board');
+  const t = THEMES.find(x => x.id === state.currentTheme) || THEMES[0];
+  board.innerHTML = t.bg();
+
+  const arr = state.themePlacements[state.currentTheme] || [];
+  arr.forEach((p, idx) => {
+    const sticker = STICKERS.find(s => s.id === p.id);
+    if (!sticker) return;
+    const div = document.createElement('div');
+    div.className = 'placed';
+    div.style.left = (p.x * 100) + '%';
+    div.style.top = (p.y * 100) + '%';
+    div.style.transform = `translate(-50%,-50%) rotate(${p.rot||0}deg) scale(${p.scale||1})`;
+    div.innerHTML = sticker.draw();
+    div.dataset.idx = idx;
+    attachPlacedHandlers(div, sticker, idx);
+    board.appendChild(div);
+  });
+}
+
+function attachPlacedHandlers(el, sticker, idx) {
+  let pressTimer = null;
+  let moved = false;
+  let startX = 0, startY = 0;
+  let dragging = false;
+
+  const startPress = (x, y) => {
+    moved = false;
+    startX = x; startY = y;
+    pressTimer = setTimeout(() => {
+      // long press -> ask remove
+      if (!moved) {
+        confirmRemove(idx);
+      }
+    }, 600);
+  };
+  const movePress = (x, y) => {
+    const dx = x - startX, dy = y - startY;
+    if (!moved && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      moved = true;
+      if (pressTimer) clearTimeout(pressTimer);
+      // start drag of placed
+      dragging = true;
+      // remove from rendered to avoid duplicate
+      el.classList.add('dragging');
+      startDrag(sticker, 'placed', idx, x, y);
+    }
+    if (dragging) moveDragFollower(x, y);
+  };
+  const endPress = () => {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    if (dragging) { dragging = false; }
+  };
+
+  el.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    startPress(t.clientX, t.clientY);
+  }, { passive: false });
+  el.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    if (t) movePress(t.clientX, t.clientY);
+  }, { passive: false });
+  el.addEventListener('touchend', endPress);
+  el.addEventListener('touchcancel', endPress);
+
+  el.addEventListener('mousedown', (e) => {
+    startPress(e.clientX, e.clientY);
+  });
+  el.addEventListener('mousemove', (e) => {
+    if (e.buttons) movePress(e.clientX, e.clientY);
+  });
+  el.addEventListener('mouseup', endPress);
+}
+
+function confirmRemove(idx) {
+  showModal('はがす？', '<div style="font-size:30px;">🤔</div><div style="margin-top:8px;">このシール はがしちゃう？</div>', [
+    { label:'やめる', cls:'gray' },
+    { label:'はがす', cls:'yellow', fn: () => {
+      const arr = state.themePlacements[state.currentTheme] || [];
+      const p = arr[idx];
+      if (!p) return;
+      // return sticker to inventory
+      state.inventory[p.id] = (state.inventory[p.id] || 0) + 1;
+      arr.splice(idx, 1);
+      saveState();
+      renderBoard();
+      buildInventory();
+      sfxRemove();
+      showToast('もどしたよ〜');
+    }}
+  ]);
+}
+
+// ===================== GACHA =====================
+function rollRarity() {
+  const r = Math.random() * 100;
+  if (r < 0.5) return 'ur';
+  if (r < 5) return 'sr';
+  if (r < 20) return 'r';
+  return 'n';
+}
+function rollSticker() {
+  const rarity = rollRarity();
+  const pool = STICKERS.filter(s => s.rarity === rarity);
+  if (!pool.length) {
+    return STICKERS.find(s => s.rarity === 'n');
+  }
+  return pick(pool);
+}
+
+function doGacha() {
+  if (state.stars < 5) {
+    showToast('⭐が たりないよ〜（5こ ひつよう）');
+    sfxNoStar();
+    return;
+  }
+  state.stars -= 5;
+  updateStars();
+  saveState();
+
+  $('gacha-overlay').classList.add('active');
+  $('gacha-result').classList.remove('show');
+  $('gacha-buttons').classList.remove('show');
+  const box = $('gacha-box');
+  box.classList.remove('shake');
+  void box.offsetWidth;
+  box.classList.add('shake');
+  sfxOpen();
+
+  setTimeout(() => {
+    const sticker = rollSticker();
+    state.inventory[sticker.id] = (state.inventory[sticker.id] || 0) + 1;
+    state.collected[sticker.id] = true;
+    saveState();
+    showGachaResult(sticker);
+  }, 1400);
+}
+
+function showGachaResult(sticker) {
+  $('gacha-svg-wrap').innerHTML = `<div style="width:160px;height:160px;display:inline-block;">${sticker.draw()}</div>`;
+  $('gacha-name').textContent = sticker.name;
+  const rar = RARITY[sticker.rarity];
+  $('gacha-rarity').innerHTML = `<span style="color:${rar.color};">${rar.name}</span>`;
+  $('gacha-result').classList.add('show');
+  $('gacha-buttons').classList.add('show');
+  $('gacha-box').style.opacity = 0;
+
+  if (sticker.rarity === 'n') sfxGet();
+  else if (sticker.rarity === 'r') sfxRare();
+  else if (sticker.rarity === 'sr') { sfxRare(); spawnBurst(20, ['✨','💜','⭐']); }
+  else if (sticker.rarity === 'ur') { sfxUR(); spawnBurst(40, ['✨','🌟','💖','⭐','💎']); }
+
+  buildInventory();
+}
+
+function closeGacha() {
+  $('gacha-overlay').classList.remove('active');
+  $('gacha-box').style.opacity = 1;
+}
+
+// ===================== SPARKLES =====================
+function spawnSparkles(x, y, n, chars) {
+  const cs = chars || ['✨','⭐','💖'];
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('div');
+    s.className = 'spark';
+    s.textContent = pick(cs);
+    s.style.position = 'fixed';
+    s.style.left = x + 'px';
+    s.style.top = y + 'px';
+    const tx = (Math.random() - 0.5) * 80;
+    const ty = -40 - Math.random() * 60;
+    s.style.setProperty('--tx', tx + 'px');
+    s.style.setProperty('--ty', ty + 'px');
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  }
+}
+function spawnBurst(n, chars) {
+  const burst = document.createElement('div');
+  burst.className = 'ur-burst';
+  document.body.appendChild(burst);
+  for (let i = 0; i < n; i++) {
+    setTimeout(() => {
+      spawnSparkles(window.innerWidth/2, window.innerHeight/2, 1, chars);
+    }, i * 30);
+  }
+  setTimeout(() => burst.remove(), 2000);
+}
+
+// ===================== MINI GAME (Renda) =====================
+let miniActive = false;
+let miniCount = 0;
+let miniTimer = null;
+let miniRemain = 3.0;
+function startMini() {
+  if (miniActive) return;
+  miniActive = true;
+  miniCount = 0;
+  miniRemain = 3.0;
+  $('mini-counter').textContent = '0';
+  $('mini-timer').textContent = '3';
+  $('mini-result').textContent = '';
+  $('mini-overlay').classList.add('active');
+
+  const startTs = Date.now();
+  miniTimer = setInterval(() => {
+    const dt = (Date.now() - startTs) / 1000;
+    miniRemain = Math.max(0, 3.0 - dt);
+    $('mini-timer').textContent = miniRemain.toFixed(1);
+    if (miniRemain <= 0) endMini();
+  }, 100);
+}
+function endMini() {
+  if (!miniActive) return;
+  miniActive = false;
+  clearInterval(miniTimer); miniTimer = null;
+  // Reward: 1 star per 5 taps, max +20
+  const reward = Math.min(20, Math.floor(miniCount / 5));
+  state.stars = Math.min(STAR_MAX, state.stars + reward);
+  saveState();
+  updateStars();
+  $('mini-result').innerHTML = `${miniCount}かい！⭐+${reward} ゲット！`;
+  if (reward >= 10) sfxRare(); else sfxGet();
+  setTimeout(() => {
+    $('mini-overlay').classList.remove('active');
+  }, 1800);
+}
+attachTap($('mini-btn'), () => {
+  if (!miniActive) return;
+  miniCount++;
+  $('mini-counter').textContent = miniCount;
+  sfxTap();
+});
+
+// ===================== DAILY BONUS =====================
+function doBonus() {
+  const now = Date.now();
+  const last = state.lastBonus || 0;
+  // Check different calendar day (local)
+  const dLast = new Date(last);
+  const dNow = new Date(now);
+  const sameDay = (dLast.getFullYear() === dNow.getFullYear() &&
+                   dLast.getMonth() === dNow.getMonth() &&
+                   dLast.getDate() === dNow.getDate());
+  if (sameDay && last !== 0) {
+    showToast('きょうは もう もらったよ〜🎁');
+    return;
+  }
+  state.lastBonus = now;
+  state.stars = Math.min(STAR_MAX, state.stars + 10);
+  saveState();
+  updateStars();
+  sfxRare();
+  spawnBurst(15, ['🎁','✨','⭐']);
+  showModal('🎁 きょうの おまけ', '<div style="font-size:40px;">🎀</div><div style="margin-top:8px;">⭐10 もらったよ！</div>', [
+    { label:'やったー！', cls:'green' }
+  ]);
+}
+
+// ===================== PHOTO / CARD MODE =====================
+function showCard() {
+  const board = $('board');
+  const rect = board.getBoundingClientRect();
+  const W = 600, H = 800;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // background
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,W,H);
+
+  // gold border
+  const grad = ctx.createLinearGradient(0,0,W,H);
+  grad.addColorStop(0, '#ffd700');
+  grad.addColorStop(0.5, '#ff80c0');
+  grad.addColorStop(1, '#ffd700');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 16;
+  ctx.strokeRect(8,8,W-16,H-16);
+
+  // theme name
+  ctx.fillStyle = '#d63384';
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  const t = THEMES.find(x => x.id === state.currentTheme) || THEMES[0];
+  ctx.fillText(`${t.emoji} ${t.name}`, W/2, 60);
+
+  // Render board area: capture board via foreignObject? Simpler: draw bg gradient + emojis approximation
+  const boardX = 30, boardY = 90, boardW = W - 60, boardH = H - 180;
+  ctx.fillStyle = '#ffe0f0';
+  ctx.fillRect(boardX, boardY, boardW, boardH);
+
+  // Use SVG to image: render background SVG via Image
+  const svgBg = (function(){
+    // Extract first <svg> from theme.bg()
+    const html = t.bg();
+    const m = html.match(/<svg[\s\S]*?<\/svg>/);
+    return m ? m[0] : '';
+  })();
+
+  const drawAll = () => {
+    // Render placed stickers
+    const arr = state.themePlacements[state.currentTheme] || [];
+    let pending = arr.length;
+    if (!pending) {
+      finalize();
+      return;
+    }
+    arr.forEach(p => {
+      const sticker = STICKERS.find(s => s.id === p.id);
+      if (!sticker) { pending--; if (!pending) finalize(); return; }
+      const img = new Image();
+      img.onload = () => {
+        const sw = 64 * (p.scale||1);
+        const cx = boardX + (p.x * boardW);
+        const cy = boardY + (p.y * boardH);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(((p.rot||0) * Math.PI) / 180);
+        ctx.drawImage(img, -sw/2, -sw/2, sw, sw);
+        ctx.restore();
+        pending--;
+        if (!pending) finalize();
+      };
+      img.onerror = () => { pending--; if (!pending) finalize(); };
+      img.src = svgToDataURL(sticker.draw());
+    });
+  };
+
+  const finalize = () => {
+    // date
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}.${(now.getMonth()+1)}.${now.getDate()}`;
+    ctx.fillStyle = '#a060c0';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText(`✨ ${dateStr} ✨`, W/2, H - 50);
+    ctx.fillStyle = '#ff80c0';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText('キラキラ☆シールちょう', W/2, H - 22);
+
+    // Output as image for long-press save
+    const wrap = $('card-canvas-wrap');
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = canvas.toDataURL('image/png');
+    img.alt = 'シールカード';
+    img.style.width = '100%';
+    img.style.borderRadius = '10px';
+    wrap.appendChild(img);
+    $('card-overlay').classList.add('active');
+    sfxRare();
+  };
+
+  // First draw bg svg if exists
+  if (svgBg) {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, boardX, boardY, boardW, boardH);
+      drawAll();
+    };
+    img.onerror = () => { drawAll(); };
+    img.src = svgToDataURL(svgBg);
+  } else {
+    drawAll();
+  }
+}
+
+// ===================== TITLE / SCENE WIRING =====================
+function startNewGame() {
+  if (Object.keys(state.inventory).length > 0 || Object.keys(state.collected).length > 0) {
+    showModal('あたらしく はじめる？', 'いままでの きろくは きえちゃうよ。<br>ほんとに いい？', [
+      { label:'やめる', cls:'gray' },
+      { label:'はじめる', cls:'yellow', fn: () => {
+        state = defaultState();
+        saveState();
+        enterMain(true);
+      }}
+    ]);
+  } else {
+    enterMain(true);
+  }
+}
+
+function enterMain(welcome) {
+  switchScene('main-scene');
+  buildCategoryTabs();
+  buildInventory();
+  renderBoard();
+  updateStars();
+  updateThemeName();
+  startBgm();
+  if (welcome) {
+    showToast('シールゲットボタン (🎁) で あつめよう！', 2400);
+  }
+}
+
+// ===================== EVENTS =====================
+function bindEvents() {
+  attachTap($('btn-new'), () => { ensureAudio(); startNewGame(); });
+  attachTap($('btn-continue'), () => { ensureAudio(); enterMain(false); });
+  attachTap($('btn-zukan-from-title'), () => { ensureAudio(); zukanFromMain = false; buildZukan(); switchScene('zukan-scene'); });
+
+  attachTap($('btn-gacha'), () => { ensureAudio(); doGacha(); });
+  attachTap($('btn-theme'), () => { ensureAudio(); buildThemeGrid(); switchScene('theme-scene'); });
+  attachTap($('btn-zukan'), () => { zukanFromMain = true; buildZukan(); switchScene('zukan-scene'); });
+  attachTap($('btn-photo'), () => { showCard(); });
+  attachTap($('btn-mini'), () => { ensureAudio(); startMini(); });
+  attachTap($('btn-bonus'), () => { doBonus(); });
+
+  attachTap($('btn-gacha-again'), () => { closeGacha(); doGacha(); });
+  attachTap($('btn-gacha-ok'), () => { closeGacha(); });
+
+  attachTap($('theme-back'), () => { switchScene('main-scene'); });
+  attachTap($('zukan-back'), () => {
+    // Return to main if game started (has entered main scene at least once), else title
+    if (zukanFromMain) {
+      switchScene('main-scene');
+    } else {
+      switchScene('title-scene');
+    }
+  });
+  attachTap($('card-close'), () => { $('card-overlay').classList.remove('active'); });
+
+  attachTap($('muteBtn'), () => {
+    muted = !muted;
+    state.muted = muted;
+    saveState();
+    $('muteBtn').textContent = muted ? '🔇' : '🔊';
+    if (muted) stopBgm(); else { ensureAudio(); startBgm(); }
+  });
+
+  // Prevent context menu on long press to keep "long press to remove" UX clean
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('#board') || e.target.closest('#inventory')) e.preventDefault();
+  });
+}
+
+// ===================== INIT =====================
+function init() {
+  loadState();
+  muted = !!state.muted;
+  $('muteBtn').textContent = muted ? '🔇' : '🔊';
+  regenStars();
+  updateStars();
+  bindEvents();
+
+  // Build initial UI (some lazy)
+  buildCategoryTabs();
+  buildInventory();
+}
+
+window.addEventListener('load', init);
+window.addEventListener('beforeunload', saveState);
+window.addEventListener('visibilitychange', () => {
+  if (document.hidden) saveState();
+  else regenStars();
+});
+</script>
+</body>
+</html>
