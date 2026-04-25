@@ -1571,7 +1571,7 @@ const SKILLS = {
   koriSeiron:  { name: 'こおりの<ruby>正論<rt>せいろん</rt></ruby>', mp: 4, power: 1.2, type: 'human', msg: 'ただしすぎて こおりついた！', fx: '🧊', confuseChance: 0.4 },
   mugonAtsu:   { name: 'むごんの<ruby>圧力<rt>あつりょく</rt></ruby>', mp: 5, power: 1.0, type: 'human', msg: 'なにも いわずに ジッと みつめた…', fx: '😶', atkDown: 0.4 }, // TODO: status effect not yet wired
   zettaiPresen:{ name: 'ぜったいれいど プレゼン', mp: 7, power: 2.4, type: 'human', msg: 'ぜったいれいどの プレゼンが はじまった！', fx: '❄️📊' },
-  // ----- テラスタルキョダイマックス（チート級） -----
+  // ----- テラスタルとーとんキョダイマックス（チート級） -----
   shachoKourin:{ name: 'しゃちょー<ruby>降臨<rt>こうりん</rt></ruby>', mp: 8, power: 3.0, type: 'human', msg: 'しゃちょーが あらわれて いっかつ！', fx: '👔💢', critBoost: true }, // TODO: status effect not yet wired
   taishoku:    { name: 'たいしょくだいこう アタック', mp: 7, power: 2.5, type: 'human', msg: 'たいしょくだいこうの ふうとうを たたきつけた！', fx: '📨💥' },
   ultimateCoffee:{ name: 'きわみの コーヒーブレイク', mp: 6, power: 0.0, type: 'human', msg: 'きわみの コーヒーで HP・MPが ぜんかい！つぎのターン むてき！', fx: '☕✨', heal: true, healAmt: 1.0, mpRecover: 999, invincibleNext: true }, // TODO: status effect not yet wired
@@ -4796,7 +4796,7 @@ function setupUI() {
     applyMinimapVisibility();
     saveGame(true);
 
-    // 隠しコマンド: 虹のお城で4兄弟連れて10連打 → テラスタルキョダイマックス出現
+    // 隠しコマンド: 虹のお城で4兄弟連れて10連打 → テラスタルとーとんキョダイマックス出現
     if (state.curStage === 5) {
       _terastalTapCount++;
       clearTimeout(_terastalTapTimer);
