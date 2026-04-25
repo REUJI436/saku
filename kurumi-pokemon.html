@@ -766,6 +766,143 @@
   .stage-pick p { font-size: 12px; color: #666; }
 
   .center-row { display: flex; justify-content: center; }
+
+  /* ===== STARTER SELECT ===== */
+  #starter-scene {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.3), transparent 40%),
+      radial-gradient(circle at 80% 30%, rgba(201, 160, 255, 0.3), transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(255, 182, 193, 0.4), transparent 50%),
+      linear-gradient(180deg, #ffe0f0 0%, #ffc9e6 50%, #ffb3d9 100%);
+    align-items: center;
+    padding: 56px 12px 12px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #starter-scene h2 {
+    color: #d63384;
+    font-size: clamp(18px, 5vw, 24px);
+    text-align: center;
+    margin: 8px 0 14px;
+    text-shadow: 1px 1px 0 #fff, 2px 2px 0 #ffd0e8;
+    line-height: 1.4;
+  }
+  #starter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 14px;
+  }
+  .starter-card {
+    background: linear-gradient(180deg, #fff, #ffeaf5);
+    border: 3px solid #ffb0d8;
+    border-radius: 16px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+  }
+  .starter-card:active { transform: scale(0.97); }
+  .starter-card.selected {
+    border-color: #ff4090;
+    box-shadow: 0 0 0 3px #ffd0e8, 0 0 24px rgba(255, 64, 144, 0.7);
+    animation: starterShine 1.4s ease-in-out infinite;
+  }
+  @keyframes starterShine {
+    0%, 100% {
+      box-shadow: 0 0 0 3px #ffd0e8, 0 0 18px rgba(255, 64, 144, 0.55);
+      filter: brightness(1);
+    }
+    50% {
+      box-shadow: 0 0 0 4px #ffd700, 0 0 28px rgba(255, 215, 0, 0.85);
+      filter: brightness(1.1);
+    }
+  }
+  .starter-card .art {
+    width: clamp(80px, 22vw, 110px);
+    height: clamp(80px, 22vw, 110px);
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff, #ffe4f0);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 6px;
+  }
+  .starter-card .art svg { width: 92%; height: 92%; }
+  .starter-card .name {
+    font-weight: bold;
+    color: #6b2350;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  .starter-card .typebadge {
+    display: inline-block;
+    font-size: 10px;
+    color: #fff;
+    padding: 1px 8px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
+  }
+  .starter-card .stats {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.35;
+    text-align: center;
+  }
+  #starter-confirm-wrap {
+    display: flex; justify-content: center; gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 0 14px;
+  }
+  #starter-confirm.btn { font-size: 17px; padding: 12px 28px; }
+  #starter-confirm.btn:disabled { opacity: 0.45; }
+
+  /* Confirm fly-up animation */
+  #starter-fly {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.4);
+    width: clamp(140px, 40vw, 220px);
+    height: clamp(140px, 40vw, 220px);
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 50%, #ffd700 100%);
+    box-shadow: 0 0 60px rgba(255, 215, 0, 0.9), 0 0 120px rgba(255, 111, 168, 0.7);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 8500;
+    pointer-events: none;
+  }
+  #starter-fly.show {
+    display: flex;
+    animation: starterFly 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  #starter-fly svg { width: 80%; height: 80%; }
+  @keyframes starterFly {
+    0% { transform: translate(-50%, -50%) scale(0.4) rotate(-20deg); opacity: 0; }
+    35% { transform: translate(-50%, -50%) scale(1.25) rotate(8deg); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(1.1) rotate(-4deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.4) rotate(0); opacity: 0; }
+  }
+  /* sparkle particles around starter-fly */
+  .starter-spark {
+    position: fixed;
+    pointer-events: none;
+    font-size: 26px;
+    z-index: 8550;
+    animation: sparkFly 1.4s ease-out forwards;
+  }
+  @keyframes sparkFly {
+    0% { transform: translate(0,0) scale(0.4); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(1.2); opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -782,6 +919,16 @@
     <button id="btn-continue" class="btn blue">つづきから</button>
   </div>
   <div id="title-last-save" style="display:none;"></div>
+</div>
+
+<!-- ====== STARTER SELECT (オープニング) ====== -->
+<div id="starter-scene" class="scene">
+  <h2><ruby>相棒<rt>あいぼう</rt></ruby>の ポケモンを えらんでね！</h2>
+  <div id="starter-grid"></div>
+  <div id="starter-confirm-wrap">
+    <button id="starter-confirm" class="btn" disabled>これに する！</button>
+  </div>
+  <div id="starter-fly"></div>
 </div>
 
 <!-- ====== STAGE SELECT ====== -->
@@ -1050,15 +1197,25 @@ const TYPES = {
   yellow: { name: 'きいろ',     color: '#ffd700', dark: '#c08820' },
   green:  { name: 'みどり',     color: '#90d870', dark: '#4a8030' },
   purple: { name: 'むらさき', color: '#c8a0f0', dark: '#6030a0' },
-  human:  { name: 'ヒト',       color: '#888888', dark: '#4a4a4a' }
+  human:  { name: 'ヒト',       color: '#888888', dark: '#4a4a4a' },
+  red:    { name: 'あか',       color: '#ff5050', dark: '#c01818' }
 };
 
 // タイプ相性表（与ダメージ倍率）。未指定は1.0倍。
 // ヒトタイプは攻撃側・受け側ともに常に1.0倍（中立）。
 const TYPE_CHART = {
   // attacker: { defender: multiplier }
+  red: { sky: 0.7 },
+  yellow: { red: 1.3 }
 };
-function typeMul(/* atkType, defType */) { return 1.0; }
+function typeMul(atkType, defType) {
+  if (!atkType || !defType) return 1.0;
+  if (atkType === 'human' || defType === 'human') return 1.0;
+  const row = TYPE_CHART[atkType];
+  if (!row) return 1.0;
+  const m = row[defType];
+  return (typeof m === 'number') ? m : 1.0;
+}
 
 const SKILLS = {
   // name, mp, power, type, msg, fx
@@ -1084,7 +1241,14 @@ const SKILLS = {
   jimu:    { name: '<ruby>事務<rt>じむ</rt></ruby><ruby>作業<rt>さぎょう</rt></ruby>', mp: 0, power: 0.6, type: 'human', msg: 'たんたんと しごとを こなした！', fx: '📋', mpRecover: 3 },
   coffee:  { name: 'コーヒーブレイク', mp: 3, power: 0.0, type: 'human', msg: 'コーヒーで ひといき ついた！', fx: '☕', heal: true, healAmt: 0.15 },
   eigyou:  { name: '<ruby>営業<rt>えいぎょう</rt></ruby>トーク', mp: 4, power: 1.0, type: 'human', msg: 'うまい トークで まるめこんだ！', fx: '💬', confuseChance: 0.3 },
-  riman:   { name: 'リーマン<ruby>突進<rt>とっしん</rt></ruby>', mp: 5, power: 1.6, type: 'human', msg: '「やってられっか〜！」と とっしん！', fx: '💼', recoil: 0.1 }
+  riman:   { name: 'リーマン<ruby>突進<rt>とっしん</rt></ruby>', mp: 5, power: 1.6, type: 'human', msg: '「やってられっか〜！」と とっしん！', fx: '💼', recoil: 0.1 },
+  // ===== 新スターター用わざ =====
+  scratch:  { name: 'ひっかき',   mp: 0, power: 1.0, type: 'red',    msg: 'するどい ツメで ひっかいた！', fx: '✊' },
+  flame:    { name: '<ruby>火炎放<rt>かえんほう</rt></ruby>', mp: 4, power: 1.4, type: 'red', msg: 'もえあがる ほのおを はなった！', fx: '🔥' },
+  heartatk: { name: 'ハートアタック', mp: 0, power: 1.0, type: 'pink',  msg: 'ハートで たいあたり！', fx: '💕' },
+  loveBeam: { name: 'ラブラブビーム', mp: 5, power: 1.3, type: 'pink',  msg: 'あいの ビーム！', fx: '💖', heal: false, healAmt: 0.1, healSelf: true },
+  shock:    { name: '<ruby>電気<rt>でんき</rt></ruby>ショック', mp: 3, power: 1.1, type: 'yellow', msg: 'ビリッと しびれた！', fx: '⚡' },
+  charge:   { name: 'とつげき',     mp: 3, power: 1.3, type: 'yellow', msg: 'いきおいよく とつげき！', fx: '💨' }
 };
 
 const MONSTERS = [
@@ -1142,10 +1306,25 @@ const MONSTERS = [
   { id:29, name:'ドラゴリン',   type:'purple',color:'#a070d0', shape:'dragon',  face:'🐲', hp:78, atk:26, def:24, spd:26, learn:{1:'dragon',20:'hyper'}, evo:null, dex:'ドラゴンの こども。レア。' },
   { id:30, name:'メガロン',     type:'purple',color:'#7040b0', shape:'dragon',  face:'🐉', hp:120, atk:34, def:30, spd:28, learn:{1:'hyper',10:'dragon'}, evo:null, dex:'でんせつの ドラゴン。' },
 
-  // sky starter line ポチャミン → ポチャミー → ポチャマスター
-  { id:31, name:'ポチャミン',     type:'sky', color:'#4a9fd9', shape:'penguin',  face:'', hp:18, atk:12, def:10, spd:8,  learn:{1:'watergun',2:'peck'}, evo:{lvl:16,to:32}, dex:'ちっちゃい あおいペンギン。みずが すき。', starter:true, evoStage:0 },
-  { id:32, name:'ポチャミー',     type:'sky', color:'#3a85c0', shape:'penguin',  face:'', hp:36, atk:20, def:18, spd:14, learn:{16:'splash',22:'bubble'}, evo:{lvl:32,to:33}, dex:'すこし そだった ペンギン。はねが ふくらむ。', evoStage:1 },
-  { id:33, name:'ポチャマスター', type:'sky', color:'#1a55a0', shape:'penguin',  face:'', hp:78, atk:34, def:30, spd:22, learn:{32:'hyper',38:'bubble'}, evo:null, dex:'おおきなトサカが かんむりみたい。みずの 王者。', evoStage:2 },
+  // sky starter line ポッチョマ → ポッチョミー → ポッチョマスター（旧ポチャミン系統リネーム）
+  { id:31, name:'ポッチョマ',     type:'sky', color:'#4a9fd9', shape:'penguin',  face:'', hp:18, atk:12, def:10, spd:8,  learn:{1:'watergun',2:'peck'}, evo:{lvl:16,to:32}, dex:'ちっちゃい あおいペンギン。みずが すき。', starter:true, evoStage:0 },
+  { id:32, name:'ポッチョミー',   type:'sky', color:'#3a85c0', shape:'penguin',  face:'', hp:36, atk:20, def:18, spd:14, learn:{16:'splash',22:'bubble'}, evo:{lvl:32,to:33}, dex:'すこし そだった ペンギン。はねが ふくらむ。', evoStage:1 },
+  { id:33, name:'ポッチョマスター', type:'sky', color:'#1a55a0', shape:'penguin',  face:'', hp:78, atk:34, def:30, spd:22, learn:{32:'hyper',38:'bubble'}, evo:null, dex:'おおきなトサカが かんむりみたい。みずの 王者。', evoStage:2 },
+
+  // ===== 新スターター: トカゲー（あか） =====
+  { id:100, name:'トカゲー',     type:'red',    color:'#ff5050', shape:'lizard',    face:'', hp:17, atk:14, def:8,  spd:11, learn:{1:'scratch',5:'flame'}, evo:{lvl:16,to:103}, dex:'あかい ちいさな トカゲ。しっぽに ほのおが ともる。', starter:true, evoStage:0 },
+  { id:103, name:'トカゲオン',   type:'red',    color:'#ff3030', shape:'lizard',    face:'', hp:38, atk:22, def:14, spd:18, learn:{16:'flame',22:'scratch'}, evo:{lvl:32,to:104}, dex:'おおきく そだった トカゲ。ほのおが ふくらむ。', evoStage:1 },
+  { id:104, name:'トカゲドラゴ', type:'red',    color:'#c01818', shape:'lizard',    face:'', hp:80, atk:36, def:24, spd:28, learn:{32:'hyper',38:'flame'}, evo:null, dex:'りっぱな はねを もつ ドラゴンに しんかした。', evoStage:2 },
+
+  // ===== 新スターター: ハートん（ピンク・防御寄り） =====
+  { id:101, name:'ハートん',     type:'pink',   color:'#ff9ec5', shape:'heart-mob', face:'', hp:20, atk:9,  def:12, spd:7,  learn:{1:'heartatk',6:'loveBeam'}, evo:{lvl:16,to:105}, dex:'ハートのからだに リボン。やさしくて まもりが かたい。', starter:true, evoStage:0 },
+  { id:105, name:'ハートりん',   type:'pink',   color:'#ff70a8', shape:'heart-mob', face:'', hp:46, atk:16, def:22, spd:13, learn:{16:'loveBeam',22:'heart'}, evo:{lvl:32,to:106}, dex:'ハートが ふえて キラキラ。ドレス感がでてきた。', evoStage:1 },
+  { id:106, name:'ハートメイデン', type:'pink', color:'#ff4090', shape:'heart-mob', face:'', hp:88, atk:26, def:34, spd:22, learn:{32:'hyper',38:'loveBeam'}, evo:null, dex:'おひめさまドレスの ようせい。あいで まもる。', evoStage:2 },
+
+  // ===== 新スターター: ピウー（きいろ・速さ特化） =====
+  { id:102, name:'ピウー',       type:'yellow', color:'#ffe040', shape:'chick',     face:'', hp:16, atk:13, def:7,  spd:14, learn:{1:'shock',5:'charge'}, evo:{lvl:16,to:107}, dex:'きいろい ひよこ。ほっぺに ちいさな かみなり。', starter:true, evoStage:0 },
+  { id:107, name:'ピウン',       type:'yellow', color:'#ffc820', shape:'chick',     face:'', hp:36, atk:22, def:13, spd:24, learn:{16:'shock',22:'charge'}, evo:{lvl:32,to:108}, dex:'はねが とがり、でんきが ばちばち。', evoStage:1 },
+  { id:108, name:'ピウーラ',     type:'yellow', color:'#ffa800', shape:'chick',     face:'', hp:74, atk:34, def:22, spd:34, learn:{32:'hyper',38:'shock'}, evo:null, dex:'でんきの わを まとう。すばやさ さいきょう。', evoStage:2 },
 
   // ===== 隠しキャラクター: とーとん（人間） =====
   { id:99, name:'とーとん', type:'human', color:'#9a9a9a', shape:'human', face:'', hp:20, atk:8, def:7, spd:35, learn:{1:'jimu',2:'coffee',3:'eigyou',4:'riman'}, evo:null, dex:'モンスターだらけの せかいに まぎれこんだ ヒト。やせた おとなの おとこのひと。', stage:0, hidden:true }
@@ -1309,9 +1488,10 @@ function svgMon(mon) {
   const c = def.color;
   const dark = TYPES[def.type].dark;
   const face = def.face;
-  return svgShape(def.shape, c, dark, face);
+  return svgShape(def.shape, c, dark, face, def.evoStage || 0);
 }
-function svgShape(shape, color, dark, face) {
+function svgShape(shape, color, dark, face, evoStage) {
+  const stageVar = (typeof evoStage === 'number') ? evoStage : 0;
   // common SVG wrap
   const f = `<text x="60" y="68" font-size="32" text-anchor="middle">${face}</text>`;
   let body = '';
@@ -1508,6 +1688,271 @@ function svgShape(shape, color, dark, face) {
       <!-- 口（真一文字、無表情） -->
       <line x1="55" y1="42" x2="65" y2="42" stroke="#5a3520" stroke-width="1.3" stroke-linecap="round"/>`;
     return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  } else if (shape === 'lizard') {
+    // トカゲ系: stage 0 = 小さい, 1 = 大きい, 2 = 翼つきドラゴン
+    if (stageVar === 0) {
+      body = `
+        <!-- しっぽ + ほのお -->
+        <path d="M22 88 Q14 78 22 70 Q30 80 38 86" fill="${color}" stroke="${dark}" stroke-width="2.5"/>
+        <path d="M16 76 Q10 70 14 64 Q20 66 22 72" fill="#ffaa00" stroke="#ff6600" stroke-width="1.5"/>
+        <path d="M14 70 Q10 66 12 62 Q16 64 18 68" fill="#ffe040"/>
+        <!-- 胴体 -->
+        <ellipse cx="60" cy="78" rx="30" ry="22" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- 手足 -->
+        <ellipse cx="42" cy="96" rx="6" ry="4" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="78" cy="96" rx="6" ry="4" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="40" cy="76" rx="5" ry="3" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="80" cy="76" rx="5" ry="3" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <!-- 頭 -->
+        <ellipse cx="68" cy="55" rx="22" ry="20" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- 目 -->
+        <ellipse cx="62" cy="52" rx="4" ry="5" fill="#fff"/>
+        <ellipse cx="76" cy="52" rx="4" ry="5" fill="#fff"/>
+        <circle cx="62" cy="53" r="2.5" fill="#000"/>
+        <circle cx="76" cy="53" r="2.5" fill="#000"/>
+        <circle cx="63" cy="52" r="0.8" fill="#fff"/>
+        <circle cx="77" cy="52" r="0.8" fill="#fff"/>
+        <!-- 口 -->
+        <path d="M62 62 Q70 66 80 60" stroke="${dark}" stroke-width="2" fill="none"/>
+        <!-- ほっぺ -->
+        <circle cx="58" cy="60" r="2.5" fill="#ffb0a0" opacity="0.7"/>`;
+    } else if (stageVar === 1) {
+      body = `
+        <!-- しっぽ + 大きい炎 -->
+        <path d="M14 92 Q4 78 14 64 Q26 78 38 88" fill="${color}" stroke="${dark}" stroke-width="2.5"/>
+        <path d="M8 76 Q-2 64 6 50 Q14 56 18 68" fill="#ff6600" stroke="#c01818" stroke-width="1.5"/>
+        <path d="M6 64 Q2 56 8 48 Q12 54 14 60" fill="#ffaa00"/>
+        <path d="M8 56 Q6 50 10 46 Q14 50 14 54" fill="#ffe040"/>
+        <!-- 小さな翼 -->
+        <path d="M40 44 Q26 30 22 46 Q34 50 44 50 Z" fill="${dark}" opacity="0.55" stroke="${dark}" stroke-width="2"/>
+        <path d="M82 44 Q98 30 102 46 Q90 50 80 50 Z" fill="${dark}" opacity="0.55" stroke="${dark}" stroke-width="2"/>
+        <!-- 胴体 -->
+        <ellipse cx="60" cy="80" rx="36" ry="26" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <ellipse cx="60" cy="84" rx="22" ry="18" fill="#fff5e0" opacity="0.5"/>
+        <!-- 手足 -->
+        <ellipse cx="40" cy="100" rx="7" ry="4" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="80" cy="100" rx="7" ry="4" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <!-- 頭 -->
+        <ellipse cx="62" cy="50" rx="26" ry="22" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- ツノ -->
+        <polygon points="48,32 50,18 56,30" fill="${dark}"/>
+        <polygon points="76,32 74,18 68,30" fill="${dark}"/>
+        <!-- 目 -->
+        <ellipse cx="54" cy="48" rx="4" ry="5" fill="#fff"/>
+        <ellipse cx="72" cy="48" rx="4" ry="5" fill="#fff"/>
+        <circle cx="54" cy="49" r="2.5" fill="#000"/>
+        <circle cx="72" cy="49" r="2.5" fill="#000"/>
+        <!-- 口 -->
+        <path d="M54 60 Q62 66 74 58" stroke="${dark}" stroke-width="2.5" fill="none"/>`;
+    } else {
+      body = `
+        <!-- 大きな翼 -->
+        <path d="M30 30 Q4 14 0 40 Q12 50 38 48 Z" fill="${dark}" stroke="${dark}" stroke-width="2.5"/>
+        <path d="M90 30 Q116 14 120 40 Q108 50 82 48 Z" fill="${dark}" stroke="${dark}" stroke-width="2.5"/>
+        <path d="M22 24 L4 32 M14 38 L0 44" stroke="${dark}" stroke-width="1.5"/>
+        <!-- しっぽ + 巨大な炎 -->
+        <path d="M10 100 Q-4 78 8 56 Q22 76 38 92" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <path d="M4 80 Q-6 60 4 40 Q14 50 16 70" fill="#ff3010" stroke="#c01818" stroke-width="1.5"/>
+        <path d="M2 64 Q-2 50 8 36 Q14 46 14 58" fill="#ff8000"/>
+        <path d="M6 50 Q4 38 12 30 Q16 38 14 46" fill="#ffd040"/>
+        <!-- 胴体 -->
+        <ellipse cx="60" cy="84" rx="40" ry="28" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <ellipse cx="60" cy="88" rx="24" ry="20" fill="#fff5e0" opacity="0.55"/>
+        <!-- 手足 -->
+        <ellipse cx="38" cy="106" rx="8" ry="5" fill="${color}" stroke="${dark}" stroke-width="2.5"/>
+        <ellipse cx="82" cy="106" rx="8" ry="5" fill="${color}" stroke="${dark}" stroke-width="2.5"/>
+        <!-- 頭 -->
+        <ellipse cx="60" cy="46" rx="30" ry="24" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- 大きなツノ -->
+        <polygon points="42,28 44,8 52,26" fill="${dark}" stroke="${dark}" stroke-width="1.5"/>
+        <polygon points="78,28 76,8 68,26" fill="${dark}" stroke="${dark}" stroke-width="1.5"/>
+        <!-- 鋭い目 -->
+        <ellipse cx="50" cy="44" rx="5" ry="6" fill="#fff"/>
+        <ellipse cx="70" cy="44" rx="5" ry="6" fill="#fff"/>
+        <ellipse cx="50" cy="46" rx="2.5" ry="4" fill="#000"/>
+        <ellipse cx="70" cy="46" rx="2.5" ry="4" fill="#000"/>
+        <!-- 牙のある口 -->
+        <path d="M48 58 Q60 66 72 56" stroke="${dark}" stroke-width="3" fill="none"/>
+        <polygon points="52,60 54,66 56,60" fill="#fff"/>
+        <polygon points="64,60 66,66 68,60" fill="#fff"/>`;
+    }
+    return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  } else if (shape === 'heart-mob') {
+    // ハートん系: stage 0 = ハートにリボン, 1 = ふえてキラキラ, 2 = ドレス少女
+    if (stageVar === 0) {
+      body = `
+        <!-- ハート本体 -->
+        <path d="M60 100 C18 72 22 32 48 32 C56 32 60 40 60 48 C60 40 64 32 72 32 C98 32 102 72 60 100 Z"
+          fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- リボン髪飾り -->
+        <polygon points="44,30 36,22 38,36" fill="#ff4090" stroke="${dark}" stroke-width="1.5"/>
+        <polygon points="52,30 60,22 58,36" fill="#ff4090" stroke="${dark}" stroke-width="1.5"/>
+        <circle cx="48" cy="30" r="3" fill="#ffd700" stroke="${dark}" stroke-width="1"/>
+        <!-- 目 -->
+        <ellipse cx="50" cy="58" rx="4" ry="5" fill="#fff"/>
+        <ellipse cx="70" cy="58" rx="4" ry="5" fill="#fff"/>
+        <circle cx="50" cy="59" r="2.5" fill="#3a1830"/>
+        <circle cx="70" cy="59" r="2.5" fill="#3a1830"/>
+        <circle cx="51" cy="57" r="1" fill="#fff"/>
+        <circle cx="71" cy="57" r="1" fill="#fff"/>
+        <!-- 口 -->
+        <path d="M54 70 Q60 76 66 70" stroke="${dark}" stroke-width="2" fill="none"/>
+        <!-- ほっぺ -->
+        <circle cx="44" cy="68" r="3" fill="#ff70a8" opacity="0.6"/>
+        <circle cx="76" cy="68" r="3" fill="#ff70a8" opacity="0.6"/>
+        <!-- 小さな手 -->
+        <circle cx="26" cy="78" r="5" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <circle cx="94" cy="78" r="5" fill="${color}" stroke="${dark}" stroke-width="2"/>`;
+    } else if (stageVar === 1) {
+      body = `
+        <!-- 大きなハート + キラキラ -->
+        <path d="M60 104 C12 72 18 28 46 28 C56 28 60 38 60 48 C60 38 64 28 74 28 C102 28 108 72 60 104 Z"
+          fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- 周りの小ハート -->
+        <path d="M22 40 C18 36 18 30 24 30 C26 30 26 32 26 34 C26 32 28 30 30 30 C36 30 36 36 22 40 Z" fill="${dark}" opacity="0.7"/>
+        <path d="M98 40 C94 36 94 30 100 30 C102 30 102 32 102 34 C102 32 104 30 106 30 C112 30 112 36 98 40 Z" fill="${dark}" opacity="0.7"/>
+        <!-- リボン大 -->
+        <polygon points="42,28 30,16 36,38" fill="#ff4090" stroke="${dark}" stroke-width="1.5"/>
+        <polygon points="54,28 66,16 60,38" fill="#ff4090" stroke="${dark}" stroke-width="1.5"/>
+        <circle cx="48" cy="28" r="4" fill="#ffd700" stroke="${dark}" stroke-width="1"/>
+        <!-- きらきら -->
+        <polygon points="20,60 22,66 28,68 22,70 20,76 18,70 12,68 18,66" fill="#ffd700" opacity="0.85"/>
+        <polygon points="100,60 102,66 108,68 102,70 100,76 98,70 92,68 98,66" fill="#ffd700" opacity="0.85"/>
+        <!-- 目 -->
+        <ellipse cx="50" cy="58" rx="5" ry="6" fill="#fff"/>
+        <ellipse cx="70" cy="58" rx="5" ry="6" fill="#fff"/>
+        <circle cx="50" cy="60" r="3" fill="#3a1830"/>
+        <circle cx="70" cy="60" r="3" fill="#3a1830"/>
+        <circle cx="52" cy="58" r="1.2" fill="#fff"/>
+        <circle cx="72" cy="58" r="1.2" fill="#fff"/>
+        <!-- 口 -->
+        <path d="M52 72 Q60 78 68 72" stroke="${dark}" stroke-width="2.5" fill="none"/>
+        <!-- ほっぺ -->
+        <circle cx="42" cy="68" r="3.5" fill="#ff4090" opacity="0.55"/>
+        <circle cx="78" cy="68" r="3.5" fill="#ff4090" opacity="0.55"/>`;
+    } else {
+      body = `
+        <!-- ドレスのスカート -->
+        <path d="M28 100 Q40 68 60 64 Q80 68 92 100 Q60 110 28 100 Z" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <path d="M36 96 Q60 88 84 96" stroke="#fff" stroke-width="2" fill="none" opacity="0.7"/>
+        <!-- ハート胴体 -->
+        <path d="M60 78 C36 60 38 36 52 36 C58 36 60 42 60 48 C60 42 62 36 68 36 C82 36 84 60 60 78 Z"
+          fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- 王冠 -->
+        <polygon points="42,18 50,4 56,16 60,2 64,16 70,4 78,18 78,24 42,24 Z"
+          fill="#ffd700" stroke="#c08000" stroke-width="1.5"/>
+        <circle cx="60" cy="14" r="2.5" fill="#ff4090"/>
+        <!-- 髪 -->
+        <path d="M40 28 Q40 40 44 50 L46 44 Q44 36 46 28 Z" fill="${dark}"/>
+        <path d="M80 28 Q80 40 76 50 L74 44 Q76 36 74 28 Z" fill="${dark}"/>
+        <!-- 顔の上に大ハート飾り -->
+        <path d="M58 30 C54 26 54 20 60 20 C62 20 62 24 60 26 C62 24 64 20 66 20 C70 20 72 26 60 32 Z" fill="#fff" opacity="0.9"/>
+        <!-- 目 -->
+        <ellipse cx="50" cy="48" rx="5" ry="6" fill="#fff"/>
+        <ellipse cx="70" cy="48" rx="5" ry="6" fill="#fff"/>
+        <circle cx="50" cy="50" r="3" fill="#3a1830"/>
+        <circle cx="70" cy="50" r="3" fill="#3a1830"/>
+        <circle cx="52" cy="48" r="1.2" fill="#fff"/>
+        <circle cx="72" cy="48" r="1.2" fill="#fff"/>
+        <!-- まつげ -->
+        <path d="M45 44 L42 41" stroke="${dark}" stroke-width="1.5"/>
+        <path d="M75 44 L78 41" stroke="${dark}" stroke-width="1.5"/>
+        <!-- 口 -->
+        <path d="M54 60 Q60 66 66 60" stroke="${dark}" stroke-width="2" fill="none"/>
+        <!-- ほっぺ -->
+        <circle cx="42" cy="58" r="3.5" fill="#ff4090" opacity="0.6"/>
+        <circle cx="78" cy="58" r="3.5" fill="#ff4090" opacity="0.6"/>
+        <!-- きらきら -->
+        <polygon points="18,40 20,46 26,48 20,50 18,56 16,50 10,48 16,46" fill="#ffd700"/>
+        <polygon points="102,40 104,46 110,48 104,50 102,56 100,50 94,48 100,46" fill="#ffd700"/>`;
+    }
+    return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  } else if (shape === 'chick') {
+    // ピウー系: stage 0 = ひよこ, 1 = はね尖り, 2 = 電気の輪
+    if (stageVar === 0) {
+      body = `
+        <!-- 体 -->
+        <ellipse cx="60" cy="74" rx="32" ry="30" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- 短い羽根 -->
+        <ellipse cx="32" cy="78" rx="8" ry="14" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <ellipse cx="88" cy="78" rx="8" ry="14" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <!-- 短いくちばし -->
+        <polygon points="56,72 64,72 60,80" fill="#ff8800" stroke="${dark}" stroke-width="1.5"/>
+        <!-- 目 -->
+        <ellipse cx="50" cy="62" rx="5" ry="6" fill="#fff"/>
+        <ellipse cx="70" cy="62" rx="5" ry="6" fill="#fff"/>
+        <circle cx="50" cy="64" r="3" fill="#000"/>
+        <circle cx="70" cy="64" r="3" fill="#000"/>
+        <circle cx="51" cy="62" r="1" fill="#fff"/>
+        <circle cx="71" cy="62" r="1" fill="#fff"/>
+        <!-- ほっぺに小さな雷マーク -->
+        <polygon points="36,72 40,68 38,72 41,72 36,78 38,74 35,74" fill="#ffaa00" stroke="${dark}" stroke-width="0.8"/>
+        <polygon points="80,72 84,68 82,72 85,72 80,78 82,74 79,74" fill="#ffaa00" stroke="${dark}" stroke-width="0.8"/>
+        <!-- 足 -->
+        <line x1="52" y1="102" x2="50" y2="112" stroke="#ff8800" stroke-width="2.5"/>
+        <line x1="68" y1="102" x2="70" y2="112" stroke="#ff8800" stroke-width="2.5"/>
+        <polygon points="48,112 52,112 50,108" fill="#ff8800"/>
+        <polygon points="68,112 72,112 70,108" fill="#ff8800"/>`;
+    } else if (stageVar === 1) {
+      body = `
+        <!-- 電気のチカチカ -->
+        <polygon points="14,40 22,44 14,48 24,52 16,58" fill="#ffd040" stroke="${dark}" stroke-width="1"/>
+        <polygon points="106,40 98,44 106,48 96,52 104,58" fill="#ffd040" stroke="${dark}" stroke-width="1"/>
+        <!-- 体 -->
+        <ellipse cx="60" cy="76" rx="36" ry="32" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- 尖った羽根 -->
+        <polygon points="22,64 8,80 26,86 32,78" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <polygon points="98,64 112,80 94,86 88,78" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <!-- 頭の電気トサカ -->
+        <polygon points="48,38 52,18 58,32 60,14 64,32 70,18 74,38" fill="#ffd040" stroke="${dark}" stroke-width="1.5"/>
+        <!-- くちばし -->
+        <polygon points="55,68 65,68 60,78" fill="#ff8800" stroke="${dark}" stroke-width="1.5"/>
+        <!-- 目 -->
+        <ellipse cx="50" cy="58" rx="5" ry="6" fill="#fff"/>
+        <ellipse cx="70" cy="58" rx="5" ry="6" fill="#fff"/>
+        <circle cx="50" cy="60" r="3" fill="#000"/>
+        <circle cx="70" cy="60" r="3" fill="#000"/>
+        <!-- ほっぺ雷 -->
+        <polygon points="36,68 40,62 38,68 42,68 36,76 38,70 35,70" fill="#ff8800" stroke="${dark}" stroke-width="1"/>
+        <polygon points="80,68 84,62 82,68 86,68 80,76 82,70 79,70" fill="#ff8800" stroke="${dark}" stroke-width="1"/>
+        <!-- 足 -->
+        <line x1="52" y1="104" x2="48" y2="114" stroke="#ff8800" stroke-width="3"/>
+        <line x1="68" y1="104" x2="72" y2="114" stroke="#ff8800" stroke-width="3"/>
+        <polygon points="44,114 52,114 48,108" fill="#ff8800"/>
+        <polygon points="68,114 76,114 72,108" fill="#ff8800"/>`;
+    } else {
+      body = `
+        <!-- 周りの電気の輪 -->
+        <ellipse cx="60" cy="76" rx="54" ry="20" fill="none" stroke="#ffd040" stroke-width="3" opacity="0.85"/>
+        <ellipse cx="60" cy="76" rx="50" ry="14" fill="none" stroke="#ffaa00" stroke-width="2" opacity="0.7"/>
+        <!-- 体 -->
+        <ellipse cx="60" cy="76" rx="38" ry="34" fill="${color}" stroke="${dark}" stroke-width="3"/>
+        <!-- 尖った大きな羽根 -->
+        <polygon points="22,58 0,82 24,90 32,80" fill="${color}" stroke="${dark}" stroke-width="2.5"/>
+        <polygon points="98,58 120,82 96,90 88,80" fill="${color}" stroke="${dark}" stroke-width="2.5"/>
+        <polygon points="14,72 4,82 14,80" fill="#ffd040" stroke="${dark}" stroke-width="1"/>
+        <polygon points="106,72 116,82 106,80" fill="#ffd040" stroke="${dark}" stroke-width="1"/>
+        <!-- 頭の大きな電気トサカ -->
+        <polygon points="42,38 48,14 56,30 60,8 64,30 72,14 78,38" fill="#ffd040" stroke="#c08000" stroke-width="2"/>
+        <!-- 王冠の輪 -->
+        <ellipse cx="60" cy="36" rx="20" ry="4" fill="none" stroke="#ffd040" stroke-width="2"/>
+        <!-- くちばし -->
+        <polygon points="54,68 66,68 60,80" fill="#ff8800" stroke="${dark}" stroke-width="1.5"/>
+        <!-- 鋭い目 -->
+        <ellipse cx="50" cy="56" rx="5" ry="7" fill="#fff"/>
+        <ellipse cx="70" cy="56" rx="5" ry="7" fill="#fff"/>
+        <ellipse cx="50" cy="58" rx="3" ry="5" fill="#000"/>
+        <ellipse cx="70" cy="58" rx="3" ry="5" fill="#000"/>
+        <!-- ほっぺ大きな雷 -->
+        <polygon points="32,66 38,58 34,68 40,68 32,80 36,72 30,72" fill="#ff6600" stroke="${dark}" stroke-width="1"/>
+        <polygon points="88,66 82,58 86,68 80,68 88,80 84,72 90,72" fill="#ff6600" stroke="${dark}" stroke-width="1"/>
+        <!-- 足 -->
+        <line x1="52" y1="106" x2="46" y2="116" stroke="#ff6600" stroke-width="3"/>
+        <line x1="68" y1="106" x2="74" y2="116" stroke="#ff6600" stroke-width="3"/>
+        <polygon points="42,116 52,116 47,108" fill="#ff6600"/>
+        <polygon points="68,116 78,116 73,108" fill="#ff6600"/>`;
+    }
+    return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
   } else {
     body = `<circle cx="60" cy="60" r="40" fill="${color}" stroke="${dark}" stroke-width="3"/>`;
   }
@@ -1555,8 +2000,9 @@ function initTitle() {
 }
 
 function startNewGame() {
+  // 新規ゲームは空partyで開始 → スターター選択へ
   state = {
-    party: [makeMon(31, 5)],
+    party: [],
     box: [],
     bag: { ball: 5, potion: 3 },
     coins: 200,
@@ -1566,8 +2012,83 @@ function startNewGame() {
     fieldMobs: [],
     field: null
   };
-  saveGame(true);
-  goStageSelect();
+  // ※ ここでは saveGame しない（party空のため saveGame ガードで保存されない & タイトル既存セーブを温存）
+  goStarterSelect();
+}
+
+// ===================== STARTER SELECT =====================
+const STARTER_IDS = [31, 100, 101, 102]; // ポッチョマ・トカゲー・ハートん・ピウー
+let pickedStarterId = null;
+
+function goStarterSelect() {
+  pickedStarterId = null;
+  switchScene('starter-scene');
+  const grid = $('starter-grid');
+  grid.innerHTML = '';
+  STARTER_IDS.forEach(id => {
+    const def = getMonsterDef(id);
+    if (!def) return;
+    const t = TYPES[def.type] || { name: def.type, color: '#888', dark: '#444' };
+    const card = document.createElement('div');
+    card.className = 'starter-card';
+    card.dataset.id = id;
+    card.innerHTML = `
+      <div class="art">${svgMon(id)}</div>
+      <div class="name">${def.name}</div>
+      <div class="typebadge" style="background:${t.dark}">${t.name}</div>
+      <div class="stats">HP${def.hp}・<ruby>攻<rt>こう</rt></ruby>${def.atk}・<ruby>防<rt>ぼう</rt></ruby>${def.def}・<ruby>速<rt>そく</rt></ruby>${def.spd}</div>
+    `;
+    attachTap(card, () => {
+      pickedStarterId = id;
+      document.querySelectorAll('.starter-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      $('starter-confirm').disabled = false;
+      sfxTap();
+    });
+    grid.appendChild(card);
+  });
+  $('starter-confirm').disabled = true;
+}
+
+function confirmStarter() {
+  if (pickedStarterId == null) return;
+  const id = pickedStarterId;
+  const def = getMonsterDef(id);
+  if (!def) return;
+  // パーティに LV5 で追加
+  state.party = [makeMon(id, 5)];
+  // 演出: 拡大して中央に飛ぶ + キラキラ + バナー
+  sfxLevel();
+  const fly = $('starter-fly');
+  fly.innerHTML = svgMon(id);
+  fly.classList.remove('show');
+  void fly.offsetWidth;
+  fly.classList.add('show');
+  // sparkles
+  const sparks = ['✨','💖','⭐','💫','🌟'];
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement('div');
+    s.className = 'starter-spark';
+    s.textContent = sparks[i % sparks.length];
+    const ang = (i / 14) * Math.PI * 2;
+    const dist = 120 + Math.random() * 80;
+    s.style.left = '50%';
+    s.style.top = '50%';
+    s.style.setProperty('--tx', Math.cos(ang) * dist + 'px');
+    s.style.setProperty('--ty', Math.sin(ang) * dist + 'px');
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 1500);
+  }
+  setTimeout(() => {
+    showToast(`💗 ${def.name} を なかまに した！`, 1500);
+  }, 600);
+  setTimeout(() => {
+    fly.classList.remove('show');
+    fly.innerHTML = '';
+    // partyに入ったので saveGame できる
+    saveGame(true);
+    goStageSelect();
+  }, 1700);
 }
 
 // ===================== STAGE SELECT =====================
@@ -2170,6 +2691,12 @@ function doMyAttack(tapCount, skillKey) {
   // type bonus: same type as user
   const meDef = getMonsterDef(battle.me.mon.id);
   if (skill.type === meDef.type) dmg = Math.floor(dmg * 1.2);
+  // type chart (defender side)
+  const foeDef0 = getMonsterDef(battle.foe.mon.id);
+  if (foeDef0 && skill.type) {
+    const tm = typeMul(skill.type, foeDef0.type);
+    if (tm !== 1.0) dmg = Math.max(1, Math.floor(dmg * tm));
+  }
   // crit on lots of taps
   let crit = false;
   if (tapCount >= 25 && Math.random() < 0.3) { dmg = Math.floor(dmg * 1.6); crit = true; }
@@ -2189,6 +2716,14 @@ function doMyAttack(tapCount, skillKey) {
     hitFlashRow('foe-row');
     if (crit) { sfxCrit(); showCritText(); } else sfxHit();
     setBattleMessage(meDef.name + 'の ' + skill.msg + '<br>(' + tapCount + 'タップ)' + (crit?' クリティカル！':'') + ' ' + dmg + ' ダメージ！');
+    // Heal side-effect (e.g. ラブラブビーム): damage + self-heal
+    if (skill.healSelf && skill.healAmt) {
+      const sHeal = Math.floor(meStats.hp * skill.healAmt);
+      if (sHeal > 0) {
+        battle.me.mon.hp = Math.min(meStats.hp, battle.me.mon.hp + sHeal);
+        setTimeout(() => { spawnDmg('my-row', sHeal, 'heal'); sfxHeal(); refreshBattleUI(); }, 400);
+      }
+    }
   }
   // mp cost
   if (skill.mp) battle.me.mon.mp = Math.max(0, battle.me.mon.mp - skill.mp);
@@ -2858,6 +3393,9 @@ function goShop() {
 function setupUI() {
   // title
   initTitle();
+
+  // starter select
+  attachTap($('starter-confirm'), confirmStarter);
 
   // stage
   attachTap($('btn-stage-party'), goPartyScene);
