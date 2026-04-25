@@ -2038,7 +2038,11 @@ function _bgmStart() {
   try {
     if (!_bgmStartPending) return;
     ensureAudio();
-    if (!audioCtx || audioCtx.state === 'suspended') return;
+    if (!audioCtx) return;
+    // iOS Safari は state が 'suspended' でも、ユーザージェスチャー文脈中なら
+    // 直接 schedule すれば再生される。早期returnすると、resume()のpromise.then
+    // で遅延起動した時にジェスチャー文脈外となり再生が拒否される。
+    // → suspended のままでもスケジュールを試みる（resume後に発音が始まる）
     const trackId = _bgmStartPending;
     _bgmStartPending = null;
     _bgm = trackId;
@@ -2051,7 +2055,7 @@ function _bgmStart() {
       _bgmGainNode.gain.cancelScheduledValues(t);
       _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, t);
     } catch(e) {}
-    console.log('[_bgmStart] start', trackId, 'muted=', muted);
+    console.log('[_bgmStart] start', trackId, 'state=', audioCtx.state, 'muted=', muted);
     _bgmScheduleLoop(trackId);
   } catch (err) {
     console.error('[_bgmStart]', err);
@@ -6801,6 +6805,18 @@ function setupUI() {
     try {
       console.log('[_primeAudio] gesture fired');
       ensureAudio();
+      // iOS Safari対策: ジェスチャー文脈中に必ず無音SFXを1発鳴らして
+      // AudioContextを完全に解錠する（resume promiseを待たない）
+      if (audioCtx) {
+        try {
+          const t = audioCtx.currentTime;
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          g.gain.setValueAtTime(0.0001, t);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(t); o.stop(t + 0.01);
+        } catch(e) {}
+      }
       if (_bgm || _bgmStartPending) return;
       const active = document.querySelector('.scene.active');
       const sid = active ? active.id : 'title-scene';
@@ -6819,6 +6835,8 @@ function setupUI() {
         playBgm(isTotonBattle ? 'totonBattle' : 'battle');
       }
       else playBgm('title');
+      // ジェスチャー文脈中に直接 _bgmStart を呼ぶ（promise.then 経由だと iOS は無音）
+      _bgmStart();
     } catch (err) {
       console.error('[_primeAudio]', err);
     }
