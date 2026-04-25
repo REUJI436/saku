@@ -814,6 +814,25 @@
     box-shadow: 0 0 0 3px #ffd0e8, 0 0 24px rgba(255, 64, 144, 0.7);
     animation: starterShine 1.4s ease-in-out infinite;
   }
+  .starter-card .pick-badge {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #ff4090, #d63384);
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 0 0 2px #fff;
+    z-index: 2;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+  }
+  .starter-card.selected .pick-badge { display: flex; }
   @keyframes starterShine {
     0%, 100% {
       box-shadow: 0 0 0 3px #ffd0e8, 0 0 18px rgba(255, 64, 144, 0.55);
@@ -923,10 +942,10 @@
 
 <!-- ====== STARTER SELECT (オープニング) ====== -->
 <div id="starter-scene" class="scene">
-  <h2><ruby>相棒<rt>あいぼう</rt></ruby>の ポケモンを えらんでね！</h2>
+  <h2><ruby>相棒<rt>あいぼう</rt></ruby>の ポケモンを <span style="color:#ff4090">2<ruby>匹<rt>ひき</rt></ruby></span> えらんでね！</h2>
   <div id="starter-grid"></div>
   <div id="starter-confirm-wrap">
-    <button id="starter-confirm" class="btn" disabled>これに する！</button>
+    <button id="starter-confirm" class="btn" disabled>あと2<ruby>匹<rt>ひき</rt></ruby>えらんで！</button>
   </div>
   <div id="starter-fly"></div>
 </div>
@@ -1346,6 +1365,7 @@ const ITEMS = {
   ball:    { name:'ふつうボール',   icon:'⚪', rate:1.0, desc:'モンスターを つかまえるボール', price: 100 },
   superball:{ name:'スーパーボール', icon:'🟦', rate:1.5, desc:'よく つかまるボール', price: 300 },
   hyperball:{ name:'ハイパーボール', icon:'🟨', rate:2.0, desc:'とても よく つかまる', price: 800 },
+  masterball:{name:'マスターボール', icon:'🎯', rate:99, desc:'ぜったい つかまる！すごいボール', price: 5000, unlockStage: 5, masterball: true },
   potion:  { name:'かいふくのみ',   icon:'🍓', heal:30, desc:'HPを30 かいふく', price: 60 },
   hipotion:{ name:'スーパーのみ',   icon:'🍎', heal:80, desc:'HPを80 かいふく', price: 180 },
   fullpotion:{name:'まんたんのみ',  icon:'🍰', heal:9999, desc:'HPぜんかい', price: 500 },
@@ -2018,10 +2038,41 @@ function startNewGame() {
 
 // ===================== STARTER SELECT =====================
 const STARTER_IDS = [31, 100, 101, 102]; // ポッチョマ・トカゲー・ハートん・ピウー
-let pickedStarterId = null;
+const STARTER_PICK_LIMIT = 2;
+let pickedStarterIds = []; // 選択順に最大2匹
+
+function updateStarterConfirmBtn() {
+  const btn = $('starter-confirm');
+  const n = pickedStarterIds.length;
+  if (n === 0) {
+    btn.disabled = true;
+    btn.innerHTML = 'あと2<ruby>匹<rt>ひき</rt></ruby>えらんで！';
+  } else if (n === 1) {
+    btn.disabled = true;
+    btn.innerHTML = 'あと1<ruby>匹<rt>ひき</rt></ruby>えらんで！';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = 'これに する！';
+  }
+}
+
+function refreshStarterCardBadges() {
+  document.querySelectorAll('.starter-card').forEach(c => {
+    const id = parseInt(c.dataset.id, 10);
+    const idx = pickedStarterIds.indexOf(id);
+    const badge = c.querySelector('.pick-badge');
+    if (idx >= 0) {
+      c.classList.add('selected');
+      if (badge) badge.textContent = (idx === 0 ? '①' : '②');
+    } else {
+      c.classList.remove('selected');
+      if (badge) badge.textContent = '';
+    }
+  });
+}
 
 function goStarterSelect() {
-  pickedStarterId = null;
+  pickedStarterIds = [];
   switchScene('starter-scene');
   const grid = $('starter-grid');
   grid.innerHTML = '';
@@ -2033,62 +2084,83 @@ function goStarterSelect() {
     card.className = 'starter-card';
     card.dataset.id = id;
     card.innerHTML = `
+      <div class="pick-badge"></div>
       <div class="art">${svgMon(id)}</div>
       <div class="name">${def.name}</div>
       <div class="typebadge" style="background:${t.dark}">${t.name}</div>
       <div class="stats">HP${def.hp}・<ruby>攻<rt>こう</rt></ruby>${def.atk}・<ruby>防<rt>ぼう</rt></ruby>${def.def}・<ruby>速<rt>そく</rt></ruby>${def.spd}</div>
     `;
     attachTap(card, () => {
-      pickedStarterId = id;
-      document.querySelectorAll('.starter-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      $('starter-confirm').disabled = false;
-      sfxTap();
+      const cardId = parseInt(card.dataset.id, 10);
+      const existIdx = pickedStarterIds.indexOf(cardId);
+      if (existIdx >= 0) {
+        // 既に選択中 → 選択解除（トグル）
+        pickedStarterIds.splice(existIdx, 1);
+        sfxTap();
+      } else {
+        if (pickedStarterIds.length >= STARTER_PICK_LIMIT) {
+          // 上限ブロック
+          showToast('2<ruby>匹<rt>ひき</rt></ruby>までだよ！えらびなおすには<br>えらんでるカードを もういちど タップしてね');
+          return;
+        }
+        pickedStarterIds.push(cardId);
+        sfxTap();
+      }
+      refreshStarterCardBadges();
+      updateStarterConfirmBtn();
     });
     grid.appendChild(card);
   });
-  $('starter-confirm').disabled = true;
+  refreshStarterCardBadges();
+  updateStarterConfirmBtn();
 }
 
 function confirmStarter() {
-  if (pickedStarterId == null) return;
-  const id = pickedStarterId;
-  const def = getMonsterDef(id);
-  if (!def) return;
-  // パーティに LV5 で追加
-  state.party = [makeMon(id, 5)];
-  // 演出: 拡大して中央に飛ぶ + キラキラ + バナー
+  if (pickedStarterIds.length !== STARTER_PICK_LIMIT) return;
+  const ids = pickedStarterIds.slice();
+  const defs = ids.map(id => getMonsterDef(id)).filter(Boolean);
+  if (defs.length !== STARTER_PICK_LIMIT) return;
+  // パーティに LV5 で追加（2匹）
+  state.party = ids.map(id => makeMon(id, 5));
+  // 演出: 2匹を順番に中央に飛ばす + キラキラ + バナー
   sfxLevel();
   const fly = $('starter-fly');
-  fly.innerHTML = svgMon(id);
-  fly.classList.remove('show');
-  void fly.offsetWidth;
-  fly.classList.add('show');
-  // sparkles
-  const sparks = ['✨','💖','⭐','💫','🌟'];
-  for (let i = 0; i < 14; i++) {
-    const s = document.createElement('div');
-    s.className = 'starter-spark';
-    s.textContent = sparks[i % sparks.length];
-    const ang = (i / 14) * Math.PI * 2;
-    const dist = 120 + Math.random() * 80;
-    s.style.left = '50%';
-    s.style.top = '50%';
-    s.style.setProperty('--tx', Math.cos(ang) * dist + 'px');
-    s.style.setProperty('--ty', Math.sin(ang) * dist + 'px');
-    document.body.appendChild(s);
-    setTimeout(() => s.remove(), 1500);
+
+  function flyOne(id, delay) {
+    setTimeout(() => {
+      fly.innerHTML = svgMon(id);
+      fly.classList.remove('show');
+      void fly.offsetWidth;
+      fly.classList.add('show');
+      const sparks = ['✨','💖','⭐','💫','🌟'];
+      for (let i = 0; i < 12; i++) {
+        const s = document.createElement('div');
+        s.className = 'starter-spark';
+        s.textContent = sparks[i % sparks.length];
+        const ang = (i / 12) * Math.PI * 2;
+        const dist = 120 + Math.random() * 80;
+        s.style.left = '50%';
+        s.style.top = '50%';
+        s.style.setProperty('--tx', Math.cos(ang) * dist + 'px');
+        s.style.setProperty('--ty', Math.sin(ang) * dist + 'px');
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 1500);
+      }
+    }, delay);
   }
+  flyOne(ids[0], 0);
+  flyOne(ids[1], 900);
+
   setTimeout(() => {
-    showToast(`💗 ${def.name} を なかまに した！`, 1500);
-  }, 600);
+    showToast(`💗 ${defs[0].name}と${defs[1].name}が なかまに なった！`, 1500);
+  }, 1500);
   setTimeout(() => {
     fly.classList.remove('show');
     fly.innerHTML = '';
     // partyに入ったので saveGame できる
     saveGame(true);
     goStageSelect();
-  }, 1700);
+  }, 3100);
 }
 
 // ===================== STAGE SELECT =====================
@@ -3087,7 +3159,7 @@ function useItem(key) {
     setBattleMessage(it.name + ' を つかった！MP ' + it.mp + ' かいふく！');
     refreshBattleUI();
     setTimeout(foeTurn, 1100);
-  } else if (key === 'ball' || key === 'superball' || key === 'hyperball') {
+  } else if (key === 'ball' || key === 'superball' || key === 'hyperball' || key === 'masterball') {
     tryCatch(key);
   }
 }
@@ -3106,6 +3178,8 @@ function tryCatch(ballKey) {
   chance = clamp(chance, 0.05, 0.95);
   // とーとんは捕獲率5%固定（HP残量・ボール種類に関係なく超レア）
   if (battle.isToton) chance = 0.05;
+  // マスターボールは100%（とーとんも捕獲可能）
+  if (ITEMS[ballKey].masterball) chance = 1.0;
   setBattleMessage('えい！ ' + ITEMS[ballKey].name + ' を なげた！');
   sfxCatch();
   setTimeout(() => {
@@ -3144,7 +3218,7 @@ function tryCatch(ballKey) {
 
 function cmdBall() {
   // pick lowest tier ball available
-  const ballKeys = ['ball', 'superball', 'hyperball'];
+  const ballKeys = ['ball', 'superball', 'hyperball', 'masterball'];
   const list = $('item-list');
   list.innerHTML = '';
   let any = false;
@@ -3343,6 +3417,8 @@ function goShop() {
   Object.keys(ITEMS).forEach(key => {
     const it = ITEMS[key];
     if (!it.price) return;
+    // unlockStage 設定があり、まだ解禁してない場合は表示しない
+    if (it.unlockStage && (state.unlocked || 0) < it.unlockStage) return;
     const row = document.createElement('div');
     row.className = 'shop-item';
     const have = state.bag[key] || 0;
