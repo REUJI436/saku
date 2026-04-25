@@ -1553,31 +1553,30 @@
 
 <script>
 // ===================== UTIL =====================
-// touch端末は touchend → 自動synthetic click が発火するため、両方バインドすると
-// fn が二重発火する（preventDefault も完全には抑止できない）。
-// → touch / click 両方バインドした上で、共通の lastFire タイムスタンプで
-//    350ms のデバウンス。これで端末判定の誤検出に依存せず安全に1回だけ発火する。
+// touch端末は touchend のあと synthetic click が遅延発火し、
+// シーン遷移後に「同じ画面位置にある別画面のボタン」を誤タップする問題があった。
+// 対策: グローバルに「直近のtouch時刻」を記録し、touchから600ms以内のclickは全部無視。
+let _lastTouchAt = 0;
+if (typeof window !== 'undefined') {
+  window.addEventListener('touchstart', () => { _lastTouchAt = Date.now(); }, { capture: true, passive: true });
+  window.addEventListener('touchend',   () => { _lastTouchAt = Date.now(); }, { capture: true, passive: true });
+}
 function attachTap(el, fn) {
   if (!el) return;
   let touched = false;
-  let lastFire = 0;
-  const fire = (e) => {
-    const now = Date.now();
-    if (now - lastFire < 350) return;
-    lastFire = now;
-    fn.call(el, e);
-  };
   el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
   el.addEventListener('touchend', (e) => {
     if (!touched || el.disabled) { touched = false; return; }
     touched = false;
     e.preventDefault();
-    fire(e);
+    fn.call(el, e);
   }, { passive: false });
   el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
   el.addEventListener('click', (e) => {
     if (el.disabled) return;
-    fire(e);
+    // 直近のtouchが600ms以内なら synthetic click とみなして無視
+    if (Date.now() - _lastTouchAt < 600) return;
+    fn.call(el, e);
   });
 }
 
