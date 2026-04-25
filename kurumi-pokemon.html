@@ -1575,7 +1575,9 @@ const SKILLS = {
   shachoKourin:{ name: 'しゃちょー<ruby>降臨<rt>こうりん</rt></ruby>', mp: 8, power: 3.0, type: 'human', msg: 'しゃちょーが あらわれて いっかつ！', fx: '👔💢', critBoost: true }, // TODO: status effect not yet wired
   taishoku:    { name: 'たいしょくだいこう アタック', mp: 7, power: 2.5, type: 'human', msg: 'たいしょくだいこうの ふうとうを たたきつけた！', fx: '📨💥' },
   ultimateCoffee:{ name: 'きわみの コーヒーブレイク', mp: 6, power: 0.0, type: 'human', msg: 'きわみの コーヒーで HP・MPが ぜんかい！つぎのターン むてき！', fx: '☕✨', heal: true, healAmt: 1.0, mpRecover: 999, invincibleNext: true }, // TODO: status effect not yet wired
-  kyodaiManin: { name: 'キョダイ まんいんでんしゃ', mp: 9, power: 4.0, type: 'human', msg: 'まんいんでんしゃに つめこまれた！', fx: '🚆💢', confuseChance: 1.0, paralyzeChance: 1.0, burnChance: 1.0 } // TODO: status effect not yet wired
+  kyodaiManin: { name: 'キョダイ まんいんでんしゃ', mp: 9, power: 4.0, type: 'human', msg: 'まんいんでんしゃに つめこまれた！', fx: '🚆💢', confuseChance: 1.0, paralyzeChance: 1.0, burnChance: 1.0 }, // TODO: status effect not yet wired
+  // ----- メガテラスタルとーとんキョダイマックスEX 専用 -----
+  megaShachoNova:{ name: 'メガ・しゃちょー・スーパーノヴァ', mp: 14, power: 5.5, type: 'human', msg: 'うちゅうの しゃちょーが あらわれて すべてを つつみこんだ！', fx: '👔🌌💥', critBoost: true, confuseChance: 1.0, paralyzeChance: 1.0, burnChance: 1.0 } // TODO: status effect not yet wired
 };
 
 const MONSTERS = [
@@ -1660,7 +1662,8 @@ const MONSTERS = [
   { id:96, name:'<ruby>雷<rt>かみなり</rt></ruby>とーとん', type:'yellow', color:'#ffd040', shape:'human', face:'⚡', hp:80, atk:32, def:18, spd:42, learn:{}, startSkills:['zansetsu','canCoffee','shudenDash','blackThunder'], evo:null, dex:'<ruby>残業<rt>ざんぎょう</rt></ruby>かえりに かみなりを まとった おじさん。', stage:0, hidden:true, legendary:true },
   { id:97, name:'<ruby>炎<rt>ほのお</rt></ruby>とーとん', type:'red', color:'#ff5040', shape:'human', face:'🔥', hp:90, atk:40, def:20, spd:30, learn:{}, startSkills:['shimekiriFire','tetsuyaOni','shuraba','moetsukiAtk'], evo:null, dex:'しめきりに おわれて もえあがった おじさん。', stage:0, hidden:true, legendary:true },
   { id:98, name:'<ruby>氷<rt>こおり</rt></ruby>とーとん', type:'sky', color:'#80c8ff', shape:'human', face:'❄️', hp:110, atk:25, def:34, spd:22, learn:{}, startSkills:['coldFeedback','koriSeiron','mugonAtsu','zettaiPresen'], evo:null, dex:'クールビズで れいせいすぎる おじさん。むごん。', stage:0, hidden:true, legendary:true },
-  { id:95, name:'テラスタルとーとんキョダイマックス', type:'human-god', color:'#ff00ff', shape:'human', face:'👑', hp:350, atk:80, def:60, spd:60, learn:{}, startSkills:['shachoKourin','taishoku','ultimateCoffee','kyodaiManin'], evo:null, dex:'すべてを こえた でんせつの おじさん。にじいろに かがやく…', stage:0, hidden:true, legendary:true, godTier:true }
+  { id:95, name:'テラスタルとーとんキョダイマックス', type:'human-god', color:'#ff00ff', shape:'human', face:'👑', hp:350, atk:80, def:60, spd:60, learn:{}, startSkills:['shachoKourin','taishoku','ultimateCoffee','kyodaiManin'], evo:{lvl:100,to:94}, dex:'すべてを こえた でんせつの おじさん。にじいろに かがやく…', stage:0, hidden:true, legendary:true, godTier:true },
+  { id:94, name:'メガテラスタルとーとんキョダイマックスEX', type:'human-god', color:'#ff80ff', shape:'human', face:'👑', hp:700, atk:200, def:150, spd:150, learn:{100:'megaShachoNova'}, evo:null, dex:'うちゅうを すべる でんせつの メガおじさん。すべてを こえた…', stage:0, hidden:true, legendary:true, godTier:true, megaForm:true }
 ];
 
 function getMonsterDef(id) { return MONSTERS.find(m => m.id === id); }
@@ -1695,6 +1698,17 @@ const ITEMS = {
   wondercandy: { name:'ふしぎなアメ',          icon:'🌟', desc:'パーティ ぜんいんの LV+1！', dropOnly:true },
   goldcoin:    { name:'きらきらコイン',        icon:'💰', desc:'コインが +2000！',           dropOnly:true }
 };
+
+// ===================== DEMO MODE =====================
+// URL末尾に ?demo=1 を付けるとデモモード（出現50%・マスターボール99個・全ステージ解禁）
+const _isDemoMode = (typeof window !== 'undefined' && window.location && /[?&]demo=1\b/.test(window.location.search || ''));
+
+function applyDemoMode() {
+  if (!_isDemoMode || !state) return;
+  if (!state.bag) state.bag = {};
+  if ((state.bag.masterball || 0) < 99) state.bag.masterball = 99;
+  if (!state.unlocked || state.unlocked < 5) state.unlocked = 5;
+}
 
 // ===================== STATE =====================
 let state = {
@@ -1776,6 +1790,8 @@ function saveGame(silent) {
   // Don't overwrite a real save with the empty default state
   // (when user is still on the title screen and hasn't started/loaded yet)
   if (!state || !state.party || state.party.length === 0) return;
+  // デモモード中は本番セーブを汚染しないためスキップ
+  if (_isDemoMode) return;
   try {
     // 直前バックアップ：保存前のメインを退避（1世代だけ）
     try {
@@ -1856,6 +1872,7 @@ function loadGame() {
       return loadFromBackup();
     }
     state = migrated;
+    applyDemoMode();
     return true;
   } catch(e) {
     console.warn('loadGame failed:', e);
@@ -1872,6 +1889,7 @@ function loadFromBackup() {
     const migrated = migrateSaveData(parsed);
     if (!migrated) return false;
     state = migrated;
+    applyDemoMode();
     console.warn('loaded from backup');
     return true;
   } catch(e) {
@@ -2598,6 +2616,7 @@ function startNewGame() {
     minimapVisible: true,
     invertDrag: true
   };
+  applyDemoMode();
   // ※ ここでは saveGame しない（party空のため saveGame ガードで保存されない & タイトル既存セーブを温存）
   goStarterSelect();
 }
@@ -2837,7 +2856,9 @@ function generateFieldMobs(stage) {
   // ===== 隠しキャラ「とーとん」スポーン処理 =====
   // ステージ5（虹のお城）でのみ、1〜2%の確率で1体出現。
   // 通常モブに加えて配置される（最大1体）。
-  if (stage.id === 5 && Math.random() < 0.015) {
+  // デモモード(?demo=1)では50%に上昇
+  const totonRate = _isDemoMode ? 0.5 : 0.015;
+  if (stage.id === 5 && Math.random() < totonRate) {
     const tx = 100 + Math.random() * (WORLD_W - 200);
     const ty = 320 + Math.random() * (WORLD_H - 500);
     state.fieldMobs.push({
@@ -2853,16 +2874,16 @@ function generateFieldMobs(stage) {
     });
   }
 
-  // ===== 雷とーとん（ステージ2、1.5%） =====
-  if (stage.id === 2 && Math.random() < 0.015) {
+  // ===== 雷とーとん（ステージ2、1.5% / デモ50%） =====
+  if (stage.id === 2 && Math.random() < totonRate) {
     spawnLegendaryToton(96, stage);
   }
-  // ===== 炎とーとん（ステージ3、1.5%） =====
-  if (stage.id === 3 && Math.random() < 0.015) {
+  // ===== 炎とーとん（ステージ3、1.5% / デモ50%） =====
+  if (stage.id === 3 && Math.random() < totonRate) {
     spawnLegendaryToton(97, stage);
   }
-  // ===== 氷とーとん（ステージ4、1.5%） =====
-  if (stage.id === 4 && Math.random() < 0.015) {
+  // ===== 氷とーとん（ステージ4、1.5% / デモ50%） =====
+  if (stage.id === 4 && Math.random() < totonRate) {
     spawnLegendaryToton(98, stage);
   }
 }
@@ -4053,7 +4074,7 @@ function loseBattle() {
 function giveExp(mon, amt) {
   const ups = [];
   mon.exp += amt;
-  while (mon.exp >= expForNext(mon.lvl) && mon.lvl < 50) {
+  while (mon.exp >= expForNext(mon.lvl) && mon.lvl < 100) {
     mon.exp -= expForNext(mon.lvl);
     mon.lvl++;
     // learn new skill if any
@@ -4275,7 +4296,7 @@ function useSpecialItem(key, inBattle, done) {
     sfxLevel();
     const allUps = [];
     state.party.forEach(m => {
-      if (m.lvl >= 50) return;
+      if (m.lvl >= 100) return;
       m.lvl++;
       const def = getMonsterDef(m.id);
       if (def.learn[m.lvl] && !m.skills.includes(def.learn[m.lvl])) m.skills.push(def.learn[m.lvl]);
