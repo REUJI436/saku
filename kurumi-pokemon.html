@@ -1419,11 +1419,12 @@
 
 <script>
 // ===================== UTIL =====================
+// iPhone等のタッチ端末ではtouchend＋syntheticクリックの二重発火が起きるので
+// 「touch端末ならtouchendだけ／非touch端末ならclickだけ」を厳密に排他する。
+// さらに念のため350msのデバウンスも併用。
+const _hasTouch = (typeof window !== 'undefined') && ('ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0);
 function attachTap(el, fn) {
   if (!el) return;
-  let touched = false;
-  // touchendの直後に synthetic click が来ても、二重発火しないようにデバウンス
-  // （Android Chromeでは touchend.preventDefault() が click を抑止しないことがある）
   let lastFire = 0;
   const fire = (e) => {
     const now = Date.now();
@@ -1431,18 +1432,22 @@ function attachTap(el, fn) {
     lastFire = now;
     fn.call(el, e);
   };
-  el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
-  el.addEventListener('touchend', (e) => {
-    if (!touched || el.disabled) { touched = false; return; }
-    touched = false;
-    e.preventDefault();
-    fire(e);
-  }, { passive: false });
-  el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
-  el.addEventListener('click', (e) => {
-    if (el.disabled) return;
-    fire(e);
-  });
+  if (_hasTouch) {
+    let touched = false;
+    el.addEventListener('touchstart', () => { touched = true; }, { passive: true });
+    el.addEventListener('touchend', (e) => {
+      if (!touched || el.disabled) { touched = false; return; }
+      touched = false;
+      e.preventDefault();
+      fire(e);
+    }, { passive: false });
+    el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
+  } else {
+    el.addEventListener('click', (e) => {
+      if (el.disabled) return;
+      fire(e);
+    });
+  }
 }
 
 function $(id) { return document.getElementById(id); }
