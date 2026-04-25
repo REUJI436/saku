@@ -1565,6 +1565,7 @@ const STAGES = [
 ];
 
 // ===================== ITEMS =====================
+// dropOnly:true なアイテムはショップに並ばない（戦闘ドロップ専用）
 const ITEMS = {
   ball:    { name:'ふつうボール',   icon:'⚪', rate:1.0, desc:'モンスターを つかまえるボール', price: 100 },
   superball:{ name:'スーパーボール', icon:'🟦', rate:1.5, desc:'よく つかまるボール', price: 300 },
@@ -1573,7 +1574,16 @@ const ITEMS = {
   potion:  { name:'かいふくのみ',   icon:'🍓', heal:30, desc:'HPを30 かいふく', price: 60 },
   hipotion:{ name:'スーパーのみ',   icon:'🍎', heal:80, desc:'HPを80 かいふく', price: 180 },
   fullpotion:{name:'まんたんのみ',  icon:'🍰', heal:9999, desc:'HPぜんかい', price: 500 },
-  ether:   { name:'まほうのみず',   icon:'💧', mp:30, desc:'MPを30 かいふく', price: 200 }
+  ether:   { name:'まほうのみず',   icon:'💧', mp:30, desc:'MPを30 かいふく', price: 200 },
+  // ----- けいけんアメ（戦闘ドロップ専用） -----
+  'xpcandy-s':  { name:'けいけんアメ<ruby>小<rt>しょう</rt></ruby>',  icon:'🍬', xp:50,   desc:'パーティから1ぴき えらぶと EXP +50', price: 100,  dropOnly:true },
+  'xpcandy-m':  { name:'けいけんアメ<ruby>中<rt>ちゅう</rt></ruby>',  icon:'🍭', xp:200,  desc:'パーティから1ぴき えらぶと EXP +200', price: 400,  dropOnly:true },
+  'xpcandy-l':  { name:'けいけんアメ<ruby>大<rt>だい</rt></ruby>',    icon:'🎂', xp:500,  desc:'パーティから1ぴき えらぶと EXP +500', price: 1000, dropOnly:true },
+  'xpcandy-xl': { name:'けいけんアメ<ruby>特大<rt>とくだい</rt></ruby>', icon:'👑', xp:2000, desc:'パーティから1ぴき えらぶと EXP +2000', price: 5000, dropOnly:true },
+  // ----- レアアイテム（戦闘ドロップ専用） -----
+  evostone:    { name:'<ruby>進化<rt>しんか</rt></ruby>のいし', icon:'💎', desc:'えらんだ なかまを つぎの しんか形に！', dropOnly:true },
+  wondercandy: { name:'ふしぎなアメ',          icon:'🌟', desc:'パーティ ぜんいんの LV+1！', dropOnly:true },
+  goldcoin:    { name:'きらきらコイン',        icon:'💰', desc:'コインが +2000！',           dropOnly:true }
 };
 
 // ===================== STATE =====================
@@ -3308,6 +3318,33 @@ function onMyFaint() {
   }
 }
 
+function rollBattleDrops(isBoss) {
+  // 通常モブ・ボスで分岐。返り値は ['xpcandy-s', 'evostone', ...] のキー配列
+  const drops = [];
+  if (isBoss) {
+    // ボス: けいけんアメ大は確定で1個
+    drops.push('xpcandy-l');
+    // 50%でけいけんアメ特大
+    if (Math.random() < 0.50) drops.push('xpcandy-xl');
+    // 30%でレアアイテム1個（重み付き抽選）
+    if (Math.random() < 0.30) {
+      const r = Math.random();
+      // evostone:0.40 / wondercandy:0.30 / goldcoin:0.25 / masterball:0.05
+      if      (r < 0.40) drops.push('evostone');
+      else if (r < 0.70) drops.push('wondercandy');
+      else if (r < 0.95) drops.push('goldcoin');
+      else               drops.push('masterball');
+    }
+  } else {
+    // 通常モブ: 各けいけんアメは独立試行
+    if (Math.random() < 0.20)   drops.push('xpcandy-s');
+    if (Math.random() < 0.05)   drops.push('xpcandy-m');
+    if (Math.random() < 0.01)   drops.push('xpcandy-l');
+    if (Math.random() < 0.002)  drops.push('xpcandy-xl');
+  }
+  return drops;
+}
+
 function winBattle() {
   battle.ended = true;
   hideCommands();
@@ -3326,11 +3363,31 @@ function winBattle() {
   }
   state.coins += coinGain;
 
-  if (battle.isToton) {
-    setBattleMessage('🎉 とーとん を たおした！？<br>けいけんち ' + expGain + '・コイン ' + coinGain + ' （ボーナス+500！）を てに いれた！');
-  } else {
-    setBattleMessage('🎉 かった！<br>' + foe.def.name + 'を たおして、けいけんち ' + expGain + '・コイン ' + coinGain + ' を てに いれた！');
+  // ----- ドロップ判定 -----
+  const drops = rollBattleDrops(!!battle.isBoss);
+  // 個数は1個ずつ。bag に追加
+  drops.forEach(k => { state.bag[k] = (state.bag[k] || 0) + 1; });
+  // ドロップ表示用HTML
+  let dropHtml = '';
+  if (drops.length) {
+    // 同じキーを集計
+    const counts = {};
+    drops.forEach(k => { counts[k] = (counts[k] || 0) + 1; });
+    dropHtml = '<br><br>▼ ひろったアイテム ▼';
+    Object.keys(counts).forEach(k => {
+      const it = ITEMS[k];
+      if (!it) return;
+      dropHtml += '<br>' + it.icon + ' ' + it.name + ' ×' + counts[k];
+    });
   }
+
+  if (battle.isToton) {
+    setBattleMessage('🎉 とーとん を たおした！？<br>けいけんち ' + expGain + '・コイン ' + coinGain + ' （ボーナス+500！）を てに いれた！' + dropHtml);
+  } else {
+    setBattleMessage('🎉 かった！<br>' + foe.def.name + 'を たおして、けいけんち ' + expGain + '・コイン ' + coinGain + ' を てに いれた！' + dropHtml);
+  }
+  // ドロップ獲得SE（あれば）
+  if (drops.length) setTimeout(() => sfxCatch(), 350);
 
   // give exp to all alive party
   setTimeout(() => {
@@ -3543,8 +3600,10 @@ function cmdItem() {
 
 function useItem(key) {
   const it = ITEMS[key];
-  state.bag[key]--;
+  if (!it) return;
+  // 戦闘中にしか使わない系（HP/MP/ボール）はここで決済
   if (it.heal) {
+    state.bag[key]--;
     const m = battle.me.mon;
     const s = monStats(m);
     const heal = Math.min(it.heal, s.hp - m.hp);
@@ -3555,6 +3614,7 @@ function useItem(key) {
     refreshBattleUI();
     setTimeout(foeTurn, 1100);
   } else if (it.mp) {
+    state.bag[key]--;
     const m = battle.me.mon;
     const s = monStats(m);
     m.mp = Math.min(s.mp, m.mp + it.mp);
@@ -3563,8 +3623,246 @@ function useItem(key) {
     refreshBattleUI();
     setTimeout(foeTurn, 1100);
   } else if (key === 'ball' || key === 'superball' || key === 'hyperball' || key === 'masterball') {
+    state.bag[key]--;
     tryCatch(key);
+  } else if (it.xp || key === 'evostone' || key === 'wondercandy' || key === 'goldcoin') {
+    // 戦闘中も使えるが、専用フローへ
+    useSpecialItem(key, /*inBattle=*/true, (used) => {
+      // 使ったあとは敵ターンへ。キャンセル時はターン消費しない
+      refreshBattleUI();
+      if (used) setTimeout(foeTurn, 1100);
+      else { showCommands(); }
+    });
   }
+}
+
+// ===================== けいけんアメ・レアアイテム使用 =====================
+// inBattle: 戦闘中に使ったか / done(used:boolean): 使い終わったあとのコールバック（used=falseはキャンセル/不可）
+function returnFromEvoIfNeeded() {
+  // evo-scene がアクティブだったらフィールド/ステージ選択へ戻す
+  const evoScene = $('evo-scene');
+  if (evoScene && evoScene.classList.contains('active')) {
+    if (state.field && state.curStage) enterStageRefresh();
+    else goStageSelect();
+  }
+}
+function useSpecialItem(key, inBattle, done) {
+  const it = ITEMS[key];
+  const finish = (used) => {
+    // 戦闘外でevo-sceneに残っていたらフィールドに戻す
+    if (!inBattle) returnFromEvoIfNeeded();
+    if (done) done(!!used);
+  };
+  if (!it) { finish(false); return; }
+  if (!state.bag[key]) {
+    showToast('もってないよ');
+    finish(false);
+    return;
+  }
+  // けいけんアメ：パーティ選択 → EXP付与
+  if (it.xp) {
+    pickPartyMember('だれに あげる？', () => true, (mon) => {
+      if (!mon) { finish(false); return; }
+      state.bag[key]--;
+      sfxHeal();
+      const ups = giveExp(mon, it.xp);
+      const def = getMonsterDef(mon.id);
+      const msg = it.icon + ' ' + def.name + 'は<br>けいけんち +' + it.xp + '！';
+      if (inBattle) setBattleMessage(msg.replace(/<br>/g, ' '));
+      else showToast(msg);
+      saveGame(true);
+      if (ups.length) {
+        showLevelup(ups, () => maybeEvolve(ups, () => finish(true)));
+      } else {
+        finish(true);
+      }
+    });
+    return;
+  }
+  // ふしぎなアメ：パーティ全員 LV+1
+  if (key === 'wondercandy') {
+    if (!state.party.length) { showToast('パーティが いないよ'); finish(false); return; }
+    state.bag[key]--;
+    sfxLevel();
+    const allUps = [];
+    state.party.forEach(m => {
+      if (m.lvl >= 50) return;
+      m.lvl++;
+      const def = getMonsterDef(m.id);
+      if (def.learn[m.lvl] && !m.skills.includes(def.learn[m.lvl])) m.skills.push(def.learn[m.lvl]);
+      const s = monStats(m);
+      m.hp = Math.min(s.hp, m.hp + Math.floor(s.hp * 0.2));
+      m.mp = s.mp;
+      // +1演出（数字ポップ）
+      if (inBattle) spawnDmg('my-row', 1, 'heal');
+      allUps.push({ mon: m, lvl: m.lvl, def });
+    });
+    showToast('🌟 ふしぎなアメで パーティぜんいんが LV+1！');
+    saveGame(true);
+    if (allUps.length) {
+      showLevelup(allUps, () => maybeEvolve(allUps, () => finish(true)));
+    } else {
+      finish(true);
+    }
+    return;
+  }
+  // 進化のいし：パーティ選択 → 進化先があれば強制進化
+  if (key === 'evostone') {
+    pickPartyMember('だれに あげる？', (m) => {
+      const d = getMonsterDef(m.id);
+      return !!(d && d.evo && d.evo.to);
+    }, (mon) => {
+      if (!mon) { finish(false); return; }
+      const def = getMonsterDef(mon.id);
+      if (!def || !def.evo || !def.evo.to) {
+        showToast('これ<ruby>以上<rt>いじょう</rt></ruby> しんかできないよ！');
+        finish(false);
+        return;
+      }
+      state.bag[key]--;
+      sfxEvo();
+      // 既存の進化ロジック流用（LV条件は無視して to を直接代入）
+      const toDef = getMonsterDef(def.evo.to);
+      const evos = [{ mon, fromDef: def, toDef }];
+      saveGame(true);
+      doEvolution(evos, () => {
+        saveGame(true);
+        finish(true); // finish() 側で必要なら scene を戻す
+      });
+    });
+    return;
+  }
+  // きらきらコイン：コイン+2000
+  if (key === 'goldcoin') {
+    state.bag[key]--;
+    state.coins += 2000;
+    sfxCatch(); // コイン入手SE流用
+    showToast('💰 コイン +2000！');
+    // 残高表示を更新（場面に応じて）
+    try { if ($('field-coins')) $('field-coins').textContent = state.coins; } catch(e){}
+    try { if ($('stage-coins')) $('stage-coins').textContent = state.coins; } catch(e){}
+    try { if ($('shop-coins')) $('shop-coins').textContent = state.coins; } catch(e){}
+    try { if ($('party-coins')) $('party-coins').textContent = state.coins; } catch(e){}
+    saveGame(true);
+    finish(true);
+    return;
+  }
+  finish(false);
+}
+
+// パーティ選択モーダル：filterFn(mon) で対象を絞り込み、cb(mon) でコールバック（キャンセル時 null）
+function pickPartyMember(title, filterFn, cb) {
+  const candidates = state.party.filter(m => !filterFn || filterFn(m));
+  if (!candidates.length) {
+    showToast('つかえる なかまが いないよ！');
+    if (cb) cb(null);
+    return;
+  }
+  let html = '<div style="display:flex; flex-direction:column; gap:8px; max-height:55vh; overflow-y:auto;">';
+  state.party.forEach((m, i) => {
+    const def = getMonsterDef(m.id);
+    const stats = monStats(m);
+    const ok = (!filterFn || filterFn(m));
+    html += `<button class="btn ${ok?'green':'gray'}" data-pick-idx="${i}" ${ok?'':'disabled'} style="text-align:left; padding:10px; display:flex; align-items:center; gap:8px;">
+      <span style="font-size:24px">${def.face || '👾'}</span>
+      <span style="flex:1">
+        <b>${def.name}</b> Lv${m.lvl}<br>
+        <small style="opacity:.85">HP ${m.hp}/${stats.hp}・EXP ${m.exp}/${expForNext(m.lvl)}</small>
+      </span>
+    </button>`;
+  });
+  html += '</div>';
+  showModal(title, html, [{ label: 'やめる', cls: 'gray', fn: () => { if (cb) cb(null); } }]);
+  // 各ボタンにタップを後付け
+  setTimeout(() => {
+    const body = $('modal-body');
+    if (!body) return;
+    body.querySelectorAll('button[data-pick-idx]').forEach(btn => {
+      if (btn.disabled) return;
+      attachTap(btn, () => {
+        const idx = +btn.getAttribute('data-pick-idx');
+        const m = state.party[idx];
+        hideModal();
+        if (cb) cb(m);
+      });
+    });
+  }, 0);
+}
+
+// フィールドのバッグ：表示＋アイテム使用（戦闘外）
+function openFieldBag() {
+  const keys = Object.keys(state.bag).filter(k => state.bag[k] > 0 && ITEMS[k]);
+  if (keys.length === 0) {
+    showModal('🎒 バッグ', '<div style="text-align:center; color:#888; padding:16px;">アイテムが ないよ</div>', [{ label: 'とじる', cls: 'gray' }]);
+    return;
+  }
+  let html = '<div style="display:flex; flex-direction:column; gap:6px; max-height:55vh; overflow-y:auto;">';
+  keys.forEach(k => {
+    const it = ITEMS[k];
+    // 戦闘外で意味のあるアイテムだけ「つかう」ボタンを出す
+    // - けいけんアメ系（xp）
+    // - evostone / wondercandy / goldcoin
+    // - HP/MP回復（戦闘外でも HP/MP 回復したい場面のため、対象を選ぶ簡易版）
+    const isXp   = !!it.xp;
+    const isRare = (k === 'evostone' || k === 'wondercandy' || k === 'goldcoin');
+    const isHeal = !!it.heal;
+    const isMp   = !!it.mp;
+    const usable = isXp || isRare || isHeal || isMp;
+    html += `<div style="display:flex; gap:8px; align-items:center; padding:6px; border-bottom:1px dashed #ffb0d8; background:#fff8fc; border-radius:8px;">
+      <span style="font-size:24px">${it.icon}</span>
+      <span style="flex:1;"><b>${it.name}</b> ×${state.bag[k]}<br><small style="color:#666">${it.desc}</small></span>
+      ${usable ? `<button class="btn yellow" data-bag-use="${k}" style="font-size:12px; padding:6px 10px;">つかう</button>` : ''}
+    </div>`;
+  });
+  html += '</div>';
+  showModal('🎒 バッグ', html, [{ label: 'とじる', cls: 'gray' }]);
+  // つかうボタンを後付け
+  setTimeout(() => {
+    const body = $('modal-body');
+    if (!body) return;
+    body.querySelectorAll('button[data-bag-use]').forEach(btn => {
+      attachTap(btn, () => {
+        const k = btn.getAttribute('data-bag-use');
+        hideModal();
+        const it = ITEMS[k];
+        if (!it) return;
+        // HP/MP 回復は対象選択
+        if (it.heal) {
+          pickPartyMember('だれに あげる？', () => true, (mon) => {
+            if (!mon) { openFieldBag(); return; }
+            if (!state.bag[k]) { openFieldBag(); return; }
+            state.bag[k]--;
+            const s = monStats(mon);
+            const heal = Math.min(it.heal, s.hp - mon.hp);
+            mon.hp = Math.min(s.hp, mon.hp + it.heal);
+            sfxHeal();
+            const def = getMonsterDef(mon.id);
+            showToast(it.icon + ' ' + def.name + ' HP +' + heal);
+            saveGame(true);
+            openFieldBag();
+          });
+          return;
+        }
+        if (it.mp) {
+          pickPartyMember('だれに あげる？', () => true, (mon) => {
+            if (!mon) { openFieldBag(); return; }
+            if (!state.bag[k]) { openFieldBag(); return; }
+            state.bag[k]--;
+            const s = monStats(mon);
+            mon.mp = Math.min(s.mp, mon.mp + it.mp);
+            sfxHeal();
+            const def = getMonsterDef(mon.id);
+            showToast(it.icon + ' ' + def.name + ' MP +' + it.mp);
+            saveGame(true);
+            openFieldBag();
+          });
+          return;
+        }
+        // けいけんアメ・レアアイテム
+        useSpecialItem(k, /*inBattle=*/false, () => { openFieldBag(); });
+      });
+    });
+  }, 0);
 }
 
 function tryCatch(ballKey) {
@@ -3820,6 +4118,8 @@ function goShop() {
   Object.keys(ITEMS).forEach(key => {
     const it = ITEMS[key];
     if (!it.price) return;
+    // dropOnly はショップに並ばない（戦闘ドロップ専用）
+    if (it.dropOnly) return;
     // unlockStage 設定があり、まだ解禁してない場合は表示しない
     if (it.unlockStage && (state.unlocked || 0) < it.unlockStage) return;
     const row = document.createElement('div');
@@ -3884,19 +4184,7 @@ function setupUI() {
 
   // field
   attachTap($('btn-field-party'), () => { stopFieldLoop(); goPartyScene(); });
-  attachTap($('btn-field-bag'), () => {
-    // simple bag view via modal
-    let html = '<div style="text-align:left; max-height:50vh; overflow-y:auto;">';
-    Object.keys(state.bag).forEach(k => {
-      if (!state.bag[k] || !ITEMS[k]) return;
-      html += `<div style="display:flex; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #ffb0d8;">
-        <span style="font-size:24px">${ITEMS[k].icon}</span>
-        <span><b>${ITEMS[k].name}</b> ×${state.bag[k]}<br><small style="color:#666">${ITEMS[k].desc}</small></span>
-      </div>`;
-    });
-    html += '</div>';
-    showModal('🎒 バッグ', html, [{ label: 'とじる', cls: 'gray' }]);
-  });
+  attachTap($('btn-field-bag'), openFieldBag);
   attachTap($('btn-field-back'), () => {
     stopFieldLoop();
     state.field = null;
