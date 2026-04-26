@@ -2261,7 +2261,11 @@ function playBgm(trackId) {
   if (_bgm === trackId) return;
   stopBgm();
   _bgmStartPending = trackId;
-  if (audioCtx && audioCtx.state === 'running') _bgmStart();
+  // iOS Safariは画面遷移時にAudioContextを勝手にsuspendするので、
+  // 必ずensureAudioでresumeを試みた上で_bgmStartを呼ぶ。
+  // _bgmStartは内部でsuspended状態でもスケジュールを試みる設計に変更済み。
+  ensureAudio();
+  _bgmStart();
 }
 
 function _bgmApplyMute() {
