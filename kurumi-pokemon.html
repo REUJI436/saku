@@ -1922,13 +1922,16 @@ function attachTap(el, fn) {
     if (!touched || el.disabled) { touched = false; return; }
     touched = false;
     e.preventDefault();
+    // 全タップで AudioContext を warm に保つ（iOS Safari が
+    // 画面遷移時に勝手に suspend するのを防ぐ）。エラーは握り潰す。
+    if (typeof ensureAudio === 'function') { try { ensureAudio(); } catch(e0) {} }
     fn.call(el, e);
   }, { passive: false });
   el.addEventListener('touchcancel', () => { touched = false; }, { passive: true });
   el.addEventListener('click', (e) => {
     if (el.disabled) return;
-    // 直近のtouchが600ms以内なら synthetic click とみなして無視
     if (Date.now() - _lastTouchAt < 600) return;
+    if (typeof ensureAudio === 'function') { try { ensureAudio(); } catch(e0) {} }
     fn.call(el, e);
   });
 }
@@ -4878,18 +4881,19 @@ function renderWorldMap() {
 function moveAvatarTo(stage, done) {
   const avatar = $('map-avatar');
   if (!avatar) { if (done) done(); return; }
-  // ぴょんっとジャンプアニメ
+  // ぴょんっとジャンプアニメ（CSS）
   avatar.classList.remove('hopping');
-  // reflowでアニメ再起動
   void avatar.offsetWidth;
   avatar.classList.add('hopping');
   avatar.style.left = stage.mapPos.x + 'px';
   avatar.style.top  = stage.mapPos.y + 'px';
-  // CSS transition は 0.5s。短めに 320ms で入場へ
-  setTimeout(() => {
-    avatar.classList.remove('hopping');
-    if (done) done();
-  }, 360);
+  // setTimeoutで done() を遅延させると iOS Safari の
+  // ジェスチャー文脈が切れて BGM が鳴らなくなるので、
+  // done() は同期的に呼ぶ。アニメ自体は CSS transition が
+  // 続行するので視覚的にも問題なし。
+  if (done) done();
+  // hoppingクラスは少し遅らせて外す（こちらは音に関係ない）
+  setTimeout(() => { avatar.classList.remove('hopping'); }, 360);
 }
 
 // ===================== FIELD (walk + encounter) =====================
