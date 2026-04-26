@@ -5109,11 +5109,12 @@ function generateFieldMobs(stage) {
     });
   }
 
-  // ===== 隠しキャラ「とーとん」スポーン処理 =====
-  // 対応ステージで 1.5% / デモ50% で1体スポーン
+  // ===== 隠しキャラ「とーとん」スポーン処理（Cプラン: 各ワールドのN-3に配置） =====
+  // N-3 は中ボスステージ。中ボス→ボスへの段階演出に「とーとん遭遇」が加わる。
+  // 中ボス・とーとんは別系統（isToton除外）なので進行ロジック上は共存可。
   const totonRate = _isDemoMode ? 0.5 : 0.015;
-  // 通常とーとん（id:99）: 5-4
-  if (stage.id === '5-4' && Math.random() < totonRate) {
+  // 通常とーとん（id:99）: 1-3
+  if (stage.id === '1-3' && Math.random() < totonRate) {
     const tx = 100 + Math.random() * (WORLD_W - 200);
     const ty = 320 + Math.random() * (WORLD_H - 500);
     state.fieldMobs.push({
@@ -5128,16 +5129,16 @@ function generateFieldMobs(stage) {
       wanderTimer: rand(40, 120)
     });
   }
-  // 雷とーとん（id:96）: 2-4
-  if (stage.id === '2-4' && Math.random() < totonRate) {
+  // 雷とーとん（id:96）: 2-3
+  if (stage.id === '2-3' && Math.random() < totonRate) {
     spawnLegendaryToton(96, stage);
   }
-  // 炎とーとん（id:97）: 3-4
-  if (stage.id === '3-4' && Math.random() < totonRate) {
+  // 炎とーとん（id:97）: 3-3
+  if (stage.id === '3-3' && Math.random() < totonRate) {
     spawnLegendaryToton(97, stage);
   }
-  // 氷とーとん（id:98）: 4-4
-  if (stage.id === '4-4' && Math.random() < totonRate) {
+  // 氷とーとん（id:98）: 4-3
+  if (stage.id === '4-3' && Math.random() < totonRate) {
     spawnLegendaryToton(98, stage);
   }
 }
@@ -5154,7 +5155,8 @@ function tryTerastalSpawn() {
   if (top4.length < 4 || top4.join(',') !== want.join(',')) return;
   if (state.fieldMobs.some(m => m.id === 95 && !m.defeated)) return;
 
-  const stage = STAGES.find(s => s.id === '5-5') || STAGES.find(s => s.worldId === 5);
+  // 1-1 のフィールドにスポーン（隠しコマンド発動の場所＝始まりの場所）
+  const stage = STAGES.find(s => s.id === '1-1') || STAGES.find(s => s.worldId === 1);
   spawnLegendaryToton(95, stage, { lvl: 1, godTier: true });
   showToast('!? せかいが <ruby>揺<rt>ゆ</rt></ruby>れている…');
   if (typeof sfxLevel === 'function') sfxLevel();
@@ -7477,8 +7479,9 @@ function setupUI() {
     applyMinimapVisibility();
     saveGame(true);
 
-    // 隠しコマンド: 虹のお城ボス(5-5)で4兄弟連れて10連打 → テラスタルとーとんキョダイマックス出現
-    if (state.curStage === '5-5') {
+    // 隠しコマンド: 始まりの場所(1-1)で4兄弟連れて10連打 → テラスタルとーとんキョダイマックス出現
+    // 「すべての始まりの場所に最強が眠っている」ロマン配置
+    if (state.curStage === '1-1') {
       _terastalTapCount++;
       clearTimeout(_terastalTapTimer);
       _terastalTapTimer = setTimeout(() => { _terastalTapCount = 0; }, 5000);
