@@ -1534,25 +1534,25 @@
   <h1>くるみのポケモン<ruby>探<rt>さが</rt></ruby>し</h1>
   <p class="sub">かわいいモンスターを<ruby>捕<rt>つか</rt></ruby>まえて<ruby>育<rt>そだ</rt></ruby>てよう！</p>
   <div class="title-buttons">
-    <button id="btn-new" class="btn">はじめから</button>
+    <button id="btn-new" class="btn"><ruby>始<rt>はじ</rt></ruby>めから</button>
     <button id="btn-continue" class="btn blue">つづきから</button>
   </div>
   <div id="title-save-tools">
-    <button id="btn-save-export" class="title-tool-btn">セーブを ほぞん</button>
-    <button id="btn-save-import" class="title-tool-btn">セーブを よみこみ</button>
-    <button id="btn-drag-mode" class="title-tool-btn">そうさ: ひく</button>
+    <button id="btn-save-export" class="title-tool-btn">セーブを <ruby>保存<rt>ほぞん</rt></ruby></button>
+    <button id="btn-save-import" class="title-tool-btn">セーブを <ruby>読<rt>よ</rt></ruby>みこみ</button>
+    <button id="btn-drag-mode" class="title-tool-btn"><ruby>操作<rt>そうさ</rt></ruby>: ひく</button>
   </div>
-  <a id="btn-restore-backup" href="#"><ruby>壊<rt>こわ</rt></ruby>れた？ ひとつ前にもどす</a>
-  <a id="btn-reset-danger" href="#" style="display:none;">ぜんぶ けして あたらしく はじめる</a>
+  <a id="btn-restore-backup" href="#"><ruby>壊<rt>こわ</rt></ruby>れた？ ひとつ<ruby>前<rt>まえ</rt></ruby>に<ruby>戻<rt>もど</rt></ruby>す</a>
+  <a id="btn-reset-danger" href="#" style="display:none;">ぜんぶ <ruby>消<rt>け</rt></ruby>して <ruby>新<rt>あたら</rt></ruby>しく <ruby>始<rt>はじ</rt></ruby>める</a>
   <div id="title-last-save" style="display:none;"></div>
 </div>
 
 <!-- ====== STARTER SELECT (オープニング) ====== -->
 <div id="starter-scene" class="scene">
-  <h2><ruby>相棒<rt>あいぼう</rt></ruby>の ポケモンを <span style="color:#ff4090">2<ruby>匹<rt>ひき</rt></ruby></span> えらんでね！</h2>
+  <h2><ruby>相棒<rt>あいぼう</rt></ruby>の ポケモンを <span style="color:#ff4090">2<ruby>匹<rt>ひき</rt></ruby></span> <ruby>選<rt>えら</rt></ruby>んでね！</h2>
   <div id="starter-grid"></div>
   <div id="starter-confirm-wrap">
-    <button id="starter-confirm" class="btn" disabled>あと2<ruby>匹<rt>ひき</rt></ruby>えらんで！</button>
+    <button id="starter-confirm" class="btn" disabled>あと2<ruby>匹<rt>ひき</rt></ruby><ruby>選<rt>えら</rt></ruby>んで！</button>
   </div>
   <div id="starter-fly"></div>
 </div>
@@ -1560,7 +1560,7 @@
 <!-- ====== WORLD MAP (旧 STAGE SELECT) ====== -->
 <div id="stage-scene" class="scene">
   <div id="field-header">
-    <span class="stage-name">ぼうけんの ちず</span>
+    <span class="stage-name">ぼうけんの <ruby>地図<rt>ちず</rt></ruby></span>
     <span class="coins">💰<span id="stage-coins">0</span></span>
   </div>
   <div id="map-area">
@@ -1589,7 +1589,7 @@
     <canvas id="field-canvas"></canvas>
     <div id="encounter-mark">！</div>
     <!-- ドラッグでうごこう！ -->
-    <div id="drag-hint">👆 がめんを ドラッグして うごこう！</div>
+    <div id="drag-hint">👆 <ruby>画面<rt>がめん</rt></ruby>を ドラッグして <ruby>動<rt>うご</rt></ruby>こう！</div>
     <!-- ミニマップ -->
     <div id="minimap-wrap">
       <canvas id="minimap-canvas"></canvas>
@@ -1627,37 +1627,37 @@
           <div class="mpbar"><div class="mpfill" id="my-mpfill"></div></div>
         </div>
       </div>
-      <div id="crit-text">💥 きゅうしょ！</div>
+      <div id="crit-text">💥 <ruby>急所<rt>きゅうしょ</rt></ruby>！</div>
     </div>
     <div id="battle-message"><ruby>戦闘<rt>せんとう</rt></ruby><ruby>開始<rt>かいし</rt></ruby>！</div>
   </div>
   <div id="battle-bottom">
     <div id="cmd-grid">
-      <button class="btn" id="cmd-attack">たたかう</button>
-      <button class="btn blue" id="cmd-skill">とくぎ</button>
+      <button class="btn" id="cmd-attack"><ruby>戦<rt>たたか</rt></ruby>う</button>
+      <button class="btn blue" id="cmd-skill"><ruby>特技<rt>とくぎ</rt></ruby></button>
       <button class="btn yellow" id="cmd-item">アイテム</button>
       <button class="btn green" id="cmd-ball">ボール</button>
       <button class="btn gray" id="cmd-swap"><ruby>交代<rt>こうたい</rt></ruby></button>
-      <button class="btn gray" id="cmd-run">にげる</button>
+      <button class="btn gray" id="cmd-run"><ruby>逃<rt>に</rt></ruby>げる</button>
     </div>
     <div id="tap-arena">
       <!-- ボタンを上、ゲージ類を下に配置（iOS下端スワイプ誤発動防止） -->
       <button id="tap-button"><ruby>連打<rt>れんだ</rt></ruby>！！！</button>
       <div id="tap-power-bar" aria-label="パワーゲージ">
         <div id="tap-power-fill"></div>
-        <div id="tap-power-label">パワー</div>
+        <div id="tap-power-label"><ruby>力<rt>ちから</rt></ruby></div>
       </div>
       <div id="tap-timer-bar"><div id="tap-timer-fill"></div></div>
       <div id="tap-info">
         <div class="pill"><span class="lbl"><ruby>残<rt>のこ</rt></ruby>り<ruby>時間<rt>じかん</rt></ruby></span><span id="tap-timer-text">3.0</span>びょう</div>
-        <div class="pill"><span class="lbl">タップ</span><span id="tap-count">0</span>かい</div>
+        <div class="pill"><span class="lbl">タップ</span><span id="tap-count">0</span><ruby>回<rt>かい</rt></ruby></div>
       </div>
     </div>
   </div>
 
   <!-- Skill submenu -->
   <div class="sub-panel" id="skill-panel">
-    <h2>とくぎを<ruby>選<rt>えら</rt></ruby>ぼう</h2>
+    <h2><ruby>特技<rt>とくぎ</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぼう</h2>
     <div class="sub-list" id="skill-list"></div>
     <div class="sub-buttons">
       <button class="btn gray" id="skill-cancel">キャンセル</button>
@@ -1717,7 +1717,7 @@
 <div id="evo-scene" class="scene">
   <div id="evo-art-wrap"></div>
   <div id="evo-text"></div>
-  <button class="btn" id="evo-next">つぎへ</button>
+  <button class="btn" id="evo-next"><ruby>次<rt>つぎ</rt></ruby>へ</button>
 </div>
 
 <!-- ===== Floating UI ===== -->
@@ -2144,15 +2144,15 @@ const SKILLS = {
   splash:  { name: 'みずしぶき',   mp: 4,  power: 1.4, type: 'sky',    msg: 'みずしぶきを とばした！', fx: '💧' },
   bubble:  { name: 'バブルジェット', mp: 8,  power: 1.7, type: 'sky',    msg: 'バブルジェット！',     fx: '🫧' },
   thunder: { name: 'ビリビリショック', mp: 5,  power: 1.5, type: 'yellow', msg: 'ビリビリでしびれた！', fx: '⚡' },
-  flash:   { name: 'フラッシュ',   mp: 8,  power: 1.6, type: 'yellow', msg: 'まばゆい ひかり！',     fx: '⭐' },
+  flash:   { name: 'フラッシュ',   mp: 8,  power: 1.6, type: 'yellow', msg: 'まばゆい <ruby>光<rt>ひかり</rt></ruby>！',     fx: '⭐' },
   leaf:    { name: 'はっぱカッター', mp: 4,  power: 1.4, type: 'green',  msg: 'はっぱを とばした！', fx: '🍃' },
   vine:    { name: 'つるムチ',     mp: 6,  power: 1.6, type: 'green',  msg: 'つるムチでしばいた！', fx: '🌿' },
   heart:   { name: 'ラブビーム',   mp: 6,  power: 1.6, type: 'pink',   msg: 'ラブビーム！',         fx: '💕' },
   star:    { name: 'スターショット', mp: 7,  power: 1.7, type: 'yellow', msg: 'スターショット！',     fx: '🌟' },
   magic:   { name: 'まほうのこな', mp: 5,  power: 1.4, type: 'purple', msg: 'まほうのこな！',       fx: '✨' },
   hyper:   { name: 'はかいビーム', mp: 14, power: 2.5, type: 'purple', msg: 'はかいビーム！！',     fx: '💥' },
-  hug:     { name: 'もふもふハグ', mp: 4,  power: 0.0, type: 'pink',   msg: 'もふもふハグで かいふく！', fx: '💗', heal: true, healAmt: 0.4 },
-  shine:   { name: 'きらめきパワー', mp: 8,  power: 0.0, type: 'yellow', msg: 'きらめきパワーで かいふく！', fx: '💫', heal: true, healAmt: 0.6 },
+  hug:     { name: 'もふもふハグ', mp: 4,  power: 0.0, type: 'pink',   msg: 'もふもふハグで <ruby>回復<rt>かいふく</rt></ruby>！', fx: '💗', heal: true, healAmt: 0.4 },
+  shine:   { name: 'きらめきパワー', mp: 8,  power: 0.0, type: 'yellow', msg: 'きらめきパワーで <ruby>回復<rt>かいふく</rt></ruby>！', fx: '💫', heal: true, healAmt: 0.6 },
   dragon:  { name: 'ドラゴンブレス', mp: 12, power: 2.2, type: 'purple', msg: 'ドラゴンブレス！！',   fx: '🔥' },
   lullaby: { name: 'こもりうた',   mp: 3,  power: 0.7, type: 'pink',   msg: 'こもりうたで ねむらせた！', fx: '🎵' },
   watergun:{ name: 'みずでっぽう', mp: 3,  power: 1.3, type: 'sky',    msg: 'みずでっぽう！',       fx: '💦' },
@@ -2322,7 +2322,7 @@ const STAGES = (function buildStages(){
       else              { mobCount = 4;  lvlLo = w.low + 5; lvlHi = w.high;    boss = { id: w.bossId, lvl: w.bossLvl }; }
       const px = Math.round(wi * worldW + off.dx * worldW);
       const py = Math.round(WORLD_MAP_BASE_Y + off.dy);
-      const subLabel = ['はじまり','すすむ','ちょっとずつ','もうすこし','ボス'][si];
+      const subLabel = ['<ruby>始<rt>はじ</rt></ruby>まり','<ruby>進<rt>すす</rt></ruby>む','ちょっとずつ','もうすこし','ボス'][si];
       arr.push({
         id,
         worldId: w.id,
@@ -2375,21 +2375,21 @@ function getNextStageId(stageId) {
 // ===================== ITEMS =====================
 // dropOnly:true なアイテムはショップに並ばない（戦闘ドロップ専用）
 const ITEMS = {
-  ball:    { name:'ふつうボール',   icon:'⚪', rate:1.0, desc:'モンスターを つかまえるボール', price: 100 },
-  superball:{ name:'スーパーボール', icon:'🟦', rate:1.5, desc:'よく つかまるボール', price: 300 },
-  hyperball:{ name:'ハイパーボール', icon:'🟨', rate:2.0, desc:'とても よく つかまる', price: 800 },
-  masterball:{name:'マスターボール', icon:'🎯', rate:99, desc:'ぜったい つかまる！すごいボール', price: 5000, unlockStage: '5-5', masterball: true },
-  potion:  { name:'かいふくのみ',   icon:'🍓', heal:30, desc:'HPを30 かいふく', price: 60 },
-  hipotion:{ name:'スーパーのみ',   icon:'🍎', heal:80, desc:'HPを80 かいふく', price: 180 },
-  fullpotion:{name:'まんたんのみ',  icon:'🍰', heal:9999, desc:'HPぜんかい', price: 500 },
-  ether:   { name:'まほうのみず',   icon:'💧', mp:30, desc:'MPを30 かいふく', price: 200 },
+  ball:    { name:'ふつうボール',   icon:'⚪', rate:1.0, desc:'モンスターを <ruby>捕<rt>つか</rt></ruby>まえるボール', price: 100 },
+  superball:{ name:'スーパーボール', icon:'🟦', rate:1.5, desc:'よく <ruby>捕<rt>つか</rt></ruby>まるボール', price: 300 },
+  hyperball:{ name:'ハイパーボール', icon:'🟨', rate:2.0, desc:'とても よく <ruby>捕<rt>つか</rt></ruby>まる', price: 800 },
+  masterball:{name:'マスターボール', icon:'🎯', rate:99, desc:'ぜったい <ruby>捕<rt>つか</rt></ruby>まる！すごいボール', price: 5000, unlockStage: '5-5', masterball: true },
+  potion:  { name:'<ruby>回復<rt>かいふく</rt></ruby>のみ',   icon:'🍓', heal:30, desc:'HPを30 <ruby>回復<rt>かいふく</rt></ruby>', price: 60 },
+  hipotion:{ name:'スーパーのみ',   icon:'🍎', heal:80, desc:'HPを80 <ruby>回復<rt>かいふく</rt></ruby>', price: 180 },
+  fullpotion:{name:'まんたんのみ',  icon:'🍰', heal:9999, desc:'HP <ruby>全回復<rt>ぜんかいふく</rt></ruby>', price: 500 },
+  ether:   { name:'まほうのみず',   icon:'💧', mp:30, desc:'MPを30 <ruby>回復<rt>かいふく</rt></ruby>', price: 200 },
   // ----- けいけんアメ（戦闘ドロップ専用） -----
-  'xpcandy-s':  { name:'けいけんアメ<ruby>小<rt>しょう</rt></ruby>',  icon:'🍬', xp:50,   desc:'パーティから1ぴき えらぶと EXP +50', price: 100,  dropOnly:true },
-  'xpcandy-m':  { name:'けいけんアメ<ruby>中<rt>ちゅう</rt></ruby>',  icon:'🍭', xp:200,  desc:'パーティから1ぴき えらぶと EXP +200', price: 400,  dropOnly:true },
-  'xpcandy-l':  { name:'けいけんアメ<ruby>大<rt>だい</rt></ruby>',    icon:'🎂', xp:500,  desc:'パーティから1ぴき えらぶと EXP +500', price: 1000, dropOnly:true },
-  'xpcandy-xl': { name:'けいけんアメ<ruby>特大<rt>とくだい</rt></ruby>', icon:'👑', xp:2000, desc:'パーティから1ぴき えらぶと EXP +2000', price: 5000, dropOnly:true },
+  'xpcandy-s':  { name:'けいけんアメ<ruby>小<rt>しょう</rt></ruby>',  icon:'🍬', xp:50,   desc:'パーティから1ぴき <ruby>選<rt>えら</rt></ruby>ぶと EXP +50', price: 100,  dropOnly:true },
+  'xpcandy-m':  { name:'けいけんアメ<ruby>中<rt>ちゅう</rt></ruby>',  icon:'🍭', xp:200,  desc:'パーティから1ぴき <ruby>選<rt>えら</rt></ruby>ぶと EXP +200', price: 400,  dropOnly:true },
+  'xpcandy-l':  { name:'けいけんアメ<ruby>大<rt>だい</rt></ruby>',    icon:'🎂', xp:500,  desc:'パーティから1ぴき <ruby>選<rt>えら</rt></ruby>ぶと EXP +500', price: 1000, dropOnly:true },
+  'xpcandy-xl': { name:'けいけんアメ<ruby>特大<rt>とくだい</rt></ruby>', icon:'👑', xp:2000, desc:'パーティから1ぴき <ruby>選<rt>えら</rt></ruby>ぶと EXP +2000', price: 5000, dropOnly:true },
   // ----- レアアイテム（戦闘ドロップ専用） -----
-  evostone:    { name:'<ruby>進化<rt>しんか</rt></ruby>のいし', icon:'💎', desc:'えらんだ なかまを つぎの しんか形に！', dropOnly:true },
+  evostone:    { name:'<ruby>進化<rt>しんか</rt></ruby>のいし', icon:'💎', desc:'<ruby>選<rt>えら</rt></ruby>んだ <ruby>仲間<rt>なかま</rt></ruby>を つぎの すがたに！', dropOnly:true },
   wondercandy: { name:'ふしぎなアメ',          icon:'🌟', desc:'パーティ ぜんいんの LV+1！', dropOnly:true },
   goldcoin:    { name:'きらきらコイン',        icon:'💰', desc:'コインが +2000！',           dropOnly:true }
 };
@@ -2504,11 +2504,11 @@ function saveGame(silent) {
     state.lastSavedAt = Date.now();
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     showSaveToast(false);
-    if (!silent) showToast('💾 ほぞんしました！');
+    if (!silent) showToast('💾 <ruby>保存<rt>ほぞん</rt></ruby>しました！');
   } catch(e) {
     console.warn('saveGame failed:', e);
     showSaveToast(true);
-    if (!silent) showToast('ほぞんに しっぱい');
+    if (!silent) showToast('<ruby>保存<rt>ほぞん</rt></ruby>に しっぱい');
   }
 }
 
@@ -2638,22 +2638,22 @@ function restoreFromBackup() {
   try {
     const raw = localStorage.getItem(BACKUP_KEY);
     if (!raw) {
-      showToast('もどせるセーブが ありません');
+      showToast('<ruby>戻<rt>もど</rt></ruby>せるセーブが ありません');
       return false;
     }
     // 軽くバリデーション
     const parsed = JSON.parse(raw);
     if (!migrateSaveData(parsed)) {
-      showToast('バックアップが こわれてます');
+      showToast('バックアップが <ruby>壊<rt>こわ</rt></ruby>れてます');
       return false;
     }
     localStorage.setItem(SAVE_KEY, raw);
-    showToast('ひとつ前のセーブにもどしました！');
+    showToast('ひとつ<ruby>前<rt>まえ</rt></ruby>のセーブに<ruby>戻<rt>もど</rt></ruby>しました！');
     updateTitleLastSave();
     return true;
   } catch(e) {
     console.warn('restoreFromBackup failed:', e);
-    showToast('もどすのに しっぱい');
+    showToast('<ruby>戻<rt>もど</rt></ruby>すのに しっぱい');
     return false;
   }
 }
@@ -2663,7 +2663,7 @@ function exportSaveToClipboard() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) {
-      showToast('ほぞんデータが ないよ');
+      showToast('<ruby>保存<rt>ほぞん</rt></ruby>データが ないよ');
       return;
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2692,9 +2692,9 @@ function downloadSave(raw) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast('💾 ファイルにほぞんしたよ');
+    showToast('💾 ファイルに<ruby>保存<rt>ほぞん</rt></ruby>したよ');
   } catch(e) {
-    showToast('ほぞんに しっぱい');
+    showToast('<ruby>保存<rt>ほぞん</rt></ruby>に しっぱい');
   }
 }
 
@@ -2711,7 +2711,7 @@ function importSaveFromPrompt() {
     }
     const migrated = migrateSaveData(parsed);
     if (!migrated) {
-      showToast('セーブの なかみが おかしいよ');
+      showToast('セーブの <ruby>中<rt>なか</rt></ruby>みが おかしいよ');
       return;
     }
     // 念のため：取り込み前のメインをバックアップへ退避
@@ -2720,11 +2720,11 @@ function importSaveFromPrompt() {
       if (prev) localStorage.setItem(BACKUP_KEY, prev);
     } catch(eBak) {}
     localStorage.setItem(SAVE_KEY, JSON.stringify(migrated));
-    showToast('📥 よみこんだよ！');
+    showToast('📥 <ruby>読<rt>よ</rt></ruby>みこんだよ！');
     updateTitleLastSave();
   } catch(e) {
     console.warn('import failed:', e);
-    showToast('よみこみに しっぱい');
+    showToast('<ruby>読<rt>よ</rt></ruby>みこみに しっぱい');
   }
 }
 function formatSavedTime(ms) {
@@ -2734,14 +2734,14 @@ function formatSavedTime(ms) {
   const D = d.getDate();
   const h = d.getHours();
   const m = ('0' + d.getMinutes()).slice(-2);
-  return `最終セーブ：${M}月${D}日 ${h}時${m}分`;
+  return `<ruby>最終<rt>さいしゅう</rt></ruby>セーブ：${M}<ruby>月<rt>がつ</rt></ruby>${D}<ruby>日<rt>にち</rt></ruby> ${h}<ruby>時<rt>じ</rt></ruby>${m}<ruby>分<rt>ふん</rt></ruby>`;
 }
 function updateTitleLastSave() {
   const el = $('title-last-save');
   if (!el) return;
   const meta = getSavedMeta();
   if (meta && meta.lastSavedAt) {
-    el.textContent = formatSavedTime(meta.lastSavedAt);
+    el.innerHTML = formatSavedTime(meta.lastSavedAt);
     el.style.display = '';
   } else {
     el.style.display = 'none';
@@ -3264,12 +3264,12 @@ function initTitle() {
   attachTap(btnReset, (e) => {
     if (e && e.preventDefault) e.preventDefault();
     // 2段階確認：1回目「ほんとうに？」→ 2回目「ほぞんデータも きえちゃうよ。それでも？」
-    showModal('ほんとうに けすの？', 'いままで そだてた ポケモンが<br>ぜんぶ きえちゃうよ。', [
+    showModal('ほんとうに <ruby>消<rt>け</rt></ruby>すの？', 'いままで <ruby>育<rt>そだ</rt></ruby>てた ポケモンが<br>ぜんぶ <ruby>消<rt>き</rt></ruby>えちゃうよ。', [
       { label: 'やめる', cls: 'gray' },
       { label: 'つづける', cls: '', fn: () => {
-        showModal('さいごの かくにん', 'これを おしたら<br>もとには もどせないよ！<br><br>(まちがいじゃ ない？)', [
+        showModal('さいごの <ruby>確認<rt>かくにん</rt></ruby>', 'これを <ruby>押<rt>お</rt></ruby>したら<br><ruby>元<rt>もと</rt></ruby>には <ruby>戻<rt>もど</rt></ruby>せないよ！<br><br>(まちがいじゃ ない？)', [
           { label: 'やっぱり やめる', cls: 'gray' },
-          { label: 'けして あたらしく はじめる', cls: '', fn: () => {
+          { label: '<ruby>消<rt>け</rt></ruby>して <ruby>新<rt>あたら</rt></ruby>しく <ruby>始<rt>はじ</rt></ruby>める', cls: '', fn: () => {
             // セーブを直前バックアップに退避してから消去（万が一に備え）
             try {
               const prev = localStorage.getItem(SAVE_KEY);
@@ -3284,10 +3284,10 @@ function initTitle() {
   });
   attachTap($('btn-continue'), () => {
     if (loadGame()) {
-      showToast('ほぞんデータを よみこみました！');
+      showToast('<ruby>保存<rt>ほぞん</rt></ruby>データを <ruby>読<rt>よ</rt></ruby>みこみました！');
       goStageSelect();
     } else {
-      showToast('ほぞんデータが ないよ');
+      showToast('<ruby>保存<rt>ほぞん</rt></ruby>データが ないよ');
     }
   });
   // セーブ保存（クリップボードコピー / フォールバックでDL）
@@ -3307,7 +3307,7 @@ function initTitle() {
   if (dragModeBtn) {
     const refreshDragModeLabel = () => {
       const mode = (state && state.invertDrag) ? 'ひく' : 'おす';
-      dragModeBtn.textContent = 'そうさ: ' + mode;
+      dragModeBtn.innerHTML = '<ruby>操作<rt>そうさ</rt></ruby>: ' + mode;
     };
     refreshDragModeLabel();
     attachTap(dragModeBtn, () => {
@@ -3352,10 +3352,10 @@ function updateStarterConfirmBtn() {
   const n = pickedStarterIds.length;
   if (n === 0) {
     btn.disabled = true;
-    btn.innerHTML = 'あと2<ruby>匹<rt>ひき</rt></ruby>えらんで！';
+    btn.innerHTML = 'あと2<ruby>匹<rt>ひき</rt></ruby><ruby>選<rt>えら</rt></ruby>んで！';
   } else if (n === 1) {
     btn.disabled = true;
-    btn.innerHTML = 'あと1<ruby>匹<rt>ひき</rt></ruby>えらんで！';
+    btn.innerHTML = 'あと1<ruby>匹<rt>ひき</rt></ruby><ruby>選<rt>えら</rt></ruby>んで！';
   } else {
     btn.disabled = false;
     btn.innerHTML = 'これに する！';
@@ -3406,7 +3406,7 @@ function goStarterSelect() {
       } else {
         if (pickedStarterIds.length >= STARTER_PICK_LIMIT) {
           // 上限ブロック
-          showToast('2<ruby>匹<rt>ひき</rt></ruby>までだよ！えらびなおすには<br>えらんでるカードを もういちど タップしてね');
+          showToast('2<ruby>匹<rt>ひき</rt></ruby>までだよ！<ruby>選<rt>えら</rt></ruby>びなおすには<br><ruby>選<rt>えら</rt></ruby>んでるカードを もういちど タップしてね');
           return;
         }
         pickedStarterIds.push(cardId);
@@ -3458,7 +3458,7 @@ function confirmStarter() {
   flyOne(ids[1], 900);
 
   setTimeout(() => {
-    showToast(`💗 ${defs[0].name}と${defs[1].name}が なかまに なった！`, 1500);
+    showToast(`💗 ${defs[0].name}と${defs[1].name}が <ruby>仲間<rt>なかま</rt></ruby>に なった！`, 1500);
   }, 1500);
   setTimeout(() => {
     fly.classList.remove('show');
@@ -3479,7 +3479,7 @@ function goWorldMap() {
   if (state && state.cleared && state.v2WorldMapShown === false) {
     state.v2WorldMapShown = true;
     try { saveGame(true); } catch(e) {}
-    setTimeout(() => showToast('あたらしい せかいに ようこそ！<br>てもちの ポケモンは そのままだよ', 3000), 400);
+    setTimeout(() => showToast('<ruby>新<rt>あたら</rt></ruby>しい せかいに ようこそ！<br><ruby>手持<rt>ても</rt></ruby>ちの ポケモンは そのままだよ', 3000), 400);
   }
 }
 
@@ -4462,7 +4462,7 @@ function tryTerastalSpawn() {
 
   const stage = STAGES.find(s => s.id === '5-5') || STAGES.find(s => s.worldId === 5);
   spawnLegendaryToton(95, stage, { lvl: 1, godTier: true });
-  showToast('!? せかいが ゆれている…');
+  showToast('!? せかいが <ruby>揺<rt>ゆ</rt></ruby>れている…');
   if (typeof sfxLevel === 'function') sfxLevel();
   const flash = document.createElement('div');
   flash.style.cssText = 'position:fixed;inset:0;background:radial-gradient(circle, #fff 0%, #ff00ff 50%, transparent 100%);z-index:9000;pointer-events:none;animation:terastalFlash 1.2s forwards;';
@@ -4716,7 +4716,7 @@ function openFieldChest(c) {
     const coinsEl = $('field-coins');
     if (coinsEl) coinsEl.textContent = state.coins;
     burstHTML = `💰 +${amt}`;
-    toastMsg  = `たからばこ！💰${amt}コイン`;
+    toastMsg  = `<ruby>宝箱<rt>たからばこ</rt></ruby>！💰${amt}コイン`;
   } else if (c.item && c.item.type === 'item') {
     const key = c.item.key;
     const cnt = c.item.count || 1;
@@ -4727,7 +4727,7 @@ function openFieldChest(c) {
     burstHTML = `${icon} ${nm}${cnt > 1 ? ' ×' + cnt : ''}`;
     // toast はrubyを除去した平文にしておく
     const plainName = nm.replace(/<[^>]+>/g, '');
-    toastMsg = `たからばこ！${icon}${plainName}${cnt > 1 ? ' ×' + cnt : ''}`;
+    toastMsg = `<ruby>宝箱<rt>たからばこ</rt></ruby>！${icon}${plainName}${cnt > 1 ? ' ×' + cnt : ''}`;
   }
   // burst element at chest's screen position（drawField が直前に走っているのでカメラを再計算して使う）
   const fieldArea = document.getElementById('field-area');
@@ -5070,8 +5070,8 @@ function showTotonCatchBanner() {
     <div style="background:linear-gradient(180deg,#fff,#eee);border:5px solid #444;border-radius:18px;padding:24px 32px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,0.5);transform:scale(0.6);animation:totonPop 0.5s forwards cubic-bezier(0.34,1.56,0.64,1);">
       <div style="font-size:36px;font-weight:900;color:#444;text-shadow:2px 2px 0 #aaa;">!</div>
       <div style="margin-top:6px;font-size:24px;font-weight:bold;color:#333;letter-spacing:2px;">とーとん が</div>
-      <div style="font-size:24px;font-weight:bold;color:#333;letter-spacing:2px;">なかまに なった…！？</div>
-      <div style="margin-top:10px;font-size:13px;color:#888;">（てもちに ヒトが いる… いいんだろうか）</div>
+      <div style="font-size:24px;font-weight:bold;color:#333;letter-spacing:2px;"><ruby>仲間<rt>なかま</rt></ruby>に なった…！？</div>
+      <div style="margin-top:10px;font-size:13px;color:#888;">（<ruby>手持<rt>ても</rt></ruby>ちに ヒトが いる… いいんだろうか）</div>
     </div>`;
   // inject keyframes once
   if (!document.getElementById('totonStyle')) {
@@ -5183,7 +5183,7 @@ function startBattle(fieldMob, idx) {
   // 安全網：エンカウント時の「!」マークから戦闘画面に進めず固まるバグを防止
   try {
     if (!activeMon()) {
-      showToast('たたかえる モンスターが いないよ！<br>かいふくしてね');
+      showToast('<ruby>戦<rt>たたか</rt></ruby>える モンスターが いないよ！<br><ruby>回復<rt>かいふく</rt></ruby>してね');
       return;
     }
     const foe = makeMon(fieldMob.id, fieldMob.lvl);
@@ -5202,20 +5202,20 @@ function startBattle(fieldMob, idx) {
     refreshBattleUI();
     if (battle.isToton) {
       const fid = battle.foe.mon.id;
-      if (fid === 96)      setBattleMessage('⚡ <ruby>雷<rt>かみなり</rt></ruby>とーとん が あらわれた！');
-      else if (fid === 97) setBattleMessage('🔥 <ruby>炎<rt>ほのお</rt></ruby>とーとん が あらわれた！');
-      else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が あらわれた！');
-      else if (fid === 95) setBattleMessage('!? テラスタルとーとんキョダイマックス…！？<br>せかいの あいだから あらわれた！');
-      else                 setBattleMessage('まさかの <ruby>人間<rt>にんげん</rt></ruby> 「とーとん」 が あらわれた！');
+      if (fid === 96)      setBattleMessage('⚡ <ruby>雷<rt>かみなり</rt></ruby>とーとん が <ruby>現<rt>あらわ</rt></ruby>れた！');
+      else if (fid === 97) setBattleMessage('🔥 <ruby>炎<rt>ほのお</rt></ruby>とーとん が <ruby>現<rt>あらわ</rt></ruby>れた！');
+      else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が <ruby>現<rt>あらわ</rt></ruby>れた！');
+      else if (fid === 95) setBattleMessage('!? テラスタルとーとんキョダイマックス…！？<br>せかいの あいだから <ruby>現<rt>あらわ</rt></ruby>れた！');
+      else                 setBattleMessage('まさかの <ruby>人間<rt>にんげん</rt></ruby> 「とーとん」 が <ruby>現<rt>あらわ</rt></ruby>れた！');
     } else {
-      setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が あらわれた！');
+      setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が <ruby>現<rt>あらわ</rt></ruby>れた！');
     }
     switchScene('battle-scene');
     setTurnUI('me');
     showCommands();
   } catch (err) {
     console.error('[startBattle]', err);
-    showToast('せんとうの じゅんびに しっぱい… フィールドに もどるね');
+    showToast('<ruby>戦闘<rt>せんとう</rt></ruby>の じゅんびに しっぱい… フィールドに <ruby>戻<rt>もど</rt></ruby>るね');
     // フィールドに戻して、ループを再開（フリーズ回避）
     try { switchScene('field-scene'); } catch(e) {}
     try { fieldRunning = true; if (typeof startFieldLoop === 'function') startFieldLoop(); } catch(e) {}
@@ -5265,11 +5265,11 @@ function setTurnUI(who) {
   if (who === 'me') {
     myRow.classList.add('active-turn');
     label.classList.add('me');
-    label.innerHTML = '🔆 あなたのターン！';
+    label.innerHTML = '🔆 あなたの<ruby>番<rt>ばん</rt></ruby>！';
   } else if (who === 'foe') {
     foeRow.classList.add('active-turn');
     label.classList.add('foe');
-    label.innerHTML = '👾 あいてのターン';
+    label.innerHTML = '👾 <ruby>相手<rt>あいて</rt></ruby>の<ruby>番<rt>ばん</rt></ruby>';
   }
 }
 
@@ -5316,7 +5316,7 @@ function _resetTapPowerUI() {
   const tb   = $('tap-button');
   if (fill) { fill.style.width = '0%'; fill.style.backgroundPosition = '0% 0%'; }
   if (bar)  { bar.classList.remove('charging-high', 'crit-zone'); }
-  if (lbl)  { lbl.textContent = 'パワー'; }
+  if (lbl)  { lbl.innerHTML = '<ruby>力<rt>ちから</rt></ruby>'; }
   if (tb)   {
     tb.classList.remove('crit-glow');
     tb.style.background = '';
@@ -5332,7 +5332,7 @@ function startTapPhase(skillKey) {
   $('tap-timer-text').textContent = (tap.duration / 1000).toFixed(1);
   $('tap-timer-fill').style.width = (tap.duration / 30) + '%';
   _resetTapPowerUI();
-  setBattleMessage(skillKey ? SKILLS[skillKey].name + ' を じゅんびちゅう！<br>1かいタップで タイマースタート！' : '1かいタップで タイマースタート！');
+  setBattleMessage(skillKey ? SKILLS[skillKey].name + ' を じゅんびちゅう！<br>1<ruby>回<rt>かい</rt></ruby>タップで タイマースタート！' : '1<ruby>回<rt>かい</rt></ruby>タップで タイマースタート！');
 }
 
 function tapHit() {
@@ -5340,7 +5340,7 @@ function tapHit() {
   // 初回タップでタイマー起動
   if (tap.end == null) {
     tap.end = Date.now() + tap.duration;
-    setBattleMessage('<ruby>連打<rt>れんだ</rt></ruby>！ パワーを ためよう！');
+    setBattleMessage('<ruby>連打<rt>れんだ</rt></ruby>！ <ruby>力<rt>ちから</rt></ruby>を ためよう！');
     const tick = () => {
       if (!tap) return;
       const left = tap.end - Date.now();
@@ -5381,8 +5381,8 @@ function tapHit() {
     bar.classList.toggle('crit-zone',     tap.count >= TAP_CRIT_ZONE);
   }
   if (lbl) {
-    lbl.textContent = (tap.count >= TAP_CRIT_ZONE) ? 'CRIT!! ★' :
-                      (ratio >= 0.6) ? 'パワー もっと！' : 'パワー';
+    lbl.innerHTML = (tap.count >= TAP_CRIT_ZONE) ? 'CRIT!! ★' :
+                      (ratio >= 0.6) ? '<ruby>力<rt>ちから</rt></ruby> もっと！' : '<ruby>力<rt>ちから</rt></ruby>';
   }
 
   // ===== ボタン色シフト（HSL補間：cool blue 210 → hot orange/red 10）=====
@@ -5439,7 +5439,7 @@ function doMyAttack(tapCount, skillKey) {
   if (battle.confused) {
     battle.confused = false;
     const meDefC = getMonsterDef(battle.me.mon.id);
-    setBattleMessage(meDefC.name + 'は こんらんして わざを はずした！');
+    setBattleMessage(meDefC.name + 'は こんらんして <ruby>技<rt>わざ</rt></ruby>を はずした！');
     sfxHit();
     refreshBattleUI();
     setTimeout(() => {
@@ -5474,7 +5474,7 @@ function doMyAttack(tapCount, skillKey) {
     battle.me.mon.hp = Math.min(meStats.hp, battle.me.mon.hp + heal);
     spawnDmg('my-row', heal, 'heal');
     sfxHeal();
-    setBattleMessage(meDef.name + 'は ' + skill.msg + '<br>HPが ' + heal + ' かいふく！');
+    setBattleMessage(meDef.name + 'は ' + skill.msg + '<br>HPが ' + heal + ' <ruby>回復<rt>かいふく</rt></ruby>！');
   } else {
     battle.foe.mon.hp = Math.max(0, battle.foe.mon.hp - dmg);
     if (skill.superFlash) {
@@ -5503,7 +5503,7 @@ function doMyAttack(tapCount, skillKey) {
           refreshBattleUI();
           // メッセージにも回復を追記
           const cur = $('battle-message');
-          if (cur) cur.innerHTML += '<br>あいの ちからで +' + sHeal + ' HP かいふく！';
+          if (cur) cur.innerHTML += '<br>あいの <ruby>力<rt>ちから</rt></ruby>で +' + sHeal + ' HP <ruby>回復<rt>かいふく</rt></ruby>！';
         }, 400);
       }
     }
@@ -5593,7 +5593,7 @@ function foeTurn() {
     // 営業トーク：30%で混乱
     if (skill.confuseChance && Math.random() < skill.confuseChance) {
       battle.confused = true;
-      extraMsg = '<br>あいては こんらんした！';
+      extraMsg = '<br><ruby>相手<rt>あいて</rt></ruby>は こんらんした！';
     }
     // リーマン突進：反動ダメージ
     if (skill.recoil) {
@@ -5625,13 +5625,13 @@ function foeTurn() {
 }
 
 function onMyFaint() {
-  showToast(getMonsterDef(battle.me.mon.id).name + ' は たおれた！');
+  showToast(getMonsterDef(battle.me.mon.id).name + ' は <ruby>倒<rt>たお</rt></ruby>れた！');
   // try next mon
   const next = state.party.find(m => m.hp > 0 && m !== battle.me.mon);
   if (next) {
     battle.me.mon = next;
     refreshBattleUI();
-    setTimeout(() => { battle.turn = 'me'; setTurnUI('me'); showCommands(); setBattleMessage(getMonsterDef(next.id).name + 'が とびだした！'); }, 800);
+    setTimeout(() => { battle.turn = 'me'; setTurnUI('me'); showCommands(); setBattleMessage(getMonsterDef(next.id).name + 'が <ruby>飛<rt>と</rt></ruby>びだした！'); }, 800);
   } else {
     loseBattle();
   }
@@ -5669,7 +5669,7 @@ function winBattle() {
   hideCommands();
   hideAllSubPanels();
   setTurnUI(null);
-  $('turn-label').innerHTML = '🎉 かった！';
+  $('turn-label').innerHTML = '🎉 <ruby>勝<rt>か</rt></ruby>った！';
   sfxWin();
   // exp + coins
   const foe = battle.foe;
@@ -5696,7 +5696,7 @@ function winBattle() {
     // 同じキーを集計
     const counts = {};
     drops.forEach(k => { counts[k] = (counts[k] || 0) + 1; });
-    dropHtml = '<br><br>▼ ひろったアイテム ▼';
+    dropHtml = '<br><br>▼ <ruby>拾<rt>ひろ</rt></ruby>ったアイテム ▼';
     Object.keys(counts).forEach(k => {
       const it = ITEMS[k];
       if (!it) return;
@@ -5706,17 +5706,17 @@ function winBattle() {
 
   if (battle.isToton) {
     let bonusLabel = 'ボーナス+500！';
-    let title = '🎉 とーとん を たおした！？';
+    let title = '🎉 とーとん を <ruby>倒<rt>たお</rt></ruby>した！？';
     if (totonTier === 2) {
       bonusLabel = 'ボーナス+1500！';
-      title = '🎉 でんせつの とーとん を たおした！';
+      title = '🎉 でんせつの とーとん を <ruby>倒<rt>たお</rt></ruby>した！';
     } else if (totonTier === 3) {
       bonusLabel = 'ボーナス+5000！！';
-      title = '🌈 テラスタルとーとんキョダイマックス を たおした！！';
+      title = '🌈 テラスタルとーとんキョダイマックス を <ruby>倒<rt>たお</rt></ruby>した！！';
     }
-    setBattleMessage(title + '<br>けいけんち ' + expGain + '・コイン ' + coinGain + ' （' + bonusLabel + '）を てに いれた！' + dropHtml);
+    setBattleMessage(title + '<br><ruby>経験値<rt>けいけんち</rt></ruby> ' + expGain + '・コイン ' + coinGain + ' （' + bonusLabel + '）を <ruby>手<rt>て</rt></ruby>に <ruby>入<rt>い</rt></ruby>れた！' + dropHtml);
   } else {
-    setBattleMessage('🎉 かった！<br>' + foe.def.name + 'を たおして、けいけんち ' + expGain + '・コイン ' + coinGain + ' を てに いれた！' + dropHtml);
+    setBattleMessage('🎉 <ruby>勝<rt>か</rt></ruby>った！<br>' + foe.def.name + 'を <ruby>倒<rt>たお</rt></ruby>して、<ruby>経験値<rt>けいけんち</rt></ruby> ' + expGain + '・コイン ' + coinGain + ' を <ruby>手<rt>て</rt></ruby>に <ruby>入<rt>い</rt></ruby>れた！' + dropHtml);
   }
   // ドロップ獲得SE（あれば）
   if (drops.length) setTimeout(() => sfxCatch(), 350);
@@ -5754,7 +5754,7 @@ function winBattle() {
     if (didClear) {
       const nextId = getNextStageId(stage.id);
       if (nextId) {
-        showToast(isWorldBossClear ? '🎊 ワールドボスを たおした！つぎの ワールドが ひらいた！' : '🎊 ステージクリア！つぎが ひらいた！', 2400);
+        showToast(isWorldBossClear ? '🎊 ワールドボスを <ruby>倒<rt>たお</rt></ruby>した！つぎの ワールドが <ruby>開<rt>ひら</rt></ruby>いた！' : '🎊 ステージクリア！つぎが <ruby>開<rt>ひら</rt></ruby>いた！', 2400);
       } else {
         showToast('🌈 ぜんぶ クリア！おめでとう！', 2800);
       }
@@ -5808,9 +5808,9 @@ function loseBattle() {
   hideCommands();
   hideAllSubPanels();
   setTurnUI(null);
-  $('turn-label').innerHTML = '💧 まけちゃった...';
+  $('turn-label').innerHTML = '💧 <ruby>負<rt>ま</rt></ruby>けちゃった...';
   sfxLose();
-  setBattleMessage('まけてしまった... <br>すこし HPを かいふくして もどろう。');
+  setBattleMessage('<ruby>負<rt>ま</rt></ruby>けてしまった... <br>すこし HPを <ruby>回復<rt>かいふく</rt></ruby>して <ruby>戻<rt>もど</rt></ruby>ろう。');
   // revive minimum
   state.party.forEach(m => {
     const s = monStats(m);
@@ -5875,7 +5875,7 @@ function doEvolution(evos, after) {
   const e = evos.shift();
   switchScene('evo-scene');
   $('evo-art-wrap').innerHTML = svgMon(e.mon.id);
-  $('evo-text').innerHTML = e.fromDef.name + ' は しんかしている...';
+  $('evo-text').innerHTML = e.fromDef.name + ' は <ruby>進化<rt>しんか</rt></ruby>している...';
   $('evo-next').classList.remove('show');
   sfxEvo();
   let step = 0;
@@ -5889,7 +5889,7 @@ function doEvolution(evos, after) {
         if (e.mon.lvl >= +k && !e.mon.skills.includes(e.toDef.learn[k])) e.mon.skills.push(e.toDef.learn[k]);
       });
       $('evo-art-wrap').innerHTML = svgMon(e.toDef.id);
-      $('evo-text').innerHTML = '✨ ' + e.fromDef.name + ' は<br>' + e.toDef.name + ' に しんかした！ ✨';
+      $('evo-text').innerHTML = '✨ ' + e.fromDef.name + ' は<br>' + e.toDef.name + ' に <ruby>進化<rt>しんか</rt></ruby>した！ ✨';
       $('evo-next').classList.add('show');
       sfxWin();
       saveGame(true);
@@ -5919,7 +5919,7 @@ function cmdSkill() {
     row.innerHTML = `<div style="font-size:24px">${s.fx}</div>
       <div class="info-block">
         <div class="name">${s.name}</div>
-        <div class="stats">タイプ:${(TYPES[s.type]&&TYPES[s.type].name)||s.type||'?'}・MP ${s.mp}・<ruby>威力<rt>いりょく</rt></ruby>${s.power}${s.heal?' (かいふく)':''}</div>
+        <div class="stats">タイプ:${(TYPES[s.type]&&TYPES[s.type].name)||s.type||'?'}・MP ${s.mp}・<ruby>威力<rt>いりょく</rt></ruby>${s.power}${s.heal?' (<ruby>回復<rt>かいふく</rt></ruby>)':''}</div>
       </div>`;
     if (can) attachTap(row, () => {
       $('skill-panel').classList.remove('active');
@@ -5971,7 +5971,7 @@ function useItem(key) {
     m.hp = Math.min(s.hp, m.hp + it.heal);
     spawnDmg('my-row', heal, 'heal');
     sfxHeal();
-    setBattleMessage(it.name + ' を つかった！HP ' + heal + ' かいふく！');
+    setBattleMessage(it.name + ' を <ruby>使<rt>つか</rt></ruby>った！HP ' + heal + ' <ruby>回復<rt>かいふく</rt></ruby>！');
     refreshBattleUI();
     setTimeout(foeTurn, 1100);
   } else if (it.mp) {
@@ -5980,7 +5980,7 @@ function useItem(key) {
     const s = monStats(m);
     m.mp = Math.min(s.mp, m.mp + it.mp);
     sfxHeal();
-    setBattleMessage(it.name + ' を つかった！MP ' + it.mp + ' かいふく！');
+    setBattleMessage(it.name + ' を <ruby>使<rt>つか</rt></ruby>った！MP ' + it.mp + ' <ruby>回復<rt>かいふく</rt></ruby>！');
     refreshBattleUI();
     setTimeout(foeTurn, 1100);
   } else if (key === 'ball' || key === 'superball' || key === 'hyperball' || key === 'masterball') {
@@ -6016,7 +6016,7 @@ function useSpecialItem(key, inBattle, done) {
   };
   if (!it) { finish(false); return; }
   if (!state.bag[key]) {
-    showToast('もってないよ');
+    showToast('<ruby>持<rt>も</rt></ruby>ってないよ');
     finish(false);
     return;
   }
@@ -6028,7 +6028,7 @@ function useSpecialItem(key, inBattle, done) {
       sfxHeal();
       const ups = giveExp(mon, it.xp);
       const def = getMonsterDef(mon.id);
-      const msg = it.icon + ' ' + def.name + 'は<br>けいけんち +' + it.xp + '！';
+      const msg = it.icon + ' ' + def.name + 'は<br><ruby>経験値<rt>けいけんち</rt></ruby> +' + it.xp + '！';
       if (inBattle) setBattleMessage(msg.replace(/<br>/g, ' '));
       else showToast(msg);
       saveGame(true);
@@ -6058,7 +6058,7 @@ function useSpecialItem(key, inBattle, done) {
       if (inBattle) spawnDmg('my-row', 1, 'heal');
       allUps.push({ mon: m, lvl: m.lvl, def });
     });
-    showToast('🌟 ふしぎなアメで パーティぜんいんが LV+1！');
+    showToast('🌟 ふしぎなアメで パーティ ぜんいんが LV+1！');
     saveGame(true);
     if (allUps.length) {
       showLevelup(allUps, () => maybeEvolve(allUps, () => finish(true)));
@@ -6076,7 +6076,7 @@ function useSpecialItem(key, inBattle, done) {
       if (!mon) { finish(false); return; }
       const def = getMonsterDef(mon.id);
       if (!def || !def.evo || !def.evo.to) {
-        showToast('これ<ruby>以上<rt>いじょう</rt></ruby> しんかできないよ！');
+        showToast('これ<ruby>以上<rt>いじょう</rt></ruby> <ruby>進化<rt>しんか</rt></ruby>できないよ！');
         finish(false);
         return;
       }
@@ -6115,7 +6115,7 @@ function useSpecialItem(key, inBattle, done) {
 function pickPartyMember(title, filterFn, cb) {
   const candidates = state.party.filter(m => !filterFn || filterFn(m));
   if (!candidates.length) {
-    showToast('つかえる なかまが いないよ！');
+    showToast('<ruby>使<rt>つか</rt></ruby>える <ruby>仲間<rt>なかま</rt></ruby>が いないよ！');
     if (cb) cb(null);
     return;
   }
@@ -6154,7 +6154,7 @@ function pickPartyMember(title, filterFn, cb) {
 function openFieldBag() {
   const keys = Object.keys(state.bag).filter(k => state.bag[k] > 0 && ITEMS[k]);
   if (keys.length === 0) {
-    showModal('🎒 バッグ', '<div style="text-align:center; color:#888; padding:16px;">アイテムが ないよ</div>', [{ label: 'とじる', cls: 'gray' }]);
+    showModal('🎒 バッグ', '<div style="text-align:center; color:#888; padding:16px;">アイテムが ないよ</div>', [{ label: '<ruby>閉<rt>と</rt></ruby>じる', cls: 'gray' }]);
     return;
   }
   let html = '<div style="display:flex; flex-direction:column; gap:6px; max-height:55vh; overflow-y:auto;">';
@@ -6172,11 +6172,11 @@ function openFieldBag() {
     html += `<div style="display:flex; gap:8px; align-items:center; padding:6px; border-bottom:1px dashed #ffb0d8; background:#fff8fc; border-radius:8px;">
       <span style="font-size:24px">${it.icon}</span>
       <span style="flex:1;"><b>${it.name}</b> ×${state.bag[k]}<br><small style="color:#666">${it.desc}</small></span>
-      ${usable ? `<button class="btn yellow" data-bag-use="${k}" style="font-size:12px; padding:6px 10px;">つかう</button>` : ''}
+      ${usable ? `<button class="btn yellow" data-bag-use="${k}" style="font-size:12px; padding:6px 10px;"><ruby>使<rt>つか</rt></ruby>う</button>` : ''}
     </div>`;
   });
   html += '</div>';
-  showModal('🎒 バッグ', html, [{ label: 'とじる', cls: 'gray' }]);
+  showModal('🎒 バッグ', html, [{ label: '<ruby>閉<rt>と</rt></ruby>じる', cls: 'gray' }]);
   // つかうボタンを後付け
   setTimeout(() => {
     const body = $('modal-body');
@@ -6229,7 +6229,7 @@ function openFieldBag() {
 function tryCatch(ballKey) {
   const f = battle.foe;
   if (battle.isBoss) {
-    setBattleMessage('ボスは つかまえられない！');
+    setBattleMessage('ボスは <ruby>捕<rt>つか</rt></ruby>まえられない！');
     setTimeout(foeTurn, 1100);
     return;
   }
@@ -6247,7 +6247,7 @@ function tryCatch(ballKey) {
   }
   // マスターボールは100%（とーとんも捕獲可能）
   if (ITEMS[ballKey].masterball) chance = 1.0;
-  setBattleMessage('えい！ ' + ITEMS[ballKey].name + ' を なげた！');
+  setBattleMessage('えい！ ' + ITEMS[ballKey].name + ' を <ruby>投<rt>な</rt></ruby>げた！');
   sfxCatch();
   setTimeout(() => {
     if (Math.random() < chance) {
@@ -6259,13 +6259,13 @@ function tryCatch(ballKey) {
       if (battle.isToton) {
         showTotonCatchBanner();
         const fid = f.mon.id;
-        if (fid === 96)      setBattleMessage('⚡ <ruby>雷<rt>かみなり</rt></ruby>とーとん が なかまに なった！');
-        else if (fid === 97) setBattleMessage('🔥 <ruby>炎<rt>ほのお</rt></ruby>とーとん が なかまに なった！');
-        else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が なかまに なった！');
-        else if (fid === 95) setBattleMessage('🌈 テラスタルとーとんキョダイマックス が なかまに なった！！');
-        else                 setBattleMessage('！ とーとん が なかまに なった…！？');
+        if (fid === 96)      setBattleMessage('⚡ <ruby>雷<rt>かみなり</rt></ruby>とーとん が <ruby>仲間<rt>なかま</rt></ruby>に なった！');
+        else if (fid === 97) setBattleMessage('🔥 <ruby>炎<rt>ほのお</rt></ruby>とーとん が <ruby>仲間<rt>なかま</rt></ruby>に なった！');
+        else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が <ruby>仲間<rt>なかま</rt></ruby>に なった！');
+        else if (fid === 95) setBattleMessage('🌈 テラスタルとーとんキョダイマックス が <ruby>仲間<rt>なかま</rt></ruby>に なった！！');
+        else                 setBattleMessage('！ とーとん が <ruby>仲間<rt>なかま</rt></ruby>に なった…！？');
       } else {
-        setBattleMessage('🎉 ' + f.def.name + ' を つかまえた！');
+        setBattleMessage('🎉 ' + f.def.name + ' を <ruby>捕<rt>つか</rt></ruby>まえた！');
       }
       sfxWin();
       battle.ended = true;
@@ -6281,8 +6281,8 @@ function tryCatch(ballKey) {
         else returnToFieldOrStage();
       }, 1500);
     } else {
-      setBattleMessage('くっ... にげられた！');
-      showToast('つかまえ そこねた！');
+      setBattleMessage('くっ... <ruby>逃<rt>に</rt></ruby>げられた！');
+      showToast('<ruby>捕<rt>つか</rt></ruby>まえ そこねた！');
       setTimeout(foeTurn, 1100);
     }
   }, 1000);
@@ -6314,7 +6314,7 @@ function cmdBall() {
     list.appendChild(row);
   });
   if (!any) {
-    showToast('ボールが ないよ！ショップで かおう');
+    showToast('ボールが ないよ！ショップで <ruby>買<rt>か</rt></ruby>おう');
     return;
   }
   $('item-panel').classList.add('active');
@@ -6337,31 +6337,31 @@ function cmdSwap() {
     if (m.hp > 0) attachTap(row, () => {
       $('swap-panel').classList.remove('active');
       battle.me.mon = m;
-      setBattleMessage(def.name + ' に こうたい！');
+      setBattleMessage(def.name + ' に <ruby>交代<rt>こうたい</rt></ruby>！');
       refreshBattleUI();
       setTimeout(foeTurn, 1100);
     });
     list.appendChild(row);
   });
   if (list.children.length === 0) {
-    showToast('こうたいできる なかまが いない！');
+    showToast('<ruby>交代<rt>こうたい</rt></ruby>できる <ruby>仲間<rt>なかま</rt></ruby>が いない！');
     return;
   }
   $('swap-panel').classList.add('active');
 }
 
 function cmdRun() {
-  if (battle.isBoss) { showToast('ボスからは にげられない！'); return; }
+  if (battle.isBoss) { showToast('ボスからは <ruby>逃<rt>に</rt></ruby>げられない！'); return; }
   const meSpd = monStats(battle.me.mon).spd;
   const foeSpd = battle.foe.stats.spd;
   if (Math.random() < clamp(meSpd / (foeSpd + meSpd) + 0.2, 0.4, 0.95)) {
-    setBattleMessage('うまく にげられた！');
+    setBattleMessage('うまく <ruby>逃<rt>に</rt></ruby>げられた！');
     sfxTap();
     battle.ended = true;
     saveGame(true);
     setTimeout(() => returnToFieldOrStage(), 1000);
   } else {
-    setBattleMessage('にげられない！');
+    setBattleMessage('<ruby>逃<rt>に</rt></ruby>げられない！');
     setTimeout(foeTurn, 1000);
   }
 }
@@ -6484,7 +6484,7 @@ function renderParty() {
     attachTap(btn, (e) => {
       e.stopPropagation && e.stopPropagation();
       // move to box if party > 1
-      if (state.party.length <= 1) { showToast('せんとうメンバーは 1ぴき<ruby>残<rt>のこ</rt></ruby>す ひつようがあるよ'); return; }
+      if (state.party.length <= 1) { showToast('<ruby>戦闘<rt>せんとう</rt></ruby>メンバーは 1ぴき<ruby>残<rt>のこ</rt></ruby>す <ruby>必要<rt>ひつよう</rt></ruby>があるよ'); return; }
       state.box.push(m);
       state.party.splice(i, 1);
       saveGame(true);
@@ -6507,7 +6507,7 @@ function renderParty() {
         <div class="name">${def.name} Lv${m.lvl}</div>
         <div class="stats">HP ${m.hp}/${stats.hp}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
       </div>
-      <button class="btn green" style="font-size:11px;padding:4px 8px;" ${can?'':'disabled'}>つれてく</button>`;
+      <button class="btn green" style="font-size:11px;padding:4px 8px;" ${can?'':'disabled'}><ruby>連<rt>つ</rt></ruby>れてく</button>`;
     const btn = row.querySelector('button');
     if (can) attachTap(btn, (e) => {
       e.stopPropagation && e.stopPropagation();
@@ -6553,10 +6553,10 @@ function goShop() {
         <div class="desc">${it.desc}</div>
         <div class="price">💰${it.price}</div>
       </div>
-      <button class="btn yellow">かう</button>`;
+      <button class="btn yellow"><ruby>買<rt>か</rt></ruby>う</button>`;
     const btn = row.querySelector('button');
     attachTap(btn, () => {
-      if (state.coins < it.price) { showToast('コインが たりないよ'); return; }
+      if (state.coins < it.price) { showToast('コインが <ruby>足<rt>た</rt></ruby>りないよ'); return; }
       state.coins -= it.price;
       state.bag[key] = (state.bag[key] || 0) + 1;
       sfxTap();
@@ -6572,18 +6572,18 @@ function goShop() {
   heal.className = 'shop-item';
   heal.innerHTML = `<span class="icon">💗</span>
     <div class="info-block">
-      <div class="name">パーティ ぜんかい かいふく</div>
-      <div class="desc">てもちぜんいんの HP/MP を まんたんに</div>
+      <div class="name">パーティ <ruby>全回復<rt>ぜんかいふく</rt></ruby></div>
+      <div class="desc"><ruby>手持<rt>ても</rt></ruby>ち ぜんいんの HP/MP を まんたんに</div>
       <div class="price">💰150</div>
     </div>
-    <button class="btn">かいふく</button>`;
+    <button class="btn"><ruby>回復<rt>かいふく</rt></ruby></button>`;
   const hbtn = heal.querySelector('button');
   attachTap(hbtn, () => {
     if (state.coins < 150) { showToast('コインが たりないよ'); return; }
     state.coins -= 150;
     state.party.forEach(m => { const s = monStats(m); m.hp = s.hp; m.mp = s.mp; });
     sfxHeal();
-    showToast('まんたんに かいふくしたよ💗');
+    showToast('まんたんに <ruby>回復<rt>かいふく</rt></ruby>したよ💗');
     $('shop-coins').textContent = state.coins;
     saveGame(true);
   });
