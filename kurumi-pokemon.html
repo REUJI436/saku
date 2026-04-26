@@ -3055,16 +3055,28 @@ function applyDemoMode() {
   }
   // evotest: テラスタル (id:95) を Lv.99 で配置し、EXPを「あと1で次レベル」状態に
   // → 1回戦闘して経験値もらえば Lv.100 → メガEXへ進化する瞬間が見られる
-  if (_isEvoTest && typeof makeMon === 'function' && typeof expForNext === 'function') {
-    const tera = makeMon(95, 99);
-    tera.exp = Math.max(0, expForNext(99) - 1);
-    state.party = [tera];
-    state.box = state.box || [];
-    [99, 96, 97, 98].forEach(id => {
-      if (!state.party.some(m => m.id === id) && !state.box.some(m => m.id === id)) {
-        state.box.push(makeMon(id, 50));
+  if (_isEvoTest) {
+    console.log('[applyDemoMode] evotest mode active');
+    try {
+      const tera = makeMon(95, 99);
+      console.log('[applyDemoMode] tera created', tera);
+      if (tera) {
+        tera.exp = Math.max(0, expForNext(99) - 1);
+        state.party = [tera];
+        state.box = state.box || [];
+        [99, 96, 97, 98].forEach(id => {
+          if (!state.party.some(m => m.id === id) && !state.box.some(m => m.id === id)) {
+            const m = makeMon(id, 50);
+            if (m) state.box.push(m);
+          }
+        });
+        console.log('[applyDemoMode] party=', state.party, 'box=', state.box);
+      } else {
+        console.error('[applyDemoMode] makeMon(95,99) returned falsy');
       }
-    });
+    } catch (err) {
+      console.error('[applyDemoMode] evotest failed:', err);
+    }
   }
 }
 
@@ -4041,6 +4053,11 @@ function startNewGame() {
   // 詰めるので、スターター選択をスキップしてワールドマップ直行する。
   // 通常モード／?demo=1 はスターター選択へ。
   if ((_isTestToton || _isTeraMax || _isEvoTest) && state.party && state.party.length > 0) {
+    const names = state.party.map(m => {
+      const d = getMonsterDef(m.id);
+      return d ? (d.name + ' Lv.' + m.lvl) : ('id:' + m.id);
+    }).join(' / ');
+    setTimeout(() => showToast('🧪 テストモード起動: ' + names.replace(/<[^>]+>/g, ''), 4000), 200);
     goStageSelect();
     return;
   }
