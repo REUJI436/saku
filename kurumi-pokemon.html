@@ -1521,6 +1521,160 @@
     0% { transform: translate(0,0) scale(0.4); opacity: 1; }
     100% { transform: translate(var(--tx), var(--ty)) scale(1.2); opacity: 0; }
   }
+
+  /* ===== STUDY QUIZ OVERLAY ===== */
+  #quiz-overlay {
+    position: fixed; inset: 0;
+    z-index: 9700;
+    background: rgba(20, 8, 40, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 14px;
+    animation: quizFadeIn 0.22s ease-out;
+  }
+  #quiz-overlay.active { display: flex; }
+  @keyframes quizFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  #quiz-card {
+    width: min(560px, 92vw);
+    max-height: 92vh;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #fff 0%, #ffeaf5 100%);
+    border: 5px solid #ff8fc0;
+    border-radius: 22px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    padding: 16px 18px 18px;
+    animation: quizPop 0.32s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes quizPop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  #quiz-context {
+    font-size: 13px; font-weight: bold;
+    color: #c44d85; text-align: center;
+    background: #fff0f7;
+    border-radius: 12px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  #quiz-question {
+    font-size: 32px; font-weight: 900;
+    color: #d63384;
+    text-align: center;
+    padding: 14px 8px;
+    background: linear-gradient(180deg, #fffbe5, #fff5d0);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    text-shadow: 1px 1px 0 #fff;
+    line-height: 1.25;
+    word-break: keep-all;
+  }
+  #quiz-question .qz-kana { font-size: 56px; }
+  #quiz-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  #quiz-choices .qz-btn {
+    background: linear-gradient(180deg, #aee3ff 0%, #5cb8f5 100%);
+    color: #fff;
+    border: 3px solid #fff;
+    border-radius: 18px;
+    padding: 14px 6px;
+    font-size: 22px;
+    font-weight: bold;
+    box-shadow: 0 4px 0 #2a6da6, 0 6px 12px rgba(92,184,245,0.4);
+    text-shadow: 1px 1px 0 #2a6da6;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.08s;
+    min-height: 60px;
+    line-height: 1.2;
+  }
+  #quiz-choices .qz-btn:nth-child(2) {
+    background: linear-gradient(180deg, #ffe89a 0%, #ffc94a 100%);
+    box-shadow: 0 4px 0 #c08820, 0 6px 12px rgba(255,201,74,0.4);
+    text-shadow: 1px 1px 0 #c08820; color: #6b4500;
+  }
+  #quiz-choices .qz-btn:nth-child(3) {
+    background: linear-gradient(180deg, #c0f0a8 0%, #80d860 100%);
+    box-shadow: 0 4px 0 #4a8030, 0 6px 12px rgba(128,216,96,0.4);
+    text-shadow: 1px 1px 0 #4a8030;
+  }
+  #quiz-choices .qz-btn:nth-child(4) {
+    background: linear-gradient(180deg, #ffb0d8 0%, #ff7ab8 100%);
+    box-shadow: 0 4px 0 #c44d85, 0 6px 12px rgba(255,111,168,0.4);
+    text-shadow: 1px 1px 0 #d63384;
+  }
+  #quiz-choices .qz-btn:active { transform: translateY(3px); }
+  #quiz-choices .qz-btn.correct {
+    animation: qzGlow 0.6s ease-out;
+    background: linear-gradient(180deg, #b8ffb8 0%, #50e050 100%);
+    box-shadow: 0 4px 0 #2a8030, 0 0 24px rgba(120,255,120,0.9);
+  }
+  #quiz-choices .qz-btn.wrong {
+    animation: qzShake 0.45s ease-in-out;
+    background: linear-gradient(180deg, #ffb0b0 0%, #ff5050 100%);
+    box-shadow: 0 4px 0 #802020, 0 0 16px rgba(255,80,80,0.7);
+  }
+  @keyframes qzGlow {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  @keyframes qzShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  #quiz-result {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 20px; font-weight: bold;
+    min-height: 26px;
+    color: #c44d85;
+  }
+  #quiz-result.correct { color: #2a8030; }
+  #quiz-result.wrong { color: #c43030; }
+  #quiz-streak {
+    text-align: center;
+    font-size: 14px;
+    color: #d63384;
+    margin-top: 4px;
+    min-height: 20px;
+    font-weight: bold;
+  }
+  #quiz-skip-wrap {
+    text-align: center;
+    margin-top: 10px;
+  }
+  #quiz-skip {
+    background: rgba(255,255,255,0.7);
+    border: 2px solid #c44d85;
+    color: #c44d85;
+    border-radius: 14px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #quiz-skip:active { background: #ffe6f2; }
+  .qz-star {
+    position: fixed;
+    pointer-events: none;
+    font-size: 38px;
+    z-index: 9800;
+    animation: qzStarFly 1.0s ease-out forwards;
+  }
+  @keyframes qzStarFly {
+    0% { transform: translate(0,0) scale(0.3); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(1.4); opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -1541,6 +1695,7 @@
     <button id="btn-save-export" class="title-tool-btn">セーブを <ruby>保存<rt>ほぞん</rt></ruby></button>
     <button id="btn-save-import" class="title-tool-btn">セーブを <ruby>読<rt>よ</rt></ruby>みこみ</button>
     <button id="btn-drag-mode" class="title-tool-btn"><ruby>操作<rt>そうさ</rt></ruby>: ひく</button>
+    <button id="btn-study-mode" class="title-tool-btn">べんきょう: <span id="study-mode-label">小学生</span></button>
   </div>
   <a id="btn-restore-backup" href="#"><ruby>壊<rt>こわ</rt></ruby>れた？ ひとつ<ruby>前<rt>まえ</rt></ruby>に<ruby>戻<rt>もど</rt></ruby>す</a>
   <a id="btn-reset-danger" href="#" style="display:none;">ぜんぶ <ruby>消<rt>け</rt></ruby>して <ruby>新<rt>あたら</rt></ruby>しく <ruby>始<rt>はじ</rt></ruby>める</a>
@@ -1737,6 +1892,18 @@
   <p id="levelup-text"></p>
 </div>
 
+<!-- ===== STUDY QUIZ OVERLAY ===== -->
+<div id="quiz-overlay">
+  <div id="quiz-card">
+    <div id="quiz-context"></div>
+    <div id="quiz-question"></div>
+    <div id="quiz-choices"></div>
+    <div id="quiz-result"></div>
+    <div id="quiz-streak"></div>
+    <div id="quiz-skip-wrap" style="display:none;"><button id="quiz-skip" type="button">スキップ</button></div>
+  </div>
+</div>
+
 <script>
 // ===================== UTIL =====================
 // touch端末は touchend のあと synthetic click が遅延発火し、
@@ -1800,6 +1967,9 @@ function switchScene(id) {
   $(id).classList.add('active');
   if (id === 'title-scene' && typeof window._refreshDragModeLabel === 'function') {
     window._refreshDragModeLabel();
+  }
+  if (id === 'title-scene' && typeof window._refreshStudyModeLabel === 'function') {
+    window._refreshStudyModeLabel();
   }
   if (typeof playBgm === 'function') {
     try {
@@ -2372,6 +2542,368 @@ function getNextStageId(stageId) {
   return null;
 }
 
+// ===================== STUDY QUIZ SYSTEM =====================
+const STUDY_MODES = {
+  youchien:    { name: 'ようちえん',     icon: '🌸', label: 'ようちえん' },
+  shogakusei:  { name: '<ruby>小学生<rt>しょうがくせい</rt></ruby>', icon: '📘', label: '小学生' },
+  muzukashii:  { name: 'むずかしい',     icon: '📕', label: 'むずかしい' }
+};
+const QUIZ_CATEGORIES_BY_MODE = {
+  youchien:    ['sansu', 'hiragana', 'suji'],
+  shogakusei:  ['sansu', 'hiragana', 'katakana', 'kanji'],
+  muzukashii:  ['sansu', 'kanji', 'katakana']
+};
+
+// ひらがな辞書（カテゴリ別の単語）— カテゴリは「答えのカナ始まり」検索用
+const HIRA_WORDS = {
+  animals: ['いぬ','ねこ','うさぎ','ぞう','きつね','くま','とら','うし','うま','ぱんだ','りす','かば','さる','たぬき','ひつじ','かえる','かに','たこ','いるか','くじら','ありくい','はと','すずめ','つばめ','ふくろう','めだか','こい','せみ','あり','てんとうむし','ほたる','みみず','もぐら','やぎ','らくだ','わに'],
+  foods:   ['りんご','ばなな','みかん','いちご','ぱん','ごはん','うどん','そば','たまご','とうふ','とまと','にんじん','きゅうり','すいか','めろん','ぶどう','もも','なし','けーき','ちょこ','あいす','ぷりん','おにぎり','ぎゅうにゅう','やさい','さかな','にく','たまねぎ','じゃがいも','れもん'],
+  colors:  ['あか','あお','きいろ','しろ','くろ','みどり','ぴんく','むらさき','おれんじ','ちゃいろ']
+};
+// カタカナ単語
+const KATA_WORDS = {
+  animals: ['イヌ','ネコ','ウサギ','ゾウ','キツネ','クマ','トラ','パンダ','リス','カバ','サル','ヒツジ','カエル','タコ','イルカ','クジラ','ワニ','ハト','スズメ'],
+  foods:   ['リンゴ','バナナ','ミカン','イチゴ','パン','ゴハン','ウドン','タマゴ','トマト','ニンジン','スイカ','メロン','ブドウ','ケーキ','チョコ','アイス','プリン','レモン','ハム','チーズ','ミルク'],
+  colors:  ['アカ','アオ','キイロ','シロ','クロ','ミドリ','ピンク','ムラサキ','オレンジ','チャイロ']
+};
+const SUJI_NAMES = ['','いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう'];
+
+// 漢字辞書（読み・意味）— 小学校1〜2年配当中心
+const KANJI_LIST = [
+  { k:'火', read:'ひ',  mean:'ひ' },
+  { k:'水', read:'みず', mean:'みず' },
+  { k:'木', read:'き',  mean:'き' },
+  { k:'土', read:'つち', mean:'つち' },
+  { k:'金', read:'きん', mean:'きん' },
+  { k:'日', read:'ひ',  mean:'たいよう' },
+  { k:'月', read:'つき', mean:'つき' },
+  { k:'山', read:'やま', mean:'やま' },
+  { k:'川', read:'かわ', mean:'かわ' },
+  { k:'田', read:'た',  mean:'たんぼ' },
+  { k:'人', read:'ひと', mean:'ひと' },
+  { k:'口', read:'くち', mean:'くち' },
+  { k:'目', read:'め',  mean:'め' },
+  { k:'耳', read:'みみ', mean:'みみ' },
+  { k:'手', read:'て',  mean:'て' },
+  { k:'足', read:'あし', mean:'あし' },
+  { k:'犬', read:'いぬ', mean:'いぬ' },
+  { k:'猫', read:'ねこ', mean:'ねこ' },
+  { k:'魚', read:'さかな', mean:'さかな' },
+  { k:'鳥', read:'とり', mean:'とり' },
+  { k:'花', read:'はな', mean:'はな' },
+  { k:'草', read:'くさ', mean:'くさ' },
+  { k:'空', read:'そら', mean:'そら' },
+  { k:'雨', read:'あめ', mean:'あめ' },
+  { k:'雪', read:'ゆき', mean:'ゆき' },
+  { k:'石', read:'いし', mean:'いし' },
+  { k:'本', read:'ほん', mean:'ほん' },
+  { k:'車', read:'くるま', mean:'くるま' },
+  { k:'学', read:'がく', mean:'まなぶ' },
+  { k:'校', read:'こう', mean:'がっこう' },
+  { k:'先', read:'せん', mean:'さき' },
+  { k:'生', read:'せい', mean:'うまれる' },
+  { k:'大', read:'おお', mean:'おおきい' },
+  { k:'小', read:'しょう', mean:'ちいさい' },
+  { k:'中', read:'なか', mean:'なか' },
+  { k:'上', read:'うえ', mean:'うえ' },
+  { k:'下', read:'した', mean:'した' },
+  { k:'右', read:'みぎ', mean:'みぎ' },
+  { k:'左', read:'ひだり', mean:'ひだり' }
+];
+
+function shuffleArr(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function _quizSansu(mode) {
+  let a, b, op, ans, qtxt;
+  if (mode === 'youchien') {
+    do { a = rand(1,5); b = rand(1,5); } while (a + b > 10);
+    ans = a + b; qtxt = a + ' + ' + b + ' = ?';
+  } else if (mode === 'shogakusei') {
+    const t = rand(0, 2);
+    if (t === 0) { // add
+      a = rand(1,9); b = rand(1,9); ans = a + b; qtxt = a + ' + ' + b + ' = ?';
+    } else if (t === 1) { // sub
+      a = rand(2,9); b = rand(1, a); ans = a - b; qtxt = a + ' − ' + b + ' = ?';
+    } else { // small mul
+      a = rand(1,5); b = rand(1,5); ans = a * b; qtxt = a + ' × ' + b + ' = ?';
+    }
+  } else { // muzukashii
+    const t = rand(0, 2);
+    if (t === 0) {
+      a = rand(10,50); b = rand(10,50); ans = a + b; qtxt = a + ' + ' + b + ' = ?';
+    } else if (t === 1) {
+      a = rand(20,99); b = rand(1, a-1); ans = a - b; qtxt = a + ' − ' + b + ' = ?';
+    } else {
+      a = rand(2,9); b = rand(2,9); ans = a * b; qtxt = a + ' × ' + b + ' = ?';
+    }
+  }
+  // build distractors
+  const choicesSet = new Set([ans]);
+  let guard = 0;
+  while (choicesSet.size < 4 && guard++ < 40) {
+    const off = (Math.random() < 0.5 ? -1 : 1) * (rand(1, Math.max(2, Math.floor(ans*0.3)+1)));
+    const cand = ans + off;
+    if (cand >= 0) choicesSet.add(cand);
+  }
+  while (choicesSet.size < 4) choicesSet.add(ans + choicesSet.size * 2 + 1);
+  const arr = shuffleArr([...choicesSet]);
+  return {
+    question: qtxt,
+    choices: arr.map(String),
+    correctIndex: arr.indexOf(ans),
+    category: 'sansu'
+  };
+}
+
+function _quizHiragana() {
+  // pick a category, then a target word; question: "○ から はじまる ことばは？"
+  const catKeys = Object.keys(HIRA_WORDS);
+  const cat = pick(catKeys);
+  const word = pick(HIRA_WORDS[cat]);
+  const startKana = word.charAt(0);
+  // distractors: words from same category that DON'T start with startKana
+  const others = HIRA_WORDS[cat].filter(w => w.charAt(0) !== startKana);
+  const distractors = shuffleArr(others).slice(0, 3);
+  while (distractors.length < 3) {
+    // fall back to all categories
+    const all = catKeys.flatMap(k => HIRA_WORDS[k]).filter(w => w.charAt(0) !== startKana && !distractors.includes(w));
+    if (!all.length) break;
+    distractors.push(pick(all));
+  }
+  const choicesArr = shuffleArr([word, ...distractors]);
+  return {
+    question: '<span class="qz-kana">「' + startKana + '」</span><br><span style="font-size:18px">から はじまる ことばは？</span>',
+    choices: choicesArr,
+    correctIndex: choicesArr.indexOf(word),
+    category: 'hiragana'
+  };
+}
+
+function _quizKatakana() {
+  const catKeys = Object.keys(KATA_WORDS);
+  const cat = pick(catKeys);
+  const word = pick(KATA_WORDS[cat]);
+  const startKana = word.charAt(0);
+  const others = KATA_WORDS[cat].filter(w => w.charAt(0) !== startKana);
+  const distractors = shuffleArr(others).slice(0, 3);
+  while (distractors.length < 3) {
+    const all = catKeys.flatMap(k => KATA_WORDS[k]).filter(w => w.charAt(0) !== startKana && !distractors.includes(w));
+    if (!all.length) break;
+    distractors.push(pick(all));
+  }
+  const choicesArr = shuffleArr([word, ...distractors]);
+  return {
+    question: '<span class="qz-kana">「' + startKana + '」</span><br><span style="font-size:18px">から はじまる ことばは？</span>',
+    choices: choicesArr,
+    correctIndex: choicesArr.indexOf(word),
+    category: 'katakana'
+  };
+}
+
+function _quizSuji() {
+  // ようちえん only: 1-10 → matching ひらがな name
+  const n = rand(1, 10);
+  const correct = SUJI_NAMES[n];
+  const pool = SUJI_NAMES.slice(1).filter(s => s !== correct);
+  const distractors = shuffleArr(pool).slice(0, 3);
+  const choicesArr = shuffleArr([correct, ...distractors]);
+  return {
+    question: '<span class="qz-kana" style="font-size:72px">' + n + '</span><br><span style="font-size:18px">は どう よむ？</span>',
+    choices: choicesArr,
+    correctIndex: choicesArr.indexOf(correct),
+    category: 'suji'
+  };
+}
+
+function _quizKanji() {
+  const item = pick(KANJI_LIST);
+  // 50/50: read or meaning
+  const askRead = Math.random() < 0.5;
+  const correct = askRead ? item.read : item.mean;
+  const pool = KANJI_LIST
+    .filter(x => x.k !== item.k)
+    .map(x => askRead ? x.read : x.mean)
+    .filter(s => s !== correct);
+  const uniq = [...new Set(pool)];
+  const distractors = shuffleArr(uniq).slice(0, 3);
+  const choicesArr = shuffleArr([correct, ...distractors]);
+  return {
+    question: '<span class="qz-kana" style="font-size:80px">' + item.k + '</span><br><span style="font-size:16px">' + (askRead ? 'なんて よむ？' : 'なんの こと？') + '</span>',
+    choices: choicesArr,
+    correctIndex: choicesArr.indexOf(correct),
+    category: 'kanji'
+  };
+}
+
+function generateQuiz(mode) {
+  if (!QUIZ_CATEGORIES_BY_MODE[mode]) mode = 'shogakusei';
+  const cat = pick(QUIZ_CATEGORIES_BY_MODE[mode]);
+  try {
+    if (cat === 'sansu')    return _quizSansu(mode);
+    if (cat === 'hiragana') return _quizHiragana();
+    if (cat === 'katakana') return _quizKatakana();
+    if (cat === 'suji')     return _quizSuji();
+    if (cat === 'kanji')    return _quizKanji();
+  } catch (e) {
+    console.warn('[generateQuiz] fallback:', e);
+  }
+  return _quizSansu('youchien');
+}
+
+// ----- Quiz UI engine -----
+let _quizActive = null; // { opts, currentQ }
+
+function _spawnStarBurst() {
+  const card = document.getElementById('quiz-card');
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  const stars = ['⭐','✨','💖','🌟','💫'];
+  for (let i = 0; i < 10; i++) {
+    const s = document.createElement('div');
+    s.className = 'qz-star';
+    s.textContent = stars[i % stars.length];
+    s.style.left = cx + 'px';
+    s.style.top = cy + 'px';
+    const ang = (i / 10) * Math.PI * 2;
+    const dist = 80 + Math.random() * 80;
+    s.style.setProperty('--tx', Math.cos(ang) * dist + 'px');
+    s.style.setProperty('--ty', Math.sin(ang) * dist + 'px');
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 1100);
+  }
+}
+
+function _renderQuiz() {
+  const q = _quizActive.currentQ;
+  const opts = _quizActive.opts;
+  const ctxEl = document.getElementById('quiz-context');
+  const qEl = document.getElementById('quiz-question');
+  const choicesEl = document.getElementById('quiz-choices');
+  const resultEl = document.getElementById('quiz-result');
+  const streakEl = document.getElementById('quiz-streak');
+  const skipWrap = document.getElementById('quiz-skip-wrap');
+  if (ctxEl) ctxEl.innerHTML = opts.context || '';
+  if (qEl) qEl.innerHTML = q.question;
+  if (resultEl) { resultEl.textContent = ''; resultEl.className = ''; }
+  // streak display
+  const streak = (state && typeof state._quizStreak === 'number') ? state._quizStreak : 0;
+  if (streakEl) {
+    if (streak >= 2) streakEl.innerHTML = (streak >= 3 ? '✨ ' : '') + 'れんぞく <b>' + streak + '</b> もん せいかい！' + (streak >= 3 ? ' ✨' : '');
+    else streakEl.textContent = '';
+  }
+  if (skipWrap) skipWrap.style.display = opts.mandatory ? 'none' : '';
+  // choices
+  choicesEl.innerHTML = '';
+  q.choices.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'qz-btn';
+    b.innerHTML = c;
+    b.dataset.idx = String(i);
+    attachTap(b, () => _onQuizAnswer(i, b));
+    choicesEl.appendChild(b);
+  });
+}
+
+let _quizLock = false;
+function _onQuizAnswer(idx, btn) {
+  if (_quizLock || !_quizActive) return;
+  _quizLock = true;
+  const q = _quizActive.currentQ;
+  const opts = _quizActive.opts;
+  const correct = (idx === q.correctIndex);
+  const resultEl = document.getElementById('quiz-result');
+  // disable all buttons
+  document.querySelectorAll('#quiz-choices .qz-btn').forEach(b => { b.style.pointerEvents = 'none'; });
+  if (correct) {
+    btn.classList.add('correct');
+    if (resultEl) { resultEl.textContent = '⭕ せいかい！'; resultEl.className = 'correct'; }
+    if (typeof sfxLevel === 'function') sfxLevel();
+    _spawnStarBurst();
+    // stats
+    if (state) {
+      if (!state.studyStats) state.studyStats = { correct: 0, wrong: 0, streakBest: 0 };
+      state.studyStats.correct = (state.studyStats.correct || 0) + 1;
+      state._quizStreak = (state._quizStreak || 0) + 1;
+      if (state._quizStreak > (state.studyStats.streakBest || 0)) state.studyStats.streakBest = state._quizStreak;
+      try { saveGame(true); } catch (e) {}
+    }
+    setTimeout(() => {
+      _hideQuiz();
+      _quizLock = false;
+      if (typeof opts.onCorrect === 'function') opts.onCorrect();
+    }, 900);
+  } else {
+    btn.classList.add('wrong');
+    if (resultEl) {
+      resultEl.innerHTML = opts.mandatory ? '❌ もういちど！' : '❌ ざんねん…';
+      resultEl.className = 'wrong';
+    }
+    // soft bonk
+    try { sfx(220, 0.18, 'sawtooth', 0.16); } catch (e) {}
+    if (state) {
+      if (!state.studyStats) state.studyStats = { correct: 0, wrong: 0, streakBest: 0 };
+      state.studyStats.wrong = (state.studyStats.wrong || 0) + 1;
+      state._quizStreak = 0;
+      try { saveGame(true); } catch (e) {}
+    }
+    if (opts.mandatory) {
+      // retry with new question
+      setTimeout(() => {
+        _quizActive.currentQ = generateQuiz(opts.mode || (state && state.studyMode) || 'shogakusei');
+        _renderQuiz();
+        _quizLock = false;
+      }, 1100);
+    } else {
+      setTimeout(() => {
+        _hideQuiz();
+        _quizLock = false;
+        if (typeof opts.onWrong === 'function') opts.onWrong();
+      }, 1100);
+    }
+  }
+}
+
+function _hideQuiz() {
+  const ov = document.getElementById('quiz-overlay');
+  if (ov) ov.classList.remove('active');
+  _quizActive = null;
+}
+
+// Public API
+function showQuiz(opts) {
+  opts = opts || {};
+  const mode = opts.mode || (state && state.studyMode) || 'shogakusei';
+  _quizActive = { opts: opts, currentQ: generateQuiz(mode) };
+  _quizLock = false;
+  // wire skip
+  const skipBtn = document.getElementById('quiz-skip');
+  if (skipBtn) {
+    // re-bind each open
+    const newBtn = skipBtn.cloneNode(true);
+    skipBtn.parentNode.replaceChild(newBtn, skipBtn);
+    attachTap(newBtn, () => {
+      if (!_quizActive) return;
+      const o = _quizActive.opts;
+      _hideQuiz();
+      _quizLock = false;
+      if (typeof o.onSkip === 'function') o.onSkip();
+    });
+  }
+  _renderQuiz();
+  const ov = document.getElementById('quiz-overlay');
+  if (ov) ov.classList.add('active');
+}
+
 // ===================== ITEMS =====================
 // dropOnly:true なアイテムはショップに並ばない（戦闘ドロップ専用）
 const ITEMS = {
@@ -2423,7 +2955,11 @@ let state = {
   fieldChests: {}, // { [stageId]: [{ x, y, opened, item }] }  各ステージの宝箱
   minimapVisible: true,
   invertDrag: true,
-  v2WorldMapShown: false
+  v2WorldMapShown: false,
+  // ===== STUDY QUIZ =====
+  studyMode: 'shogakusei',                      // 'youchien' | 'shogakusei' | 'muzukashii'
+  studyStats: { correct: 0, wrong: 0, streakBest: 0 },
+  _quizStreak: 0                                // current streak (transient but persisted)
 };
 
 function makeMon(id, lvl) {
@@ -2566,6 +3102,17 @@ function migrateSaveData(data) {
   }
   if (typeof data.minimapVisible !== 'boolean') data.minimapVisible = true;
   if (typeof data.invertDrag !== 'boolean') data.invertDrag = true;
+
+  // ===== STUDY QUIZ migration =====
+  const validStudyModes = { youchien: 1, shogakusei: 1, muzukashii: 1 };
+  if (typeof data.studyMode !== 'string' || !validStudyModes[data.studyMode]) {
+    data.studyMode = 'shogakusei';
+  }
+  if (!data.studyStats || typeof data.studyStats !== 'object') data.studyStats = { correct: 0, wrong: 0, streakBest: 0 };
+  if (typeof data.studyStats.correct !== 'number') data.studyStats.correct = 0;
+  if (typeof data.studyStats.wrong !== 'number') data.studyStats.wrong = 0;
+  if (typeof data.studyStats.streakBest !== 'number') data.studyStats.streakBest = 0;
+  if (typeof data._quizStreak !== 'number') data._quizStreak = 0;
 
   // モンスターのフィールド補完
   data.party = data.party.map(m => ensureMonsterFields(m)).filter(Boolean);
@@ -3319,10 +3866,33 @@ function initTitle() {
     // タイトル表示時にラベル再描画（state読み込み後の状態を反映）
     window._refreshDragModeLabel = refreshDragModeLabel;
   }
+  // べんきょうモード切替トグル
+  const studyBtn = $('btn-study-mode');
+  if (studyBtn) {
+    const cycle = ['youchien', 'shogakusei', 'muzukashii'];
+    const refreshStudyLabel = () => {
+      const mode = (state && state.studyMode) || 'shogakusei';
+      const lbl = $('study-mode-label');
+      if (lbl) lbl.innerHTML = (STUDY_MODES[mode] && STUDY_MODES[mode].label) || '小学生';
+    };
+    refreshStudyLabel();
+    attachTap(studyBtn, () => {
+      if (!state) state = {};
+      const cur = state.studyMode || 'shogakusei';
+      const idx = cycle.indexOf(cur);
+      state.studyMode = cycle[(idx + 1) % cycle.length];
+      refreshStudyLabel();
+      try { saveGame(true); } catch (e) {}
+      try { sfxTap(); } catch (e) {}
+    });
+    window._refreshStudyModeLabel = refreshStudyLabel;
+  }
 }
 
 function startNewGame() {
   // 新規ゲームは空partyで開始 → スターター選択へ
+  // タイトルで設定された studyMode は引き継ぐ（無ければデフォルト）
+  const prevStudyMode = (state && typeof state.studyMode === 'string') ? state.studyMode : 'shogakusei';
   state = {
     party: [],
     box: [],
@@ -3335,7 +3905,10 @@ function startNewGame() {
     fieldChests: {},
     minimapVisible: true,
     invertDrag: true,
-    v2WorldMapShown: true
+    v2WorldMapShown: true,
+    studyMode: prevStudyMode,
+    studyStats: { correct: 0, wrong: 0, streakBest: 0 },
+    _quizStreak: 0
   };
   applyDemoMode();
   // ※ ここでは saveGame しない（party空のため saveGame ガードで保存されない & タイトル既存セーブを温存）
@@ -4415,6 +4988,23 @@ function generateFieldMobs(stage) {
     });
   }
 
+  // ===== STUDY: 📚 べんきょうモンスター（5%でステージに1体） =====
+  if (Math.random() < 0.05) {
+    const sx = 100 + Math.random() * (WORLD_W - 200);
+    const sy = 280 + Math.random() * (WORLD_H - 500);
+    state.fieldMobs.push({
+      id: -1,                  // sentinel: study mob, no monster
+      lvl: 1,
+      isStudyMob: true,
+      x: sx, y: sy,
+      defeated: false,
+      isBoss: false,
+      dx: (Math.random() - 0.5) * 0.3,
+      dy: (Math.random() - 0.5) * 0.3,
+      wanderTimer: rand(40, 120)
+    });
+  }
+
   // ===== 隠しキャラ「とーとん」スポーン処理 =====
   // 対応ステージで 1.5% / デモ50% で1体スポーン
   const totonRate = _isDemoMode ? 0.5 : 0.015;
@@ -4679,6 +5269,9 @@ function drawMinimap() {
       ctx.textBaseline = 'middle';
       ctx.fillText(star, mx, my);
       ctx.restore();
+    } else if (m.isStudyMob) {
+      ctx.fillStyle = '#5cb8f5';
+      ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI * 2); ctx.fill();
     } else if (m.isBoss) {
       ctx.fillStyle = '#ff3030';
       ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI * 2); ctx.fill();
@@ -4890,6 +5483,42 @@ function drawField() {
     const size = m.isBoss ? BOSS_SIZE : MOB_SIZE;
     // off-screen culling
     if (sx + size < -20 || sx - size > cw + 20 || sy + size < -20 || sy - size > ch + 20) return;
+    // ===== STUDY: 📚 べんきょうモンスター描画 =====
+    if (m.isStudyMob) {
+      const t = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+      const pulse = 1 + 0.1 * Math.sin(t / 220);
+      const bob = Math.sin(t / 320 + (m.x + m.y) * 0.01) * 3;
+      // shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy + size * 0.4, size * 0.4, size * 0.14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // soft glow
+      ctx.save();
+      const glow = 0.35 + 0.2 * Math.sin(t / 260);
+      ctx.fillStyle = `rgba(120,200,255,${glow * 0.4})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy + bob, size * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      // 📚 emoji
+      ctx.save();
+      ctx.font = 'bold ' + Math.floor(size * 0.85 * pulse) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('📚', sx, sy + bob);
+      ctx.restore();
+      // sparkle
+      const sparkPhase = (t / 600) % 1;
+      ctx.save();
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillStyle = `rgba(150,220,255,${1 - sparkPhase})`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText('✨', sx + size * 0.35, sy - size * 0.25 - sparkPhase * 8 + bob);
+      ctx.restore();
+      return;
+    }
     // Boss: golden ring
     if (m.isBoss) {
       ctx.save();
@@ -5044,6 +5673,61 @@ function triggerEncounter(fieldMob, idx) {
     const len = Math.hypot(dx, dy) || 1;
     state.field.lastSafePx = clamp(fieldMob.x + (dx / len) * 80, 24, WORLD_W - 24);
     state.field.lastSafePy = clamp(fieldMob.y + (dy / len) * 80, 24, WORLD_H - 24);
+  }
+  // ===== STUDY: 📚 べんきょうモンスター =====
+  if (fieldMob.isStudyMob) {
+    showQuiz({
+      context: '📚 べんきょうモンスター！クイズに <ruby>正解<rt>せいかい</rt></ruby>すると、ごほうび GET！',
+      mandatory: false,
+      mode: state.studyMode,
+      onCorrect: () => {
+        const c = 200 + rand(0, 300);
+        state.coins += c;
+        const items = ['xpcandy-s','xpcandy-m','potion','hipotion'];
+        const item = pick(items);
+        if (!state.bag) state.bag = {};
+        state.bag[item] = (state.bag[item] || 0) + 1;
+        showToast('💰+' + c + 'コイン！ ' + ITEMS[item].name + 'を 1こ <ruby>手<rt>て</rt></ruby>に <ruby>入<rt>い</rt></ruby>れた！', 2200);
+        fieldMob.defeated = true;
+        try { saveGame(true); } catch(e) {}
+        // フィールドに戻ってループ再開
+        try { startFieldLoop(); } catch(e) { fieldRunning = true; }
+      },
+      onWrong: () => {
+        showToast('べんきょうモンスターは <ruby>逃<rt>に</rt></ruby>げた！');
+        fieldMob.defeated = true;
+        try { startFieldLoop(); } catch(e) { fieldRunning = true; }
+      },
+      onSkip: () => {
+        // close, keep mob (player can come back later)
+        try { startFieldLoop(); } catch(e) { fieldRunning = true; }
+      }
+    });
+    return;
+  }
+  // ===== STUDY: ボス・中ボス前のクイズゲート =====
+  if ((fieldMob.isBoss === true || fieldMob.isMidBoss === true) && !fieldMob.isToton) {
+    const isWB = fieldMob.isBoss && !fieldMob.isMidBoss;
+    showQuiz({
+      context: isWB ? 'ワールドボスとの <ruby>戦<rt>たたか</rt></ruby>い！<br>クイズに <ruby>正解<rt>せいかい</rt></ruby>して すすもう！'
+                    : '<ruby>中<rt>ちゅう</rt></ruby>ボスとの <ruby>戦<rt>たたか</rt></ruby>い！<br>クイズに <ruby>正解<rt>せいかい</rt></ruby>して すすもう！',
+      mandatory: true,
+      mode: state.studyMode,
+      onCorrect: () => {
+        // 正解 → 通常エンカウント演出を経て startBattle へ
+        const fieldArea = document.querySelector('#field-scene #field-area');
+        $('encounter-mark').classList.add('show');
+        if (fieldArea) fieldArea.classList.add('shake');
+        sfxCrit();
+        setTimeout(() => {
+          $('encounter-mark').classList.remove('show');
+          if (fieldArea) fieldArea.classList.remove('shake');
+          stopFieldLoop();
+          startBattle(fieldMob, idx);
+        }, 700);
+      }
+    });
+    return;
   }
   // ===== とーとん 専用エンカウント演出（暗転＋!?＋テキスト） =====
   if (fieldMob.isToton) {
@@ -6237,6 +6921,10 @@ function tryCatch(ballKey) {
   const ballRate = ITEMS[ballKey].rate;
   // success rate: low HP -> high
   let chance = (1 - ratio) * 0.7 * ballRate + 0.05;
+  // === STUDY: クイズ正解ボーナスを反映 ===
+  const studyBonus = (typeof window !== 'undefined' && typeof window._catchBonus === 'number') ? window._catchBonus : 0;
+  if (studyBonus > 0) chance += studyBonus;
+  if (typeof window !== 'undefined') window._catchBonus = 0;
   chance = clamp(chance, 0.05, 0.95);
   // とーとんは捕獲率固定（HP残量・ボール種類に関係なく超レア）
   if (battle.isToton) {
@@ -6309,7 +6997,31 @@ function cmdBall() {
     attachTap(row, () => {
       $('item-panel').classList.remove('active');
       state.bag[key]--;
-      tryCatch(key);
+      // === STUDY: ボール投げる前にクイズチャレンジ（任意） ===
+      if (battle.isBoss) {
+        // ボスは捕獲不可なので素直に進む（tryCatch側で弾かれる）
+        if (typeof window !== 'undefined') window._catchBonus = 0;
+        tryCatch(key);
+        return;
+      }
+      showQuiz({
+        context: 'ボールを <ruby>投<rt>な</rt></ruby>げる <ruby>前<rt>まえ</rt></ruby>に クイズに チャレンジ！<br><ruby>正解<rt>せいかい</rt></ruby>で <ruby>捕<rt>つか</rt></ruby>まえやすく なるよ',
+        mandatory: false,
+        mode: state.studyMode,
+        onCorrect: () => {
+          if (typeof window !== 'undefined') window._catchBonus = 0.25;
+          showToast('✨ せいかい！ <ruby>捕<rt>つか</rt></ruby>まえやすく なった！', 1200);
+          tryCatch(key);
+        },
+        onWrong: () => {
+          if (typeof window !== 'undefined') window._catchBonus = 0;
+          tryCatch(key);
+        },
+        onSkip: () => {
+          if (typeof window !== 'undefined') window._catchBonus = 0;
+          tryCatch(key);
+        }
+      });
     });
     list.appendChild(row);
   });
@@ -6468,6 +7180,16 @@ function renderParty() {
   const boxList = $('party-list-box');
   mineList.innerHTML = '';
   boxList.innerHTML = '';
+
+  // ===== STUDY STATS バナー =====
+  const ss = state.studyStats || { correct: 0, wrong: 0, streakBest: 0 };
+  const modeLabel = (STUDY_MODES[state.studyMode] && STUDY_MODES[state.studyMode].label) || '小学生';
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:linear-gradient(180deg,#fff8d8,#ffe89a);border:2.5px solid #ffc94a;border-radius:14px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#6b4500;text-align:center;font-weight:bold;line-height:1.5;';
+  banner.innerHTML = '📘 べんきょうメダル: <b style="color:#d63384;font-size:16px">' + (ss.correct || 0) + '</b><ruby>問<rt>もん</rt></ruby> せいかい！'
+    + ' （<ruby>連続<rt>れんぞく</rt></ruby> さいこう <b>' + (ss.streakBest || 0) + '</b><ruby>問<rt>もん</rt></ruby>）'
+    + '<br><span style="font-size:11px;color:#888;">いまの モード: ' + modeLabel + '</span>';
+  mineList.appendChild(banner);
 
   state.party.forEach((m, i) => {
     const def = getMonsterDef(m.id);
