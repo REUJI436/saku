@@ -2005,13 +2005,27 @@ function switchScene(id) {
 let audioCtx = null;
 let muted = false;
 function ensureAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    catch(e) { return null; }
+  // iOS Safari は audioCtx を 'closed' や 'interrupted' にすることがある。
+  // 'closed' の場合は再利用不可なので作り直す。
+  if (audioCtx && audioCtx.state === 'closed') {
+    console.log('[ensureAudio] ctx was closed, recreating');
+    audioCtx = null;
+    _bgmGainNode = null;
   }
-  if (audioCtx.state === 'suspended') {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      console.log('[ensureAudio] new ctx created, state=', audioCtx.state);
+    }
+    catch(e) { console.error('[ensureAudio] create failed', e); return null; }
+  }
+  if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+    console.log('[ensureAudio] resuming, state=', audioCtx.state);
     const p = audioCtx.resume();
-    if (p && p.then) p.then(() => { if (_bgmStartPending) _bgmStart(); });
+    if (p && p.then) p.then(() => {
+      console.log('[ensureAudio] resume resolved, state=', audioCtx && audioCtx.state);
+      if (_bgmStartPending) _bgmStart();
+    }).catch(err => console.error('[ensureAudio] resume failed', err));
   }
   if (_bgmStartPending && audioCtx.state === 'running') _bgmStart();
   return audioCtx;
@@ -2208,28 +2222,41 @@ function _bgmScheduleLoop(trackId) {
   _bgmTimer = setTimeout(() => _bgmScheduleLoop(trackId), Math.max(50, (loopDur - 0.05) * 1000));
 }
 
+// ===== BGM CORE (rewritten 2026-04-25) =====
+// 設計方針：
+//  1. _bgmStart は毎回 _bgmGainNode を「作り直す」。
+//     → 古いノードに残った scheduledValue（cancelできない iOS 仕様）の影響を排除。
+//  2. stopBgm は GainNode に一切触らない。タイマーと state だけ落とす。
+//     古い oscillator は osc.stop(t+dur) で自然に消える（最大 1〜2 秒）ので無害。
+//  3. _bgmStart は currentTime に setValueAtTime のみ（ramp なし）で確実に発音。
+//  4. 各ステップで console.log を出してデバッグできるようにする。
 function _bgmStart() {
   try {
-    if (!_bgmStartPending) return;
+    if (!_bgmStartPending) {
+      console.log('[_bgmStart] no pending track, skip');
+      return;
+    }
     ensureAudio();
-    if (!audioCtx) return;
-    // iOS Safari は state が 'suspended' でも、ユーザージェスチャー文脈中なら
-    // 直接 schedule すれば再生される。早期returnすると、resume()のpromise.then
-    // で遅延起動した時にジェスチャー文脈外となり再生が拒否される。
-    // → suspended のままでもスケジュールを試みる（resume後に発音が始まる）
+    if (!audioCtx) {
+      console.log('[_bgmStart] no audioCtx');
+      return;
+    }
     const trackId = _bgmStartPending;
     _bgmStartPending = null;
     _bgm = trackId;
-    if (!_bgmGainNode) {
-      _bgmGainNode = audioCtx.createGain();
-      _bgmGainNode.connect(audioCtx.destination);
+
+    // 【H3 対策】GainNode を毎回作り直す。iOS WebKit では cancelScheduledValues が
+    // 過去にスケジュールされた ramp を完全には消せず、新規 setValueAtTime が無視される
+    // 場合があるため、再利用しない。古いノードは disconnect して GC させる。
+    if (_bgmGainNode) {
+      try { _bgmGainNode.disconnect(); } catch(e) {}
     }
+    _bgmGainNode = audioCtx.createGain();
+    _bgmGainNode.connect(audioCtx.destination);
     const t = audioCtx.currentTime;
-    try {
-      _bgmGainNode.gain.cancelScheduledValues(t);
-      _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, t);
-    } catch(e) {}
-    console.log('[_bgmStart] start', trackId, 'state=', audioCtx.state, 'muted=', muted);
+    _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, t);
+
+    console.log('[_bgmStart] start', trackId, 'state=', audioCtx.state, 'muted=', muted, 'gain=', muted ? 0 : _BGM_BASE_VOL, 't=', t.toFixed(2));
     _bgmScheduleLoop(trackId);
   } catch (err) {
     console.error('[_bgmStart]', err);
@@ -2237,48 +2264,43 @@ function _bgmStart() {
 }
 
 function stopBgm() {
+  console.log('[stopBgm] prev=', _bgm, 'pending=', _bgmStartPending);
   _bgm = null;
   _bgmStartPending = null;
   if (_bgmTimer) { clearTimeout(_bgmTimer); _bgmTimer = null; }
-  if (_bgmGainNode && audioCtx) {
-    const t = audioCtx.currentTime;
-    try {
-      _bgmGainNode.gain.cancelScheduledValues(t);
-      _bgmGainNode.gain.setValueAtTime(_bgmGainNode.gain.value, t);
-      _bgmGainNode.gain.linearRampToValueAtTime(0, t + 0.08);
-    } catch(e) {}
-  }
-  for (const o of _bgmActiveNodes) { try { o.stop(audioCtx ? audioCtx.currentTime + 0.1 : 0); } catch(e) {} }
+  // 【H1 対策】GainNode には触らない。古い oscillator は osc.stop(t+dur) で
+  // 自然に消える。新しい _bgmStart は GainNode を作り直すので、古いノードに
+  // 残ったスケジュールは新トラックに影響しない。
+  // 【H4 対策】古い oscillator も明示停止しない（busy 状態を避ける）。
   _bgmActiveNodes = [];
-  if (_bgmGainNode && audioCtx) {
-    setTimeout(() => {
-      if (!_bgm && _bgmGainNode) {
-        try { _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, audioCtx.currentTime); } catch(e) {}
-      }
-    }, 150);
-  }
 }
 
 function playBgm(trackId) {
-  if (!BGM_TRACKS[trackId]) return;
-  if (_bgm === trackId) return;
+  if (!BGM_TRACKS[trackId]) {
+    console.log('[playBgm] unknown track', trackId);
+    return;
+  }
+  if (_bgm === trackId) {
+    console.log('[playBgm] already playing', trackId);
+    return;
+  }
+  console.log('[playBgm] called', trackId, 'prev=', _bgm, 'ctxState=', audioCtx && audioCtx.state);
   stopBgm();
   _bgmStartPending = trackId;
   // iOS Safariは画面遷移時にAudioContextを勝手にsuspendするので、
   // 必ずensureAudioでresumeを試みた上で_bgmStartを呼ぶ。
-  // _bgmStartは内部でsuspended状態でもスケジュールを試みる設計に変更済み。
   ensureAudio();
   _bgmStart();
 }
 
 function _bgmApplyMute() {
+  console.log('[_bgmApplyMute] muted=', muted);
   if (!_bgmGainNode || !audioCtx) return;
   const t = audioCtx.currentTime;
   try {
-    _bgmGainNode.gain.cancelScheduledValues(t);
-    _bgmGainNode.gain.setValueAtTime(_bgmGainNode.gain.value, t);
-    _bgmGainNode.gain.linearRampToValueAtTime(muted ? 0 : _BGM_BASE_VOL, t + 0.08);
-  } catch(e) {}
+    // ramp は使わず即座に切り替え（iOS の ramp 不安定対策）
+    _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, t);
+  } catch(e) { console.error('[_bgmApplyMute]', e); }
 }
 
 // ===================== MONSTER DATABASE =====================
