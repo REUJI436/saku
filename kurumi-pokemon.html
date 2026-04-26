@@ -3018,11 +3018,13 @@ const ITEMS = {
 // ===================== DEMO MODE =====================
 // URL末尾に ?demo=1 を付けるとデモモード（出現50%・マスターボール99個・全ステージ解禁）
 // URL末尾に ?testtoton=1 を付けるとさらに テラスタル発動準備済み（4兄弟が手持ち先頭）
+// URL末尾に ?teramax=1 を付けると メガテラスタルとーとんキョダイマックスEX (Lv.100) が手持ちに
 const _isDemoMode    = (typeof window !== 'undefined' && window.location && /[?&]demo=1\b/.test(window.location.search || ''));
 const _isTestToton   = (typeof window !== 'undefined' && window.location && /[?&]testtoton=1\b/.test(window.location.search || ''));
+const _isTeraMax     = (typeof window !== 'undefined' && window.location && /[?&]teramax=1\b/.test(window.location.search || ''));
 
 function applyDemoMode() {
-  if (!_isDemoMode && !_isTestToton) return;
+  if (!_isDemoMode && !_isTestToton && !_isTeraMax) return;
   if (!state) return;
   if (!state.bag) state.bag = {};
   if ((state.bag.masterball || 0) < 99) state.bag.masterball = 99;
@@ -3036,6 +3038,18 @@ function applyDemoMode() {
     const ids = [99, 96, 97, 98];
     state.party = ids.map(id => makeMon(id, 50));
     state.box = state.box || [];
+  }
+  // teramax: メガEX (id:94) Lv.100 を先頭に配置（ペロペロアリーナ習得済み）
+  // 4兄弟もボックスに入れておく（テラスタル発動条件も同時に満たすために）
+  if (_isTeraMax && typeof makeMon === 'function') {
+    const megaEx = makeMon(94, 100);
+    state.party = [megaEx];
+    state.box = state.box || [];
+    [99, 96, 97, 98].forEach(id => {
+      if (!state.party.some(m => m.id === id) && !state.box.some(m => m.id === id)) {
+        state.box.push(makeMon(id, 50));
+      }
+    });
   }
 }
 
@@ -3124,7 +3138,7 @@ function saveGame(silent) {
   // (when user is still on the title screen and hasn't started/loaded yet)
   if (!state || !state.party || state.party.length === 0) return;
   // デモ/テストモード中は本番セーブを汚染しないためスキップ
-  if (_isDemoMode || _isTestToton) return;
+  if (_isDemoMode || _isTestToton || _isTeraMax) return;
   try {
     // 直前バックアップ：保存前のメインを退避（1世代だけ）
     try {
@@ -3897,7 +3911,7 @@ function initTitle() {
   // セーブがある場合は誤タップ防止のため「はじめから」ボタンを非表示にする
   // （代わりに右下の小さい「ぜんぶ けして〜」リンクから2段確認でリセット可能）
   // デモモード(?demo=1)の時は本番セーブを汚さないので常に「はじめから」を許可
-  const hasSv = !(_isDemoMode || _isTestToton) && hasSave();
+  const hasSv = !(_isDemoMode || _isTestToton || _isTeraMax) && hasSave();
   const btnNew = $('btn-new');
   const btnReset = $('btn-reset-danger');
   if (btnNew) btnNew.style.display = hasSv ? 'none' : '';
