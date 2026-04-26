@@ -4037,6 +4037,13 @@ function startNewGame() {
     _quizStreak: 0
   };
   applyDemoMode();
+  // テストモード（testtoton/teramax/evotest）は applyDemoMode が手持ちを
+  // 詰めるので、スターター選択をスキップしてワールドマップ直行する。
+  // 通常モード／?demo=1 はスターター選択へ。
+  if ((_isTestToton || _isTeraMax || _isEvoTest) && state.party && state.party.length > 0) {
+    goStageSelect();
+    return;
+  }
   // ※ ここでは saveGame しない（party空のため saveGame ガードで保存されない & タイトル既存セーブを温存）
   goStarterSelect();
 }
