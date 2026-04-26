@@ -3017,17 +3017,25 @@ const ITEMS = {
 
 // ===================== DEMO MODE =====================
 // URL末尾に ?demo=1 を付けるとデモモード（出現50%・マスターボール99個・全ステージ解禁）
-const _isDemoMode = (typeof window !== 'undefined' && window.location && /[?&]demo=1\b/.test(window.location.search || ''));
+// URL末尾に ?testtoton=1 を付けるとさらに テラスタル発動準備済み（4兄弟が手持ち先頭）
+const _isDemoMode    = (typeof window !== 'undefined' && window.location && /[?&]demo=1\b/.test(window.location.search || ''));
+const _isTestToton   = (typeof window !== 'undefined' && window.location && /[?&]testtoton=1\b/.test(window.location.search || ''));
 
 function applyDemoMode() {
-  if (!_isDemoMode || !state) return;
+  if (!_isDemoMode && !_isTestToton) return;
+  if (!state) return;
   if (!state.bag) state.bag = {};
   if ((state.bag.masterball || 0) < 99) state.bag.masterball = 99;
-  // 25ステージ全解禁にするため、5-5 以外の全IDを cleared に詰める（5-5 は新鮮にプレイ可）
   if (!Array.isArray(state.cleared)) state.cleared = [];
   for (const s of STAGES) {
     if (s.id === '5-5') continue;
     if (!state.cleared.includes(s.id)) state.cleared.push(s.id);
+  }
+  // testtoton: 4兄弟をパーティ先頭に揃える（テラスタル発動条件 即達成）
+  if (_isTestToton && typeof makeMon === 'function') {
+    const ids = [99, 96, 97, 98];
+    state.party = ids.map(id => makeMon(id, 50));
+    state.box = state.box || [];
   }
 }
 
@@ -3115,8 +3123,8 @@ function saveGame(silent) {
   // Don't overwrite a real save with the empty default state
   // (when user is still on the title screen and hasn't started/loaded yet)
   if (!state || !state.party || state.party.length === 0) return;
-  // デモモード中は本番セーブを汚染しないためスキップ
-  if (_isDemoMode) return;
+  // デモ/テストモード中は本番セーブを汚染しないためスキップ
+  if (_isDemoMode || _isTestToton) return;
   try {
     // 直前バックアップ：保存前のメインを退避（1世代だけ）
     try {
@@ -3889,7 +3897,7 @@ function initTitle() {
   // セーブがある場合は誤タップ防止のため「はじめから」ボタンを非表示にする
   // （代わりに右下の小さい「ぜんぶ けして〜」リンクから2段確認でリセット可能）
   // デモモード(?demo=1)の時は本番セーブを汚さないので常に「はじめから」を許可
-  const hasSv = !_isDemoMode && hasSave();
+  const hasSv = !(_isDemoMode || _isTestToton) && hasSave();
   const btnNew = $('btn-new');
   const btnReset = $('btn-reset-danger');
   if (btnNew) btnNew.style.display = hasSv ? 'none' : '';
@@ -5112,7 +5120,8 @@ function generateFieldMobs(stage) {
   // ===== 隠しキャラ「とーとん」スポーン処理（Cプラン: 各ワールドのN-3に配置） =====
   // N-3 は中ボスステージ。中ボス→ボスへの段階演出に「とーとん遭遇」が加わる。
   // 中ボス・とーとんは別系統（isToton除外）なので進行ロジック上は共存可。
-  const totonRate = _isDemoMode ? 0.5 : 0.015;
+  // testtoton モードでは100%出現
+  const totonRate = _isTestToton ? 1.0 : (_isDemoMode ? 0.5 : 0.015);
   // 通常とーとん（id:99）: 1-3
   if (stage.id === '1-3' && Math.random() < totonRate) {
     const tx = 100 + Math.random() * (WORLD_W - 200);
