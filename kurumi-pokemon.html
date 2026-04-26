@@ -2230,72 +2230,61 @@ function _bgmScheduleLoop(trackId) {
 //     古い oscillator は osc.stop(t+dur) で自然に消える（最大 1〜2 秒）ので無害。
 //  3. _bgmStart は currentTime に setValueAtTime のみ（ramp なし）で確実に発音。
 //  4. 各ステップで console.log を出してデバッグできるようにする。
-function _bgmStart() {
-  try {
-    if (!_bgmStartPending) {
-      console.log('[_bgmStart] no pending track, skip');
-      return;
-    }
-    ensureAudio();
-    if (!audioCtx) {
-      console.log('[_bgmStart] no audioCtx');
-      return;
-    }
-    const trackId = _bgmStartPending;
-    _bgmStartPending = null;
-    _bgm = trackId;
-
-    // 【H3 対策】GainNode を毎回作り直す。iOS WebKit では cancelScheduledValues が
-    // 過去にスケジュールされた ramp を完全には消せず、新規 setValueAtTime が無視される
-    // 場合があるため、再利用しない。古いノードは disconnect して GC させる。
-    if (_bgmGainNode) {
-      try { _bgmGainNode.disconnect(); } catch(e) {}
-    }
-    _bgmGainNode = audioCtx.createGain();
-    _bgmGainNode.connect(audioCtx.destination);
-    const t = audioCtx.currentTime;
-    _bgmGainNode.gain.setValueAtTime(muted ? 0 : _BGM_BASE_VOL, t);
-
-    console.log('[_bgmStart] start', trackId, 'state=', audioCtx.state, 'muted=', muted, 'gain=', muted ? 0 : _BGM_BASE_VOL, 't=', t.toFixed(2));
-    _bgmScheduleLoop(trackId);
-  } catch (err) {
-    console.error('[_bgmStart]', err);
+// ===== BGM CORE (iOS Safari極シンプル化版) =====
+// 設計方針：
+//  ・AudioParamのスケジューリング（setValueAtTime / cancelScheduledValues）を一切使わない
+//    → iOS Safariはこれらの組み合わせで沈黙バグを起こすため、gain.value=で即時設定のみ
+//  ・古いノードは強制stop+disconnect。レガシーstateを残さない
+//  ・playBgmが呼ばれたら同期的に全部やる（pending状態なし）
+function _bgmStop() {
+  if (_bgmTimer) { clearTimeout(_bgmTimer); _bgmTimer = null; }
+  for (const o of _bgmActiveNodes) {
+    try { o.stop(0); } catch(e) {}
+    try { o.disconnect(); } catch(e) {}
   }
-}
-
-function stopBgm() {
-  console.log('[stopBgm] prev=', _bgm, 'pending=', _bgmStartPending);
+  _bgmActiveNodes = [];
+  if (_bgmGainNode) { try { _bgmGainNode.disconnect(); } catch(e) {} _bgmGainNode = null; }
   _bgm = null;
   _bgmStartPending = null;
-  if (_bgmTimer) { clearTimeout(_bgmTimer); _bgmTimer = null; }
-  // 【H1 対策】GainNode には触らない。古い oscillator は osc.stop(t+dur) で
-  // 自然に消える。新しい _bgmStart は GainNode を作り直すので、古いノードに
-  // 残ったスケジュールは新トラックに影響しない。
-  // 【H4 対策】古い oscillator も明示停止しない（busy 状態を避ける）。
-  _bgmActiveNodes = [];
 }
 
 function playBgm(trackId) {
-  if (!BGM_TRACKS[trackId]) {
-    console.log('[playBgm] unknown track', trackId);
-    return;
-  }
-  if (_bgm === trackId) {
-    console.log('[playBgm] already playing', trackId);
-    return;
-  }
-  console.log('[playBgm] called', trackId, 'prev=', _bgm, 'ctxState=', audioCtx && audioCtx.state);
-  stopBgm();
-  _bgmStartPending = trackId;
-  // iOS Safariは画面遷移時にAudioContextを勝手にsuspendするので、
-  // 必ずensureAudioでresumeを試みた上で_bgmStartを呼ぶ。
+  if (!BGM_TRACKS[trackId]) return;
+  if (_bgm === trackId && _bgmGainNode) return; // 同曲再生中ならスキップ
+  console.log('[playBgm]', trackId, 'prev=', _bgm);
+  _bgmStop();
   ensureAudio();
-  _bgmStart();
+  if (!audioCtx) { console.log('[playBgm] no ctx'); return; }
+  // suspendedなら同期的にresume試行（promiseは待たない・iOSはユーザージェスチャー中に呼べばOK）
+  if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+    try { audioCtx.resume(); } catch(e) {}
+  }
+  // 新しい gain node を作って即接続。AudioParam APIは使わず .value= で即時設定。
+  _bgmGainNode = audioCtx.createGain();
+  _bgmGainNode.gain.value = muted ? 0 : _BGM_BASE_VOL;
+  _bgmGainNode.connect(audioCtx.destination);
+  _bgm = trackId;
+  console.log('[playBgm] starting', trackId, 'state=', audioCtx.state, 'gain=', _bgmGainNode.gain.value);
+  _bgmScheduleLoop(trackId);
+}
+
+// 後方互換のため stopBgm / _bgmStart も残す
+function stopBgm() { _bgmStop(); }
+function _bgmStart() {
+  if (_bgmStartPending) {
+    const t = _bgmStartPending;
+    _bgmStartPending = null;
+    playBgm(t);
+  }
 }
 
 function _bgmApplyMute() {
   console.log('[_bgmApplyMute] muted=', muted);
   if (!_bgmGainNode || !audioCtx) return;
+  // setValueAtTime も避ける。.value= で即時。
+  _bgmGainNode.gain.value = muted ? 0 : _BGM_BASE_VOL;
+  return;
+  /* eslint-disable no-unreachable */
   const t = audioCtx.currentTime;
   try {
     // ramp は使わず即座に切り替え（iOS の ramp 不安定対策）
