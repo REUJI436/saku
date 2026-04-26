@@ -1738,6 +1738,7 @@
 <div id="field-scene" class="scene">
   <div id="field-header">
     <span class="stage-name" id="field-stage-name">ステージ</span>
+    <span class="coins" style="font-size:12px;background:#fff7d0;color:#c44d00;padding:2px 8px;border-radius:10px;border:2px solid #ffb060;">のこり <span id="field-remaining">0</span><ruby>匹<rt>ひき</rt></ruby></span>
     <span class="coins">💰<span id="field-coins">0</span></span>
   </div>
   <div id="field-area">
@@ -5624,6 +5625,15 @@ function drawField() {
 function updateField() {
   const f = state.field;
   if (!f) return;
+  // ヘッダーの「のこり◯ぴき」をフレーム毎に更新（重くないので毎フレームでOK）
+  // 勉強モンスター・とーとんはクリア判定外なのでカウントから除外
+  if (state.fieldMobs) {
+    const remEl = document.getElementById('field-remaining');
+    if (remEl) {
+      const rem = state.fieldMobs.filter(m => !m.defeated && !m.isStudyMob && !m.isToton).length;
+      if (remEl.textContent !== String(rem)) remEl.textContent = rem;
+    }
+  }
   // input -> velocity
   let vx = 0, vy = 0;
   if (fieldKeys.left)  vx -= 1;
@@ -6474,7 +6484,9 @@ function winBattle() {
         const km = (battle.fieldIdx != null) ? state.fieldMobs[battle.fieldIdx] : null;
         isWorldBossClear = !(km && km.isMidBoss);
       } else if (!stage.boss && !stage.midBoss) {
-        const remaining = state.fieldMobs.filter(m => !m.defeated);
+        // クリア判定からは「べんきょうモンスター」「とーとん系」を除外
+        // （これらはランダム出現の特殊個体で、倒さなくても進めるべき）
+        const remaining = state.fieldMobs.filter(m => !m.defeated && !m.isStudyMob && !m.isToton);
         if (remaining.length === 0 && !state.cleared.includes(stage.id)) {
           state.cleared.push(stage.id);
           didClear = true;
