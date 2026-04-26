@@ -5024,8 +5024,8 @@ function generateFieldMobs(stage) {
     });
   }
 
-  // ===== STUDY: 📚 べんきょうモンスター（5%でステージに1体） =====
-  if (Math.random() < 0.05) {
+  // ===== STUDY: 📚 べんきょうモンスター（30%でステージに1体） =====
+  if (Math.random() < 0.30) {
     const sx = 100 + Math.random() * (WORLD_W - 200);
     const sy = 280 + Math.random() * (WORLD_H - 500);
     state.fieldMobs.push({
@@ -5719,14 +5719,34 @@ function triggerEncounter(fieldMob, idx) {
       onCorrect: () => {
         const c = 200 + rand(0, 300);
         state.coins += c;
-        const items = ['xpcandy-s','xpcandy-m','potion','hipotion'];
-        const item = pick(items);
         if (!state.bag) state.bag = {};
-        state.bag[item] = (state.bag[item] || 0) + 1;
-        showToast('💰+' + c + 'コイン！ ' + ITEMS[item].name + 'を 1こ <ruby>手<rt>て</rt></ruby>に <ruby>入<rt>い</rt></ruby>れた！', 2200);
+        const gained = [];
+        // けいけんアメは必ず1個ドロップ（重み付き抽選）
+        // small 50% / med 30% / large 18% / xl 2%
+        const r1 = Math.random();
+        const candy = (r1 < 0.50) ? 'xpcandy-s'
+                    : (r1 < 0.80) ? 'xpcandy-m'
+                    : (r1 < 0.98) ? 'xpcandy-l'
+                    :               'xpcandy-xl';
+        state.bag[candy] = (state.bag[candy] || 0) + 1;
+        gained.push(candy);
+        // 30%でボーナスアイテム（回復系 or 進化のいし or きらきらコイン）
+        if (Math.random() < 0.30) {
+          const bonusItems = ['potion','hipotion','fullpotion','evostone','goldcoin'];
+          const bi = pick(bonusItems);
+          state.bag[bi] = (state.bag[bi] || 0) + 1;
+          gained.push(bi);
+        }
+        // 5%でマスターボール
+        if (Math.random() < 0.05) {
+          state.bag['masterball'] = (state.bag['masterball'] || 0) + 1;
+          gained.push('masterball');
+        }
+        // ごほうび メッセージ作成
+        const itemMsg = gained.map(k => ITEMS[k].name).join('、');
+        showToast('💰+' + c + 'コイン！<br>' + itemMsg + ' を <ruby>手<rt>て</rt></ruby>に <ruby>入<rt>い</rt></ruby>れた！', 2800);
         fieldMob.defeated = true;
         try { saveGame(true); } catch(e) {}
-        // フィールドに戻ってループ再開
         try { startFieldLoop(); } catch(e) { fieldRunning = true; }
       },
       onWrong: () => {
@@ -6376,10 +6396,11 @@ function rollBattleDrops(isBoss) {
     }
   } else {
     // 通常モブ: 各けいけんアメは独立試行
-    if (Math.random() < 0.20)   drops.push('xpcandy-s');
-    if (Math.random() < 0.05)   drops.push('xpcandy-m');
-    if (Math.random() < 0.01)   drops.push('xpcandy-l');
-    if (Math.random() < 0.002)  drops.push('xpcandy-xl');
+    // 勉強モンスターを主たる入手源にしたいので、通常モブからのドロップ率は控えめに
+    if (Math.random() < 0.08)   drops.push('xpcandy-s');
+    if (Math.random() < 0.02)   drops.push('xpcandy-m');
+    if (Math.random() < 0.004)  drops.push('xpcandy-l');
+    if (Math.random() < 0.001)  drops.push('xpcandy-xl');
   }
   return drops;
 }
