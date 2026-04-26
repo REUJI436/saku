@@ -3019,12 +3019,14 @@ const ITEMS = {
 // URL末尾に ?demo=1 を付けるとデモモード（出現50%・マスターボール99個・全ステージ解禁）
 // URL末尾に ?testtoton=1 を付けるとさらに テラスタル発動準備済み（4兄弟が手持ち先頭）
 // URL末尾に ?teramax=1 を付けると メガテラスタルとーとんキョダイマックスEX (Lv.100) が手持ちに
+// URL末尾に ?evotest=1 を付けると テラスタル (id:95) Lv.99 が「あと経験値1で進化」状態で手持ちに
 const _isDemoMode    = (typeof window !== 'undefined' && window.location && /[?&]demo=1\b/.test(window.location.search || ''));
 const _isTestToton   = (typeof window !== 'undefined' && window.location && /[?&]testtoton=1\b/.test(window.location.search || ''));
 const _isTeraMax     = (typeof window !== 'undefined' && window.location && /[?&]teramax=1\b/.test(window.location.search || ''));
+const _isEvoTest     = (typeof window !== 'undefined' && window.location && /[?&]evotest=1\b/.test(window.location.search || ''));
 
 function applyDemoMode() {
-  if (!_isDemoMode && !_isTestToton && !_isTeraMax) return;
+  if (!_isDemoMode && !_isTestToton && !_isTeraMax && !_isEvoTest) return;
   if (!state) return;
   if (!state.bag) state.bag = {};
   if ((state.bag.masterball || 0) < 99) state.bag.masterball = 99;
@@ -3044,6 +3046,19 @@ function applyDemoMode() {
   if (_isTeraMax && typeof makeMon === 'function') {
     const megaEx = makeMon(94, 100);
     state.party = [megaEx];
+    state.box = state.box || [];
+    [99, 96, 97, 98].forEach(id => {
+      if (!state.party.some(m => m.id === id) && !state.box.some(m => m.id === id)) {
+        state.box.push(makeMon(id, 50));
+      }
+    });
+  }
+  // evotest: テラスタル (id:95) を Lv.99 で配置し、EXPを「あと1で次レベル」状態に
+  // → 1回戦闘して経験値もらえば Lv.100 → メガEXへ進化する瞬間が見られる
+  if (_isEvoTest && typeof makeMon === 'function' && typeof expForNext === 'function') {
+    const tera = makeMon(95, 99);
+    tera.exp = Math.max(0, expForNext(99) - 1);
+    state.party = [tera];
     state.box = state.box || [];
     [99, 96, 97, 98].forEach(id => {
       if (!state.party.some(m => m.id === id) && !state.box.some(m => m.id === id)) {
@@ -3138,7 +3153,7 @@ function saveGame(silent) {
   // (when user is still on the title screen and hasn't started/loaded yet)
   if (!state || !state.party || state.party.length === 0) return;
   // デモ/テストモード中は本番セーブを汚染しないためスキップ
-  if (_isDemoMode || _isTestToton || _isTeraMax) return;
+  if (_isDemoMode || _isTestToton || _isTeraMax || _isEvoTest) return;
   try {
     // 直前バックアップ：保存前のメインを退避（1世代だけ）
     try {
@@ -3911,7 +3926,7 @@ function initTitle() {
   // セーブがある場合は誤タップ防止のため「はじめから」ボタンを非表示にする
   // （代わりに右下の小さい「ぜんぶ けして〜」リンクから2段確認でリセット可能）
   // デモモード(?demo=1)の時は本番セーブを汚さないので常に「はじめから」を許可
-  const hasSv = !(_isDemoMode || _isTestToton || _isTeraMax) && hasSave();
+  const hasSv = !(_isDemoMode || _isTestToton || _isTeraMax || _isEvoTest) && hasSave();
   const btnNew = $('btn-new');
   const btnReset = $('btn-reset-danger');
   if (btnNew) btnNew.style.display = hasSv ? 'none' : '';
