@@ -2052,8 +2052,78 @@ function sfxCrit() { sfx(120, 0.3, 'sawtooth', 0.22); sfx(800, 0.15, 'square', 0
 function sfxHeal() { sfx(660, 0.1, 'sine', 0.15); setTimeout(()=>sfx(880, 0.15, 'sine', 0.15), 80); }
 function sfxLevel() { sfx(523, 0.1, 'square', 0.15); setTimeout(()=>sfx(659, 0.1, 'square', 0.15), 100); setTimeout(()=>sfx(784, 0.18, 'square', 0.15), 200); }
 function sfxWin() { sfxLevel(); setTimeout(()=>sfx(1047, 0.25, 'square', 0.18), 350); }
+// ステージクリア専用ファンファーレ（壮大めに3秒くらい）
+function sfxFanfare() {
+  // C-E-G-C-E-G-C 上昇 → C 高音持続
+  const seq = [
+    [523, 0.12], [659, 0.12], [784, 0.12], [1047, 0.18],
+    [1319, 0.18], [1568, 0.22],
+    [1047, 0.10], [1319, 0.10], [1568, 0.10], [2093, 0.55]
+  ];
+  let t = 0;
+  for (const [f, d] of seq) {
+    const ff = f, dd = d;
+    setTimeout(() => sfx(ff, dd, 'square', 0.18), t);
+    t += dd * 700; // 少し詰め気味
+  }
+  // ハーモニー（5度上を重ねる）
+  setTimeout(() => sfx(1568, 0.6, 'triangle', 0.12), 1100);
+  setTimeout(() => sfx(2637, 0.4, 'sine', 0.10), 1400);
+}
 function sfxLose() { sfx(330, 0.2, 'sawtooth', 0.18); setTimeout(()=>sfx(220, 0.3, 'sawtooth', 0.18), 200); }
 function sfxCatch() { sfx(660, 0.08, 'sine', 0.12); setTimeout(()=>sfx(440, 0.08, 'sine', 0.12), 100); setTimeout(()=>sfx(880, 0.2, 'sine', 0.16), 200); }
+
+// ステージクリアの祝祭バナー（フルスクリーン、紙吹雪、ファンファーレ）
+function showStageClearBanner(stageId, subtitle, isBig) {
+  if (!document.getElementById('stageClearStyle')) {
+    const st = document.createElement('style');
+    st.id = 'stageClearStyle';
+    st.textContent = `
+      @keyframes scbBgIn { 0%{opacity:0;}100%{opacity:1;} }
+      @keyframes scbCardIn { 0%{transform:translate(-50%,-50%) scale(0.4) rotate(-8deg);opacity:0;} 60%{transform:translate(-50%,-50%) scale(1.1) rotate(2deg);opacity:1;} 100%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1;} }
+      @keyframes scbStarSpin { 0%{transform:scale(0.5) rotate(0);opacity:0;} 30%{opacity:1;} 100%{transform:scale(1.4) rotate(360deg);opacity:0;} }
+      @keyframes scbConfetti { 0%{transform:translateY(-100vh) rotate(0);} 100%{transform:translateY(110vh) rotate(720deg);} }
+    `;
+    document.head.appendChild(st);
+  }
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:radial-gradient(circle,rgba(255,200,80,0.55),rgba(255,100,150,0.55));z-index:9800;pointer-events:none;animation:scbBgIn 0.3s forwards;';
+  document.body.appendChild(ov);
+  // 紙吹雪
+  const colors = ['#ff80c0','#ffd040','#80d8ff','#90e090','#c080ff','#ff9060'];
+  for (let i = 0; i < 36; i++) {
+    const c = document.createElement('div');
+    const cl = colors[i % colors.length];
+    c.style.cssText = `position:absolute;width:10px;height:14px;background:${cl};left:${Math.random()*100}%;top:-20px;animation:scbConfetti ${1.6 + Math.random()*1.4}s linear ${Math.random()*0.6}s forwards;border-radius:2px;`;
+    ov.appendChild(c);
+  }
+  // 中央カード
+  const card = document.createElement('div');
+  card.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.4);background:linear-gradient(180deg,#fff,#ffeaa0);padding:24px 36px;border-radius:24px;border:5px solid #ffb040;box-shadow:0 12px 40px rgba(0,0,0,0.4),0 0 0 8px rgba(255,255,255,0.5);text-align:center;animation:scbCardIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;';
+  card.innerHTML = `
+    <div style="font-size:${isBig ? 56 : 48}px;font-weight:900;color:#d63384;text-shadow:3px 3px 0 #ffd0e8,5px 5px 0 #ffb060;letter-spacing:4px;line-height:1;">${stageId}</div>
+    <div style="font-size:${isBig ? 36 : 32}px;font-weight:900;color:#ff5050;text-shadow:2px 2px 0 #fff,3px 3px 0 #ffd0e8;margin-top:8px;letter-spacing:2px;">クリア！！！</div>
+    <div style="font-size:18px;color:#7030a0;margin-top:14px;font-weight:bold;">おめでとう！🎉</div>
+    <div style="font-size:14px;color:#666;margin-top:8px;">${subtitle}</div>
+  `;
+  ov.appendChild(card);
+  // 中央周りに回転する星
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement('div');
+    const ang = (i / 6) * Math.PI * 2;
+    const dx = Math.cos(ang) * 140;
+    const dy = Math.sin(ang) * 140;
+    s.textContent = '⭐';
+    s.style.cssText = `position:absolute;left:calc(50% + ${dx}px);top:calc(50% + ${dy}px);font-size:48px;animation:scbStarSpin 1.4s ease-out ${i*0.08}s forwards;`;
+    ov.appendChild(s);
+  }
+  // ファンファーレ
+  try { sfxFanfare(); } catch(e) {}
+  // 自動退場
+  const total = isBig ? 3200 : 2400;
+  setTimeout(() => { ov.style.transition = 'opacity 0.4s'; ov.style.opacity = '0'; }, total - 400);
+  setTimeout(() => { try { ov.remove(); } catch(e) {} }, total);
+}
 function sfxEvo() { for (let i=0; i<6; i++) setTimeout(()=>sfx(440 + i*120, 0.08, 'square', 0.12), i*120); }
 
 // ===================== BGM =====================
@@ -6495,11 +6565,11 @@ function winBattle() {
     }
     if (didClear) {
       const nextId = getNextStageId(stage.id);
-      if (nextId) {
-        showToast(isWorldBossClear ? '🎊 ワールドボスを <ruby>倒<rt>たお</rt></ruby>した！つぎの ワールドが <ruby>開<rt>ひら</rt></ruby>いた！' : '🎊 ステージクリア！つぎが <ruby>開<rt>ひら</rt></ruby>いた！', 2400);
-      } else {
-        showToast('🌈 ぜんぶ クリア！おめでとう！', 2800);
-      }
+      const isAllClear = !nextId;
+      const subtitle = isAllClear ? '🌈 ぜんぶ クリア！'
+                     : isWorldBossClear ? '🎊 ワールドボスを たおした！つぎの ワールドが ひらいた！'
+                     : '🎊 つぎの ステージが ひらいた！';
+      showStageClearBanner(stage.id, subtitle, isWorldBossClear || isAllClear);
     }
     saveGame(true);
 
