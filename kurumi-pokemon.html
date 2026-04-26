@@ -1641,16 +1641,17 @@
       <button class="btn gray" id="cmd-run">にげる</button>
     </div>
     <div id="tap-arena">
-      <div id="tap-info">
-        <div class="pill"><span class="lbl"><ruby>残時間<rt>のこじかん</rt></ruby></span><span id="tap-timer-text">3.0</span>びょう</div>
-        <div class="pill"><span class="lbl">タップ</span><span id="tap-count">0</span>かい</div>
-      </div>
-      <div id="tap-timer-bar"><div id="tap-timer-fill"></div></div>
+      <!-- ボタンを上、ゲージ類を下に配置（iOS下端スワイプ誤発動防止） -->
+      <button id="tap-button"><ruby>連打<rt>れんだ</rt></ruby>！！！</button>
       <div id="tap-power-bar" aria-label="パワーゲージ">
         <div id="tap-power-fill"></div>
         <div id="tap-power-label">パワー</div>
       </div>
-      <button id="tap-button">れんだ！！</button>
+      <div id="tap-timer-bar"><div id="tap-timer-fill"></div></div>
+      <div id="tap-info">
+        <div class="pill"><span class="lbl"><ruby>残<rt>のこ</rt></ruby>り<ruby>時間<rt>じかん</rt></ruby></span><span id="tap-timer-text">3.0</span>びょう</div>
+        <div class="pill"><span class="lbl">タップ</span><span id="tap-count">0</span>かい</div>
+      </div>
     </div>
   </div>
 
@@ -5339,7 +5340,7 @@ function tapHit() {
   // 初回タップでタイマー起動
   if (tap.end == null) {
     tap.end = Date.now() + tap.duration;
-    setBattleMessage('れんだ！ パワーを ためよう！');
+    setBattleMessage('<ruby>連打<rt>れんだ</rt></ruby>！ パワーを ためよう！');
     const tick = () => {
       if (!tap) return;
       const left = tap.end - Date.now();
