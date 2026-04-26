@@ -4445,8 +4445,7 @@ function worldArt_Sky(W, H) {
   s += MAP_SYMBOLS;
   // 空（全面）
   s += `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#grad-sky-blue)"/>`;
-  // 巨大な虹（背景）
-  s += `<use href="#sym-rainbow" x="40" y="280" width="440" height="240" opacity="0.8"/>`;
+  // ※ 虹はステージ5「虹のお城」と被るのでステージ3からは削除
   // 雲帯（横方向の薄い帯）
   for (let i = 0; i < 6; i++) {
     s += `<ellipse cx="${(i*120+40)%W}" cy="${200 + (i%2)*60}" rx="80" ry="14" fill="#fff" opacity="0.55"/>`;
