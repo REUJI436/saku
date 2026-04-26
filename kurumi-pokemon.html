@@ -7311,7 +7311,8 @@ function playPeroperoEffect(onDone) {
 
   const txt = document.createElement('div');
   txt.textContent = 'ぺろぺろありーな';
-  txt.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.5);opacity:0;font-size:min(18vw,120px);font-weight:900;color:#1a0000;text-shadow:0 0 18px rgba(180,0,0,0.45),0 4px 12px rgba(0,0,0,0.35);letter-spacing:0.05em;white-space:nowrap;font-family:"Hiragino Sans","Yu Gothic",sans-serif;';
+  // 8文字分が画面幅内に収まるよう font-size を抑える（iPhone SE2 = 375px でも全文表示）
+  txt.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.5);opacity:0;font-size:min(10vw,68px);font-weight:900;color:#1a0000;text-shadow:0 0 18px rgba(180,0,0,0.45),0 4px 12px rgba(0,0,0,0.35);letter-spacing:0.02em;white-space:nowrap;font-family:"Hiragino Sans","Yu Gothic",sans-serif;max-width:96vw;text-align:center;';
   ov.appendChild(txt);
 
   // 不規則な連打音（瞬獄殺の鬼連打感）
