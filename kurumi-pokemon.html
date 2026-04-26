@@ -5084,12 +5084,20 @@ function generateFieldMobs(stage) {
     });
   }
 
-  // ===== STUDY: 📚 べんきょうモンスター（30%でステージに1体） =====
-  if (Math.random() < 0.30) {
-    const sx = 100 + Math.random() * (WORLD_W - 200);
-    const sy = 280 + Math.random() * (WORLD_H - 500);
+  // ===== STUDY: 📚 べんきょうモンスター（最大5体、各30%独立試行） =====
+  // 5回独立抽選 → 期待値1.5体、最大5体まで。位置は重ならないよう調整。
+  const studySpawned = [];
+  for (let si = 0; si < 5; si++) {
+    if (Math.random() >= 0.30) continue;
+    let sx = 0, sy = 0, attempts = 0;
+    do {
+      sx = 100 + Math.random() * (WORLD_W - 200);
+      sy = 280 + Math.random() * (WORLD_H - 500);
+      attempts++;
+    } while (attempts < 8 && studySpawned.some(p => Math.hypot(p.x - sx, p.y - sy) < 140));
+    studySpawned.push({ x: sx, y: sy });
     state.fieldMobs.push({
-      id: -1,                  // sentinel: study mob, no monster
+      id: -1,
       lvl: 1,
       isStudyMob: true,
       x: sx, y: sy,
