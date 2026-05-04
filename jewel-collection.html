@@ -5459,7 +5459,20 @@ function drawMinimap() {
   state.fieldMobs.forEach(m => {
     if (m.defeated) return;
     const mx = m.x * sx, my = m.y * sy;
-    if (m.isStudyMob) {
+    const def = (typeof getMonsterDef === 'function') ? getMonsterDef(m.id) : null;
+    const isLegend = def && def.legendary;
+    if (isLegend) {
+      // 伝説ジュエル（ごくう系等）: 金色の★で目立たせる
+      ctx.save();
+      ctx.shadowColor = '#ffd040';
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = '#ffd040';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', mx, my);
+      ctx.restore();
+    } else if (m.isStudyMob) {
       ctx.fillStyle = '#5cb8f5';
       ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI * 2); ctx.fill();
     } else if (m.isBoss) {
