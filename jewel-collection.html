@@ -5292,10 +5292,10 @@ function generateFieldMobs(stage) {
   // 5さい向け版: 隠しキャラ・伝説要素は撤去
 
   // ===== ドラゴンボール風「ごくうジュエル」スポーン =====
-  // World 1-3 / 2-3 (中ボスステージ) で 5%抽選で出現。
+  // World 1-3 / 2-3 (中ボスステージ) で 15%抽選で出現。
   // ?testgoku=1 では100%出現でテストプレイ可能。
   // プレイヤーはノーマル(id:31)を捕獲 → 育成で10段階進化を楽しむ。
-  const gokuRate = _isTestGoku ? 1.0 : 0.05;
+  const gokuRate = _isTestGoku ? 1.0 : 0.15;
   if ((stage.id === '1-3' || stage.id === '2-3') && Math.random() < gokuRate) {
     const tx = 100 + Math.random() * (WORLD_W - 200);
     const ty = 320 + Math.random() * (WORLD_H - 500);
