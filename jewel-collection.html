@@ -2972,12 +2972,33 @@ const ITEMS = {
 };
 
 // ===================== DEMO MODE =====================
-// 5さい向け版では テスト系モードを撤去。何もしない。
+// 通常モードでは テスト系モードを撤去。
+// ?testgoku=1 を付けるとごくうジュエル出現テスト：
+//   - 1-3 / 2-3 でごくう100%出現
+//   - ロイヤルケース99個（捕獲確定）
+//   - 全ステージ解禁、本番セーブ書き込みなし
 const _isDemoMode    = false;
 const _isTestToton   = false;
 const _isTeraMax     = false;
 const _isEvoTest     = false;
-function applyDemoMode() { /* no-op */ }
+const _isTestGoku    = (typeof window !== 'undefined' && window.location && /[?&]testgoku=1\b/.test(window.location.search || ''));
+function applyDemoMode() {
+  if (!_isTestGoku) return;
+  if (!state) return;
+  if (!state.bag) state.bag = {};
+  // ロイヤルケース99個（捕獲100%）
+  if ((state.bag['case-royal'] || 0) < 99) state.bag['case-royal'] = 99;
+  // 全ステージ解禁
+  if (!Array.isArray(state.cleared)) state.cleared = [];
+  for (const s of STAGES) {
+    if (s.id === '2-5') continue; // ラスボスは新鮮にプレイ可
+    if (!state.cleared.includes(s.id)) state.cleared.push(s.id);
+  }
+  // 仮パーティ（ハートメイデン Lv.30）を入れて即戦力化
+  if (typeof makeMon === 'function' && state.party.length === 0) {
+    state.party = [makeMon(3, 30)]; // ハートメイデン
+  }
+}
 
 // ===================== STATE =====================
 let state = {
@@ -3064,7 +3085,7 @@ function saveGame(silent) {
   // (when user is still on the title screen and hasn't started/loaded yet)
   if (!state || !state.party || state.party.length === 0) return;
   // デモ/テストモード中は本番セーブを汚染しないためスキップ
-  if (_isDemoMode || _isTestToton || _isTeraMax || _isEvoTest) return;
+  if (_isDemoMode || _isTestToton || _isTeraMax || _isEvoTest || _isTestGoku) return;
   try {
     // 直前バックアップ：保存前のメインを退避（1世代だけ）
     try {
@@ -4039,7 +4060,7 @@ function initTitle() {
   // セーブがある場合は誤タップ防止のため「はじめから」ボタンを非表示にする
   // （代わりに右下の小さい「ぜんぶ けして〜」リンクから2段確認でリセット可能）
   // デモモード(?demo=1)の時は本番セーブを汚さないので常に「はじめから」を許可
-  const hasSv = !(_isDemoMode || _isTestToton || _isTeraMax || _isEvoTest) && hasSave();
+  const hasSv = !(_isDemoMode || _isTestToton || _isTeraMax || _isEvoTest || _isTestGoku) && hasSave();
   const btnNew = $('btn-new');
   const btnReset = $('btn-reset-danger');
   if (btnNew) btnNew.style.display = hasSv ? 'none' : '';
@@ -4153,7 +4174,7 @@ function startNewGame() {
   // テストモード（testtoton/teramax/evotest）は applyDemoMode が手持ちを
   // 詰めるので、スターター選択をスキップしてワールドマップ直行する。
   // 通常モード／?demo=1 はスターター選択へ。
-  if ((_isTestToton || _isTeraMax || _isEvoTest) && state.party && state.party.length > 0) {
+  if ((_isTestToton || _isTeraMax || _isEvoTest || _isTestGoku) && state.party && state.party.length > 0) {
     const names = state.party.map(m => {
       const d = getMonsterDef(m.id);
       return d ? (d.name + ' Lv.' + m.lvl) : ('id:' + m.id);
@@ -5272,8 +5293,10 @@ function generateFieldMobs(stage) {
 
   // ===== ドラゴンボール風「ごくうジュエル」スポーン =====
   // World 1-3 / 2-3 (中ボスステージ) で 5%抽選で出現。
+  // ?testgoku=1 では100%出現でテストプレイ可能。
   // プレイヤーはノーマル(id:31)を捕獲 → 育成で10段階進化を楽しむ。
-  if ((stage.id === '1-3' || stage.id === '2-3') && Math.random() < 0.05) {
+  const gokuRate = _isTestGoku ? 1.0 : 0.05;
+  if ((stage.id === '1-3' || stage.id === '2-3') && Math.random() < gokuRate) {
     const tx = 100 + Math.random() * (WORLD_W - 200);
     const ty = 320 + Math.random() * (WORLD_H - 500);
     state.fieldMobs.push({
