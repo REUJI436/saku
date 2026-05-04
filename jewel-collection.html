@@ -2398,7 +2398,19 @@ const SKILLS = {
   heal:    { name: 'キラキラかいふく', mp: 5, power: 0.0, type: 'pink',   msg: 'キラキラパワーで <ruby>回復<rt>かいふく</rt></ruby>！', fx: '💗', heal: true, healAmt: 0.4 },
   shine:   { name: 'きらめきパワー', mp: 8,  power: 0.0, type: 'yellow',  msg: 'きらめきで <ruby>回復<rt>かいふく</rt></ruby>！', fx: '💫', heal: true, healAmt: 0.6 },
   // 互換のため残す（既存コード参照用） — どれも tap と同じ動作
-  tail: { name: 'たたき', mp: 0, power: 1.0, type: 'pink', msg: 'えいっと たたいた！', fx: '✨' }
+  tail: { name: 'たたき', mp: 0, power: 1.0, type: 'pink', msg: 'えいっと たたいた！', fx: '✨' },
+  // ===== ドラゴンボール風「ごくう」専用わざ =====
+  gokuPunch:    { name: 'パンチ',                                                  mp: 0, power: 1.0, type: 'red',    msg: 'パンチを はなった！', fx: '👊' },
+  kamehameha:   { name: 'かめはめ<ruby>波<rt>は</rt></ruby>',                      mp: 4, power: 1.5, type: 'yellow', msg: 'かーめーはーめーはーっ！', fx: '💥✨' },
+  kaioken:      { name: '<ruby>界王拳<rt>かいおうけん</rt></ruby>パンチ',          mp: 5, power: 1.8, type: 'red',    msg: '界王拳ーっ！', fx: '🔥👊' },
+  superKame:    { name: 'スーパーかめはめ<ruby>波<rt>は</rt></ruby>',              mp: 6, power: 2.0, type: 'yellow', msg: 'スーパーかめはめはーっ！', fx: '💛💥' },
+  genkidama:    { name: 'げんきだま',                                              mp: 7, power: 2.2, type: 'blue',   msg: 'みんなの げんきを あつめた！', fx: '🌐✨', critBoost: true },
+  dragonFist:   { name: 'ドラゴンフィスト',                                        mp: 8, power: 2.5, type: 'gold',   msg: 'ドラゴンが かけぬけた！', fx: '🐉👊' },
+  godKame:      { name: '<ruby>神<rt>かみ</rt></ruby>かめはめ<ruby>波<rt>は</rt></ruby>', mp: 9, power: 2.8, type: 'red', msg: '神の かめはめはーっ！', fx: '🌟💥' },
+  blueKame:     { name: 'ブルーかめはめ<ruby>波<rt>は</rt></ruby>',                mp: 10, power: 3.0, type: 'blue', msg: 'あおく かがやく かめはめはーっ！', fx: '💙💥' },
+  blueKaioken:  { name: 'ブルー<ruby>界王拳<rt>かいおうけん</rt></ruby>',          mp: 11, power: 3.4, type: 'blue', msg: 'ブルー界王拳ーっ！', fx: '💙🔥', critBoost: true },
+  ultraDodge:   { name: '<ruby>身勝手<rt>みがって</rt></ruby>かいひ',              mp: 6, power: 1.4, type: 'gold', msg: 'みがってに かわす！', fx: '✨💫', healSelf: true, healAmt: 0.15 },
+  ultimatePunch:{ name: 'きゅうきょくの こぶし',                                   mp: 12, power: 4.0, type: 'gold', msg: 'きゅうきょくの こぶしが さくれつ！', fx: '🌟💥✨', critBoost: true }
 };
 
 // ===================== JEWEL DATABASE (30 species, 10 base × 3 stages) =====================
@@ -2452,7 +2464,19 @@ const MONSTERS = [
   // 10) ベリー系
   { id:28, name:'ぷちベリー',         type:'red',    color:'#ff8080', shape:'berry',  face:'🍒', hp:28, atk:11, def:10, spd:13, learn:{1:'berry'},              evo:{lvl:16,to:29}, dex:'ちっちゃな ベリー。' },
   { id:29, name:'ベリリン',           type:'purple', color:'#a060c0', shape:'berry',  face:'🫐', hp:54, atk:18, def:16, spd:18, learn:{16:'berry',22:'heart'}, evo:{lvl:32,to:30}, dex:'むらさきの ベリーの ようせい。', evoStage:1 },
-  { id:30, name:'ベリーレディ',       type:'red',    color:'#ff4060', shape:'berry',  face:'🍓', hp:84, atk:26, def:22, spd:24, learn:{32:'royal',38:'berry'}, evo:null,           dex:'いちごの くにの レディ。', evoStage:2 }
+  { id:30, name:'ベリーレディ',       type:'red',    color:'#ff4060', shape:'berry',  face:'🍓', hp:84, atk:26, def:22, spd:24, learn:{32:'royal',38:'berry'}, evo:null,           dex:'いちごの くにの レディ。', evoStage:2 },
+
+  // 11) ごくう系（ドラゴンボール風 10だんかい しんか） — 隠し・伝説
+  { id:31, name:'ごくう・ノーマル',                                            type:'red',    color:'#ff8040', shape:'goku', face:'',  hp:36,  atk:14, def:10, spd:18, learn:{1:'gokuPunch',5:'kamehameha'},                evo:{lvl:5, to:32}, dex:'しっぽが ある げんきな こども。たたかいが だいすき！',                evoStage:0, hidden:true, legendary:true },
+  { id:32, name:'ごくう・<ruby>界王拳<rt>かいおうけん</rt></ruby>',              type:'red',    color:'#ff5020', shape:'goku', face:'',  hp:50,  atk:20, def:14, spd:24, learn:{5:'kaioken',8:'kamehameha'},                evo:{lvl:10, to:33}, dex:'からだが あかく もえる！パワー10ばい！',                                evoStage:1, hidden:true, legendary:true },
+  { id:33, name:'ごくう・<ruby>超<rt>ちょう</rt></ruby>サイヤじん',              type:'yellow', color:'#ffd040', shape:'goku', face:'',  hp:70,  atk:28, def:18, spd:30, learn:{10:'superKame',13:'kaioken'},               evo:{lvl:15, to:34}, dex:'きんいろの かみが さかだつ！でんせつの サイヤじん！',                  evoStage:2, hidden:true, legendary:true },
+  { id:34, name:'ごくう・<ruby>超<rt>ちょう</rt></ruby>サイヤじん2',             type:'yellow', color:'#ffe060', shape:'goku', face:'',  hp:90,  atk:36, def:22, spd:36, learn:{15:'genkidama',18:'superKame'},             evo:{lvl:20, to:35}, dex:'いかずちを まとった サイヤじん2！',                                    evoStage:3, hidden:true, legendary:true },
+  { id:35, name:'ごくう・<ruby>超<rt>ちょう</rt></ruby>サイヤじん3',             type:'yellow', color:'#fff080', shape:'goku', face:'',  hp:110, atk:44, def:26, spd:40, learn:{20:'dragonFist',23:'genkidama'},            evo:{lvl:25, to:36}, dex:'かみが ながく のびた さいきょうの サイヤじん3！',                      evoStage:4, hidden:true, legendary:true },
+  { id:36, name:'ごくう・<ruby>超<rt>ちょう</rt></ruby>サイヤじんゴッド',        type:'red',    color:'#ff4090', shape:'goku', face:'',  hp:135, atk:52, def:30, spd:44, learn:{25:'godKame',28:'dragonFist'},              evo:{lvl:30, to:37}, dex:'あかい かみと オーラ！かみの ちからを てに いれた！',                  evoStage:5, hidden:true, legendary:true },
+  { id:37, name:'ごくう・<ruby>超<rt>ちょう</rt></ruby>サイヤじんブルー',        type:'sky',    color:'#40a0ff', shape:'goku', face:'',  hp:160, atk:60, def:35, spd:48, learn:{30:'blueKame',33:'godKame'},                evo:{lvl:35, to:38}, dex:'あおい かみと オーラ！かみと サイヤじんの ゆうごう！',                evoStage:6, hidden:true, legendary:true },
+  { id:38, name:'ごくう・ブルー<ruby>界王拳<rt>かいおうけん</rt></ruby>',        type:'sky',    color:'#5060ff', shape:'goku', face:'',  hp:185, atk:68, def:38, spd:52, learn:{35:'blueKaioken',38:'blueKame'},            evo:{lvl:40, to:39}, dex:'あおと あかが まじりあう さいだいの パワー！',                        evoStage:7, hidden:true, legendary:true },
+  { id:39, name:'ごくう・<ruby>身勝手<rt>みがって</rt></ruby>のきょくい（<ruby>兆<rt>きざ</rt></ruby>し）', type:'gold', color:'#c0c0c0', shape:'goku', face:'', hp:215, atk:76, def:42, spd:58, learn:{40:'ultraDodge',43:'blueKaioken'},  evo:{lvl:45, to:40}, dex:'からだが かってに うごく…！', evoStage:8, hidden:true, legendary:true },
+  { id:40, name:'ごくう・<ruby>身勝手<rt>みがって</rt></ruby>のきょくい（<ruby>極<rt>きわ</rt></ruby>み）', type:'gold', color:'#ffffff', shape:'goku', face:'', hp:260, atk:90, def:50, spd:65, learn:{45:'ultimatePunch',48:'ultraDodge'}, evo:null, dex:'ぎんいろの かみと め！すべてを こえた さいきょう けいたい！', evoStage:9, hidden:true, legendary:true, godTier:true }
 ];
 
 function getMonsterDef(id) { return MONSTERS.find(m => m.id === id); }
@@ -3870,6 +3894,98 @@ function svgShape(shape, color, dark, face, evoStage) {
       <circle cx="52" cy="76" r="3" fill="#000"/>
       <circle cx="68" cy="76" r="3" fill="#000"/>
       <path d="M52 88 Q60 94 68 88" stroke="${dark}" stroke-width="2" fill="none"/>`;
+  } else if (shape === 'goku') {
+    // ===== ごくう (Dragon Ball-inspired) — 10だんかい evoStage 0..9 =====
+    const gs = stageVar;
+    // ステージ別パラメータ
+    // hairColor / hairStroke / auraColor / auraOpacity / eyeColor / lightning(true/false) / sparkle(true/false)
+    const params = [
+      { hair:'#1a1a1a', hairS:'#000',    aura:'',         eye:'#000', longHair:false, redAura:false, blueAura:false, godRed:false, lightning:false, sparkle:false }, // 0 normal
+      { hair:'#1a1a1a', hairS:'#000',    aura:'#ff3030', eye:'#000', longHair:false, redAura:true,  blueAura:false, godRed:false, lightning:false, sparkle:false }, // 1 kaioken
+      { hair:'#ffd040', hairS:'#c08000', aura:'#ffd040', eye:'#40c000', longHair:false, redAura:false, blueAura:false, godRed:false, lightning:false, sparkle:false }, // 2 SS
+      { hair:'#ffd040', hairS:'#c08000', aura:'#ffe060', eye:'#40c000', longHair:false, redAura:false, blueAura:false, godRed:false, lightning:true,  sparkle:false }, // 3 SS2
+      { hair:'#fff080', hairS:'#c0a020', aura:'#fff080', eye:'#40c000', longHair:true,  redAura:false, blueAura:false, godRed:false, lightning:false, sparkle:false }, // 4 SS3
+      { hair:'#ff4090', hairS:'#a0205a', aura:'#ff4090', eye:'#ff2020', longHair:false, redAura:false, blueAura:false, godRed:true,  lightning:false, sparkle:false }, // 5 God
+      { hair:'#40a0ff', hairS:'#205080', aura:'#40a0ff', eye:'#1060d0', longHair:false, redAura:false, blueAura:true,  godRed:false, lightning:false, sparkle:false }, // 6 Blue
+      { hair:'#40a0ff', hairS:'#205080', aura:'#a040ff', eye:'#1060d0', longHair:false, redAura:true,  blueAura:true,  godRed:false, lightning:false, sparkle:false }, // 7 Blue Kaioken
+      { hair:'#6080a0', hairS:'#304050', aura:'#c0c0c0', eye:'#a0a0a0', longHair:false, redAura:false, blueAura:false, godRed:false, lightning:false, sparkle:true  }, // 8 Ultra Hint
+      { hair:'#d0d0d0', hairS:'#808080', aura:'#ffffff', eye:'#e0e0e0', longHair:false, redAura:false, blueAura:false, godRed:false, lightning:false, sparkle:true  }  // 9 Ultra Mastered
+    ];
+    const p = params[gs] || params[0];
+    // オーラ（背景の もやもや）
+    let aura = '';
+    if (p.aura) {
+      const opa = p.redAura && p.blueAura ? 0.55 : 0.45;
+      aura += `<ellipse cx="60" cy="62" rx="54" ry="58" fill="${p.aura}" opacity="${opa}"/>`;
+      // 外側 もう一周
+      aura += `<ellipse cx="60" cy="62" rx="58" ry="62" fill="${p.aura}" opacity="0.18"/>`;
+      // ゴッド系: 赤み足し
+      if (p.godRed) {
+        aura += `<ellipse cx="60" cy="62" rx="50" ry="54" fill="#ff80c0" opacity="0.35"/>`;
+      }
+      // ブルー界王拳: 中央に赤
+      if (p.redAura && p.blueAura) {
+        aura += `<ellipse cx="60" cy="62" rx="44" ry="48" fill="#ff4040" opacity="0.30"/>`;
+      }
+    }
+    // 雷（SS2）
+    let zaps = '';
+    if (p.lightning) {
+      zaps = `
+        <polyline points="20,30 26,40 22,42 30,56" stroke="#80f0ff" stroke-width="2" fill="none"/>
+        <polyline points="100,30 94,40 98,42 90,56" stroke="#80f0ff" stroke-width="2" fill="none"/>`;
+    }
+    // ✨きらめき（身勝手）
+    let sparkle = '';
+    if (p.sparkle) {
+      sparkle = `
+        <text x="22" y="28" font-size="14">✨</text>
+        <text x="92" y="34" font-size="14">✨</text>
+        <text x="14" y="86" font-size="12">✨</text>
+        <text x="98" y="92" font-size="12">✨</text>`;
+    }
+    // 髪の毛（スパイキー or ロング）
+    let hair = '';
+    if (p.longHair) {
+      // SS3: 長くたなびく
+      hair = `
+        <path d="M40 28 Q44 6 60 8 Q76 6 80 28 L86 22 L82 36 L94 30 L86 48 L94 50 L82 60 L88 80 L78 64 L72 90 L70 60 L60 78 L50 60 L48 90 L42 64 L32 80 L38 60 L26 50 L34 48 L26 30 L38 36 L34 22 Z"
+          fill="${p.hair}" stroke="${p.hairS}" stroke-width="1.5"/>`;
+    } else {
+      // 通常スパイキー
+      hair = `
+        <path d="M40 30 Q42 12 50 12 L52 8 L56 14 L60 6 L64 14 L68 8 L70 12 Q78 12 80 30 L74 24 L72 32 L66 22 L62 32 L58 22 L54 32 L48 22 L46 32 Z"
+          fill="${p.hair}" stroke="${p.hairS}" stroke-width="1.5"/>`;
+    }
+    // 顔（肌色）
+    const face = `
+      <ellipse cx="60" cy="36" rx="16" ry="18" fill="#fcd9b6" stroke="#c9a682" stroke-width="1.5"/>`;
+    // 目
+    const eyes = `
+      <ellipse cx="53" cy="36" rx="2.4" ry="3.2" fill="${p.eye}"/>
+      <ellipse cx="67" cy="36" rx="2.4" ry="3.2" fill="${p.eye}"/>
+      <line x1="49" y1="32" x2="56" y2="33" stroke="#1a1a1a" stroke-width="1.4" stroke-linecap="round"/>
+      <line x1="71" y1="32" x2="64" y2="33" stroke="#1a1a1a" stroke-width="1.4" stroke-linecap="round"/>`;
+    // 口
+    const mouth = `<path d="M55 44 Q60 47 65 44" stroke="#5a3520" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
+    // 道着（オレンジ）+ 青帯
+    const gi = `
+      <path d="M36 64 L36 100 L84 100 L84 64 Q60 70 36 64 Z" fill="#ff8030" stroke="#a04010" stroke-width="1.5"/>
+      <path d="M36 64 Q44 70 60 70 Q76 70 84 64 L78 60 Q60 66 42 60 Z" fill="#ff8030" stroke="#a04010" stroke-width="1.5"/>
+      <rect x="36" y="84" width="48" height="6" fill="#3060c0" stroke="#1a3070" stroke-width="1"/>
+      <rect x="56" y="84" width="8" height="6" fill="#1a3070"/>`;
+    // 腕
+    const arms = `
+      <ellipse cx="30" cy="74" rx="6" ry="14" fill="#ff8030" stroke="#a04010" stroke-width="1.5"/>
+      <ellipse cx="90" cy="74" rx="6" ry="14" fill="#ff8030" stroke="#a04010" stroke-width="1.5"/>
+      <circle cx="28" cy="88" r="4" fill="#fcd9b6" stroke="#c9a682" stroke-width="1"/>
+      <circle cx="92" cy="88" r="4" fill="#fcd9b6" stroke="#c9a682" stroke-width="1"/>`;
+    // 首
+    const neck = `<rect x="56" y="50" width="8" height="8" fill="#fcd9b6" stroke="#c9a682" stroke-width="1"/>`;
+    // 神様マーク（GodKame系）: 額に小さい光
+    const extra = (gs === 5) ? `<circle cx="60" cy="28" r="2" fill="#ffe0a0" opacity="0.9"/>` : '';
+    body = aura + zaps + arms + gi + neck + face + hair + eyes + mouth + extra + sparkle;
+    return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
   } else {
     body = `<circle cx="60" cy="60" r="40" fill="${color}" stroke="${dark}" stroke-width="3"/>`;
   }
@@ -5153,6 +5269,25 @@ function generateFieldMobs(stage) {
   }
 
   // 5さい向け版: 隠しキャラ・伝説要素は撤去
+
+  // ===== ドラゴンボール風「ごくうジュエル」スポーン =====
+  // World 1-3 / 2-3 (中ボスステージ) で 5%抽選で出現。
+  // プレイヤーはノーマル(id:31)を捕獲 → 育成で10段階進化を楽しむ。
+  if ((stage.id === '1-3' || stage.id === '2-3') && Math.random() < 0.05) {
+    const tx = 100 + Math.random() * (WORLD_W - 200);
+    const ty = 320 + Math.random() * (WORLD_H - 500);
+    state.fieldMobs.push({
+      id: 31,                              // ノーマル形態を捕獲対象に
+      lvl: rand(stage.lvl[0], Math.min(stage.lvl[1], 8)),
+      x: tx, y: ty,
+      defeated: false,
+      isBoss: false,
+      isToton: false,
+      dx: (Math.random() - 0.5) * 0.6,
+      dy: (Math.random() - 0.5) * 0.6,
+      wanderTimer: rand(40, 120)
+    });
+  }
 }
 
 function tryTerastalSpawn() { /* no-op: 5さい向け版では隠しコマンド削除 */ }
