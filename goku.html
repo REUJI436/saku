@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ゴクウをそだてよう！</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html,body { margin:0; padding:0; height:100%; overflow:hidden; }
+  body {
+    font-family: "Hiragino Maru Gothic ProN","Rounded Mplus 1c", sans-serif;
+    background: radial-gradient(circle at 50% 25%, #2b3f6b, #0a0f1f 75%);
+    color:#fff; user-select:none; -webkit-user-select:none;
+    height:100dvh; overflow:hidden; position:relative;
+  }
+  #portalBtn{
+    position:fixed; top:10px; left:10px; z-index:50;
+    width:46px; height:46px; border-radius:50%;
+    background:rgba(255,255,255,.9); color:#333; text-decoration:none;
+    font-size:24px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,.4);
+  }
+  #resetBtn{
+    position:fixed; top:12px; right:12px; z-index:50;
+    background:rgba(0,0,0,.35); color:#fff; border:1px solid rgba(255,255,255,.3);
+    border-radius:20px; font-size:12px; padding:6px 12px;
+    font-family:inherit;
+  }
+  #game{ height:100dvh; display:flex; flex-direction:column; align-items:center; }
+
+  /* ステージ（キャラ表示） */
+  #stage{
+    flex:1 1 auto; width:100%; position:relative;
+    display:flex; align-items:center; justify-content:center;
+    min-height:0;
+  }
+  #bgGlow{
+    position:absolute; width:300px; height:300px; border-radius:50%;
+    filter:blur(40px); opacity:.55; pointer-events:none;
+    transition:background .6s;
+  }
+  #charWrap{ position:relative; width:min(74vw,300px); }
+  #charWrap svg{ width:100%; height:auto; display:block; filter:drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+  #formName{
+    position:absolute; top:54px; left:50%; transform:translateX(-50%);
+    font-size:clamp(15px,4.6vw,22px); font-weight:bold; white-space:nowrap;
+    text-shadow:0 2px 0 #000, 0 0 10px currentColor; z-index:5;
+    padding:2px 12px;
+  }
+  .floatTxt{
+    position:absolute; left:50%; top:40%; transform:translateX(-50%);
+    font-size:26px; font-weight:bold; color:#ffe24a;
+    text-shadow:0 2px 0 #b85c00, 0 0 8px #ff0; pointer-events:none;
+    animation:floatUp 1s ease-out forwards; z-index:8;
+  }
+  @keyframes floatUp{ 0%{opacity:1; top:46%} 100%{opacity:0; top:18%} }
+
+  /* ステータス */
+  #status{ width:100%; max-width:480px; padding:0 16px; flex:0 0 auto; }
+  .barRow{ display:flex; align-items:center; gap:8px; margin:6px 0; }
+  .barLabel{ font-size:13px; width:64px; text-align:right; flex:0 0 auto; }
+  .barOuter{ flex:1; height:18px; background:rgba(0,0,0,.45); border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.25); }
+  .barInner{ height:100%; width:0; border-radius:10px; transition:width .35s; }
+  #expBar{ background:linear-gradient(90deg,#ffd24a,#ff8a00); }
+  #eneBar{ background:linear-gradient(90deg,#5dff7a,#13b34a); }
+  #lvText{ font-size:clamp(20px,6vw,30px); font-weight:bold; text-align:center; margin:2px 0; text-shadow:0 2px 0 #000; }
+  #lvText small{ font-size:.55em; opacity:.85; font-weight:normal; }
+
+  /* ボタン */
+  #buttons{ width:100%; max-width:480px; padding:10px 16px calc(14px + env(safe-area-inset-bottom)); display:flex; gap:12px; flex:0 0 auto; }
+  .bigBtn{
+    flex:1; border:none; border-radius:18px; padding:16px 6px; font-family:inherit;
+    font-size:clamp(16px,4.6vw,20px); font-weight:bold; color:#fff;
+    box-shadow:0 5px 0 rgba(0,0,0,.35); transition:transform .08s, box-shadow .08s;
+    position:relative; line-height:1.2;
+  }
+  .bigBtn:active{ transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,.35); }
+  .bigBtn small{ display:block; font-size:.6em; font-weight:normal; opacity:.9; margin-top:2px; }
+  #trainBtn{ background:linear-gradient(180deg,#ff8a4a,#e85d18); }
+  #foodBtn{ background:linear-gradient(180deg,#5dd0ff,#1f8fd6); }
+  #rouletteBtn{ background:linear-gradient(180deg,#ffd24a,#ff7ae0); animation:rainbowGlow 1.4s infinite; }
+  #rouletteBtn[disabled]{ filter:grayscale(.7) brightness(.7); animation:none; }
+  @keyframes rainbowGlow{ 0%,100%{box-shadow:0 5px 0 rgba(0,0,0,.35),0 0 16px #ffd24a} 50%{box-shadow:0 5px 0 rgba(0,0,0,.35),0 0 26px #ff7ae0} }
+
+  /* オーバーレイ共通 */
+  .overlay{
+    position:fixed; inset:0; z-index:100; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(5,8,20,.92); backdrop-filter:blur(2px); padding:20px; text-align:center;
+  }
+  .overlay.show{ display:flex; }
+
+  /* 進化演出 */
+  #flash{ position:fixed; inset:0; background:#fff; opacity:0; z-index:120; pointer-events:none; }
+  #flash.go{ animation:flashAnim 1.1s ease-out; }
+  @keyframes flashAnim{ 0%{opacity:0} 12%{opacity:1} 60%{opacity:.9} 100%{opacity:0} }
+  #evoText{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(.4);
+    z-index:121; font-size:clamp(34px,12vw,70px); font-weight:bold; color:#fff;
+    text-shadow:0 0 20px #ffd24a,0 4px 0 #c46a00; opacity:0; pointer-events:none; white-space:nowrap;
+  }
+  #evoText.go{ animation:evoPop 1.6s ease-out; }
+  @keyframes evoPop{ 0%{opacity:0;transform:translate(-50%,-50%) scale(.3)} 25%{opacity:1;transform:translate(-50%,-50%) scale(1.15)} 70%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)} }
+
+  /* ルーレット */
+  #rTitle{ font-size:clamp(17px,5vw,24px); font-weight:bold; margin-bottom:6px; }
+  #rArrow{ font-size:28px; margin:2px 0 14px; }
+  #rArrow b{ color:#ffd24a; }
+  #rTrackWrap{ width:min(88vw,440px); margin:10px 0 6px; }
+  #rTrack{
+    position:relative; height:54px; border-radius:14px; overflow:hidden;
+    background:#1a2238; border:3px solid #fff; box-shadow:0 0 18px rgba(255,255,255,.3);
+  }
+  #rZone{
+    position:absolute; top:0; bottom:0; background:linear-gradient(180deg,#fff7a8,#ffd24a);
+    box-shadow:0 0 12px #ffd24a; display:flex; align-items:center; justify-content:center;
+    color:#c46a00; font-weight:bold; font-size:14px;
+  }
+  #rMarker{
+    position:absolute; top:-6px; bottom:-6px; width:8px; left:0;
+    background:#ff3b6b; border-radius:4px; box-shadow:0 0 10px #ff3b6b; z-index:3;
+  }
+  #rChance{ font-size:13px; opacity:.85; margin:4px 0 14px; }
+  #rStopBtn,#rRetryBtn,#rCloseBtn,.menuBtn{
+    border:none; border-radius:16px; padding:15px 30px; font-family:inherit;
+    font-size:20px; font-weight:bold; color:#fff; box-shadow:0 5px 0 rgba(0,0,0,.4); margin:6px;
+  }
+  #rStopBtn:active,#rRetryBtn:active,.menuBtn:active{ transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,.4); }
+  #rStopBtn{ background:linear-gradient(180deg,#ff5a5a,#d62020); min-width:200px; }
+  #rRetryBtn{ background:linear-gradient(180deg,#ffb24a,#e8841a); }
+  #rCloseBtn{ background:rgba(255,255,255,.25); }
+  #rResult{ font-size:clamp(22px,7vw,34px); font-weight:bold; margin:8px 0; min-height:42px; }
+
+  .secretTag{
+    display:inline-block; background:linear-gradient(90deg,#ff7ae0,#ffd24a);
+    color:#3a1d00; font-size:12px; font-weight:bold; padding:3px 10px; border-radius:12px; margin-bottom:8px;
+  }
+  /* ずかん */
+  #dexGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:min(92vw,440px); max-height:62vh; overflow:auto; padding:4px; }
+  .dexCell{ background:rgba(255,255,255,.08); border-radius:12px; padding:6px 4px; text-align:center; border:1px solid rgba(255,255,255,.15); }
+  .dexCell svg{ width:100%; height:auto; }
+  .dexCell .dn{ font-size:10px; margin-top:2px; line-height:1.15; min-height:24px; display:flex; align-items:center; justify-content:center; }
+  .dexCell.locked{ filter:brightness(.25) grayscale(1); }
+  .dexCell.locked .dn::after{ content:"？？？"; }
+  .dexCell.locked .dn span{ display:none; }
+  #dexBtn{ position:fixed; bottom:calc(96px + env(safe-area-inset-bottom)); right:12px; z-index:40;
+    background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.3); color:#fff;
+    border-radius:50%; width:50px; height:50px; font-size:22px; }
+  .ovH2{ font-size:clamp(22px,6vw,30px); margin:0 0 10px; }
+  .hintGlow{ animation:hintGlow 1s infinite; }
+  @keyframes hintGlow{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+</style>
+</head>
+<body>
+<a id="portalBtn" href="./">🏠</a>
+<button id="resetBtn">さいしょから</button>
+
+<div id="game">
+  <div id="stage">
+    <div id="bgGlow"></div>
+    <div id="charWrap">
+      <div id="formName"></div>
+      <div id="charSvg"></div>
+    </div>
+  </div>
+
+  <div id="status">
+    <div id="lvText"></div>
+    <div class="barRow"><span class="barLabel">けいけんち</span><div class="barOuter"><div id="expBar" class="barInner"></div></div></div>
+    <div class="barRow"><span class="barLabel">げんき</span><div class="barOuter"><div id="eneBar" class="barInner"></div></div></div>
+  </div>
+
+  <div id="buttons">
+    <button id="trainBtn" class="bigBtn">とっくん💪<small>かめはめ波</small></button>
+    <button id="foodBtn" class="bigBtn">ごはん🍚<small>げんき かいふく</small></button>
+    <button id="rouletteBtn" class="bigBtn" disabled>しんか🎰<small>ルーレット</small></button>
+  </div>
+</div>
+
+<button id="dexBtn">📖</button>
+
+<!-- ルーレット画面 -->
+<div id="roulette" class="overlay">
+  <div id="rSecretTag" class="secretTag" style="display:none">✨シークレット✨</div>
+  <div id="rTitle">しんかチャレンジ！</div>
+  <div id="rArrow"></div>
+  <div id="rTrackWrap">
+    <div id="rTrack">
+      <div id="rZone"></div>
+      <div id="rMarker"></div>
+    </div>
+  </div>
+  <div id="rChance"></div>
+  <div id="rResult"></div>
+  <button id="rStopBtn">とめる！</button>
+  <button id="rRetryBtn" style="display:none">もういっかい</button>
+  <button id="rCloseBtn" style="display:none">とじる</button>
+</div>
+
+<!-- ずかん -->
+<div id="dex" class="overlay">
+  <h2 class="ovH2">📖 ゴクウずかん</h2>
+  <div id="dexGrid"></div>
+  <button class="menuBtn" id="dexClose" style="background:rgba(255,255,255,.25)">とじる</button>
+</div>
+
+<!-- リセット確認 -->
+<div id="resetConfirm" class="overlay">
+  <h2 class="ovH2">さいしょから やる？</h2>
+  <p style="opacity:.8">いままで そだてた ゴクウは きえちゃうよ</p>
+  <div>
+    <button class="menuBtn" id="resetYes" style="background:linear-gradient(180deg,#ff5a5a,#d62020)">はい</button>
+    <button class="menuBtn" id="resetNo" style="background:rgba(255,255,255,.25)">やめる</button>
+  </div>
+</div>
+
+<div id="flash"></div>
+<div id="evoText"></div>
+
+<script>
+//============================================================
+// データ：進化フォーム定義
+//============================================================
+const FORMS = [
+  // hair:髪色 hairStyle:髪型 aura:オーラ色(null=なし) eye:目色 brow:眉色 skin:肌 gi:道着色
+  {name:"少年ゴクウ",        hair:"#1a1a1a", style:"kid",    aura:null,      eye:"#1a1a1a", brow:"#1a1a1a", tail:true,  glow:"#5b8cff"},
+  {name:"ゴクウ",            hair:"#1a1a1a", style:"spike",  aura:null,      eye:"#1a1a1a", brow:"#1a1a1a", glow:"#5b8cff"},
+  {name:"超サイヤ人",        hair:"#ffd21a", style:"ss",     aura:"#ffd21a", eye:"#2a8c4a", brow:"#caa000", glow:"#ffd21a"},
+  {name:"超サイヤ人2",       hair:"#ffe24a", style:"ss2",    aura:"#ffe24a", eye:"#2a8c4a", brow:"#caa000", lightning:true, glow:"#ffe24a"},
+  {name:"超サイヤ人3",       hair:"#ffd21a", style:"ss3",    aura:"#ffd21a", eye:"#2a8c4a", brow:null,      glow:"#ffd21a"},
+  {name:"超サイヤ人ゴッド",  hair:"#ff3b5c", style:"ss",     aura:"#ff3b5c", eye:"#d42040", brow:"#c01838", glow:"#ff3b5c"},
+  {name:"超サイヤ人ブルー",  hair:"#22b6ff", style:"ss",     aura:"#22b6ff", eye:"#1488d6", brow:"#0f7ac0", glow:"#22b6ff"},
+  {name:"身勝手の極意・兆",  hair:"#9aa6b5", style:"ss",     aura:"#cfe0ff", eye:"#8fa0b5", brow:"#7a8696", glow:"#cfe0ff"},
+  {name:"身勝手の極意",      hair:"#eef4ff", style:"ss",     aura:"#ffffff", eye:"#bcd0ea", brow:"#cdd9ea", white:true, glow:"#ffffff"},
+  {name:"我儘の極意ベジット",hair:"#c79bff", style:"vegeta", aura:"#a64dff", eye:"#ffffff", brow:"#9a6cd6", secret:true, glow:"#c77bff"},
+  {name:"究極・我儘の身勝手",hair:"#ffffff", style:"ultimate",aura:"rainbow",eye:"#ffffff", brow:"#ffe9b0", secret:true, ultimate:true, glow:"#ffd24a"},
+];
+
+// どのフォームから先がルーレット進化か（兆=index7 から）
+const ROULETTE_FROM = 7;
+// レベル自動進化のしきい値（FORMSのindexごとの到達レベル, ルーレット手前まで）
+const AUTO_LV = [1, 12, 24, 36, 48, 58, 64, 70];
+// ルーレット当たりゾーンの広さ(%)：index毎（進化後フォームに入るとき）
+const ZONE_PCT = { 8:42, 9:24, 10:14 }; // 兆→白42%, 白→ベジット24%, ベジット→究極14%
+
+//============================================================
+// キャラSVG生成
+//============================================================
+function charSVG(f, size){
+  const skin = "#ffd9a8";
+  const gi = "#ff7a18", giDark = "#d85a00", belt="#2b3b8c", wrist="#b81e1e";
+  let aura = "";
+  if(f.aura){
+    if(f.aura==="rainbow"){
+      aura = `
+        <ellipse cx="100" cy="135" rx="92" ry="118" fill="url(#rainbowAura)" opacity="0.55" class="auraPulse"/>
+        <ellipse cx="100" cy="135" rx="70" ry="95" fill="url(#rainbowAura)" opacity="0.4" class="auraPulse2"/>`;
+    } else {
+      aura = `
+        <ellipse cx="100" cy="135" rx="86" ry="112" fill="${f.aura}" opacity="0.42" class="auraPulse"/>
+        <ellipse cx="100" cy="135" rx="62" ry="86" fill="${f.aura}" opacity="0.5" class="auraPulse2"/>`;
+    }
+  }
+  // 髪
+  let hair = "";
+  const hc = f.hair;
+  if(f.style==="kid"){
+    hair = `<path d="M62,84 Q58,30 100,28 Q142,30 138,84 Q150,40 118,26 Q140,20 112,16 Q128,8 100,14 Q72,8 88,16 Q60,20 82,26 Q50,40 62,84 Z" fill="${hc}"/>`;
+  } else if(f.style==="spike"){
+    hair = `<path d="M58,86 L52,40 L70,58 L74,24 L92,52 L100,18 L108,52 L126,24 L130,58 L148,40 L142,86 Z" fill="${hc}"/>`;
+  } else if(f.style==="ss" || f.style==="ss2"){
+    const sharp = f.style==="ss2";
+    hair = `<path d="M56,88 L${sharp?44:46},26 L66,52 L70,${sharp?6:14} L88,46 L96,${sharp?2:8} L104,46 L112,${sharp?6:14} L132,52 L${sharp?156:154},26 L144,88 Z" fill="${hc}"/>
+            <path d="M70,52 L62,30 L78,46 Z" fill="${hc}"/><path d="M130,52 L138,30 L122,46 Z" fill="${hc}"/>`;
+  } else if(f.style==="ss3"){
+    hair = `<path d="M58,86 L46,24 L66,50 L72,10 L90,44 L98,4 L106,44 L124,10 L130,50 L150,24 L140,86 Z" fill="${hc}"/>
+            <path d="M58,80 Q26,150 44,224 L70,210 Q52,150 66,92 Z" fill="${hc}"/>
+            <path d="M142,80 Q174,150 156,224 L130,210 Q148,150 134,92 Z" fill="${hc}"/>`;
+  } else if(f.style==="vegeta"){
+    hair = `<path d="M56,86 L44,18 L66,48 L74,8 L90,42 L100,0 L110,42 L126,8 L134,48 L156,18 L144,86 Z" fill="${hc}"/>
+            <path d="M86,40 L96,84 L104,84 L114,40 Q100,30 86,40 Z" fill="${hc}"/>`;
+  } else if(f.style==="ultimate"){
+    hair = `<path d="M54,88 L40,14 L64,46 L72,4 L90,40 L100,-4 L110,40 L128,4 L136,46 L160,14 L146,88 Z" fill="url(#ultiHair)"/>
+            <path d="M68,48 L58,24 L78,44 Z" fill="url(#ultiHair)"/><path d="M132,48 L142,24 L122,44 Z" fill="url(#ultiHair)"/>`;
+  }
+  // 眉
+  const brow = f.brow ? `<rect x="78" y="98" width="14" height="5" rx="2" fill="${f.brow}"/><rect x="108" y="98" width="14" height="5" rx="2" fill="${f.brow}"/>` : "";
+  // しっぽ
+  const tail = f.tail ? `<path d="M132,176 Q176,184 172,150 Q170,134 156,140 Q166,152 154,156 Q140,158 132,168 Z" fill="#7a4a1e"/>` : "";
+  // 稲妻
+  const lightning = f.lightning ? `<path d="M150,60 L162,80 L152,82 L166,108" stroke="#fff" stroke-width="3" fill="none" opacity=".9" class="auraPulse2"/>
+            <path d="M44,70 L34,92 L44,94 L32,116" stroke="#fff" stroke-width="3" fill="none" opacity=".9" class="auraPulse"/>` : "";
+  // 目
+  const eye = f.eye;
+  const eyeWhite = f.white ? `<ellipse cx="85" cy="112" rx="9" ry="7" fill="#dfeaf7"/><ellipse cx="115" cy="112" rx="9" ry="7" fill="#dfeaf7"/>` :
+    `<ellipse cx="85" cy="112" rx="9" ry="7" fill="#fff"/><ellipse cx="115" cy="112" rx="9" ry="7" fill="#fff"/>`;
+
+  return `<svg viewBox="-10 -10 220 270" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="ultiHair" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#ffe9a8"/>
+      </linearGradient>
+      <radialGradient id="rainbowAura" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#fff"/><stop offset="35%" stop-color="#ffd24a"/>
+        <stop offset="65%" stop-color="#ff5ad0"/><stop offset="100%" stop-color="#5ad0ff"/>
+      </radialGradient>
+    </defs>
+    ${aura}
+    ${tail}
+    <!-- 体（道着） -->
+    <path d="M70,168 Q100,158 130,168 L138,236 L62,236 Z" fill="${gi}"/>
+    <path d="M70,168 Q100,158 130,168 L130,182 Q100,172 70,182 Z" fill="${giDark}"/>
+    <rect x="62" y="206" width="76" height="12" fill="${belt}"/>
+    <!-- 腕 -->
+    <path d="M70,170 L50,210 L64,216 L80,180 Z" fill="${gi}"/>
+    <path d="M130,170 L150,210 L136,216 L120,180 Z" fill="${gi}"/>
+    <rect x="48" y="206" width="20" height="10" rx="3" fill="${wrist}"/>
+    <rect x="132" y="206" width="20" height="10" rx="3" fill="${wrist}"/>
+    <circle cx="58" cy="220" r="9" fill="${skin}"/><circle cx="142" cy="220" r="9" fill="${skin}"/>
+    <!-- 首・顔 -->
+    <rect x="92" y="150" width="16" height="20" fill="${skin}"/>
+    <ellipse cx="100" cy="118" rx="42" ry="44" fill="${skin}"/>
+    ${hair}
+    ${eyeWhite}
+    <circle cx="86" cy="113" r="4.5" fill="${eye}"/><circle cx="114" cy="113" r="4.5" fill="${eye}"/>
+    ${brow}
+    <path d="M90,134 Q100,140 110,134" stroke="#9a5a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    ${lightning}
+  </svg>`;
+}
+
+//============================================================
+// 状態
+//============================================================
+const SAVE_KEY = "goku_ikusei_v1";
+let state = { level:1, exp:0, energy:100, form:0, seen:[0] };
+
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){} }
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){ const s=JSON.parse(raw); if(s && typeof s.level==="number") state = Object.assign(state, s); }
+  }catch(e){}
+  if(!Array.isArray(state.seen)) state.seen=[0];
+}
+
+function needExp(lv){ return 8 + (lv-1)*4; }
+
+//============================================================
+// 描画
+//============================================================
+const $ = id => document.getElementById(id);
+function render(){
+  const f = FORMS[state.form];
+  $("charSvg").innerHTML = charSVG(f);
+  $("formName").textContent = f.name;
+  $("formName").style.color = f.glow;
+  $("bgGlow").style.background = (f.aura==="rainbow") ? "conic-gradient(#ffd24a,#ff5ad0,#5ad0ff,#ffd24a)" : (f.glow||"#5b8cff");
+  $("lvText").innerHTML = `レベル ${state.level} <small>${state.level>=70?'★':''}</small>`;
+  const ne = needExp(state.level);
+  $("expBar").style.width = Math.min(100, state.exp/ne*100) + "%";
+  $("eneBar").style.width = Math.max(0, state.energy) + "%";
+  // ルーレットボタン：Lv70以上 かつ まだ最終でない & ルーレット対象
+  const canRoulette = state.level>=70 && state.form>=ROULETTE_FROM && state.form < FORMS.length-1;
+  $("rouletteBtn").disabled = !canRoulette;
+  if(canRoulette) $("rouletteBtn").classList.add("hintGlow"); else $("rouletteBtn").classList.remove("hintGlow");
+}
+
+function markSeen(i){ if(!state.seen.includes(i)){ state.seen.push(i); } }
+
+//============================================================
+// 効果音（WebAudio）
+//============================================================
+let actx=null;
+function beep(freq, dur, type="sine", vol=0.18, delay=0){
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==="suspended") actx.resume();
+    const t = actx.currentTime + delay;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+dur);
+  }catch(e){}
+}
+function sfxTrain(){ beep(420,.12,"square",.12); beep(680,.12,"square",.1,.06); }
+function sfxFood(){ beep(520,.1,"sine",.14); beep(720,.14,"sine",.12,.08); }
+function sfxLevel(){ beep(660,.1,"square",.13); beep(880,.12,"square",.13,.09); }
+function sfxEvo(){ [330,440,550,660,880].forEach((fr,i)=>beep(fr,.5,"sawtooth",.13,i*.08)); }
+function sfxWin(){ [523,659,784,1046].forEach((fr,i)=>beep(fr,.3,"square",.14,i*.1)); }
+function sfxLose(){ beep(300,.2,"sawtooth",.13); beep(180,.3,"sawtooth",.12,.12); }
+function sfxTick(){ beep(900,.03,"square",.05); }
+
+//============================================================
+// 育成アクション
+//============================================================
+function floatText(txt,color){
+  const el = document.createElement("div");
+  el.className="floatTxt"; el.textContent=txt; if(color) el.style.color=color;
+  $("stage").appendChild(el); setTimeout(()=>el.remove(),1000);
+}
+
+let busy=false;
+function train(){
+  if(busy) return;
+  if(state.energy < 8){ floatText("おなかすいた…","#ff8a8a"); sfxLose(); return; }
+  state.energy = Math.max(0, state.energy-8);
+  const gain = 4 + Math.ceil(state.level/2);
+  state.exp += gain;
+  floatText("+"+gain+" EXP","#ffe24a");
+  sfxTrain();
+  kamehameha();
+  checkLevel();
+  render(); save();
+}
+function feed(){
+  if(busy) return;
+  if(state.energy>=100){ floatText("げんき まんたん！","#9affb0"); return; }
+  state.energy = Math.min(100, state.energy+34);
+  floatText("げんき+34","#9affb0"); sfxFood();
+  render(); save();
+}
+
+// かめはめ波の簡易演出
+function kamehameha(){
+  const wrap = $("charWrap");
+  const ball = document.createElement("div");
+  ball.style.cssText="position:absolute;left:50%;top:62%;width:26px;height:26px;border-radius:50%;background:radial-gradient(#fff,#5cc8ff);box-shadow:0 0 20px #5cc8ff;transform:translate(-50%,-50%);z-index:6;pointer-events:none;transition:all .35s ease-out;";
+  wrap.appendChild(ball);
+  requestAnimationFrame(()=>{ ball.style.left="135%"; ball.style.width="50px"; ball.style.height="50px"; ball.style.opacity="0"; });
+  setTimeout(()=>ball.remove(),420);
+}
+
+function checkLevel(){
+  let leveled=false;
+  while(state.exp >= needExp(state.level)){
+    state.exp -= needExp(state.level);
+    state.level++;
+    leveled=true;
+  }
+  if(leveled){
+    sfxLevel(); floatText("レベルアップ！","#7affd0");
+    checkAutoEvolve();
+  }
+}
+
+// レベル自動進化（ルーレット手前のフォームまで）
+function checkAutoEvolve(){
+  // 次フォームが自動進化対象(index<=ROULETTE_FROM)で、到達レベルを満たしたら進化
+  let next = state.form+1;
+  while(next <= ROULETTE_FROM && state.level >= AUTO_LV[next]){
+    doEvolve(next, next===ROULETTE_FROM); // 兆になる時はルーレット解禁演出
+    next++;
+  }
+}
+
+function doEvolve(toIndex, unlockRoulette){
+  state.form = toIndex; markSeen(toIndex);
+  evoAnim(FORMS[toIndex].name, unlockRoulette);
+  render(); save();
+}
+
+function evoAnim(name, unlockRoulette){
+  busy=true;
+  $("flash").classList.remove("go"); void $("flash").offsetWidth; $("flash").classList.add("go");
+  const et = $("evoText");
+  et.textContent = "しんか！";
+  et.classList.remove("go"); void et.offsetWidth; et.classList.add("go");
+  sfxEvo();
+  setTimeout(()=>{ render(); }, 300);
+  setTimeout(()=>{
+    et.textContent = name;
+    et.classList.remove("go"); void et.offsetWidth; et.classList.add("go");
+  }, 700);
+  setTimeout(()=>{
+    busy=false;
+    if(unlockRoulette){ floatText("ルーレットかいきん！🎰","#ffd24a"); }
+  }, 2100);
+}
+
+//============================================================
+// ルーレット進化
+//============================================================
+let rAnim=null, rPos=0, rDir=1, rSpeed=0.9, rRunning=false, rTarget=null, rZoneStart=0, rZoneW=0;
+
+function openRoulette(){
+  const next = state.form+1;
+  if(next >= FORMS.length) return;
+  rTarget = next;
+  const toF = FORMS[next];
+  $("rArrow").innerHTML = `${FORMS[state.form].name} <span style="opacity:.6">→</span> <b>${toF.name}</b>`;
+  $("rSecretTag").style.display = toF.secret ? "inline-block" : "none";
+  const pct = ZONE_PCT[next] || 30;
+  rZoneW = pct; rZoneStart = (100-pct)/2; // 中央に配置
+  $("rZone").style.left = rZoneStart+"%";
+  $("rZone").style.width = pct+"%";
+  $("rZone").textContent = "しんか！";
+  $("rChance").textContent = toF.secret ? "むずかしいよ！よ〜く ねらってね👀" : "「しんか！」で とめよう！";
+  $("rResult").textContent="";
+  $("rStopBtn").style.display="inline-block";
+  $("rRetryBtn").style.display="none";
+  $("rCloseBtn").style.display="none";
+  $("roulette").classList.add("show");
+  startMarker();
+}
+function startMarker(){
+  rPos = 2; rDir = 1; rRunning=true;
+  // シークレットほど速くするが、目押し可能な範囲に抑える
+  rSpeed = rTarget>=10 ? 1.15 : (rTarget>=9 ? 1.0 : 0.85);
+  let lastTick=0;
+  function step(){
+    if(!rRunning) return;
+    rPos += rDir*rSpeed;
+    if(rPos>=98){ rPos=98; rDir=-1; } if(rPos<=2){ rPos=2; rDir=1; }
+    $("rMarker").style.left = rPos+"%";
+    lastTick++; if(lastTick%6===0) sfxTick();
+    rAnim = requestAnimationFrame(step);
+  }
+  rAnim = requestAnimationFrame(step);
+}
+function stopMarker(){
+  if(!rRunning) return;
+  rRunning=false; cancelAnimationFrame(rAnim);
+  // マーカー中心が当たりゾーンに入ってるか（マーカー幅は小さいので位置で判定）
+  const hit = (rPos >= rZoneStart && rPos <= rZoneStart+rZoneW);
+  $("rStopBtn").style.display="none";
+  if(hit){
+    $("rResult").style.color="#ffe24a";
+    $("rResult").textContent="せいこう！🎉";
+    sfxWin();
+    setTimeout(()=>{
+      $("roulette").classList.remove("show");
+      const toF = FORMS[rTarget];
+      doEvolve(rTarget, false);
+      markSeen(rTarget);
+    }, 900);
+  } else {
+    $("rResult").style.color="#ff8a8a";
+    $("rResult").textContent="ざんねん！";
+    sfxLose();
+    $("rRetryBtn").style.display="inline-block";
+    $("rCloseBtn").style.display="inline-block";
+  }
+}
+
+//============================================================
+// ずかん
+//============================================================
+function openDex(){
+  const grid = $("dexGrid"); grid.innerHTML="";
+  FORMS.forEach((f,i)=>{
+    const seen = state.seen.includes(i);
+    const cell = document.createElement("div");
+    cell.className = "dexCell" + (seen?"":" locked");
+    cell.innerHTML = (seen?charSVG(f):charSVG(FORMS[0])) +
+      `<div class="dn">${f.secret?'<span>✨'+f.name+'</span>':'<span>'+f.name+'</span>'}</div>`;
+    if(!seen){ cell.querySelector("svg").style.opacity="0"; }
+    grid.appendChild(cell);
+  });
+  $("dex").classList.add("show");
+}
+
+//============================================================
+// イベント
+//============================================================
+$("trainBtn").addEventListener("click", train);
+$("foodBtn").addEventListener("click", feed);
+$("rouletteBtn").addEventListener("click", ()=>{ if(!$("rouletteBtn").disabled) openRoulette(); });
+$("rStopBtn").addEventListener("click", stopMarker);
+$("rRetryBtn").addEventListener("click", ()=>{ $("rResult").textContent=""; $("rRetryBtn").style.display="none"; $("rCloseBtn").style.display="none"; $("rStopBtn").style.display="inline-block"; startMarker(); });
+$("rCloseBtn").addEventListener("click", ()=>{ rRunning=false; cancelAnimationFrame(rAnim); $("roulette").classList.remove("show"); });
+$("dexBtn").addEventListener("click", openDex);
+$("dexClose").addEventListener("click", ()=>$("dex").classList.remove("show"));
+$("resetBtn").addEventListener("click", ()=>$("resetConfirm").classList.add("show"));
+$("resetNo").addEventListener("click", ()=>$("resetConfirm").classList.remove("show"));
+$("resetYes").addEventListener("click", ()=>{
+  state = { level:1, exp:0, energy:100, form:0, seen:[0] };
+  save(); render(); $("resetConfirm").classList.remove("show");
+});
+
+// げんき自然回復（ゆっくり）
+setInterval(()=>{
+  if(state.energy<100){ state.energy=Math.min(100,state.energy+1); render(); save(); }
+}, 4000);
+
+//============================================================
+// 起動
+//============================================================
+load();
+markSeen(state.form);
+render();
+</script>
+</body>
+</html>
