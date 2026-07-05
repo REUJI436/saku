@@ -2072,6 +2072,47 @@ function sfxFanfare() {
 }
 function sfxLose() { sfx(330, 0.2, 'sawtooth', 0.18); setTimeout(()=>sfx(220, 0.3, 'sawtooth', 0.18), 200); }
 function sfxCatch() { sfx(660, 0.08, 'sine', 0.12); setTimeout(()=>sfx(440, 0.08, 'sine', 0.12), 100); setTimeout(()=>sfx(880, 0.2, 'sine', 0.16), 200); }
+// ✨色ちがい出現音（キラキラした上昇アルペジオ）
+function sfxShiny() {
+  try {
+    const seq = [1047, 1319, 1568, 2093, 1568, 2093, 2637];
+    seq.forEach((f, i) => setTimeout(() => sfx(f, 0.09, 'sine', 0.12), i * 70));
+    setTimeout(() => sfx(3136, 0.35, 'triangle', 0.08), seq.length * 70);
+  } catch(e) {}
+}
+
+// ===================== 紙吹雪（捕まえた時のお祝い演出） =====================
+function spawnConfetti(big) {
+  try {
+    if (!document.getElementById('confettiStyle')) {
+      const st = document.createElement('style');
+      st.id = 'confettiStyle';
+      st.textContent = '@keyframes confettiFall{0%{transform:translateY(-40px) rotate(0deg);opacity:1}80%{opacity:1}100%{transform:translateY(105vh) rotate(720deg);opacity:0}}';
+      document.head.appendChild(st);
+    }
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:9600;';
+    const colors = ['#ff8fc0', '#ffd700', '#80d8ff', '#c0f0a8', '#c8a0f0', '#fff'];
+    const n = big ? 64 : 36;
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement('div');
+      const dur = 1.4 + Math.random() * 1.2;
+      const delay = Math.random() * 0.5;
+      if (big && i % 6 === 0) {
+        p.textContent = '✨';
+        p.style.cssText = 'position:absolute;top:-40px;font-size:' + Math.floor(12 + Math.random() * 10) + 'px;';
+      } else {
+        const size = 6 + Math.random() * 8;
+        p.style.cssText = 'position:absolute;top:-40px;width:' + size + 'px;height:' + (size * 0.6) + 'px;background:' + colors[i % colors.length] + ';border-radius:2px;';
+      }
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.animation = 'confettiFall ' + dur + 's linear ' + delay + 's forwards';
+      ov.appendChild(p);
+    }
+    document.body.appendChild(ov);
+    setTimeout(() => { try { ov.remove(); } catch(e) {} }, 3400);
+  } catch(e) { console.warn('[spawnConfetti]', e); }
+}
 
 // ステージクリアの祝祭バナー（フルスクリーン、紙吹雪、ファンファーレ）
 function showStageClearBanner(stageId, subtitle, isBig) {
@@ -3024,6 +3065,8 @@ const _isDemoMode    = (typeof window !== 'undefined' && window.location && /[?&
 const _isTestToton   = (typeof window !== 'undefined' && window.location && /[?&]testtoton=1\b/.test(window.location.search || ''));
 const _isTeraMax     = (typeof window !== 'undefined' && window.location && /[?&]teramax=1\b/.test(window.location.search || ''));
 const _isEvoTest     = (typeof window !== 'undefined' && window.location && /[?&]evotest=1\b/.test(window.location.search || ''));
+// ?testshiny=1 で色ちがい100%出現（動作確認用）
+const _isShinyTest   = (typeof window !== 'undefined' && window.location && /[?&]testshiny=1\b/.test(window.location.search || ''));
 
 function applyDemoMode() {
   if (!_isDemoMode && !_isTestToton && !_isTeraMax && !_isEvoTest) return;
@@ -3139,6 +3182,34 @@ function monStats(mon) {
 
 function expForNext(lvl) { return Math.floor(8 + lvl * lvl * 1.2); }
 
+// ===================== なかよし度 =====================
+// friend ポイント（新フィールド・無くても壊れない）。10ポイントごとにハート+1（1〜5個）
+function friendHearts(m) {
+  if (!m) return 1;
+  return clamp(1 + Math.floor((m.friend || 0) / 10), 1, 5);
+}
+function friendHeartsHtml(m) {
+  const h = friendHearts(m);
+  return '💗'.repeat(h) + '🤍'.repeat(5 - h);
+}
+// silent=true でトースト無し（全回復など複数体同時のとき用）
+function addFriend(m, amount, silent) {
+  try {
+    if (!m) return false;
+    if (typeof m.friend !== 'number') m.friend = 0;
+    const before = friendHearts(m);
+    m.friend += amount;
+    const after = friendHearts(m);
+    if (after > before && !silent) {
+      const def = getMonsterDef(m.id);
+      showToast('💗 ' + (def ? def.name : '') + 'と もっと なかよく なった！', 1800);
+      try { sfxHeal(); } catch(e) {}
+      return true;
+    }
+    return after > before;
+  } catch(e) { console.warn('[addFriend]', e); return false; }
+}
+
 // ===================== SAVE / LOAD =====================
 const SAVE_KEY = 'kurumi_pokemon_v1';
 const BACKUP_KEY = 'kurumi_pokemon_v1_backup';
@@ -3165,7 +3236,7 @@ function saveGame(silent) {
   // (when user is still on the title screen and hasn't started/loaded yet)
   if (!state || !state.party || state.party.length === 0) return;
   // デモ/テストモード中は本番セーブを汚染しないためスキップ
-  if (_isDemoMode || _isTestToton || _isTeraMax || _isEvoTest) return;
+  if (_isDemoMode || _isTestToton || _isTeraMax || _isEvoTest || _isShinyTest) return;
   try {
     // 直前バックアップ：保存前のメインを退避（1世代だけ）
     try {
@@ -3195,6 +3266,8 @@ function ensureMonsterFields(m) {
   if (typeof m.hp !== 'number') m.hp = 10;
   if (typeof m.mp !== 'number') m.mp = 5;
   if (!Array.isArray(m.skills) || m.skills.length === 0) m.skills = ['tail'];
+  if (typeof m.friend !== 'number') m.friend = 0;  // なかよし度（v3.1追加・旧セーブは0から）
+  // m.shiny は任意フィールド（true のときだけ色ちがい）。無くてもOK
   return m;
 }
 
@@ -3443,8 +3516,24 @@ function svgMon(mon) {
   const dark = t.dark || '#444';
   const face = def.face;
   // メガテラスタルとーとんキョダイマックスEX: 専用描画（マッチョ化＋金王冠）
-  if (def.megaForm) return svgMegaToton();
-  return svgShape(def.shape, c, dark, face, def.evoStage || 0);
+  let out = def.megaForm ? svgMegaToton() : svgShape(def.shape, c, dark, face, def.evoStage || 0);
+  // ✨色ちがい: mon オブジェクトで shiny:true のときだけ色変え＋星
+  if (mon && typeof mon === 'object' && mon.shiny) out = shinyfySvg(out);
+  return out;
+}
+
+// SVG文字列に色ちがい加工（色相回転フィルタ＋白い星）を施す。失敗しても元の絵を返す
+function shinyfySvg(svg) {
+  try {
+    if (typeof svg !== 'string' || svg.indexOf('<svg') === -1) return svg;
+    let out = svg.replace('<svg ', '<svg style="filter:hue-rotate(150deg) saturate(1.5) brightness(1.06)" ');
+    // viewBox は 120x110 / 120x120 前提の固定座標（白は色相回転の影響を受けない）
+    const stars = '<text x="96" y="26" font-size="18" fill="#ffffff" text-anchor="middle" opacity="0.95">★</text>'
+      + '<text x="20" y="42" font-size="12" fill="#ffffff" text-anchor="middle" opacity="0.85">★</text>'
+      + '<text x="102" y="86" font-size="10" fill="#ffffff" text-anchor="middle" opacity="0.8">★</text>';
+    out = out.replace('</svg>', stars + '</svg>');
+    return out;
+  } catch(e) { return svg; }
 }
 
 // メガEX 専用描画。上半身ムキムキ＋金王冠＋金オーラ＋赤ネクタイ
@@ -5194,6 +5283,8 @@ function generateFieldMobs(stage) {
   const rows = Math.max(1, Math.ceil(count / cols));
   const cellW = WORLD_W / cols;
   const cellH = (WORLD_H - 400) / rows;
+  // ✨色ちがい抽選率（通常5%・?testshiny=1 で100%）
+  const shinyRate = _isShinyTest ? 1.0 : 0.05;
   for (let i = 0; i < count; i++) {
     const id = pick(stage.mobs);
     const lvl = rand(stage.lvl[0], stage.lvl[1]);
@@ -5205,6 +5296,7 @@ function generateFieldMobs(stage) {
       x: cx, y: cy,
       defeated: false,
       isBoss: false,
+      shiny: Math.random() < shinyRate,
       dx: (Math.random() - 0.5) * 0.8,
       dy: (Math.random() - 0.5) * 0.8,
       wanderTimer: rand(40, 120)
@@ -5532,6 +5624,14 @@ function drawMinimap() {
     } else if (m.isBoss) {
       ctx.fillStyle = '#ff3030';
       ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (m.shiny) {
+      // ✨色ちがいは金色＋グローで目立たせる
+      ctx.save();
+      ctx.shadowColor = '#ffd700';
+      ctx.shadowBlur = 5;
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
     } else {
       ctx.fillStyle = '#ff8fc0';
       ctx.beginPath(); ctx.arc(mx, my, 2, 0, Math.PI * 2); ctx.fill();
@@ -5792,6 +5892,18 @@ function drawField() {
       ctx.ellipse(sx, sy + size * 0.4, size * 0.45, size * 0.18, 0, 0, Math.PI * 2);
       ctx.fill();
     }
+    // ✨色ちがい: 虹色に変わるオーラ
+    if (m.shiny) {
+      const st = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+      const hue = (st / 12) % 360;
+      ctx.save();
+      ctx.fillStyle = 'hsla(' + hue + ',95%,72%,0.45)';
+      ctx.beginPath(); ctx.arc(sx, sy, size * 0.72, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'hsla(' + ((hue + 60) % 360) + ',95%,65%,0.8)';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(sx, sy, size * 0.6, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
     // mob art
     const img = getMonImg(m.id);
     if (img && img.complete && img.naturalWidth) {
@@ -5799,6 +5911,21 @@ function drawField() {
     } else {
       ctx.fillStyle = '#ffb0d8';
       ctx.beginPath(); ctx.arc(sx, sy, size / 2, 0, Math.PI * 2); ctx.fill();
+    }
+    // ✨色ちがい: のぼっていくキラキラ
+    if (m.shiny) {
+      const st = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+      const sparkPhase = (st / 550) % 1;
+      ctx.save();
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = 'rgba(255,255,180,' + (1 - sparkPhase) + ')';
+      ctx.fillText('✨', sx + size * 0.35, sy - size * 0.25 - sparkPhase * 10);
+      const sp2 = ((st + 300) / 550) % 1;
+      ctx.fillStyle = 'rgba(255,255,255,' + (1 - sp2) + ')';
+      ctx.fillText('✨', sx - size * 0.55, sy - size * 0.05 - sp2 * 10);
+      ctx.restore();
     }
     // level badge
     ctx.font = 'bold 11px sans-serif';
@@ -6169,6 +6296,8 @@ function startBattle(fieldMob, idx) {
       confused: false  // 自分の次ターン技外し用
     };
     battle.foe.mon.hp = foeStats.hp;
+    // ✨色ちがい個体（ボス・とーとんは対象外）
+    if (fieldMob.shiny && !battle.isBoss && !battle.isToton) battle.foe.mon.shiny = true;
     refreshBattleUI();
     if (battle.isToton) {
       const fid = battle.foe.mon.id;
@@ -6177,6 +6306,9 @@ function startBattle(fieldMob, idx) {
       else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が <ruby>現<rt>あらわ</rt></ruby>れた！');
       else if (fid === 95) setBattleMessage('!? テラスタルとーとんキョダイマックス…！？<br>せかいの あいだから <ruby>現<rt>あらわ</rt></ruby>れた！');
       else                 setBattleMessage('まさかの <ruby>人間<rt>にんげん</rt></ruby> 「とーとん」 が <ruby>現<rt>あらわ</rt></ruby>れた！');
+    } else if (battle.foe.mon.shiny) {
+      setBattleMessage('✨ キラキラの ' + (battle.foe.def.name) + ' が <ruby>現<rt>あらわ</rt></ruby>れた！！<br>いろちがいの レアな こだよ！');
+      try { sfxShiny(); } catch(e) {}
     } else {
       setBattleMessage('やせいの ' + (battle.foe.def.name) + ' が <ruby>現<rt>あらわ</rt></ruby>れた！');
     }
@@ -6197,8 +6329,8 @@ function refreshBattleUI() {
   try {
     // foe (% only, lighter info)
     const f = battle.foe;
-    $('foe-art').innerHTML = svgMon(f.mon.id);
-    $('foe-name').innerHTML = `👾 ${f.def.name} <small style="font-size:10px">Lv${f.mon.lvl}</small>`;
+    $('foe-art').innerHTML = svgMon(f.mon);
+    $('foe-name').innerHTML = `👾 ${f.mon.shiny ? '✨' : ''}${f.def.name} <small style="font-size:10px">Lv${f.mon.lvl}</small>`;
     const fpct = (f.mon.hp / f.hpMax) * 100;
     const fill = $('foe-hpfill');
     fill.style.width = fpct + '%';
@@ -6209,8 +6341,8 @@ function refreshBattleUI() {
     const m = battle.me.mon;
     const mDef = getMonsterDef(m.id);
     const mStats = monStats(m);
-    $('my-art').innerHTML = svgMon(m.id);
-    $('my-name').innerHTML = `💗 ${mDef.name} <small style="font-size:10px">Lv${m.lvl}</small>`;
+    $('my-art').innerHTML = svgMon(m);
+    $('my-name').innerHTML = `💗 ${m.shiny ? '✨' : ''}${mDef.name} <small style="font-size:10px">Lv${m.lvl}</small>`;
     const mpct = (m.hp / mStats.hp) * 100;
     const mfill = $('my-hpfill');
     mfill.style.width = mpct + '%';
@@ -6695,7 +6827,7 @@ function winBattle() {
   // give exp to all alive party
   setTimeout(() => {
     const levelups = [];
-    state.party.forEach(m => { if (m.hp > 0) levelups.push(...giveExp(m, expGain)); });
+    state.party.forEach(m => { if (m.hp > 0) { levelups.push(...giveExp(m, expGain)); addFriend(m, 2); } });
     if (battle.fieldIdx != null && state.fieldMobs[battle.fieldIdx]) {
       state.fieldMobs[battle.fieldIdx].defeated = true;
     }
@@ -6942,6 +7074,7 @@ function useItem(key) {
     const s = monStats(m);
     const heal = Math.min(it.heal, s.hp - m.hp);
     m.hp = Math.min(s.hp, m.hp + it.heal);
+    addFriend(m, 3, true);  // お世話するとなかよし度アップ
     spawnDmg('my-row', heal, 'heal');
     sfxHeal();
     setBattleMessage(it.name + ' を <ruby>使<rt>つか</rt></ruby>った！HP ' + heal + ' <ruby>回復<rt>かいふく</rt></ruby>！');
@@ -7231,8 +7364,16 @@ function tryCatch(ballKey) {
       // success
       const captured = makeMon(f.mon.id, f.mon.lvl);
       captured.hp = f.mon.hp;
+      captured.friend = 0;
+      if (f.mon.shiny) captured.shiny = true;  // ✨色ちがいを引き継ぐ
       if (state.party.length < 4) state.party.push(captured);
       else state.box.push(captured);
+      // 🎊 お祝い演出: 紙吹雪＋レア度別ファンファーレ
+      try {
+        const isRareCatch = !!f.mon.shiny || !!battle.isToton;
+        spawnConfetti(isRareCatch);
+        if (isRareCatch) setTimeout(() => { try { sfxFanfare(); } catch(e) {} }, 400);
+      } catch(e) {}
       if (battle.isToton) {
         showTotonCatchBanner();
         const fid = f.mon.id;
@@ -7241,6 +7382,8 @@ function tryCatch(ballKey) {
         else if (fid === 98) setBattleMessage('❄️ <ruby>氷<rt>こおり</rt></ruby>とーとん が <ruby>仲間<rt>なかま</rt></ruby>に なった！');
         else if (fid === 95) setBattleMessage('🌈 テラスタルとーとんキョダイマックス が <ruby>仲間<rt>なかま</rt></ruby>に なった！！');
         else                 setBattleMessage('！ とーとん が <ruby>仲間<rt>なかま</rt></ruby>に なった…！？');
+      } else if (f.mon.shiny) {
+        setBattleMessage('🎉✨ キラキラの ' + f.def.name + ' を <ruby>捕<rt>つか</rt></ruby>まえた！！<br>すごい！レアな いろちがいだよ！');
       } else {
         setBattleMessage('🎉 ' + f.def.name + ' を <ruby>捕<rt>つか</rt></ruby>まえた！');
       }
@@ -7330,9 +7473,9 @@ function cmdSwap() {
     const stats = monStats(m);
     const row = document.createElement('div');
     row.className = 'sub-row' + (m.hp <= 0 ? ' disabled' : '');
-    row.innerHTML = `<div class="mob-art-small">${svgMon(m.id)}</div>
+    row.innerHTML = `<div class="mob-art-small">${svgMon(m)}</div>
       <div class="info-block">
-        <div class="name">${def.name} Lv${m.lvl}</div>
+        <div class="name">${m.shiny ? '✨' : ''}${def.name} Lv${m.lvl}</div>
         <div class="stats">HP ${m.hp}/${stats.hp}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
       </div>`;
     if (m.hp > 0) attachTap(row, () => {
@@ -7486,10 +7629,10 @@ function renderParty() {
     const stats = monStats(m);
     const row = document.createElement('div');
     row.className = 'sub-row';
-    row.innerHTML = `<div class="mob-art-small">${svgMon(m.id)}</div>
+    row.innerHTML = `<div class="mob-art-small">${svgMon(m)}</div>
       <div class="info-block">
-        <div class="name">${def.name} Lv${m.lvl}</div>
-        <div class="stats">HP ${m.hp}/${stats.hp}・MP ${m.mp}/${stats.mp}・<ruby>経験<rt>けいけん</rt></ruby>${m.exp}/${expForNext(m.lvl)}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
+        <div class="name">${m.shiny ? '✨' : ''}${def.name} Lv${m.lvl}</div>
+        <div class="stats">なかよし <span style="font-size:11px;letter-spacing:-2px">${friendHeartsHtml(m)}</span><br>HP ${m.hp}/${stats.hp}・MP ${m.mp}/${stats.mp}・<ruby>経験<rt>けいけん</rt></ruby>${m.exp}/${expForNext(m.lvl)}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
       </div>
       <button class="btn gray" style="font-size:11px;padding:4px 8px;">⇆</button>`;
     const btn = row.querySelector('button');
@@ -7514,10 +7657,10 @@ function renderParty() {
     const can = state.party.length < 4;
     const row = document.createElement('div');
     row.className = 'sub-row' + (can ? '' : ' disabled');
-    row.innerHTML = `<div class="mob-art-small">${svgMon(m.id)}</div>
+    row.innerHTML = `<div class="mob-art-small">${svgMon(m)}</div>
       <div class="info-block">
-        <div class="name">${def.name} Lv${m.lvl}</div>
-        <div class="stats">HP ${m.hp}/${stats.hp}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
+        <div class="name">${m.shiny ? '✨' : ''}${def.name} Lv${m.lvl}</div>
+        <div class="stats">なかよし <span style="font-size:11px;letter-spacing:-2px">${friendHeartsHtml(m)}</span><br>HP ${m.hp}/${stats.hp}<div class="hpbar"><div class="hpfill" style="width:${m.hp/stats.hp*100}%"></div></div></div>
       </div>
       <button class="btn green" style="font-size:11px;padding:4px 8px;" ${can?'':'disabled'}><ruby>連<rt>つ</rt></ruby>れてく</button>`;
     const btn = row.querySelector('button');
@@ -7593,7 +7736,7 @@ function goShop() {
   attachTap(hbtn, () => {
     if (state.coins < 150) { showToast('コインが たりないよ'); return; }
     state.coins -= 150;
-    state.party.forEach(m => { const s = monStats(m); m.hp = s.hp; m.mp = s.mp; });
+    state.party.forEach(m => { const s = monStats(m); m.hp = s.hp; m.mp = s.mp; addFriend(m, 2, true); });
     sfxHeal();
     showToast('まんたんに <ruby>回復<rt>かいふく</rt></ruby>したよ💗');
     $('shop-coins').textContent = state.coins;

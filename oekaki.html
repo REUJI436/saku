@@ -85,6 +85,58 @@
   }
   #stamp-popup.open { display: grid; }
   #stamp-popup .btn { width: 44px; height: 44px; font-size: 24px; }
+  #stamp-popup { max-height: 46vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  #done-btn {
+    background: linear-gradient(135deg, #ffd700, #ffb700);
+    color: #7a4a00; font-size: 12px; font-weight: bold;
+    width: auto; padding: 0 10px; border-radius: 20px; height: 40px;
+  }
+
+  #confirm-popup {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 3px solid #ff6fa8;
+    border-radius: 18px;
+    padding: 16px 20px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    z-index: 60;
+  }
+  #confirm-popup.open { display: flex; }
+  #confirm-popup .confirm-text { font-size: 16px; font-weight: bold; color: #d63384; }
+  #confirm-popup .confirm-btns { display: flex; gap: 12px; }
+  #confirm-popup button {
+    border: none; border-radius: 20px; padding: 8px 18px;
+    font-size: 14px; font-weight: bold; cursor: pointer;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+  }
+  #confirm-yes { background: #ff6fa8; color: #fff; }
+  #confirm-no { background: #eee; color: #555; }
+
+  #celebrate-banner {
+    position: fixed;
+    top: 38%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: rgba(255,255,255,0.95);
+    border: 4px solid #ffd700;
+    border-radius: 24px;
+    padding: 14px 24px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #d63384;
+    z-index: 55;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+  }
+  #celebrate-banner.show { transform: translate(-50%, -50%) scale(1); }
 
   .portal-back {
     position: fixed;
@@ -116,9 +168,18 @@
     <div class="group" id="tools"></div>
     <div class="group">
       <div class="btn stamp-btn" id="stamp-toggle">🎀</div>
+      <button class="btn" id="done-btn">できた！</button>
       <button class="btn" id="clear-btn">けす</button>
     </div>
   </div>
+  <div id="confirm-popup">
+    <div class="confirm-text">ぜんぶ けしちゃう？</div>
+    <div class="confirm-btns">
+      <button id="confirm-yes">けす</button>
+      <button id="confirm-no">やめる</button>
+    </div>
+  </div>
+  <div id="celebrate-banner">🎉 できたね！すごい！ 🎉</div>
 
 <script>
 (() => {
@@ -132,9 +193,16 @@
   const tools = [
     { id: 'brush', emoji: '🖌️' },
     { id: 'sparkle', emoji: '✨' },
+    { id: 'neon', emoji: '💡' },
     { id: 'eraser', emoji: '🧽' },
   ];
-  const stamps = ['🐰', '🐱', '🐶', '🦄', '🌸', '⭐', '❤️', '🌈', '🍓', '🎀', '🍰', '🦋'];
+  const stamps = [
+    '🐰', '🐱', '🐶', '🦄', '🐼', '🐸', '🐥', '🐟', '🦖', '🐢', '🦁', '🐘',
+    '🍓', '🍰', '🍦', '🍭', '🍩', '🍎', '🍉', '🍔', '🍕', '🍪', '🧁', '🍌',
+    '🚗', '🚒', '🚓', '🚀', '🚁', '🚂', '⛵', '🚲', '👑', '💎', '🪄', '🏰',
+    '🧚', '🌸', '⭐', '❤️', '🌈', '🦋', '🌻', '☀️', '🌙', '⚡', '🎀', '🎁',
+    '🎈', '⚽', '🎵', '😊', '👻', '🍀',
+  ];
 
   const state = {
     color: '#ff6b9d',
@@ -249,10 +317,16 @@
     stampsPopup.classList.remove('open');
   }
 
+  const confirmPopup = document.getElementById('confirm-popup');
   document.getElementById('clear-btn').addEventListener('click', () => {
-    if (confirm('ぜんぶ けしちゃう？')) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    confirmPopup.classList.add('open');
+  });
+  document.getElementById('confirm-yes').addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confirmPopup.classList.remove('open');
+  });
+  document.getElementById('confirm-no').addEventListener('click', () => {
+    confirmPopup.classList.remove('open');
   });
 
   function getPos(e) {
@@ -279,6 +353,23 @@
       ctx.restore();
       return;
     }
+    if (state.tool === 'neon') {
+      const col = currentColor();
+      ctx.save();
+      ctx.shadowColor = col;
+      ctx.shadowBlur = Math.max(8, state.size);
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(x, y, state.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath();
+      ctx.arc(x, y, Math.max(1, state.size * 0.18), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
     ctx.fillStyle = currentColor();
     ctx.beginPath();
     ctx.arc(x, y, state.size / 2, 0, Math.PI * 2);
@@ -291,6 +382,26 @@
       ctx.globalCompositeOperation = 'destination-out';
       ctx.lineWidth = state.size * 2;
       ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+    if (state.tool === 'neon') {
+      const col = currentColor();
+      ctx.save();
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.shadowColor = col;
+      ctx.shadowBlur = Math.max(8, state.size);
+      ctx.strokeStyle = col;
+      ctx.lineWidth = state.size;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = Math.max(1, state.size * 0.35);
       ctx.beginPath();
       ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
       ctx.stroke();
@@ -351,6 +462,73 @@
     }
     requestAnimationFrame(animateSparkles);
   }
+
+  let audioCtx = null;
+  function fanfare() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((f, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'triangle';
+        o.frequency.value = f;
+        const t = audioCtx.currentTime + i * 0.13;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.25, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t);
+        o.stop(t + 0.55);
+      });
+    } catch (err) { /* 音が出なくても続行 */ }
+  }
+
+  function drawFrame() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (w === 0 || h === 0) return;
+    const bw = Math.max(16, Math.min(w, h) * 0.055);
+    ctx.save();
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#ffd700');
+    grad.addColorStop(0.5, '#fff3b0');
+    grad.addColorStop(1, '#ffb700');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, bw);
+    ctx.fillRect(0, h - bw, w, bw);
+    ctx.fillRect(0, 0, bw, h);
+    ctx.fillRect(w - bw, 0, bw, h);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bw, bw, w - bw * 2, h - bw * 2);
+    ctx.font = Math.floor(bw * 1.1) + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const half = bw / 2;
+    const decos = [
+      [half, half, '🌸'], [w / 2, half, '⭐'], [w - half, half, '🌸'],
+      [half, h / 2, '💖'], [w - half, h / 2, '💖'],
+      [half, h - half, '🌸'], [w / 2, h - half, '⭐'], [w - half, h - half, '🌸'],
+    ];
+    decos.forEach(d => ctx.fillText(d[2], d[0], d[1]));
+    ctx.restore();
+    for (let i = 0; i < 30; i++) {
+      const onTop = Math.random() < 0.5;
+      addSparkle(Math.random() * w, onTop ? Math.random() * bw * 2 : h - Math.random() * bw * 2);
+    }
+  }
+
+  const banner = document.getElementById('celebrate-banner');
+  let bannerTimer = null;
+  document.getElementById('done-btn').addEventListener('click', () => {
+    drawFrame();
+    fanfare();
+    banner.classList.add('show');
+    if (bannerTimer) clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => banner.classList.remove('show'), 2200);
+  });
 
   function onDown(e) {
     e.preventDefault();

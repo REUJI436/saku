@@ -520,6 +520,27 @@
     o.connect(g).connect(audioCtx.destination);
     o.start(now); o.stop(now + 1.0);
   }
+  // アイテム取得音（コイン風の明るいアルペジオ）
+  function sfxItem() {
+    beep(880, 0.07, 'triangle', 0.12);
+    setTimeout(() => beep(1320, 0.1, 'triangle', 0.12), 70);
+  }
+  // バリア取得音（キラーン）
+  function sfxShieldGet() {
+    beep(520, 0.1, 'sine', 0.14);
+    setTimeout(() => beep(780, 0.12, 'sine', 0.12), 90);
+    setTimeout(() => beep(1040, 0.16, 'sine', 0.1), 180);
+  }
+  // バリアが攻撃を防いだ音（パリーン）
+  function sfxShieldBreak() {
+    beep(700, 0.06, 'square', 0.14);
+    setTimeout(() => beep(350, 0.12, 'sawtooth', 0.12), 50);
+    setTimeout(() => beep(160, 0.18, 'sawtooth', 0.08), 110);
+  }
+  // コンボ祝福音（ファンファーレ風）
+  function sfxCombo() {
+    [660, 880, 1100].forEach((f, i) => setTimeout(() => beep(f, 0.08, 'square', 0.1), i * 60));
+  }
 
   // ====== キャラクター定義 ======
   const CHARACTERS = [
@@ -898,6 +919,7 @@
     transform: 0,  // 0: ノーマル, 1: 界王拳, 2: SSJ, 3: SSJ2, 4: SSJ3, 5: SSJ4
     power: 0,
     kiGauge: 0, kiGaugeMax: 100,  // 必殺技ゲージ
+    shieldTimer: 0,  // バリア残り時間（フレーム）
     ultActive: null,  // { timer } ... かめはめ波発動中
     kills: 0,
     charId: 'saku',
@@ -924,6 +946,7 @@
     player.shotCD = 0; player.invuln = 0;
     player.transform = 0; player.power = 0; player.kills = 0;
     player.kiGauge = 0; player.ultActive = null;
+    player.shieldTimer = 0;
     player.anim = 0;
     player.gogetaForm = false;
   }
@@ -936,6 +959,7 @@
   let companions = [];
   let boss = null;
   let popups = [];
+  let items = [];  // パワーアップアイテム（💖回復・⚡気・🛡️バリア）
   let banner = null;
   let bannerSub = null;  // サブバナー（フレーバーテキスト）
   let comboCount = 0, comboMax = 0, comboTimer = 0;
@@ -978,6 +1002,106 @@
 
   function addPopup(x, y, text, color) {
     popups.push({ x, y, text, color: color || '#fff', life: 40, maxLife: 40 });
+  }
+
+  // ====== パワーアップアイテム ======
+  const MAX_ITEMS = 8;
+  function maybeDropItem(x, y, isElite) {
+    if (items.length >= MAX_ITEMS) return;
+    const r = Math.random();
+    let type = null;
+    if (isElite) {
+      // エリート・ゴーレムは確定ドロップ（ごほうび）
+      type = r < 0.4 ? 'heart' : (r < 0.75 ? 'ki' : 'shield');
+    } else {
+      if (r < 0.035) type = 'heart';
+      else if (r < 0.075) type = 'ki';
+      else if (r < 0.095) type = 'shield';
+    }
+    if (!type) return;
+    items.push({ x, y, vy: 1.1, type, life: 600, anim: Math.random() * Math.PI * 2 });
+  }
+
+  function collectItem(it) {
+    if (it.type === 'heart') {
+      player.hp = Math.min(player.maxHp, player.hp + 2);
+      addPopup(player.x, player.y - 28, 'HP かいふく！', '#ff90c0');
+      sfxItem();
+      for (let i = 0; i < 10; i++) {
+        spawnParticle(player.x, player.y, {
+          vx: (Math.random() - 0.5) * 4, vy: -1 - Math.random() * 3,
+          life: 30, color: '#ff90c0', size: 2.5,
+        });
+      }
+    } else if (it.type === 'ki') {
+      player.kiGauge = Math.min(player.kiGaugeMax, player.kiGauge + 35);
+      addPopup(player.x, player.y - 28, '気 チャージ！', '#80d0ff');
+      sfxItem();
+      for (let i = 0; i < 10; i++) {
+        spawnParticle(player.x, player.y, {
+          vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4,
+          life: 30, color: '#80d0ff', size: 2.5,
+        });
+      }
+    } else {
+      player.shieldTimer = 600;  // 10秒バリア
+      addPopup(player.x, player.y - 28, 'バリア はつどう！', '#80ffe0');
+      sfxShieldGet();
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        spawnParticle(player.x, player.y, {
+          vx: Math.cos(a) * 2.5, vy: Math.sin(a) * 2.5,
+          life: 35, color: '#80ffe0', size: 2.5,
+        });
+      }
+    }
+  }
+
+  function updateItems() {
+    for (const it of items) {
+      it.anim += 0.1;
+      const dx = player.x - it.x, dy = player.y - it.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 0 && d < 110) {
+        // 近づくと吸い寄せられる（マグネット）
+        it.x += (dx / d) * 3.5;
+        it.y += (dy / d) * 3.5;
+      } else {
+        it.y += it.vy;
+        it.x += Math.sin(it.anim) * 0.5;
+      }
+      it.life--;
+      if (it.y > H + 30) it.life = 0;
+      if (d < player.r + 16 && it.life > 0) {
+        collectItem(it);
+        it.life = 0;
+      }
+    }
+    items = items.filter(i => i.life > 0);
+  }
+
+  const ITEM_EMOJI = { heart: '💖', ki: '⚡', shield: '🛡️' };
+  const ITEM_GLOW = {
+    heart: 'rgba(255,120,180,0.35)',
+    ki: 'rgba(80,180,255,0.35)',
+    shield: 'rgba(100,255,220,0.35)',
+  };
+  function drawItems() {
+    for (const it of items) {
+      const bob = Math.sin(it.anim * 2) * 3;
+      ctx.save();
+      // 消える直前は点滅
+      if (it.life < 120) ctx.globalAlpha = (Math.floor(it.life / 8) % 2 === 0) ? 0.35 : 1;
+      ctx.fillStyle = ITEM_GLOW[it.type];
+      ctx.beginPath();
+      ctx.arc(it.x, it.y + bob, 16 + Math.sin(it.anim * 3) * 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ITEM_EMOJI[it.type], it.x, it.y + bob);
+      ctx.restore();
+    }
   }
 
   // ====== 敵 ======
@@ -1106,7 +1230,7 @@
 
   function startStage() {
     const stg = STAGES_CONFIG[currentStageIdx];
-    enemies = []; projectiles = []; enemyProjectiles = []; particles = []; popups = [];
+    enemies = []; projectiles = []; enemyProjectiles = []; particles = []; popups = []; items = [];
     companions = spawnCompanions(stg.companions);
     // ゴジータ形態はステージ毎にリセット（ブロとーと戦で再発動）
     player.gogetaForm = false;
@@ -1343,6 +1467,7 @@
   // ====== プレイヤー更新 ======
   function updatePlayer() {
     if (player.invuln > 0) player.invuln--;
+    if (player.shieldTimer > 0) player.shieldTimer--;
     player.anim += 0.2;
 
     // 移動
@@ -1471,6 +1596,22 @@
   function damagePlayer(dmg) {
     if (player.invuln > 0) return;
     if (player.ultActive) return;  // かめはめ波発動中は無敵
+    // バリア中：1回だけダメージを完全に防ぐ
+    if (player.shieldTimer > 0) {
+      player.shieldTimer = 0;
+      player.invuln = 60;
+      addShake(8);
+      sfxShieldBreak();
+      addPopup(player.x, player.y - 30, 'バリアで ふせいだ！', '#80ffe0');
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        spawnParticle(player.x, player.y, {
+          vx: Math.cos(a) * 4, vy: Math.sin(a) * 4,
+          life: 28, color: '#80ffe0', size: 3,
+        });
+      }
+      return;
+    }
     player.hp -= dmg;
     player.invuln = 90;  // 無敵時間（60→90）
     addShake(10);
@@ -1787,6 +1928,14 @@
             totalScore += e.score;
             gainPower(e.score / 200);
             sfxExplode();
+            maybeDropItem(e.x, e.y, e.elite);
+            // コンボ節目（10ごと）のお祝い：気ボーナス＋ファンファーレ
+            if (comboCount >= 10 && comboCount % 10 === 0) {
+              addPopup(e.x, e.y - 22, comboCount + ' COMBO！すごい！', '#ffee40');
+              player.kiGauge = Math.min(player.kiGaugeMax, player.kiGauge + 8);
+              sfxCombo();
+              addShake(5);
+            }
           }
           if (!pierce) break;
         }
@@ -3319,6 +3468,7 @@
     drawEnemyProjectiles();
     drawEnemies();
     if (boss) drawBoss();
+    drawItems();
     drawCompanions();
     drawPlayer();
     drawProjectiles();
@@ -3472,6 +3622,26 @@
 
     drawCharInBattle(player, x, y, t);
     ctx.restore();
+
+    // バリア（シャボン玉風の膜。残り2秒は点滅して警告）
+    if (player.shieldTimer > 0) {
+      ctx.save();
+      const blink = player.shieldTimer < 120 && Math.floor(player.shieldTimer / 6) % 2 === 0;
+      const shieldR = 30 + Math.sin(player.anim * 0.6) * 2;
+      ctx.globalAlpha = blink ? 0.15 : 0.5;
+      ctx.strokeStyle = '#80ffe0';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y, shieldR, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = blink ? 0.05 : 0.14;
+      ctx.fillStyle = '#80ffe0';
+      ctx.beginPath(); ctx.arc(x, y, shieldR, 0, Math.PI * 2); ctx.fill();
+      // ハイライト（左上のツヤ）
+      ctx.globalAlpha = blink ? 0.1 : 0.4;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x - 6, y - 8, shieldR * 0.55, Math.PI * 1.1, Math.PI * 1.6); ctx.stroke();
+      ctx.restore();
+    }
 
     // かめはめ波ビーム（本体の後に上書き描画）
     if (player.ultActive && player.ultActive.phase === 'fire') {
@@ -5531,6 +5701,7 @@
       updatePlayer();
       updateCompanions();
       updateEnemies();
+      updateItems();
       updateProjectiles();
       updateEnemyProjectiles();
       updateBoss();

@@ -471,6 +471,12 @@
     const itemX = 30 + Math.floor(rand() * (width - 80));
     const itemY = randRange(8, 11);
     if (lvl[itemY][itemX] === ' ') lvl[itemY][itemX] = rand() < 0.5 ? 'S' : 'K';
+    // パワーアップ（とうがらし=スピード / はね=ジャンプ強化）も時々配置
+    if (rand() < 0.6) {
+      const puX = 30 + Math.floor(rand() * (width - 80));
+      const puY = randRange(7, 11);
+      if (lvl[puY][puX] === ' ') lvl[puY][puX] = rand() < 0.5 ? 'R' : 'J';
+    }
     // パイプ（稀に）
     if (rand() < 0.4) {
       const px = 50 + Math.floor(rand() * (width - 120));
@@ -568,6 +574,7 @@
     vx: 0, vy: 0, onGround: false, facing: 1,
     running: false, anim: 0,
     invuln: 0, starTimer: 0, swordTimer: 0, ultraStarTimer: 0,
+    pepperTimer: 0, wingTimer: 0,
     dead: false, jumpHeld: false,
     hp: 8, maxHp: 8,
     ultGauge: 0, maxUlt: 100,
@@ -800,6 +807,28 @@
       });
     }
   }
+  function spawnFirework() {
+    // クリア時の打ち上げ花火（カメラ内の空にランダム着弾）
+    const fx = cameraX + 60 + Math.random() * (W - 120);
+    const fy = 40 + Math.random() * 130;
+    const hue = Math.floor(Math.random() * 360);
+    const n = 28;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      const sp = 2 + Math.random() * 3.5;
+      particles.push({
+        x: fx, y: fy,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 45 + Math.random() * 25, maxLife: 70,
+        color: `hsl(${(hue + (i % 2) * 45) % 360},100%,${60 + Math.random() * 20}%)`,
+        size: 2.5, gravity: 0.06,
+      });
+    }
+    // ドーン＋キラ音
+    beep(140 + Math.random() * 80, 0.2, 'triangle', 0.16);
+    setTimeout(() => beep(900 + Math.random() * 600, 0.1, 'square', 0.06), 130);
+  }
   function updateParticles() {
     // パーティクル数上限（パフォーマンス保護）
     if (particles.length > 300) particles.splice(0, particles.length - 300);
@@ -909,6 +938,8 @@
             break;
           case 'S': items.push({ x: px + TILE/2, y: py + TILE/2, type: 'star', vy: 0, anim: 0, taken: false }); break;
           case 'K': items.push({ x: px + TILE/2, y: py + TILE/2, type: 'sword', vy: 0, anim: 0, taken: false }); break;
+          case 'R': items.push({ x: px + TILE/2, y: py + TILE/2, type: 'pepper', vy: 0, anim: 0, taken: false }); break;
+          case 'J': items.push({ x: px + TILE/2, y: py + TILE/2, type: 'wing', vy: 0, anim: 0, taken: false }); break;
           case 'Y':
             // チェックポイント（Y）: 地上から1段上に配置
             stageCheckpoint = { x: px + TILE/2, y: py, activated: false };
@@ -963,6 +994,7 @@
     saku.dead = false;
     saku.invuln = 60;
     saku.starTimer = 0; saku.swordTimer = 0; saku.ultraStarTimer = 0;
+    saku.pepperTimer = 0; saku.wingTimer = 0;
     saku.hp = saku.maxHp;
     cameraX = Math.max(0, saku.x - W/2 + saku.w/2);
     stageEl.textContent = stage.label;
@@ -992,6 +1024,10 @@
     }
     keys[e.code] = true;
     if (state === 'stageSelect') {
+      if (e.code === 'Escape' || e.code === 'Backspace') { state = 'title'; e.preventDefault(); return; }
+      return;
+    }
+    if (state === 'skinSelect') {
       if (e.code === 'Escape' || e.code === 'Backspace') { state = 'title'; e.preventDefault(); return; }
       return;
     }
@@ -1137,6 +1173,10 @@
       e.preventDefault();
       const t = e.touches[0];
       stageSelectTapAt(t.clientX, t.clientY);
+    } else if (state === 'skinSelect') {
+      e.preventDefault();
+      const t = e.touches[0];
+      skinSelectTapAt(t.clientX, t.clientY);
     } else if (state === 'cutscene') {
       e.preventDefault();
       advanceCutscene();
@@ -1148,6 +1188,7 @@
   canvas.addEventListener('click', e => {
     if (state === 'title') titleTapAt(e.clientX, e.clientY);
     else if (state === 'stageSelect') stageSelectTapAt(e.clientX, e.clientY);
+    else if (state === 'skinSelect') skinSelectTapAt(e.clientX, e.clientY);
     else if (state === 'cutscene') advanceCutscene();
     else if (state === 'tutorial') dismissUltTutorial();
   });
@@ -1191,6 +1232,16 @@
     beep(800, 0.08, 'sawtooth', 0.15);
     setTimeout(() => beep(1200, 0.12, 'sawtooth', 0.15), 80);
     setTimeout(() => beep(1600, 0.18, 'triangle', 0.12), 170);
+  }
+  function sfxPepper() {
+    beep(300, 0.07, 'square', 0.12);
+    setTimeout(() => beep(500, 0.07, 'square', 0.12), 60);
+    setTimeout(() => beep(800, 0.14, 'square', 0.12), 120);
+  }
+  function sfxWing() {
+    beep(660, 0.08, 'triangle', 0.12);
+    setTimeout(() => beep(880, 0.08, 'triangle', 0.12), 70);
+    setTimeout(() => beep(1175, 0.16, 'triangle', 0.12), 140);
   }
   function sfxRoar2() { beep(80, 0.4, 'sawtooth', 0.2); }
   function sfxBossRoar() {
@@ -1362,10 +1413,14 @@
     }
     if (state === 'cleared') {
       stateTimer++;
+      updateParticles();  // 紙吹雪を舞わせ続ける
+      // ごほうび打ち上げ花火
+      if (stateTimer % 28 === 10 && stateTimer <= 160) spawnFirework();
       return;
     }
     if (state === 'stageTransition') {
       stateTimer++;
+      updateParticles();
       if (stateTimer > 140) {
         // 10-5 クリア直後はダークコース・プロローグを挟む（currentStage を進めずにカットシーン開始）
         if (currentStage === NORMAL_COURSE_LAST) {
@@ -1560,6 +1615,9 @@
       gravity = 0.4;
       jumpVy = run ? -14.5 : -13.5;
     }
+    // パワーアップ補正（とうがらし＝スピード / はね＝ジャンプ強化）
+    if (saku.pepperTimer > 0) { maxWalk *= 1.5; walkAccel *= 1.5; }
+    if (saku.wingTimer > 0) jumpVy *= 1.22;
 
     if (left && !right) {
       saku.vx -= walkAccel;
@@ -1621,6 +1679,28 @@
         size: 2, gravity: 0,
       });
     }
+    // とうがらし効果中：走ると炎の軌跡
+    if (saku.pepperTimer > 0 && Math.abs(saku.vx) > 2 && Math.random() < 0.35) {
+      particles.push({
+        x: saku.x + saku.w/2 - saku.facing * 8,
+        y: saku.y + saku.h - 8 + Math.random() * 6,
+        vx: -saku.vx * 0.15, vy: -Math.random() * 0.8,
+        life: 20, maxLife: 20,
+        color: ['#ff8020', '#ffcc40', '#ff4020'][Math.floor(Math.random() * 3)],
+        size: 2.5, gravity: -0.02,
+      });
+    }
+    // はね効果中：空中でキラキラの羽
+    if (saku.wingTimer > 0 && !saku.onGround && Math.random() < 0.3) {
+      particles.push({
+        x: saku.x + saku.w/2 + (Math.random() - 0.5) * 16,
+        y: saku.y + 8 + Math.random() * 12,
+        vx: (Math.random() - 0.5) * 0.6, vy: 0.5,
+        life: 25, maxLife: 25,
+        color: 'rgba(180,240,255,0.9)',
+        size: 2, gravity: 0,
+      });
+    }
 
     // パーティクル更新
     updateParticles();
@@ -1669,6 +1749,7 @@
         coinEl.textContent = coinCount;
         scoreEl.textContent = score.toLocaleString();
         addUlt(isRainbow ? 15 : 5);
+        addTotalSushi(isRainbow ? 3 : 1);  // きせかえ解放用の累計（虹寿司は3貫ぶん）
         sfxCoin();
         if (isRainbow) {
           // 虹寿司エフェクト
@@ -1869,6 +1950,32 @@
               size: 2.5, gravity: 0.1,
             });
           }
+        } else if (item.type === 'pepper') {
+          saku.pepperTimer = 720; score += 300; sfxPepper();
+          ultPopups.push({ x: item.x, y: item.y - 10, text: '🌶 スピードアップ！', life: 70, maxLife: 70, color: '#ff8040' });
+          for (let i = 0; i < 14; i++) {
+            const a = (i / 14) * Math.PI * 2;
+            particles.push({
+              x: item.x, y: item.y,
+              vx: Math.cos(a) * 3.5, vy: Math.sin(a) * 3.5 - 1,
+              life: 35, maxLife: 35,
+              color: ['#ff6020', '#ffcc40'][i % 2],
+              size: 2.5, gravity: 0.1,
+            });
+          }
+        } else if (item.type === 'wing') {
+          saku.wingTimer = 720; score += 300; sfxWing();
+          ultPopups.push({ x: item.x, y: item.y - 10, text: '🪽 ジャンプきょうか！', life: 70, maxLife: 70, color: '#80e0ff' });
+          for (let i = 0; i < 14; i++) {
+            const a = (i / 14) * Math.PI * 2;
+            particles.push({
+              x: item.x, y: item.y,
+              vx: Math.cos(a) * 3.5, vy: Math.sin(a) * 3.5 - 1,
+              life: 35, maxLife: 35,
+              color: ['#a0e8ff', '#ffffff'][i % 2],
+              size: 2.5, gravity: 0.05,
+            });
+          }
         }
         scoreEl.textContent = score.toLocaleString();
       }
@@ -1876,6 +1983,8 @@
     if (saku.starTimer > 0) saku.starTimer--;
     if (saku.swordTimer > 0) saku.swordTimer--;
     if (saku.ultraStarTimer > 0) saku.ultraStarTimer--;
+    if (saku.pepperTimer > 0) saku.pepperTimer--;
+    if (saku.wingTimer > 0) saku.wingTimer--;
 
     // チェックポイント通過判定
     if (stageCheckpoint && !stageCheckpoint.activated && saku.x + saku.w/2 >= stageCheckpoint.x) {
@@ -3011,6 +3120,10 @@
       stageSelectPage = 0;
       return;
     }
+    if (choice === 'きせかえ') {
+      state = 'skinSelect';
+      return;
+    }
     const fromSave = (choice === 'つづきから');
     startGame(fromSave);
   }
@@ -3589,7 +3702,83 @@
       if (item.type === 'star') drawStarItem(x, y, item.anim);
       else if (item.type === 'ultraStar') drawUltraStarItem(x, y, item.anim);
       else if (item.type === 'sword') drawSwordItem(x, y, item.anim);
+      else if (item.type === 'pepper') drawPepperItem(x, y, item.anim);
+      else if (item.type === 'wing') drawWingItem(x, y, item.anim);
     }
+  }
+  // とうがらし（スピードアップ）
+  function drawPepperItem(cx, cy, anim) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    // オレンジの光
+    const bg = ctx.createRadialGradient(0, 0, 1, 0, 0, 14);
+    bg.addColorStop(0, 'rgba(255,160,60,0.8)');
+    bg.addColorStop(0.6, 'rgba(255,90,20,0.35)');
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI*2); ctx.fill();
+    ctx.rotate(Math.sin(anim) * 0.15 + 0.5);
+    // 実（赤い曲がった本体）
+    const pg = ctx.createLinearGradient(-6, -8, 6, 8);
+    pg.addColorStop(0, '#ff7050');
+    pg.addColorStop(0.5, '#e82818');
+    pg.addColorStop(1, '#a01008');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.quadraticCurveTo(7, -6, 6, 2);
+    ctx.quadraticCurveTo(5, 9, -1, 11);
+    ctx.quadraticCurveTo(1, 6, -1, 1);
+    ctx.quadraticCurveTo(-3, -5, 0, -8);
+    ctx.closePath(); ctx.fill();
+    // ハイライト
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath(); ctx.ellipse(3, -3, 1.5, 3.5, 0.4, 0, Math.PI*2); ctx.fill();
+    // ヘタ（緑）
+    ctx.fillStyle = '#38a038';
+    ctx.beginPath();
+    ctx.moveTo(-2, -8); ctx.lineTo(3, -9); ctx.lineTo(0, -6);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#207020'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, -8); ctx.quadraticCurveTo(-2, -11, -4, -12); ctx.stroke();
+    ctx.restore();
+  }
+  // はね（ジャンプ強化）
+  function drawWingItem(cx, cy, anim) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    // 水色の光
+    const bg = ctx.createRadialGradient(0, 0, 1, 0, 0, 14);
+    bg.addColorStop(0, 'rgba(180,240,255,0.85)');
+    bg.addColorStop(0.6, 'rgba(90,190,255,0.35)');
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI*2); ctx.fill();
+    // ぱたぱた羽ばたき
+    const flap = Math.sin(anim * 3) * 0.35;
+    for (const dir of [-1, 1]) {
+      ctx.save();
+      ctx.scale(dir, 1);
+      ctx.rotate(-flap);
+      const wg = ctx.createLinearGradient(0, -8, 12, 4);
+      wg.addColorStop(0, '#ffffff');
+      wg.addColorStop(1, '#a8d8f8');
+      ctx.fillStyle = wg;
+      ctx.beginPath();
+      ctx.moveTo(1, 2);
+      ctx.quadraticCurveTo(6, -10, 13, -8);
+      ctx.quadraticCurveTo(11, -3, 8, 0);
+      ctx.quadraticCurveTo(11, 0, 12, 1);
+      ctx.quadraticCurveTo(8, 5, 1, 4);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#70a8d0'; ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.restore();
+    }
+    // 中央のキラリ
+    ctx.fillStyle = '#fff2a0';
+    ctx.beginPath(); ctx.arc(0, 2, 2.5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#e0b840'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
   }
   function drawStarShape(size) {
     ctx.beginPath();
@@ -5039,10 +5228,18 @@
     ctx.fillRect(backX, y + 10 + bob, 8, 15);
     ctx.fillStyle = '#333340';  // ハイライト
     ctx.fillRect(backX + 1, y + 11 + bob, 2, 13);
-    // 体（白シャツ）
-    ctx.fillStyle = '#fff';
+    // 体（シャツ：きせかえ対応）
+    const skin = getCurrentSkin();
+    let shirtCol = skin.shirt, tieCol = skin.tie, pantsCol = skin.pants;
+    if (skin.rainbow) {
+      const rHue = (Date.now() * 0.15) % 360;
+      shirtCol = `hsl(${rHue},90%,72%)`;
+      tieCol = `hsl(${(rHue + 120) % 360},90%,55%)`;
+      pantsCol = `hsl(${(rHue + 240) % 360},70%,35%)`;
+    }
+    ctx.fillStyle = shirtCol;
     ctx.fillRect(cx - 7, y + 12 + bob, 14, 13);
-    ctx.fillStyle = '#3a6fb0';
+    ctx.fillStyle = tieCol;
     ctx.beginPath();
     ctx.moveTo(cx - 3, y + 12 + bob); ctx.lineTo(cx, y + 15 + bob); ctx.lineTo(cx + 3, y + 12 + bob);
     ctx.closePath(); ctx.fill();
@@ -5088,8 +5285,8 @@
     if (jumping) { ctx.arc(cx, headY + 7, 1.5, 0, Math.PI*2); }
     else { ctx.moveTo(cx - 2, headY + 7); ctx.quadraticCurveTo(cx, headY + 8.5, cx + 2, headY + 7); }
     ctx.stroke();
-    // 短パン
-    ctx.fillStyle = '#2a2a38';
+    // 短パン（きせかえ対応）
+    ctx.fillStyle = pantsCol;
     ctx.fillRect(cx - 6, y + 22 + bob, 12, 4);
     // スターのオーバーレイ
     if (saku.starTimer > 0) {
@@ -5315,6 +5512,43 @@
   function markTrueCleared() {
     try { localStorage.setItem('saku_true_cleared', '1'); } catch(e) {}
   }
+
+  // ====== きせかえ（スキン）システム ======
+  // あつめたおすし累計（saku_total_sushi）で新しい服が解放される
+  const SKINS = [
+    { id: 'white',   name: 'いつもの',     shirt: '#ffffff', tie: '#3a6fb0', pants: '#2a2a38', need: 0 },
+    { id: 'red',     name: 'あかヒーロー', shirt: '#ff5858', tie: '#ffee40', pants: '#8a2020', need: 100 },
+    { id: 'blue',    name: 'あおニンジャ', shirt: '#4898ff', tie: '#183a70', pants: '#102850', need: 300 },
+    { id: 'green',   name: 'もりのゆうしゃ', shirt: '#48c868', tie: '#186830', pants: '#1a4828', need: 600 },
+    { id: 'gold',    name: 'きんピカ',     shirt: '#ffd848', tie: '#c05010', pants: '#907010', need: 1000 },
+    { id: 'rainbow', name: 'にじいろ',     shirt: '#ff80c0', tie: '#8040ff', pants: '#404080', rainbow: true, need: 2000 },
+  ];
+  let totalSushi = (() => {
+    try { return parseInt(localStorage.getItem('saku_total_sushi') || '0', 10) || 0; } catch(e) { return 0; }
+  })();
+  let currentSkinId = (() => {
+    try { return localStorage.getItem('saku_skin') || 'white'; } catch(e) { return 'white'; }
+  })();
+  function addTotalSushi(n) {
+    const before = totalSushi;
+    totalSushi += n;
+    try { localStorage.setItem('saku_total_sushi', String(totalSushi)); } catch(e) {}
+    // 新スキン解放の瞬間にバナー
+    for (const sk of SKINS) {
+      if (sk.need > 0 && before < sk.need && totalSushi >= sk.need) {
+        ultBanner = { name: '👕 きせかえ「' + sk.name + '」かいほう！', timer: 150, maxTimer: 150 };
+        sfxRescue();
+      }
+    }
+  }
+  function getCurrentSkin() {
+    const sk = SKINS.find(s => s.id === currentSkinId);
+    return (sk && totalSushi >= sk.need) ? sk : SKINS[0];
+  }
+  function setSkin(id) {
+    currentSkinId = id;
+    try { localStorage.setItem('saku_skin', id); } catch(e) {}
+  }
   // ステージ選択画面の状態
   let stageSelectPage = 0;  // 0=通常コース, 1=ダークコース
   let stageSelectButtons = [];
@@ -5435,6 +5669,144 @@
     ctx.restore();
   }
 
+  // ====== きせかえ選択画面 ======
+  let skinSelectButtons = [];
+  let skinSelectBackBtn = null;
+  function drawSkinSelect() {
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#1a0830');
+    bg.addColorStop(1, '#301050');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+    // 星背景
+    for (let i = 0; i < 60; i++) {
+      const x = (i * 173) % W;
+      const y = (i * 89 + 31) % H;
+      ctx.fillStyle = `rgba(255,255,255,${0.15 + (i % 3) * 0.15})`;
+      const s = i % 3 === 0 ? 2 : 1;
+      ctx.fillRect(x, y, s, s);
+    }
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 28px "Hiragino Maru Gothic ProN", sans-serif';
+    ctx.lineWidth = 5; ctx.strokeStyle = '#000';
+    ctx.strokeText('👕 きせかえ', W/2, 34);
+    ctx.fillStyle = '#ffee60';
+    ctx.fillText('👕 きせかえ', W/2, 34);
+    // 累計おすし
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = '#ffcc80';
+    ctx.fillText('あつめたおすし：🍣 ' + totalSushi + ' 貫', W/2, 64);
+    // 戻るボタン
+    const bx = 50, by = 30, bw2 = 70, bh2 = 30;
+    ctx.fillStyle = 'rgba(80,40,40,0.9)';
+    ctx.fillRect(bx - bw2/2, by - bh2/2, bw2, bh2);
+    ctx.strokeStyle = '#c08080'; ctx.lineWidth = 2;
+    ctx.strokeRect(bx - bw2/2, by - bh2/2, bw2, bh2);
+    ctx.fillStyle = '#ffccaa';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('← 戻る', bx, by + 5);
+    skinSelectBackBtn = { x: bx - bw2/2, y: by - bh2/2, w: bw2, h: bh2 };
+    // スキンカード（3列×2行）
+    const cols = 3, cardW = 130, cardH = 150, gapX = 18, gapY = 18;
+    const totalWd = cardW * cols + gapX * (cols - 1);
+    const startX = (W - totalWd) / 2;
+    const startY = 88;
+    const curSkin = getCurrentSkin();
+    skinSelectButtons = [];
+    for (let i = 0; i < SKINS.length; i++) {
+      const sk = SKINS[i];
+      const col = i % cols, row = Math.floor(i / cols);
+      const cx0 = startX + col * (cardW + gapX);
+      const cy0 = startY + row * (cardH + gapY);
+      const unlocked = totalSushi >= sk.need;
+      const selected = curSkin.id === sk.id;
+      skinSelectButtons.push({ x: cx0, y: cy0, w: cardW, h: cardH, id: sk.id, unlocked });
+      // カード地
+      ctx.fillStyle = unlocked ? 'rgba(35,25,70,0.92)' : 'rgba(20,20,30,0.92)';
+      ctx.fillRect(cx0, cy0, cardW, cardH);
+      ctx.strokeStyle = selected ? '#ffee40' : (unlocked ? '#8080c0' : '#404050');
+      ctx.lineWidth = selected ? 3 : 1.5;
+      ctx.strokeRect(cx0, cy0, cardW, cardH);
+      const pcx = cx0 + cardW/2, pcy = cy0 + 56;
+      if (unlocked) {
+        // ミニさくプレビュー
+        let shirtCol = sk.shirt, pantsCol2 = sk.pants;
+        if (sk.rainbow) {
+          const rHue = (Date.now() * 0.15) % 360;
+          shirtCol = `hsl(${rHue},90%,72%)`;
+          pantsCol2 = `hsl(${(rHue + 240) % 360},70%,35%)`;
+        }
+        ctx.fillStyle = shirtCol;
+        ctx.fillRect(pcx - 11, pcy - 2, 22, 18);
+        ctx.fillStyle = pantsCol2;
+        ctx.fillRect(pcx - 10, pcy + 14, 20, 7);
+        // 顔
+        ctx.fillStyle = '#f2c8a2';
+        ctx.beginPath(); ctx.arc(pcx, pcy - 14, 12, 0, Math.PI*2); ctx.fill();
+        // 髪
+        ctx.fillStyle = '#1a1410';
+        ctx.beginPath(); ctx.arc(pcx, pcy - 17, 11, Math.PI, 2*Math.PI); ctx.fill();
+        // 目と口
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(pcx - 4, pcy - 12, 1.6, 0, Math.PI*2);
+        ctx.arc(pcx + 4, pcy - 12, 1.6, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#6a3020'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pcx - 2, pcy - 7);
+        ctx.quadraticCurveTo(pcx, pcy - 5.5, pcx + 2, pcy - 7);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#555';
+        ctx.font = 'bold 34px sans-serif';
+        ctx.fillText('🔒', pcx, pcy);
+      }
+      // 名前
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillStyle = unlocked ? '#fff' : '#888';
+      ctx.fillText(sk.name, pcx, cy0 + cardH - 38);
+      // 状態
+      ctx.font = 'bold 11px sans-serif';
+      if (selected) {
+        ctx.fillStyle = '#ffee40';
+        ctx.fillText('★ そうび中 ★', pcx, cy0 + cardH - 18);
+      } else if (unlocked) {
+        ctx.fillStyle = '#a0e0a0';
+        ctx.fillText('タップでそうび', pcx, cy0 + cardH - 18);
+      } else {
+        ctx.fillStyle = '#ffcc80';
+        ctx.fillText('🍣 ' + sk.need + ' 貫でかいほう', pcx, cy0 + cardH - 18);
+      }
+    }
+    // 操作説明
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillStyle = '#aaaaaa';
+    ctx.fillText('おすしをあつめて、あたらしいふくをゲット！', W/2, H - 12);
+    ctx.restore();
+  }
+  function skinSelectTapAt(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = (clientX - rect.left) * (W / rect.width);
+    const sy = (clientY - rect.top) * (H / rect.height);
+    const inBtn = (b) => b && sx > b.x && sx < b.x + b.w && sy > b.y && sy < b.y + b.h;
+    if (inBtn(skinSelectBackBtn)) { state = 'title'; beep(440, 0.08, 'square', 0.1); return; }
+    for (const b of skinSelectButtons) {
+      if (inBtn(b)) {
+        if (b.unlocked) {
+          setSkin(b.id);
+          beep(880, 0.08, 'square', 0.14);
+          setTimeout(() => beep(1319, 0.1, 'square', 0.1), 70);
+        } else {
+          beep(200, 0.15, 'sawtooth', 0.12);
+        }
+        return;
+      }
+    }
+  }
+
   function startFromWorld(worldIdx) {
     ensureAudio();
     // 該当ワールドの最初のステージを探す
@@ -5487,6 +5859,7 @@
     const items = ['はじめから', 'つづきから'];
     if (hasNormalCleared()) items.push('ダークコース');
     if (hasAnyStageSelectUnlock()) items.push('ステージ選択');
+    items.push('きせかえ');
     return items;
   }
 
@@ -7339,6 +7712,8 @@
         drawTitle();
       } else if (state === 'stageSelect') {
         drawStageSelect();
+      } else if (state === 'skinSelect') {
+        drawSkinSelect();
       } else if (state === 'cutscene') {
         update();
         drawCutscene();

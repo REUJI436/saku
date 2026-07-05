@@ -179,6 +179,27 @@
   }
   #drag-hint.fade { opacity: 0; }
 
+  /* ===== 🍀 きょうのラッキージュエル バナー ===== */
+  #lucky-banner {
+    display: flex; align-items: center; gap: 8px;
+    margin: 6px 8px 0; padding: 4px 10px;
+    background: linear-gradient(90deg, #fff8d0, #ffe6f5, #d8f4ff);
+    border: 2px solid #ffd040; border-radius: 14px;
+    font-size: 12px; color: #8a5a00; font-weight: bold;
+    flex-shrink: 0; line-height: 1.35;
+    box-shadow: 0 2px 6px rgba(255,200,60,0.35);
+    animation: luckyGlow 2.2s ease-in-out infinite;
+  }
+  #lucky-banner:empty { display: none; }
+  #lucky-banner .lucky-art { width: 34px; height: 34px; flex-shrink: 0; }
+  #lucky-banner .lucky-art svg { width: 100%; height: 100%; display: block; }
+  #lucky-banner b { color: #d63384; }
+  #lucky-banner small { color: #996f10; font-weight: normal; font-size: 10px; }
+  @keyframes luckyGlow {
+    0%, 100% { box-shadow: 0 2px 6px rgba(255,200,60,0.35); }
+    50% { box-shadow: 0 2px 14px rgba(255,120,190,0.65); }
+  }
+
   /* ===== Minimap (field overlay) ===== */
   #minimap-wrap {
     position: absolute;
@@ -1718,6 +1739,8 @@
     <span class="stage-name">ぼうけんの <ruby>地図<rt>ちず</rt></ruby></span>
     <span class="coins">💰<span id="stage-coins">0</span></span>
   </div>
+  <!-- 🍀 きょうのラッキージュエル（日替わり） -->
+  <div id="lucky-banner"></div>
   <div id="map-area">
     <div id="map-canvas-wrap">
       <svg id="map-paths" width="1300" height="800" viewBox="0 0 1300 800" preserveAspectRatio="none"></svg>
@@ -2988,6 +3011,8 @@ function applyDemoMode() {
   if (!state.bag) state.bag = {};
   // ロイヤルケース99個（捕獲100%）
   if ((state.bag['case-royal'] || 0) < 99) state.bag['case-royal'] = 99;
+  // 実際に戦闘で使えるのは 'hyperball'（ロイヤルケース）なのでこちらにも入れる
+  if ((state.bag['hyperball'] || 0) < 99) state.bag['hyperball'] = 99;
   // 全ステージ解禁
   if (!Array.isArray(state.cleared)) state.cleared = [];
   for (const s of STAGES) {
@@ -3017,7 +3042,11 @@ let state = {
   // ===== STUDY QUIZ =====
   studyMode: 'youchien',                        // 'youchien' | 'shogakusei' | 'muzukashii'
   studyStats: { correct: 0, wrong: 0, streakBest: 0 },
-  _quizStreak: 0                                // current streak (transient but persisted)
+  _quizStreak: 0,                               // current streak (transient but persisted)
+  // ===== ✨ ずかん・ごほうび・ラッキー（新規追加キー） =====
+  collectedIds: [],        // これまでに あつめた しゅるい（モンスターID）
+  claimedMilestones: [],   // 受け取り済みごほうび（しゅるい数）
+  luckyGreetDate: ''       // ラッキージュエルを最後に お知らせした日
 };
 
 function makeMon(id, lvl) {
@@ -3175,6 +3204,21 @@ function migrateSaveData(data) {
   // モンスターのフィールド補完
   data.party = data.party.map(m => ensureMonsterFields(m)).filter(Boolean);
   data.box = data.box.map(m => ensureMonsterFields(m)).filter(Boolean);
+
+  // ===== ✨ ずかん・ごほうび（新キーのみ追加。既存キーは触らない） =====
+  if (!Array.isArray(data.collectedIds)) data.collectedIds = [];
+  data.collectedIds = data.collectedIds.filter(v => typeof v === 'number');
+  // 既存の手持ち/ボックスから ずかんを補完（旧セーブの引き継ぎ）
+  [data.party, data.box].forEach(list => {
+    list.forEach(m => {
+      if (m && typeof m.id === 'number' && m.id > 0 && !data.collectedIds.includes(m.id)) {
+        data.collectedIds.push(m.id);
+      }
+    });
+  });
+  if (!Array.isArray(data.claimedMilestones)) data.claimedMilestones = [];
+  data.claimedMilestones = data.claimedMilestones.filter(v => typeof v === 'number');
+  if (typeof data.luckyGreetDate !== 'string') data.luckyGreetDate = '';
 
   if (data.version < SAVE_VERSION) data.version = SAVE_VERSION;
   return data;
@@ -3350,6 +3394,244 @@ function updateTitleLastSave() {
     el.style.display = '';
   } else {
     el.style.display = 'none';
+  }
+}
+
+// ===================== ✨ ジュエルずかん & きょうのラッキージュエル =====================
+// 既存セーブ構造は変更せず、新キー collectedIds / claimedMilestones / luckyGreetDate のみ追加。
+// どの関数も失敗してもゲーム進行を壊さないよう try/catch で保護する。
+
+// --- きょうの日付キー（ローカル時刻） ---
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+// ラッキージュエル候補（通常種のベース形態のみ。伝説・進化形は除外）
+const LUCKY_POOL = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28];
+
+// 日付から決定的に「きょうのラッキージュエル」を選ぶ（全員同じ・1日固定）
+function getLuckyJewelId() {
+  const s = todayKey();
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
+  return LUCKY_POOL[h % LUCKY_POOL.length];
+}
+
+// --- ずかん（あつめた しゅるい）の記録 ---
+function regularSpeciesTotal() {
+  return MONSTERS.filter(m => !m.hidden).length;
+}
+function collectedRegularCount() {
+  if (!state || !Array.isArray(state.collectedIds)) return 0;
+  return state.collectedIds.filter(id => {
+    const def = getMonsterDef(id);
+    return def && !def.hidden;
+  }).length;
+}
+function collectedLegendaryCount() {
+  if (!state || !Array.isArray(state.collectedIds)) return 0;
+  return state.collectedIds.filter(id => {
+    const def = getMonsterDef(id);
+    return def && def.hidden;
+  }).length;
+}
+// 新しいしゅるいなら記録して true を返す
+function registerSpecies(id) {
+  try {
+    if (!state || typeof id !== 'number' || id <= 0) return false;
+    if (!getMonsterDef(id)) return false;
+    if (!Array.isArray(state.collectedIds)) state.collectedIds = [];
+    if (state.collectedIds.includes(id)) return false;
+    state.collectedIds.push(id);
+    return true;
+  } catch (e) {
+    console.warn('[registerSpecies]', e);
+    return false;
+  }
+}
+
+// --- コレクション達成ごほうび（しゅるい数のマイルストーン） ---
+const COLLECTION_MILESTONES = [
+  { n: 5,  emoji: '🥉', title: 'ジュエルビギナー',   coins: 300,  items: { ball: 3 } },
+  { n: 10, emoji: '🥈', title: 'ジュエルコレクター', coins: 500,  items: { superball: 3, 'xpcandy-m': 1 } },
+  { n: 15, emoji: '🥇', title: 'ジュエルはかせ',     coins: 800,  items: { hyperball: 2, 'xpcandy-l': 1 } },
+  { n: 20, emoji: '🏆', title: 'ジュエルスター',     coins: 1200, items: { evostone: 1, 'xpcandy-l': 2 } },
+  { n: 25, emoji: '👑', title: 'ジュエルプリンセス', coins: 1500, items: { masterball: 1, 'xpcandy-xl': 1 } },
+  { n: 30, emoji: '🌈', title: 'ジュエルマスター',   coins: 3000, items: { masterball: 2, wondercandy: 1 }, allClear: true }
+];
+function currentCollectionTitle() {
+  if (!state || !Array.isArray(state.claimedMilestones) || state.claimedMilestones.length === 0) return null;
+  let best = null;
+  COLLECTION_MILESTONES.forEach(ms => {
+    if (state.claimedMilestones.includes(ms.n)) best = ms;
+  });
+  return best;
+}
+function nextCollectionMilestone() {
+  const count = collectedRegularCount();
+  return COLLECTION_MILESTONES.find(ms => count < ms.n) || null;
+}
+
+let _milestoneShowing = false;
+function checkCollectionMilestones() {
+  try {
+    if (!state || _milestoneShowing) return;
+    if (!Array.isArray(state.claimedMilestones)) state.claimedMilestones = [];
+    const count = collectedRegularCount();
+    const ms = COLLECTION_MILESTONES.find(m => count >= m.n && !state.claimedMilestones.includes(m.n));
+    if (!ms) return;
+    // ごほうび付与
+    state.claimedMilestones.push(ms.n);
+    state.coins += ms.coins;
+    if (!state.bag) state.bag = {};
+    Object.keys(ms.items || {}).forEach(k => {
+      state.bag[k] = (state.bag[k] || 0) + ms.items[k];
+    });
+    try { saveGame(true); } catch (e) {}
+    // 画面上のコイン表示があれば更新
+    try {
+      ['stage-coins', 'field-coins', 'party-coins', 'shop-coins'].forEach(cid => {
+        const el = document.getElementById(cid);
+        if (el) el.textContent = state.coins;
+      });
+    } catch (e) {}
+    _milestoneShowing = true;
+    try { showMilestoneBanner(ms, count); } catch (e) { console.warn('[milestone banner]', e); }
+    // 複数達成していたら順番に表示
+    setTimeout(() => {
+      _milestoneShowing = false;
+      try { checkCollectionMilestones(); } catch (e) {}
+    }, ms.allClear ? 5000 : 3600);
+  } catch (e) {
+    console.warn('[checkCollectionMilestones]', e);
+    _milestoneShowing = false;
+  }
+}
+
+// --- 発見・ごほうび演出のスタイル（1回だけ注入） ---
+function _ensureCollectionStyles() {
+  if (document.getElementById('collectionFxStyle')) return;
+  const st = document.createElement('style');
+  st.id = 'collectionFxStyle';
+  st.textContent = `
+    @keyframes discBgIn { 0%{opacity:0;} 100%{opacity:1;} }
+    @keyframes discCardIn { 0%{transform:translate(-50%,-50%) scale(0.3);opacity:0;} 55%{transform:translate(-50%,-50%) scale(1.12);opacity:1;} 100%{transform:translate(-50%,-50%) scale(1);opacity:1;} }
+    @keyframes discRainbow { 0%{filter:hue-rotate(0deg);} 100%{filter:hue-rotate(360deg);} }
+    @keyframes discSpark { 0%{transform:translate(-50%,-50%) scale(0.4);opacity:1;} 100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.1);opacity:0;} }
+    @keyframes discArtPop { 0%,100%{transform:scale(1) rotate(-3deg);} 50%{transform:scale(1.08) rotate(3deg);} }
+    @keyframes discConfetti { 0%{transform:translateY(-100vh) rotate(0);} 100%{transform:translateY(110vh) rotate(720deg);} }
+    .disc-art svg { width:100%; height:100%; display:block; }
+  `;
+  document.head.appendChild(st);
+}
+
+// レア発見用のキラキラ・アルペジオ（ファンファーレより軽やか）
+function sfxDiscover() {
+  try {
+    const notes = [523, 659, 784, 1047, 1319, 1568, 2093];
+    notes.forEach((f, i) => setTimeout(() => sfx(f, 0.14, 'triangle', 0.14), i * 90));
+    setTimeout(() => sfx(2637, 0.5, 'sine', 0.12), notes.length * 90);
+  } catch (e) {}
+}
+
+// ✨ はじめてのジュエル発見！フルスクリーン演出（タップ不要・自動で消える）
+function showDiscoveryBanner(id) {
+  const def = getMonsterDef(id);
+  if (!def) return;
+  _ensureCollectionStyles();
+  try { sfxDiscover(); } catch (e) {}
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9750;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,0.55),rgba(255,150,220,0.5));animation:discBgIn 0.25s forwards;';
+  document.body.appendChild(ov);
+  // 虹色スパーク（中央から放射）
+  const sparks = ['🌈', '✨', '💖', '⭐', '💫', '🌟', '🎀', '💎'];
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement('div');
+    const ang = (i / 18) * Math.PI * 2;
+    const dist = 130 + Math.random() * 110;
+    s.textContent = sparks[i % sparks.length];
+    s.style.cssText = 'position:absolute;left:50%;top:50%;font-size:' + (20 + Math.floor(Math.random() * 16)) + 'px;--dx:' + Math.round(Math.cos(ang) * dist) + 'px;--dy:' + Math.round(Math.sin(ang) * dist) + 'px;animation:discSpark ' + (0.9 + Math.random() * 0.7).toFixed(2) + 's ease-out ' + (Math.random() * 0.3).toFixed(2) + 's forwards;opacity:0;';
+    ov.appendChild(s);
+  }
+  const isLegend = !!def.legendary;
+  const card = document.createElement('div');
+  card.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#fff,#ffe0f0);padding:18px 30px 16px;border-radius:22px;border:5px solid ' + (isLegend ? '#ffd040' : '#ff6fa8') + ';box-shadow:0 10px 36px rgba(0,0,0,0.35),0 0 0 7px rgba(255,255,255,0.55);text-align:center;animation:discCardIn 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards;max-width:86vw;';
+  card.innerHTML =
+    '<div style="font-size:17px;font-weight:900;color:#ff30a0;letter-spacing:1px;text-shadow:1px 1px 0 #fff;animation:discRainbow 2.2s linear infinite;">✨ はじめての ジュエル！ ✨</div>'
+    + '<div class="disc-art" style="width:110px;height:110px;margin:8px auto 4px;animation:discArtPop 1.2s ease-in-out infinite;">' + svgMon(id) + '</div>'
+    + '<div style="font-size:20px;font-weight:900;color:#d63384;">' + def.name + '</div>'
+    + (isLegend
+        ? '<div style="font-size:13px;color:#c08820;font-weight:bold;margin-top:6px;">🌟 でんせつの ジュエルだ！！</div>'
+        : '<div style="font-size:13px;color:#7030a0;font-weight:bold;margin-top:6px;">💎 ずかん ' + collectedRegularCount() + ' / ' + regularSpeciesTotal() + ' しゅるい</div>');
+  ov.appendChild(card);
+  setTimeout(() => { ov.style.transition = 'opacity 0.4s'; ov.style.opacity = '0'; }, 2100);
+  setTimeout(() => { try { ov.remove(); } catch (e) {} }, 2550);
+}
+
+// 🏆 コレクション達成ごほうび演出（タップ不要・自動で消える）
+function showMilestoneBanner(ms, count) {
+  _ensureCollectionStyles();
+  try { if (ms.allClear) sfxFanfare(); else sfxDiscover(); } catch (e) {}
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9760;pointer-events:none;background:radial-gradient(circle,rgba(255,230,140,0.55),rgba(255,140,200,0.5));animation:discBgIn 0.25s forwards;';
+  document.body.appendChild(ov);
+  // 紙吹雪
+  const colors = ['#ff80c0', '#ffd040', '#80d8ff', '#90e090', '#c080ff', '#ff9060'];
+  const confettiCount = ms.allClear ? 48 : 28;
+  for (let i = 0; i < confettiCount; i++) {
+    const c = document.createElement('div');
+    c.style.cssText = 'position:absolute;width:10px;height:14px;background:' + colors[i % colors.length] + ';left:' + (Math.random() * 100) + '%;top:-20px;animation:discConfetti ' + (1.6 + Math.random() * 1.6).toFixed(2) + 's linear ' + (Math.random() * 0.7).toFixed(2) + 's forwards;border-radius:2px;';
+    ov.appendChild(c);
+  }
+  // ごほうびリスト
+  let rewardHtml = '💰 ' + ms.coins + 'コイン';
+  Object.keys(ms.items || {}).forEach(k => {
+    const it = ITEMS[k];
+    if (!it) return;
+    rewardHtml += '<br>' + it.icon + ' ' + it.name + ' ×' + ms.items[k];
+  });
+  const card = document.createElement('div');
+  card.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#fff,#ffeaa0);padding:20px 32px 16px;border-radius:24px;border:5px solid #ffb040;box-shadow:0 12px 40px rgba(0,0,0,0.4),0 0 0 8px rgba(255,255,255,0.5);text-align:center;animation:discCardIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;max-width:86vw;';
+  card.innerHTML =
+    '<div style="font-size:44px;line-height:1;">' + ms.emoji + '</div>'
+    + '<div style="font-size:20px;font-weight:900;color:#d63384;margin-top:6px;text-shadow:1px 1px 0 #ffd0e8;">'
+    + (ms.allClear ? '🌈 ぜんぶ あつめた！！' : 'ずかん ' + ms.n + 'しゅるい たっせい！') + '</div>'
+    + '<div style="font-size:15px;font-weight:900;color:#7030a0;margin-top:8px;">しょうごう「' + ms.title + '」ゲット！</div>'
+    + '<div style="font-size:13px;color:#8a5a00;font-weight:bold;margin-top:10px;background:rgba(255,255,255,0.7);border-radius:12px;padding:6px 10px;">▼ ごほうび ▼<br>' + rewardHtml + '</div>';
+  ov.appendChild(card);
+  const total = ms.allClear ? 4600 : 3200;
+  setTimeout(() => { ov.style.transition = 'opacity 0.4s'; ov.style.opacity = '0'; }, total - 400);
+  setTimeout(() => { try { ov.remove(); } catch (e) {} }, total);
+}
+
+// 発見演出 → ごほうびチェックの順で流す（新種ゲット時に呼ぶ）
+function celebrateDiscovery(id) {
+  try { showDiscoveryBanner(id); } catch (e) { console.warn('[celebrateDiscovery]', e); }
+  setTimeout(() => { try { checkCollectionMilestones(); } catch (e) {} }, 2700);
+}
+
+// 🍀 ワールドマップの「きょうのラッキージュエル」バナー更新＋1日1回のお知らせ
+function announceLuckyJewel() {
+  try {
+    const id = getLuckyJewelId();
+    const def = getMonsterDef(id);
+    if (!def) return;
+    const bn = document.getElementById('lucky-banner');
+    if (bn) {
+      bn.innerHTML = '<span class="lucky-art disc-art">' + svgMon(id) + '</span>'
+        + '<span class="lucky-txt">🍀 きょうのラッキージュエル：<b>' + def.name + '</b><br>'
+        + '<small>たおすと コイン3ばい！つかまえやすさも アップ！</small></span>';
+    }
+    const tk = todayKey();
+    if (state && state.luckyGreetDate !== tk) {
+      state.luckyGreetDate = tk;
+      try { saveGame(true); } catch (e) {}
+      try { sfxDiscover(); } catch (e) {}
+      showToast('🍀 きょうの ラッキージュエルは<br><b>' + def.name + '</b> だよ！✨', 3200);
+    }
+  } catch (e) {
+    console.warn('[announceLuckyJewel]', e);
   }
 }
 
@@ -4168,7 +4450,10 @@ function startNewGame() {
     v2WorldMapShown: true,
     studyMode: prevStudyMode,
     studyStats: { correct: 0, wrong: 0, streakBest: 0 },
-    _quizStreak: 0
+    _quizStreak: 0,
+    collectedIds: [],
+    claimedMilestones: [],
+    luckyGreetDate: ''
   };
   applyDemoMode();
   // テストモード（testtoton/teramax/evotest）は applyDemoMode が手持ちを
@@ -4273,6 +4558,8 @@ function confirmStarter() {
   if (defs.length !== STARTER_PICK_LIMIT) return;
   // パーティに LV5 で追加（2匹）
   state.party = ids.map(id => makeMon(id, 5));
+  // ✨ ずかんに登録（スターターは専用演出があるので発見バナーは出さない）
+  try { ids.forEach(id => registerSpecies(id)); } catch (e) {}
   // 演出: 2匹を順番に中央に飛ばす + キラキラ + バナー
   sfxLevel();
   const fly = $('starter-fly');
@@ -4320,6 +4607,8 @@ function goWorldMap() {
   switchScene('stage-scene');
   $('stage-coins').textContent = state.coins;
   renderWorldMap();
+  // 🍀 きょうのラッキージュエル表示（1日1回はキラキラお知らせ付き）
+  try { announceLuckyJewel(); } catch (e) {}
   // 一度だけ移行のお知らせ
   if (state && state.cleared && state.v2WorldMapShown === false) {
     state.v2WorldMapShown = true;
@@ -5311,6 +5600,33 @@ function generateFieldMobs(stage) {
       wanderTimer: rand(40, 120)
     });
   }
+
+  // ===== 🍀 きょうのラッキージュエル =====
+  // 日替わりのラッキー種を毎ステージに2匹確定スポーン。
+  // 倒すとコイン3倍・捕まえやすさアップ。クリア判定・のこり数には含めない。
+  try {
+    const luckyId = getLuckyJewelId();
+    // 通常抽選で同じ種が出ていたら、その子もラッキー扱いに
+    state.fieldMobs.forEach(m => {
+      if (m.id === luckyId && !m.isBoss && !m.isStudyMob) m.isLucky = true;
+    });
+    for (let li = 0; li < 2; li++) {
+      state.fieldMobs.push({
+        id: luckyId,
+        lvl: rand(stage.lvl[0], stage.lvl[1]),
+        x: 80 + Math.random() * (WORLD_W - 160),
+        y: 300 + Math.random() * (WORLD_H - 520),
+        defeated: false,
+        isBoss: false,
+        isLucky: true,
+        dx: (Math.random() - 0.5) * 0.8,
+        dy: (Math.random() - 0.5) * 0.8,
+        wanderTimer: rand(40, 120)
+      });
+    }
+  } catch (e) {
+    console.warn('[lucky spawn]', e);
+  }
 }
 
 function tryTerastalSpawn() { /* no-op: 5さい向け版では隠しコマンド削除 */ }
@@ -5494,6 +5810,17 @@ function drawMinimap() {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('★', mx, my);
+      ctx.restore();
+    } else if (m.isLucky) {
+      // 🍀 ラッキージュエル: ピンクの☆（伝説の金★とは色で区別）
+      ctx.save();
+      ctx.shadowColor = '#ff50b0';
+      ctx.shadowBlur = 5;
+      ctx.fillStyle = '#ff50b0';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('☆', mx, my);
       ctx.restore();
     } else if (m.isStudyMob) {
       ctx.fillStyle = '#5cb8f5';
@@ -5761,6 +6088,33 @@ function drawField() {
       ctx.ellipse(sx, sy + size * 0.4, size * 0.45, size * 0.18, 0, 0, Math.PI * 2);
       ctx.fill();
     }
+    // 🍀 きょうのラッキージュエル: 虹色に回るリング＋クローバーバッジ
+    if (m.isLucky) {
+      const tNow = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+      const hue = (tNow / 12) % 360;
+      ctx.save();
+      // ふわっと光る虹色の下地
+      ctx.fillStyle = 'hsla(' + ((hue + 60) % 360) + ',95%,75%,0.28)';
+      ctx.beginPath(); ctx.arc(sx, sy, size * 0.75, 0, Math.PI * 2); ctx.fill();
+      // 虹色リング（脈打つ）
+      ctx.strokeStyle = 'hsla(' + hue + ',90%,60%,0.95)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(sx, sy, size * 0.62 + Math.sin(tNow / 200) * 3, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      // 🍀バッジ＋キラキラ
+      ctx.save();
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🍀', sx - size * 0.45, sy - size * 0.45 + Math.sin(tNow / 300) * 2);
+      const sp = (tNow / 550) % 1;
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,160,' + (1 - sp) + ')';
+      ctx.fillText('✨', sx + size * 0.42, sy - size * 0.35 - sp * 9);
+      ctx.restore();
+    }
     // mob art
     const img = getMonImg(m.id);
     if (img && img.complete && img.naturalWidth) {
@@ -5830,7 +6184,7 @@ function updateField() {
   if (state.fieldMobs) {
     const remEl = document.getElementById('field-remaining');
     if (remEl) {
-      const rem = state.fieldMobs.filter(m => !m.defeated && !m.isStudyMob && !m.isToton).length;
+      const rem = state.fieldMobs.filter(m => !m.defeated && !m.isStudyMob && !m.isToton && !m.isLucky).length;
       if (remEl.textContent !== String(rem)) remEl.textContent = rem;
     }
   }
@@ -6056,6 +6410,7 @@ function startBattle(fieldMob, idx) {
       me: { mon: activeMon() },
       fieldIdx: idx,
       isBoss: fieldMob.isBoss,
+      isLucky: !!fieldMob.isLucky,
       isToton: false,
       turn: 'me',
       ended: false,
@@ -6530,6 +6885,9 @@ function winBattle() {
   const foe = battle.foe;
   let expGain = Math.floor(8 + foe.mon.lvl * 4 + (battle.isBoss ? foe.mon.lvl * 5 : 0));
   let coinGain = Math.floor(10 + foe.mon.lvl * (battle.isBoss ? 6 : 2));
+  // 🍀 きょうのラッキージュエルは コイン3ばい！
+  const wasLucky = !!battle.isLucky;
+  if (wasLucky) coinGain *= 3;
   state.coins += coinGain;
 
   // ----- ドロップ判定 -----
@@ -6550,7 +6908,8 @@ function winBattle() {
     });
   }
 
-  setBattleMessage('🎉 <ruby>勝<rt>か</rt></ruby>った！<br>' + foe.def.name + 'を <ruby>倒<rt>たお</rt></ruby>して、<ruby>経験値<rt>けいけんち</rt></ruby> ' + expGain + '・コイン ' + coinGain + ' を <ruby>手<rt>て</rt></ruby>に <ruby>入<rt>い</rt></ruby>れた！' + dropHtml);
+  const luckyHtml = wasLucky ? '<br>🍀 <b>ラッキージュエル ボーナス！コイン3ばい！</b>' : '';
+  setBattleMessage('🎉 <ruby>勝<rt>か</rt></ruby>った！<br>' + foe.def.name + 'を <ruby>倒<rt>たお</rt></ruby>して、<ruby>経験値<rt>けいけんち</rt></ruby> ' + expGain + '・コイン ' + coinGain + ' を <ruby>手<rt>て</rt></ruby>に <ruby>入<rt>い</rt></ruby>れた！' + luckyHtml + dropHtml);
   // ドロップ獲得SE（あれば）
   if (drops.length) setTimeout(() => sfxCatch(), 350);
 
@@ -6577,9 +6936,9 @@ function winBattle() {
         const km = (battle.fieldIdx != null) ? state.fieldMobs[battle.fieldIdx] : null;
         isWorldBossClear = !(km && km.isMidBoss);
       } else if (!stage.boss && !stage.midBoss) {
-        // クリア判定からは「べんきょうジュエル」を除外
-        // （これらはランダム出現の特殊個体で、倒さなくても進めるべき）
-        const remaining = state.fieldMobs.filter(m => !m.defeated && !m.isStudyMob && !m.isToton);
+        // クリア判定からは「べんきょうジュエル」「ラッキージュエル」を除外
+        // （これらはランダム/日替わり出現の特殊個体で、倒さなくても進めるべき）
+        const remaining = state.fieldMobs.filter(m => !m.defeated && !m.isStudyMob && !m.isToton && !m.isLucky);
         if (remaining.length === 0 && !state.cleared.includes(stage.id)) {
           state.cleared.push(stage.id);
           didClear = true;
@@ -6727,6 +7086,12 @@ function doEvolution(evos, after) {
       $('evo-text').innerHTML = '✨ ' + e.fromDef.name + ' は<br>' + e.toDef.name + ' に <ruby>進化<rt>しんか</rt></ruby>した！ ✨';
       $('evo-next').classList.add('show');
       sfxWin();
+      // ✨ 進化先も ずかんに登録（新種ならごほうびチェック）
+      try {
+        if (registerSpecies(e.toDef.id)) {
+          setTimeout(() => { try { checkCollectionMilestones(); } catch (e2) {} }, 900);
+        }
+      } catch (e1) {}
       saveGame(true);
       return;
     }
@@ -7077,6 +7442,8 @@ function tryCatch(ballKey) {
   if (studyBonus > 0) chance += studyBonus;
   if (typeof window !== 'undefined') window._catchBonus = 0;
   chance = clamp(chance, 0.05, 0.95);
+  // 🍀 きょうのラッキージュエルは つかまえやすい！
+  if (battle.isLucky) chance = clamp(chance + 0.20, 0.05, 0.98);
   // きせきのケースは100%
   if (ITEMS[ballKey].masterball) chance = 1.0;
   setBattleMessage('えい！ ' + ITEMS[ballKey].name + ' を <ruby>投<rt>な</rt></ruby>げた！');
@@ -7090,6 +7457,19 @@ function tryCatch(ballKey) {
       else state.box.push(captured);
       setBattleMessage('🎉 ' + f.def.name + ' を <ruby>集<rt>あつ</rt></ruby>めた！');
       sfxWin();
+      // ✨ ずかん登録：はじめてのしゅるいなら 虹の発見演出＋ごほうびチェック
+      try {
+        if (registerSpecies(f.mon.id)) {
+          setTimeout(() => { try { celebrateDiscovery(f.mon.id); } catch (e2) {} }, 700);
+        }
+      } catch (e1) {}
+      // 🍀 ラッキージュエル捕獲ボーナス
+      try {
+        if (battle.isLucky) {
+          state.coins += 300;
+          setTimeout(() => showToast('🍀 ラッキーボーナス！💰+300コイン', 1800), 400);
+        }
+      } catch (e3) {}
       battle.ended = true;
       // mark defeated on field
       if (battle.fieldIdx != null && state.fieldMobs[battle.fieldIdx]) state.fieldMobs[battle.fieldIdx].defeated = true;
@@ -7284,6 +7664,26 @@ function renderParty() {
     + ' （<ruby>連続<rt>れんぞく</rt></ruby> さいこう <b>' + (ss.streakBest || 0) + '</b><ruby>問<rt>もん</rt></ruby>）'
     + '<br><span style="font-size:11px;color:#888;">いまの モード: ' + modeLabel + '</span>';
   mineList.appendChild(banner);
+
+  // ===== ✨ ジュエルずかん バナー（あつめた しゅるい数・しょうごう・つぎのごほうび） =====
+  try {
+    const regCount = collectedRegularCount();
+    const regTotal = regularSpeciesTotal();
+    const legCount = collectedLegendaryCount();
+    const title = currentCollectionTitle();
+    const nextMs = nextCollectionMilestone();
+    const colBanner = document.createElement('div');
+    colBanner.style.cssText = 'background:linear-gradient(180deg,#ffe6f5,#ffd0ec);border:2.5px solid #ff8fc0;border-radius:14px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#8a2358;text-align:center;font-weight:bold;line-height:1.5;';
+    let colHtml = '💎 ジュエルずかん: <b style="color:#d63384;font-size:16px">' + regCount + '</b> / ' + regTotal + ' しゅるい';
+    if (legCount > 0) colHtml += ' <span style="color:#c08820">＋でんせつ' + legCount + '</span>';
+    if (title) colHtml += '<br><span style="font-size:11px;">' + title.emoji + ' しょうごう: ' + title.title + '</span>';
+    if (nextMs) colHtml += '<br><span style="font-size:11px;color:#b06090;">あと ' + (nextMs.n - regCount) + 'しゅるいで ' + nextMs.emoji + ' ごほうび！</span>';
+    else colHtml += '<br><span style="font-size:11px;color:#b06090;">🌈 ぜんぶ あつめた！すごい！</span>';
+    colBanner.innerHTML = colHtml;
+    mineList.appendChild(colBanner);
+  } catch (e) {
+    console.warn('[collection banner]', e);
+  }
 
   state.party.forEach((m, i) => {
     const def = getMonsterDef(m.id);

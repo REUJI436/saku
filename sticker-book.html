@@ -617,6 +617,49 @@
     100% { transform: translate(-50%,-50%) scale(1); }
   }
 
+  /* ===== Hologram sticker ===== */
+  .holo-fx svg {
+    animation: holoHue 2.6s linear infinite;
+  }
+  @keyframes holoHue {
+    0%   { filter: hue-rotate(0deg) saturate(1.5) brightness(1); }
+    50%  { filter: hue-rotate(180deg) saturate(1.9) brightness(1.35); }
+    100% { filter: hue-rotate(360deg) saturate(1.5) brightness(1); }
+  }
+  .inv-sticker.holo-fx {
+    border: 2px solid transparent;
+    background: linear-gradient(#fff,#fff) padding-box,
+                linear-gradient(90deg,#ff5050,#ffd040,#80d850,#5cb8f5,#c870ff) border-box;
+  }
+  .holo-badge {
+    position: absolute;
+    top: -6px; left: -6px;
+    background: linear-gradient(90deg,#ff5050,#ffd040,#5cb8f5,#c870ff);
+    color: #fff;
+    font-size: 9px; font-weight: bold;
+    padding: 1px 5px;
+    border-radius: 8px;
+    border: 1.5px solid #fff;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .holo-title {
+    font-size: 20px; font-weight: 900;
+    background: linear-gradient(90deg,#ff5050,#ffd040,#80d850,#5cb8f5,#c870ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-top: 4px;
+    animation: holoTitlePulse 1s ease-in-out infinite;
+  }
+  @keyframes holoTitlePulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+  .zukan-comp {
+    font-size: 12px;
+    color: #d63384;
+    margin-left: 6px;
+  }
+
   /* Responsive tweaks */
   @media (max-height: 600px) {
     #bottom-bar { height: 120px; }
@@ -831,6 +874,8 @@ function sfxRare()   { for (let i=0;i<6;i++) setTimeout(()=>sfx(440+i*120,0.08,'
 function sfxUR()     { for (let i=0;i<10;i++) setTimeout(()=>sfx(523+i*80,0.1,'sine',0.16), i*60); setTimeout(()=>sfx(1568,0.4,'sine',0.18),700); }
 function sfxOpen()   { sfx(330, 0.1, 'sine', 0.12); setTimeout(()=>sfx(523,0.1,'sine',0.12),100); setTimeout(()=>sfx(784,0.18,'sine',0.14),200); }
 function sfxNoStar() { sfx(220, 0.18, 'triangle', 0.14); }
+function sfxHolo()   { [523,659,784,1047,1319,1568].forEach((f,i)=>setTimeout(()=>sfx(f,0.12,'triangle',0.14), i*80)); setTimeout(()=>sfx(2093,0.35,'sine',0.14), 520); }
+function sfxComplete(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>sfx(f,0.15,'sine',0.16), i*130)); setTimeout(()=>{ sfx(1047,0.5,'sine',0.16); sfx(1319,0.5,'sine',0.1); sfx(1568,0.5,'sine',0.08); }, 580); }
 function sfxBgm() {
   // tiny twinkle melody loop (handled by interval)
 }
@@ -870,6 +915,7 @@ const CATEGORIES = [
   { id: 'ride',   label: '🚗 のりもの' },
   { id: 'food',   label: '🍎 たべもの' },
   { id: 'princess', label: '👑 おひめさま' },
+  { id: 'space',  label: '🚀 うちゅう' },
   { id: 'rare',   label: '🌟 レア' }
 ];
 
@@ -1371,7 +1417,62 @@ const STICKERS = [
     <circle cx="42" cy="44" r="4" fill="#e0c870" opacity="0.6"/>
     <circle cx="56" cy="56" r="3" fill="#e0c870" opacity="0.6"/>
     <circle cx="62" cy="42" r="3" fill="#e0c870" opacity="0.6"/>
-    <path d="M40 36 Q42 32 46 34" stroke="#a08020" stroke-width="1" fill="none"/>`) }
+    <path d="M40 36 Q42 32 46 34" stroke="#a08020" stroke-width="1" fill="none"/>`) },
+
+  // ===== Space =====
+  { id:'sp_rocket', name:'ロケット', cat:'space', rarity:'n', draw: () => svgWrap(`
+    <path d="M50 8 Q66 24 64 58 L36 58 Q34 24 50 8 Z" fill="#fff" stroke="#c05050" stroke-width="2"/>
+    <circle cx="50" cy="36" r="8" fill="#a0e0ff" stroke="#5cb8f5" stroke-width="2"/>
+    <polygon points="36,58 24,78 36,70" fill="#ff5050" stroke="#a02020" stroke-width="2"/>
+    <polygon points="64,58 76,78 64,70" fill="#ff5050" stroke="#a02020" stroke-width="2"/>
+    <rect x="42" y="58" width="16" height="10" fill="#ff5050" stroke="#a02020" stroke-width="2"/>
+    <path d="M44 72 Q50 90 56 72" fill="#ffd040" stroke="#ff8030" stroke-width="2"/>`) },
+  { id:'sp_saturn', name:'どせい', cat:'space', rarity:'n', draw: () => svgWrap(`
+    <circle cx="50" cy="50" r="22" fill="#ffd068" stroke="#a07020" stroke-width="2"/>
+    <circle cx="42" cy="42" r="4" fill="#ffe8a0"/>
+    <circle cx="56" cy="56" r="3" fill="#e0b050" opacity="0.7"/>
+    <ellipse cx="50" cy="50" rx="38" ry="10" fill="none" stroke="#c870ff" stroke-width="4" transform="rotate(-15 50 50)"/>
+    <ellipse cx="50" cy="50" rx="38" ry="10" fill="none" stroke="#fff" stroke-width="1" transform="rotate(-15 50 50)" opacity="0.7"/>`) },
+  { id:'sp_shooting', name:'ながれぼし', cat:'space', rarity:'n', draw: () => svgWrap(`
+    <path d="M52 52 Q32 62 14 84" stroke="#ffd040" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M60 60 Q44 70 32 86" stroke="#a0e0ff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <polygon points="62,16 68,34 86,36 72,47 76,64 62,54 48,64 52,47 38,36 56,34" fill="#ffd700" stroke="#fff" stroke-width="2"/>
+    <circle cx="62" cy="40" r="4" fill="#fff" opacity="0.6"/>`) },
+  { id:'sp_alien', name:'うちゅうじん', cat:'space', rarity:'n', draw: () => svgWrap(`
+    <line x1="42" y1="20" x2="38" y2="8" stroke="#508030" stroke-width="2"/>
+    <circle cx="38" cy="8" r="3.5" fill="#a0e878" stroke="#508030" stroke-width="1.5"/>
+    <line x1="58" y1="20" x2="62" y2="8" stroke="#508030" stroke-width="2"/>
+    <circle cx="62" cy="8" r="3.5" fill="#a0e878" stroke="#508030" stroke-width="1.5"/>
+    <ellipse cx="50" cy="48" rx="24" ry="28" fill="#a0e878" stroke="#508030" stroke-width="2"/>
+    <ellipse cx="41" cy="44" rx="6" ry="9" fill="#222" transform="rotate(-15 41 44)"/>
+    <ellipse cx="59" cy="44" rx="6" ry="9" fill="#222" transform="rotate(15 59 44)"/>
+    <circle cx="42" cy="41" r="2" fill="#fff"/>
+    <circle cx="58" cy="41" r="2" fill="#fff"/>
+    <path d="M44 64 Q50 70 56 64" stroke="#508030" stroke-width="2" fill="none"/>`) },
+  { id:'sp_earth', name:'ちきゅう', cat:'space', rarity:'r', draw: () => svgWrap(`
+    <circle cx="50" cy="50" r="30" fill="#5cb8f5" stroke="#2a6da6" stroke-width="2"/>
+    <path d="M30 40 Q40 28 52 36 Q58 44 48 50 Q36 54 30 40 Z" fill="#80d850"/>
+    <path d="M60 58 Q72 54 74 64 Q68 76 58 70 Q54 62 60 58 Z" fill="#80d850"/>
+    <ellipse cx="62" cy="36" rx="9" ry="3" fill="#fff" opacity="0.8"/>
+    <ellipse cx="38" cy="66" rx="8" ry="3" fill="#fff" opacity="0.7"/>`) },
+  { id:'sp_ufo', name:'ユーフォー', cat:'space', rarity:'r', draw: () => svgWrap(`
+    <path d="M32 46 Q32 26 50 26 Q68 26 68 46" fill="#a0e0ff" stroke="#5cb8f5" stroke-width="2" opacity="0.9"/>
+    <polygon points="40,58 60,58 70,90 30,90" fill="#fff8a0" opacity="0.5"/>
+    <ellipse cx="50" cy="50" rx="34" ry="12" fill="#b0b8c8" stroke="#606880" stroke-width="2"/>
+    <circle cx="32" cy="52" r="3" fill="#ffd040"/>
+    <circle cx="50" cy="56" r="3" fill="#ff5096"/>
+    <circle cx="68" cy="52" r="3" fill="#80d850"/>`) },
+  { id:'sp_astro', name:'うちゅうひこうし', cat:'space', rarity:'sr', draw: () => svgWrap(`
+    <circle cx="50" cy="38" r="20" fill="#fff" stroke="#8090a8" stroke-width="2"/>
+    <circle cx="50" cy="38" r="13" fill="#3a1860"/>
+    <circle cx="46" cy="34" r="2" fill="#fff"/>
+    <circle cx="54" cy="40" r="1" fill="#ffd040"/>
+    <rect x="36" y="56" width="28" height="28" rx="8" fill="#fff" stroke="#8090a8" stroke-width="2"/>
+    <rect x="44" y="62" width="12" height="8" rx="2" fill="#5cb8f5"/>
+    <circle cx="28" cy="66" r="6" fill="#fff" stroke="#8090a8" stroke-width="2"/>
+    <circle cx="72" cy="66" r="6" fill="#fff" stroke="#8090a8" stroke-width="2"/>
+    <circle cx="46" cy="76" r="1.5" fill="#ff5050"/>
+    <circle cx="52" cy="76" r="1.5" fill="#80d850"/>`) }
 ];
 
 // Build by-category
@@ -1565,7 +1666,9 @@ const defaultState = () => ({
   unlockedThemes: { flower:true, sweets:true, cloud:true }, // start unlocked
   currentTheme: 'flower',
   lastBonus: 0, // unix ms of last daily bonus
-  muted: false
+  muted: false,
+  holo: {}, // { stickerId: true } hologram versions owned (new key, additive)
+  catComplete: {} // { catId: true } celebrated complete categories (new key, additive)
 });
 
 let state = defaultState();
@@ -1581,6 +1684,8 @@ function loadState() {
     state.collected = state.collected || {};
     state.themePlacements = state.themePlacements || {};
     state.unlockedThemes = state.unlockedThemes || { flower:true, sweets:true, cloud:true };
+    state.holo = state.holo || {};
+    state.catComplete = state.catComplete || {};
     return true;
   } catch(e) { return false; }
 }
@@ -1623,15 +1728,17 @@ function buildZukan() {
     const sec = document.createElement('div');
     sec.className = 'zukan-section';
     const h3 = document.createElement('h3');
-    h3.textContent = cat.label;
+    const catGot = items.filter(s => state.collected[s.id]).length;
+    h3.innerHTML = `${cat.label}<span class="zukan-comp">${catGot}/${items.length}${catGot === items.length ? ' 🏆コンプ！' : ''}</span>`;
     sec.appendChild(h3);
     const grid = document.createElement('div');
     grid.className = 'zukan-grid';
     items.forEach(s => {
       const cell = document.createElement('div');
-      cell.className = 'zukan-cell ' + (state.collected[s.id] ? '' : 'locked');
-      cell.innerHTML = s.draw();
-      cell.title = state.collected[s.id] ? s.name : 'まだだよ';
+      const gotIt = !!state.collected[s.id];
+      cell.className = 'zukan-cell ' + (gotIt ? '' : 'locked') + (gotIt && state.holo[s.id] ? ' holo-fx' : '');
+      cell.innerHTML = s.draw() + (gotIt && state.holo[s.id] ? '<div class="holo-badge">✨</div>' : '');
+      cell.title = gotIt ? s.name : 'まだだよ';
       grid.appendChild(cell);
     });
     sec.appendChild(grid);
@@ -1716,7 +1823,9 @@ function buildInventory() {
     if (s.rarity === 'r')  div.classList.add('rare');
     if (s.rarity === 'sr') div.classList.add('srare');
     if (s.rarity === 'ur') div.classList.add('urare');
-    div.innerHTML = s.draw() + (c > 0 ? `<div class="count">${c}</div>` : '');
+    const isHolo = !!state.holo[s.id];
+    if (isHolo && c > 0) div.classList.add('holo-fx');
+    div.innerHTML = s.draw() + (c > 0 ? `<div class="count">${c}</div>` : '') + (isHolo && c > 0 ? '<div class="holo-badge">✨ホロ</div>' : '');
     div.dataset.sid = s.id;
     if (c > 0) attachInvDrag(div, s);
     inv.appendChild(div);
@@ -1851,7 +1960,7 @@ function renderBoard() {
     const sticker = STICKERS.find(s => s.id === p.id);
     if (!sticker) return;
     const div = document.createElement('div');
-    div.className = 'placed';
+    div.className = 'placed' + (state.holo[p.id] ? ' holo-fx' : '');
     div.style.left = (p.x * 100) + '%';
     div.style.top = (p.y * 100) + '%';
     div.style.transform = `translate(-50%,-50%) rotate(${p.rot||0}deg) scale(${p.scale||1})`;
@@ -1976,26 +2085,57 @@ function doGacha() {
     const sticker = rollSticker();
     state.inventory[sticker.id] = (state.inventory[sticker.id] || 0) + 1;
     state.collected[sticker.id] = true;
+    // Hologram roll: 12% chance to turn this sticker into a holo version (permanent)
+    let newHolo = false;
+    if (!state.holo[sticker.id] && Math.random() < 0.12) {
+      state.holo[sticker.id] = true;
+      newHolo = true;
+    }
     saveState();
-    showGachaResult(sticker);
+    showGachaResult(sticker, newHolo);
+    checkCatComplete();
   }, 1400);
 }
 
-function showGachaResult(sticker) {
-  $('gacha-svg-wrap').innerHTML = `<div style="width:160px;height:160px;display:inline-block;">${sticker.draw()}</div>`;
+function showGachaResult(sticker, newHolo) {
+  const isHolo = !!state.holo[sticker.id];
+  $('gacha-svg-wrap').innerHTML = `<div class="${isHolo ? 'holo-fx' : ''}" style="width:160px;height:160px;display:inline-block;">${sticker.draw()}</div>`;
   $('gacha-name').textContent = sticker.name;
   const rar = RARITY[sticker.rarity];
-  $('gacha-rarity').innerHTML = `<span style="color:${rar.color};">${rar.name}</span>`;
+  $('gacha-rarity').innerHTML = `<span style="color:${rar.color};">${rar.name}</span>` +
+    (newHolo ? '<div class="holo-title">✨ ホロシールに へんしん！ ✨</div>' : (isHolo ? '<div class="holo-title">✨ ホロ ✨</div>' : ''));
   $('gacha-result').classList.add('show');
   $('gacha-buttons').classList.add('show');
   $('gacha-box').style.opacity = 0;
 
-  if (sticker.rarity === 'n') sfxGet();
+  if (newHolo) { sfxHolo(); spawnBurst(30, ['🌈','✨','🌟','💎']); }
+  else if (sticker.rarity === 'n') sfxGet();
   else if (sticker.rarity === 'r') sfxRare();
   else if (sticker.rarity === 'sr') { sfxRare(); spawnBurst(20, ['✨','💜','⭐']); }
   else if (sticker.rarity === 'ur') { sfxUR(); spawnBurst(40, ['✨','🌟','💖','⭐','💎']); }
 
   buildInventory();
+}
+
+// ===================== CATEGORY COMPLETE CELEBRATION =====================
+function checkCatComplete() {
+  CATEGORIES.forEach(cat => {
+    const items = byCat[cat.id];
+    if (!items.length || state.catComplete[cat.id]) return;
+    if (items.every(s => state.collected[s.id])) {
+      state.catComplete[cat.id] = true;
+      state.stars = Math.min(STAR_MAX, state.stars + 15);
+      saveState();
+      updateStars();
+      setTimeout(() => {
+        sfxComplete();
+        spawnBurst(30, ['🎉','✨','🌟','💖','🏆']);
+        showModal('🎉 シリーズ コンプリート！',
+          `<div style="font-size:44px;">🏆</div><div style="margin-top:8px;">「${cat.label}」の シールを<br>ぜんぶ あつめたよ！すごい！<br><b style="color:#d63384;">ごほうび ⭐15 ゲット！</b></div>`,
+          [ { label:'やったー！', cls:'green' } ]);
+      }, 1000);
+    }
+  });
 }
 
 function closeGacha() {

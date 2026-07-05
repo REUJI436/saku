@@ -276,6 +276,7 @@
 
 <div id="over">
   <div>GAME OVER</div>
+  <div id="newBest" style="display:none; margin-top: 10px; font-size: 22px; font-weight: bold; color: #ffd94a; text-shadow: 0 0 10px #ffaa00, 0 0 20px #ff6600;">🏆 じこベスト こうしん！ 🏆</div>
   <div style="font-size: 14px; margin-top: 12px; color: #bbb;">Esc でタイトルへ</div>
   <button onclick="location.reload()">RESTART</button>
 </div>
@@ -299,6 +300,7 @@
   const chainEl = document.getElementById('chain');
   const overEl = document.getElementById('over');
   const bestEl = document.getElementById('best');
+  const newBestEl = document.getElementById('newBest');
 
   const grid = Array.from({length: ROWS}, () => Array(COLS).fill(EMPTY));
 
@@ -379,11 +381,13 @@
   }
 
   function saveBestScore() {
+    const isNewBest = score > bestScore && score > 0;
     if (score > bestScore) {
       bestScore = score;
       try { localStorage.setItem('puyotooot_best', String(bestScore)); } catch(e) {}
     }
     if (bestEl) bestEl.textContent = bestScore;
+    if (newBestEl) newBestEl.style.display = isNewBest ? 'block' : 'none';
   }
 
   function specialCells(p) {
@@ -770,6 +774,25 @@
     pendingChain = chainCount;
 
     triggerVoice(voiceIdx);
+
+    // 連鎖演出：「Nれんさ！」ポップ＋音階アップ（2連鎖から）
+    if (chainCount >= 2) {
+      try { sfxChainUp(chainCount); } catch(e) {}
+      try { spawnChainPop(chainCount); } catch(e) {}
+    }
+    // 自己ベスト更新のお祝い（プレイ中・1ゲーム1回）
+    if (!bestBeatenThisGame && bestScore > 0 && score > bestScore) {
+      bestBeatenThisGame = true;
+      try {
+        chainPops.push({
+          text: '✨じこベスト！✨', sub: 'きろく こうしん！',
+          life: 120, maxLife: 120, size: 26, color: '#ffe066', rot: 0,
+        });
+        spawnStarBurst(field.width / 2, field.height * 0.35, 36, 5,
+          ['#ffe066', '#fff6c0', '#ffaa33', '#ffffff']);
+        sfxBestFanfare();
+      } catch(e) {}
+    }
   }
 
   // === 消去時のセリフ ===
@@ -1396,6 +1419,70 @@
       else if (idx === 2) { sfxPero(); voicePero(); }
     } catch(e) {}
     speak(line, false);
+  }
+
+  // === 連鎖演出（ポップ表示・星パーティクル・音階アップ） ===
+  let chainPops = [];   // { text, sub, life, maxLife, size, color, rot }
+  let chainStars = [];  // { x, y, vx, vy, rot, vr, size, life, color }
+  let bestBeatenThisGame = false;  // プレイ中の自己ベストお祝いは1ゲーム1回
+
+  function spawnStarBurst(x, y, n, power, palette) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 1.5 + Math.random() * power;
+      chainStars.push({
+        x, y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 1.5,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.3,
+        size: 4 + Math.random() * 5,
+        life: 45 + Math.random() * 30,
+        color: palette[i % palette.length],
+      });
+    }
+  }
+
+  function spawnChainPop(chain) {
+    const colors = ['#ffdd55', '#ffdd55', '#ffdd55', '#ffaa33', '#ff7755', '#ff55aa', '#aaddff'];
+    const color = colors[Math.min(chain, colors.length - 1)];
+    const size = Math.min(30 + chain * 5, 55);
+    let sub = null;
+    if (chain >= 6) sub = 'かみわざ！！！';
+    else if (chain >= 5) sub = 'てんさい！！';
+    else if (chain >= 4) sub = 'すごーい！！';
+    else if (chain >= 3) sub = 'すごい！';
+    chainPops.push({
+      text: chain + 'れんさ！', sub,
+      life: 80, maxLife: 80, size, color,
+      rot: (Math.random() - 0.5) * 0.1,
+    });
+    spawnStarBurst(field.width / 2, field.height * 0.36,
+      Math.min(chain * 6, 36), 2 + chain,
+      ['#ffdd55', '#ff88bb', '#88ddff', '#aaffaa']);
+  }
+
+  // 連鎖数に応じて音階が上がるアルペジオ（連鎖ボイス風）
+  function sfxChainUp(chain) {
+    const base = 392 * Math.pow(1.122, Math.min(chain - 1, 10));
+    const cnt = Math.min(3 + chain, 7);
+    const notes = [];
+    for (let i = 0; i < cnt; i++) {
+      notes.push({ f: base * Math.pow(1.26, i), t: i * 0.05, d: 0.09 });
+    }
+    sfxBlipSequence(notes, { type: 'triangle', gain: 0.14 });
+  }
+
+  // 自己ベスト更新ファンファーレ
+  function sfxBestFanfare() {
+    sfxBlipSequence([
+      { f: 523.25, t: 0.00, d: 0.09 },
+      { f: 659.25, t: 0.09, d: 0.09 },
+      { f: 783.99, t: 0.18, d: 0.09 },
+      { f: 1046.5, t: 0.27, d: 0.14 },
+      { f: 783.99, t: 0.42, d: 0.07 },
+      { f: 1046.5, t: 0.50, d: 0.30 },
+    ], { type: 'triangle', gain: 0.16 });
   }
 
   function speakSad(line) {
@@ -3032,6 +3119,58 @@
       fctx.restore();
     }
 
+    // 星パーティクル（連鎖・お祝い）
+    if (chainStars.length) {
+      for (const s of chainStars) {
+        s.x += s.vx; s.y += s.vy; s.vy += 0.08; s.rot += s.vr; s.life--;
+        fctx.save();
+        fctx.globalAlpha = Math.max(0, Math.min(1, s.life / 30));
+        fctx.translate(s.x, s.y);
+        fctx.rotate(s.rot);
+        fctx.fillStyle = s.color;
+        drawStarShape(fctx, s.size);
+        fctx.restore();
+      }
+      chainStars = chainStars.filter(s => s.life > 0);
+    }
+
+    // 連鎖ポップ（「2れんさ！」「すごい！」など）
+    if (chainPops.length) {
+      for (const p of chainPops) {
+        p.life--;
+        const t = 1 - p.life / p.maxLife;
+        const appear = Math.min(1, t * 6);
+        const overshoot = 1 + 0.3 * Math.sin(Math.min(1, t * 3) * Math.PI);
+        const fade = p.life < 14 ? Math.max(0, p.life / 14) : 1;
+        const y = field.height * 0.36 - t * 24;
+        fctx.save();
+        fctx.globalAlpha = fade;
+        fctx.translate(field.width / 2, y);
+        fctx.scale(appear * overshoot, appear * overshoot);
+        fctx.rotate(p.rot);
+        fctx.textAlign = 'center';
+        fctx.textBaseline = 'middle';
+        fctx.font = `bold ${p.size}px "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif`;
+        fctx.lineWidth = 10; fctx.strokeStyle = '#000';
+        fctx.strokeText(p.text, 0, 0);
+        fctx.lineWidth = 4; fctx.strokeStyle = '#fff';
+        fctx.strokeText(p.text, 0, 0);
+        fctx.fillStyle = p.color;
+        fctx.fillText(p.text, 0, 0);
+        if (p.sub) {
+          fctx.font = 'bold 20px "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif';
+          fctx.lineWidth = 7; fctx.strokeStyle = '#000';
+          fctx.strokeText(p.sub, 0, p.size * 0.95);
+          fctx.lineWidth = 3; fctx.strokeStyle = '#fff';
+          fctx.strokeText(p.sub, 0, p.size * 0.95);
+          fctx.fillStyle = '#ff88bb';
+          fctx.fillText(p.sub, 0, p.size * 0.95);
+        }
+        fctx.restore();
+      }
+      chainPops = chainPops.filter(p => p.life > 0);
+    }
+
     fctx.restore();  // シェイクの save とペア
 
     // 特殊カットインは最前面に
@@ -3147,6 +3286,9 @@
     fallAnims = [];
     fallAnimMap = new Map();
     explosionMode = false;
+    chainPops = [];
+    chainStars = [];
+    bestBeatenThisGame = false;
     // 特殊ぷよもリセット
     specials = [];
     specialCellMap.clear();
@@ -3174,6 +3316,8 @@
     explosionMode = false;
     floatMessages = [];
     sakuraLingering = [];
+    chainPops = [];
+    chainStars = [];
     specials = [];
     specialCellMap.clear();
     nextSpecialId = 1;

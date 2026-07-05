@@ -43,7 +43,7 @@ rt { font-size:0.55em; color:#e53935; font-weight:normal; }
 .tray { background:#fff; border:3px dashed #ffb300; border-radius:16px; padding:14px; flex:1; min-height:90px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; transition:border-color 0.2s; }
 .tray .placeholder { color:#c18a1e; font-size:16px; }
 .serve-row { display:flex; gap:10px; justify-content:center; }
-.shelf { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+.shelf { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
 .item-btn { background:#fff; border:3px solid #ffe082; border-radius:14px; padding:8px 2px; text-align:center; cursor:pointer; transition:transform 0.1s; }
 .item-btn:active { transform:scale(0.88); }
 .item-btn .em { font-size:38px; line-height:1; }
@@ -53,6 +53,20 @@ rt { font-size:0.55em; color:#e53935; font-weight:normal; }
 @keyframes sp { 0%{transform:scale(0) rotate(0);opacity:1} 100%{transform:scale(1.6) rotate(45deg);opacity:0} }
 .happy { animation:jump 0.5s ease; }
 @keyframes jump { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-22px) scale(1.1)} }
+
+.item-btn.locked { background:#eee; border-color:#ccc; opacity:0.75; }
+.item-btn.locked .em { filter:grayscale(1); }
+.combobox { background:linear-gradient(180deg,#ffab91,#ff5722); border:3px solid #fff; border-radius:999px; padding:6px 16px; font-size:20px; font-weight:bold; color:#fff; display:none; align-items:center; gap:4px; box-shadow:0 3px 6px rgba(0,0,0,0.15); text-shadow:1px 1px 0 #bf360c; }
+.combobox.on { display:flex; animation:comboPop 0.3s ease; }
+@keyframes comboPop { 0%{transform:scale(0.5)} 60%{transform:scale(1.2)} 100%{transform:scale(1)} }
+.heart { position:fixed; pointer-events:none; font-size:34px; z-index:9000; animation:rise 1.1s ease-out forwards; }
+@keyframes rise { 0%{transform:translateY(0) scale(0.6);opacity:1} 100%{transform:translateY(-90px) scale(1.4);opacity:0} }
+#badgePop { position:fixed; left:50%; top:42%; transform:translate(-50%,-50%) scale(0); z-index:9500; background:#fff; border:5px solid #ffca28; border-radius:24px; padding:22px 30px; text-align:center; box-shadow:0 8px 30px rgba(0,0,0,0.35); pointer-events:none; transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+#badgePop.show { transform:translate(-50%,-50%) scale(1); }
+#badgePop .big { font-size:64px; line-height:1.2; }
+#badgePop .txt { font-size:20px; font-weight:bold; color:#e65100; margin-top:6px; }
+.title-badges { margin-top:18px; font-size:15px; color:#6b4500; min-height:24px; }
+.title-badges .bd { font-size:30px; margin:0 3px; }
 </style>
 </head>
 <body>
@@ -64,10 +78,11 @@ rt { font-size:0.55em; color:#e53935; font-weight:normal; }
   <h1>いらっしゃいませ！<br>マックやさん</h1>
   <p style="font-size:18px;color:#6b4500;margin-bottom:22px;">おきゃくさんの ちゅうもんを<br>つくってあげてね！</p>
   <button class="btn red" id="startBtn">スタート ▶</button>
+  <div class="title-badges" id="titleBadges"></div>
 </div>
 
 <div id="game-scene" class="scene">
-  <div class="topbar"><div class="coinbox"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#f5c518" stroke="#c99700" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#c99700" stroke-width="1.5"/></svg><span id="coins">0</span></div></div>
+  <div class="topbar" style="gap:8px;"><div class="coinbox"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#f5c518" stroke="#c99700" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#c99700" stroke-width="1.5"/></svg><span id="coins">0</span></div><div class="combobox" id="comboBox">🔥<span id="comboN">2</span>れんぞく！</div></div>
   <div class="customer-area">
     <div id="customer">🐰</div>
     <div class="order-bubble"><div class="label">ちゅうもん</div><div class="order-items" id="order"></div></div>
@@ -80,30 +95,53 @@ rt { font-size:0.55em; color:#e53935; font-weight:normal; }
   <div class="shelf" id="shelf"></div>
 </div>
 
+<div id="badgePop"></div>
+
 <script>
 const ITEMS = [
-  {id:'burger', em:'🍔', name:'ハンバーガー'},
-  {id:'potato', em:'🍟', name:'ポテト'},
-  {id:'shake',  em:'🥤', name:'シェイク'},
-  {id:'juice',  em:'🍊', name:'オレンジジュース'},
-  {id:'pie',    em:'🥧', name:'アップルパイ'},
+  {id:'burger', em:'🍔', name:'ハンバーガー', unlock:0},
+  {id:'potato', em:'🍟', name:'ポテト', unlock:0},
+  {id:'shake',  em:'🥤', name:'シェイク', unlock:0},
+  {id:'juice',  em:'🍊', name:'オレンジジュース', unlock:0},
+  {id:'pie',    em:'🥧', name:'アップルパイ', unlock:0},
+  {id:'nugget', em:'🍗', name:'ナゲット', unlock:3},
+  {id:'ice',    em:'🍦', name:'ソフトクリーム', unlock:6},
+  {id:'pancake',em:'🥞', name:'ホットケーキ', unlock:10},
 ];
 const CUSTOMERS = ['🐰','🐻','🐱','🐶','🐸','🐹','🐼','🐯','🐵'];
+const BADGES = [
+  {id:'b3',  n:3,  em:'🎖️', name:'みならいバッジ'},
+  {id:'b5',  n:5,  em:'🏅', name:'てんいんバッジ'},
+  {id:'b10', n:10, em:'👑', name:'てんちょうバッジ'},
+];
+const THANKS = ['ありがとう！','わーい おいしい！','やったー！','だいすき！','さいこう！'];
 
-let coins = 0, order = [], tray = [], muted = false;
+let coins = 0, order = [], tray = [], muted = false, combo = 0;
+
+function loadLS(key,def){ try{ const v=localStorage.getItem(key); return v===null?def:JSON.parse(v); }catch(e){ return def; } }
+function saveLS(key,val){ try{ localStorage.setItem(key,JSON.stringify(val)); }catch(e){} }
+let totalCoins = loadLS('macyasan_total',0);
+let badges = loadLS('macyasan_badges',{});
+if(typeof totalCoins!=='number'||!isFinite(totalCoins)) totalCoins=0;
+if(typeof badges!=='object'||badges===null) badges={};
 
 function $(id){ return document.getElementById(id); }
 function showScene(id){ document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); }
 
-function startGame(){ ac(); coins=0; updateCoins(); buildShelf(); showScene('game-scene'); newCustomer(); }
+function unlockedItems(){ return ITEMS.filter(it=>totalCoins>=it.unlock); }
+
+function startGame(){ ac(); coins=0; combo=0; updateCoins(); updateCombo(); buildShelf(); showScene('game-scene'); newCustomer(); }
 
 function buildShelf(){
   const shelf=$('shelf'); shelf.innerHTML='';
   ITEMS.forEach(it=>{
+    const locked = totalCoins<it.unlock;
     const b=document.createElement('div');
-    b.className='item-btn';
-    b.innerHTML='<div class="em">'+it.em+'</div><div class="nm">'+it.name+'</div>';
-    b.onclick=()=>addToTray(it.id);
+    b.className='item-btn'+(locked?' locked':'');
+    b.innerHTML = locked
+      ? '<div class="em">🔒</div><div class="nm">コイン'+it.unlock+'で とうじょう</div>'
+      : '<div class="em">'+it.em+'</div><div class="nm">'+it.name+'</div>';
+    b.onclick = locked ? ()=>beep(220,0.1) : ()=>addToTray(it.id);
     shelf.appendChild(b);
   });
 }
@@ -111,10 +149,12 @@ function buildShelf(){
 function newCustomer(){
   $('customer').textContent = CUSTOMERS[Math.floor(Math.random()*CUSTOMERS.length)];
   const count = coins>=10 ? 3 : coins>=5 ? 2 : 1;
+  const pool = unlockedItems();
   order=[];
-  for(let i=0;i<count;i++) order.push(ITEMS[Math.floor(Math.random()*ITEMS.length)].id);
+  for(let i=0;i<count;i++) order.push(pool[Math.floor(Math.random()*pool.length)].id);
   tray=[];
   renderOrder(); renderTray();
+  chime();
   setTimeout(speakOrder, 400);
 }
 
@@ -138,18 +178,70 @@ function serve(){
 }
 
 function correct(){
-  coins++; updateCoins(); sparkleBurst(); successSound();
+  coins++; combo++; totalCoins++; saveLS('macyasan_total',totalCoins);
+  updateCoins(); updateCombo(); sparkleBurst(); heartBurst(); successSound();
+  if(combo>=2) beep(1047+combo*80,0.15);
   $('customer').classList.add('happy');
-  speak('ありがとう！');
+  $('order').innerHTML = '<span style="font-size:34px">😋</span><span style="color:#e65100;font-weight:bold;font-size:18px;margin-left:4px">おいしい！</span>';
+  speak(THANKS[Math.floor(Math.random()*THANKS.length)]);
+  checkBadge();
+  const unlocked = ITEMS.find(it=>it.unlock===totalCoins);
+  if(unlocked){
+    buildShelf();
+    setTimeout(()=>{ showPop(unlocked.em,'あたらしいメニュー！<br>'+unlocked.name); fanfare(); }, 800);
+  }
   setTimeout(()=>{ $('customer').classList.remove('happy'); newCustomer(); }, 1300);
 }
 function wrong(){
+  combo=0; updateCombo();
   errorSound(); speak('あれ？ もういちど！');
   const tr=$('tray'); tr.style.borderColor='#e53935';
   setTimeout(()=>{ tr.style.borderColor='#ffb300'; clearTray(); }, 700);
 }
 
 function updateCoins(){ $('coins').textContent=coins; }
+function updateCombo(){
+  const box=$('comboBox');
+  if(combo>=2){ $('comboN').textContent=combo; box.classList.remove('on'); void box.offsetWidth; box.classList.add('on'); }
+  else box.classList.remove('on');
+}
+
+function checkBadge(){
+  const bd = BADGES.find(b=>b.n===combo);
+  if(!bd) return;
+  if(!badges[bd.id]){ badges[bd.id]=true; saveLS('macyasan_badges',badges); renderTitleBadges(); }
+  showPop(bd.em, combo+'れんぞく せいかい！<br>'+bd.name+' ゲット！');
+  fanfare();
+  speak(bd.name+'ゲット！すごい！');
+}
+
+let popTimer=null;
+function showPop(em,html){
+  const p=$('badgePop');
+  p.innerHTML='<div class="big">'+em+'</div><div class="txt">'+html+'</div>';
+  p.classList.add('show');
+  if(popTimer) clearTimeout(popTimer);
+  popTimer=setTimeout(()=>p.classList.remove('show'),2200);
+}
+
+function renderTitleBadges(){
+  const earned = BADGES.filter(b=>badges[b.id]);
+  $('titleBadges').innerHTML = earned.length===0 ? ''
+    : 'あつめたバッジ：' + earned.map(b=>'<span class="bd">'+b.em+'</span>').join('');
+}
+
+function heartBurst(){
+  const marks=['💗','💛','🧡','💕'];
+  const c=$('customer').getBoundingClientRect();
+  for(let i=0;i<5;i++){
+    const h=document.createElement('div'); h.className='heart';
+    h.textContent=marks[i%marks.length];
+    h.style.left=(c.left+c.width/2-17+(Math.random()*60-30))+'px';
+    h.style.top=(c.top+Math.random()*20)+'px';
+    h.style.animationDelay=(i*0.09)+'s';
+    document.body.appendChild(h); setTimeout(()=>h.remove(),1600);
+  }
+}
 
 function sparkleBurst(){
   const marks=['✨','⭐','🌟','💫'];
@@ -166,6 +258,8 @@ function ac(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudio
 function beep(freq,dur){ if(muted)return; const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain(); o.frequency.value=freq; o.type='sine'; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(0.2,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur); o.start(); o.stop(c.currentTime+dur); }
 function successSound(){ if(muted)return; [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.13),i*90)); }
 function errorSound(){ if(muted)return; beep(300,0.15); setTimeout(()=>beep(240,0.2),130); }
+function chime(){ if(muted)return; beep(660,0.15); setTimeout(()=>beep(880,0.3),160); }
+function fanfare(){ if(muted)return; [523,523,784,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,0.16),i*110)); }
 
 function speak(text){ if(muted||!window.speechSynthesis)return; try{ const u=new SpeechSynthesisUtterance(text); u.lang='ja-JP'; u.rate=1.0; u.pitch=1.4; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
 function speakOrder(){ speak(order.map(id=>ITEMS.find(x=>x.id===id).name).join('と')+'ください'); }
@@ -174,6 +268,7 @@ $('startBtn').onclick = startGame;
 $('serveBtn').onclick = serve;
 $('clearBtn').onclick = clearTray;
 $('muteBtn').onclick = function(){ muted=!muted; this.textContent=muted?'🔇':'🔊'; if(muted&&window.speechSynthesis)speechSynthesis.cancel(); };
+renderTitleBadges();
 </script>
 </body>
 </html>

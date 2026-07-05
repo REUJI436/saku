@@ -212,6 +212,170 @@
     100% { transform: translateX(100%); }
   }
 
+  /* R5 secret */
+  .card.r5 {
+    background: linear-gradient(135deg, #ff9ecd, #ffd966, #a0ffc9, #87ceeb, #c9a0ff);
+    background-size: 400% 400%;
+    animation: rainbow 1.5s ease infinite;
+    border-color: #ffd700;
+    box-shadow: 0 0 30px #ffd700, 0 0 60px rgba(255,111,168,0.6), 0 6px 20px rgba(0,0,0,0.3);
+  }
+  .card.r5::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.6) 50%, transparent 70%);
+    animation: shine 1.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Card flip reveal */
+  .flip-wrap { perspective: 900px; width: 220px; height: 300px; }
+  .flip-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+    transition: transform 0.65s cubic-bezier(0.4, 0.1, 0.3, 1.15);
+  }
+  .flip-wrap.flipped .flip-inner { transform: rotateY(180deg); }
+  .flip-wrap:not(.flipped) .flip-back { visibility: hidden; }
+  .flip-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 20px;
+  }
+  .flip-front {
+    background: linear-gradient(135deg, #b388ff, #7c4dff);
+    border: 4px solid #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    animation: backPulse 1s ease-in-out infinite alternate;
+  }
+  .flip-front .back-mark { font-size: 90px; }
+  .flip-front .back-deco { font-size: 24px; }
+  @keyframes backPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.03); }
+  }
+  @keyframes wobble {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-2deg) scale(1.03); }
+    75% { transform: rotate(2deg) scale(1.03); }
+  }
+  .flip-front.glow3 {
+    box-shadow: 0 0 25px 8px #ffd700, 0 6px 20px rgba(0,0,0,0.3);
+    border-color: #ffd700;
+  }
+  .flip-front.glow4 {
+    box-shadow: 0 0 35px 12px #ffd700, 0 0 60px rgba(255,111,168,0.7), 0 6px 20px rgba(0,0,0,0.3);
+    border-color: #ffd700;
+    animation: wobble 0.5s ease-in-out infinite;
+  }
+  .flip-front.glow5 {
+    box-shadow: 0 0 40px 15px #ffd700, 0 0 80px rgba(255,111,168,0.9), 0 6px 20px rgba(0,0,0,0.3);
+    border-color: #ffd700;
+    animation: wobble 0.3s ease-in-out infinite;
+  }
+
+  /* Rainbow flash for secret */
+  #rainbow-flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 300;
+    opacity: 0;
+    background: linear-gradient(45deg, #ff9ecd, #ffd966, #a0ffc9, #87ceeb, #c9a0ff);
+  }
+  #rainbow-flash.flash { animation: rainbowFlash 1.2s ease-out; }
+  @keyframes rainbowFlash {
+    0% { opacity: 0; }
+    15% { opacity: 0.9; }
+    100% { opacity: 0; }
+  }
+
+  /* Album progress */
+  #progress-wrap {
+    margin-top: 8px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 14px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #progress-bar {
+    flex: 1;
+    height: 14px;
+    background: #eee;
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  #progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff6fa8, #ffd700);
+    border-radius: 7px;
+    transition: width 0.6s ease;
+  }
+  #progress-text {
+    font-size: 13px;
+    font-weight: bold;
+    color: #d63384;
+    white-space: nowrap;
+  }
+
+  /* Complete celebration */
+  #complete-screen {
+    background: rgba(0,0,0,0.75);
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    z-index: 150;
+    text-align: center;
+  }
+  #complete-screen .big { font-size: 80px; animation: bounce 1s ease-in-out infinite; }
+  #complete-screen .msg {
+    color: #ffd700;
+    font-size: 30px;
+    font-weight: bold;
+    text-shadow: 3px 3px 0 #ff6fa8, -2px -2px 0 #fff;
+    animation: pulse 0.6s ease-in-out infinite alternate;
+  }
+  #complete-screen .sub { color: #fff; font-size: 16px; }
+
+  /* Confirm dialog */
+  #confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 400;
+  }
+  #confirm-overlay.show { display: flex; }
+  #confirm-box {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px 20px;
+    max-width: 300px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    margin: 0 16px;
+  }
+  .confirm-msg { font-size: 16px; font-weight: bold; color: #333; line-height: 1.5; }
+  .confirm-btns { display: flex; gap: 12px; justify-content: center; }
+
   /* Collection screen */
   #collection-grid {
     flex: 1;
@@ -249,6 +413,7 @@
   .mini-card.r2 { background: linear-gradient(135deg, #ffe6f2, #ffb3d9); }
   .mini-card.r3 { background: linear-gradient(135deg, #fff2cc, #ffd966); border-color: #ffd700; }
   .mini-card.r4 { background: linear-gradient(135deg, #ff9ecd, #c9a0ff, #87ceeb); border-color: #ffd700; box-shadow: 0 0 8px #ffd700; }
+  .mini-card.r5 { background: linear-gradient(135deg, #ff9ecd, #ffd966, #87ceeb, #c9a0ff); border-color: #ffd700; box-shadow: 0 0 12px #ffd700; }
 
   /* Tap anywhere hint */
   .tap-hint {
@@ -299,7 +464,7 @@
   <div id="reveal-screen" class="screen">
     <div id="reveal-new" style="display:none;">✨ あたらしいカード！ ✨</div>
     <div id="reveal-card"></div>
-    <div class="tap-hint">タップ で つぎへ</div>
+    <div class="tap-hint" id="tap-hint">タップ で めくる！</div>
   </div>
 
   <div id="collection-screen" class="screen">
@@ -308,9 +473,31 @@
       <div class="count" id="collection-count"></div>
       <button class="nav-btn" id="back-home">◀ もどる</button>
     </div>
+    <div id="progress-wrap">
+      <div id="progress-bar"><div id="progress-fill"></div></div>
+      <div id="progress-text"></div>
+    </div>
     <div id="collection-grid"></div>
   </div>
 
+  <div id="complete-screen" class="screen">
+    <div class="big">🏆</div>
+    <div class="msg">🎉 コンプリート！ 🎉</div>
+    <div class="sub">カードを ぜんぶ あつめたよ！<br>きみは カードマスターだ！</div>
+    <div class="tap-hint">タップ で もどる</div>
+  </div>
+
+  <div id="confirm-overlay">
+    <div id="confirm-box">
+      <div class="confirm-msg">あつめたカードを<br>ぜんぶ わすれちゃう？</div>
+      <div class="confirm-btns">
+        <button class="nav-btn" id="confirm-no" style="background: #999; box-shadow: 0 3px 0 #666;">やめる</button>
+        <button class="nav-btn" id="confirm-yes">わすれる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="rainbow-flash"></div>
   <canvas id="sparkle-canvas"></canvas>
   <a href="./" class="portal-back">🏠 ゲームせんたく</a>
 
@@ -340,13 +527,73 @@ const CARDS = [
   // R4 legendary
   { id: 19, name: 'にじのユニコーン', char: '🦄', rarity: 4, bg: '🌈' },
   { id: 20, name: 'ドラゴンのひめ', char: '🐉', rarity: 4, bg: '💖' },
+  // new series
+  { id: 21, name: 'ひつじちゃん', char: '🐑', rarity: 1, bg: '☁️' },
+  { id: 22, name: 'はむちゃん', char: '🐹', rarity: 1, bg: '🌻' },
+  { id: 23, name: 'ことりちゃん', char: '🐦', rarity: 1, bg: '🎵' },
+  { id: 24, name: 'いるかちゃん', char: '🐬', rarity: 2, bg: '🌊' },
+  { id: 25, name: 'ふくろうはかせ', char: '🦉', rarity: 2, bg: '🌙' },
+  { id: 26, name: 'ようせいちゃん', char: '🧚‍♀️', rarity: 3, bg: '🍀' },
+  { id: 27, name: 'くじゃくひめ', char: '🦚', rarity: 4, bg: '💠' },
+  // R5 secret
+  { id: 28, name: 'きらきらクイーン', char: '👑', rarity: 5, bg: '💎' },
+  { id: 29, name: 'ほしのせいれい', char: '🌟', rarity: 5, bg: '🌠' },
 ];
 
 // drop rates per rarity
-const RARITY_WEIGHT = { 1: 60, 2: 25, 3: 12, 4: 3 };
+const RARITY_WEIGHT = { 1: 60, 2: 25, 3: 11, 4: 3, 5: 1 };
 
 const STORAGE_KEY = 'kira-card-collection-v1';
+const COMPLETE_KEY = 'kira-card-complete-v1';
 let owned = loadOwned();
+
+// --- Sound (WebAudio, safe-fail) ---
+let audioCtx = null;
+function initAudio() {
+  try {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) { audioCtx = null; }
+}
+document.body.addEventListener('pointerdown', initAudio);
+
+function playNote(freq, start, dur, type, vol) {
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  try {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    const t = audioCtx.currentTime + start;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol || 0.18, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  } catch (e) {}
+}
+function sndGacha() {
+  playNote(523, 0, 0.15);
+  playNote(659, 0.08, 0.15);
+}
+function sndFlip(rarity) {
+  if (rarity >= 5) {
+    [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => playNote(f, i * 0.09, 0.35, 'triangle', 0.22));
+  } else if (rarity === 4) {
+    [523, 659, 784, 1047].forEach((f, i) => playNote(f, i * 0.1, 0.3, 'triangle', 0.2));
+  } else if (rarity === 3) {
+    [659, 784, 988].forEach((f, i) => playNote(f, i * 0.09, 0.25));
+  } else {
+    playNote(784, 0, 0.12);
+    playNote(988, 0.07, 0.2);
+  }
+}
+function sndComplete() {
+  [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => playNote(f, i * 0.13, 0.35, 'triangle', 0.22));
+}
 
 function loadOwned() {
   try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
@@ -371,7 +618,7 @@ function drawCard() {
 function makeCardEl(card, cls = 'card') {
   const el = document.createElement('div');
   el.className = `${cls} r${card.rarity}`;
-  const stars = '⭐'.repeat(card.rarity);
+  const stars = card.rarity >= 5 ? '🌈👑🌈' : '⭐'.repeat(card.rarity);
   const bgHtml = cls === 'card' ? `<div class="bg-pattern">${card.bg.repeat(24)}</div>` : '';
   el.innerHTML = `
     ${bgHtml}
@@ -391,6 +638,9 @@ function updateCounts() {
   const text = `あつめた: ${owned.size} / ${CARDS.length}`;
   document.getElementById('home-count').textContent = text;
   document.getElementById('collection-count').textContent = text;
+  const pct = Math.round((owned.size / CARDS.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = pct >= 100 ? '🏆 コンプリート！' : `たっせいど ${pct}%`;
 }
 
 // Sparkle animation
@@ -448,33 +698,97 @@ function animate() {
 }
 animate();
 
-// Reveal
+// Reveal (2 taps: 1st = flip the card, 2nd = back to home)
+let revealPhase = 'idle';
+let revealIsNew = false;
+let revealRarity = 1;
+
 function openGacha() {
+  initAudio();
   const card = drawCard();
-  const isNew = !owned.has(card.id);
+  revealIsNew = !owned.has(card.id);
+  revealRarity = card.rarity;
   owned.add(card.id);
   saveOwned();
 
   const revealCard = document.getElementById('reveal-card');
   revealCard.innerHTML = '';
-  revealCard.appendChild(makeCardEl(card));
+  const wrap = document.createElement('div');
+  wrap.className = 'flip-wrap';
+  const inner = document.createElement('div');
+  inner.className = 'flip-inner';
+  const front = document.createElement('div');
+  front.className = 'flip-face flip-front' + (card.rarity >= 3 ? ' glow' + card.rarity : '');
+  front.innerHTML = '<div class="back-mark">❓</div><div class="back-deco">✨🎀✨</div>';
+  const back = document.createElement('div');
+  back.className = 'flip-face flip-back';
+  back.appendChild(makeCardEl(card));
+  inner.appendChild(front);
+  inner.appendChild(back);
+  wrap.appendChild(inner);
+  revealCard.appendChild(wrap);
 
-  document.getElementById('reveal-new').style.display = isNew ? 'block' : 'none';
-
+  document.getElementById('reveal-new').style.display = 'none';
+  document.getElementById('tap-hint').textContent = 'タップ で めくる！';
+  revealPhase = 'cover';
   showScreen('reveal-screen');
-
-  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-  const intense = card.rarity >= 3;
-  burstSparkles(cx, cy, card.rarity * 25, intense);
-  if (card.rarity === 4) {
-    setTimeout(() => burstSparkles(cx, cy, 60, true), 200);
-    setTimeout(() => burstSparkles(cx, cy, 60, true), 400);
-  }
+  sndGacha();
+  burstSparkles(window.innerWidth / 2, window.innerHeight / 2, 15);
 }
 
 document.getElementById('gacha-box').addEventListener('click', openGacha);
 
 document.getElementById('reveal-screen').addEventListener('click', () => {
+  if (revealPhase === 'cover') {
+    revealPhase = 'open';
+    const wrap = document.querySelector('#reveal-card .flip-wrap');
+    if (wrap) wrap.classList.add('flipped');
+    const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+    setTimeout(() => {
+      if (revealPhase !== 'open') return;
+      sndFlip(revealRarity);
+      burstSparkles(cx, cy, revealRarity * 25, revealRarity >= 3);
+      if (revealRarity >= 4) {
+        setTimeout(() => burstSparkles(cx, cy, 60, true), 200);
+        setTimeout(() => burstSparkles(cx, cy, 60, true), 400);
+      }
+      if (revealRarity >= 5) {
+        const rf = document.getElementById('rainbow-flash');
+        rf.classList.remove('flash');
+        void rf.offsetWidth;
+        rf.classList.add('flash');
+        setTimeout(() => burstSparkles(cx, cy, 80, true), 600);
+      }
+      const label = document.getElementById('reveal-new');
+      if (revealRarity >= 5) {
+        label.textContent = '🌈 シークレット カード！！ 🌈';
+        label.style.display = 'block';
+      } else if (revealIsNew) {
+        label.textContent = '✨ あたらしいカード！ ✨';
+        label.style.display = 'block';
+      }
+      document.getElementById('tap-hint').textContent = 'タップ で つぎへ';
+    }, 350);
+  } else if (revealPhase === 'open') {
+    revealPhase = 'idle';
+    let celebrated = '1';
+    try { celebrated = localStorage.getItem(COMPLETE_KEY) || ''; } catch (e) {}
+    if (owned.size >= CARDS.length && !celebrated) {
+      try { localStorage.setItem(COMPLETE_KEY, '1'); } catch (e) {}
+      showScreen('complete-screen');
+      sndComplete();
+      const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+      burstSparkles(cx, cy * 0.6, 80, true);
+      setTimeout(() => burstSparkles(cx * 0.5, cy, 60, true), 300);
+      setTimeout(() => burstSparkles(cx * 1.5, cy, 60, true), 600);
+    } else {
+      showScreen('home-screen');
+    }
+    updateCounts();
+  }
+});
+
+document.getElementById('complete-screen').addEventListener('click', () => {
   showScreen('home-screen');
   updateCounts();
 });
@@ -489,11 +803,17 @@ document.getElementById('back-home').addEventListener('click', () => {
 });
 
 document.getElementById('reset-btn').addEventListener('click', () => {
-  if (confirm('あつめたカードを ぜんぶ わすれちゃう？')) {
-    owned = new Set();
-    saveOwned();
-    updateCounts();
-  }
+  document.getElementById('confirm-overlay').classList.add('show');
+});
+document.getElementById('confirm-no').addEventListener('click', () => {
+  document.getElementById('confirm-overlay').classList.remove('show');
+});
+document.getElementById('confirm-yes').addEventListener('click', () => {
+  owned = new Set();
+  saveOwned();
+  try { localStorage.removeItem(COMPLETE_KEY); } catch (e) {}
+  updateCounts();
+  document.getElementById('confirm-overlay').classList.remove('show');
 });
 
 function renderCollection() {
