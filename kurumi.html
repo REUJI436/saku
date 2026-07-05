@@ -1627,7 +1627,13 @@ function speak(text) {
     u.rate = 1.0;
     u.pitch = 1.0;
     if (preferredVoice) u.voice = preferredVoice;
-    u.onerror = (e) => { if (window.__dbg) window.__dbg('tts onerror: ' + (e.error||'?'), 'err'); };
+    u.onerror = (e) => {
+      // 'canceled'/'interrupted'は次のセリフに切り替わる時に毎回起きる正常動作。
+      // 'err'で記録するとデバッグ画面がセリフごとに表示されてしまうので情報レベルに
+      const kind = (e && e.error) || '?';
+      const benign = kind === 'canceled' || kind === 'interrupted' || kind === 'not-allowed';
+      if (window.__dbg) window.__dbg('tts onerror: ' + kind, benign ? 'ev' : 'err');
+    };
     speechSynthesis.speak(u);
     if (window.__dbg) window.__dbg('speak: "' + clean.substring(0,20) + '..." voice=' + (preferredVoice && preferredVoice.name || 'default'), 'ev');
   } catch(e) {
