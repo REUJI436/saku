@@ -806,7 +806,7 @@ window.addEventListener('unhandledrejection', function(ev) {
 <script>
 // ====================== DEBUG OVERLAY ======================
 // Androidスマホでは DevTools が開けないので、画面上にログを出す。
-// ?debug=1 で常時表示、それ以外でもエラーが出れば自動表示。
+// 表示されるのは ?debug=1 を付けたときだけ（通常プレイ中は絶対に出ない）。
 (function setupDebug(){
   try {
     const params = new URLSearchParams(location.search);
@@ -826,16 +826,10 @@ function dbg(msg, cls) {
     if (__dbgLines.length > __dbgMax) __dbgLines.shift();
     if (__dbgEl) {
       __dbgEl.textContent = __dbgLines.join('\n');
-      // エラーがあれば強制表示
-      if (cls === 'err' || window.__debugMode) {
+      // 表示は ?debug=1 のときだけ。エラーでも自動表示はしない
+      // （遊んでいる子どもの画面をログで塞がない。ログ自体は溜まるので後から確認できる）
+      if (window.__debugMode) {
         __dbgEl.classList.add('show');
-        // ?debug=1以外では8秒後に自動で消す（子どもの画面を塞ぎ続けないため）
-        if (!window.__debugMode) {
-          clearTimeout(window.__dbgHideTimer);
-          window.__dbgHideTimer = setTimeout(() => {
-            try { __dbgEl.classList.remove('show'); } catch(e) {}
-          }, 8000);
-        }
       }
     }
   } catch(e) {}
